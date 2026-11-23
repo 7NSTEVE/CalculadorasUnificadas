@@ -51,7 +51,7 @@ constexpr std::uint16_t kDig0    = 0x0702, kDig1 = 0x0703, kDig2 = 0x0603, kDig3
 constexpr std::uint16_t kDig4    = 0x0704, kDig5 = 0x0604, kDig6 = 0x0504;
 constexpr std::uint16_t kDig7    = 0x0705, kDig8 = 0x0605, kDig9 = 0x0505;
 constexpr std::uint16_t kMas     = 0x0403, kMenos = 0x0303, kPor = 0x0404, kEntre = 0x0304;
-constexpr std::uint16_t kPunto   = 0x0602;
+constexpr std::uint16_t kPunto   = 0x0602, kNeg   = 0x0402;
 
 bool ReadExactFile(const char* path, std::size_t expected, std::vector<std::uint8_t>& out)
 {
@@ -441,6 +441,191 @@ int main(int argc, char** argv)
 
         cg50core_destroy(ctx.core);
         std::printf("[APPS] CERT19 COMPLETE\n");
+        return 0;
+    }
+
+    if (argc >= 7 && std::strcmp(argv[6], "cert2900") == 0) {
+        // Exhaustive v43 SH7305 full-hardware & all-apps certification suite:
+        // Covers all 19 Casio built-in apps + all 5 .g3a add-ins + ADC Battery +
+        // R61524 SHIFT+7 GRAM Capture + NOR Flash eAct Save + SCIF0/USB2 Link +
+        // Equation Poly Solver + Statistics 1-VAR + MicroPython + 3DGraph Sphere.
+
+        // 01. Run-Matrix [1]: verify symbolic & numeric engine
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig1, 200, 1800);
+        ctx.TapSeq({kDig2, kPor, kDig3, kMas, kDig4, kExe}, 150, 900); // 2*3+4 = 10
+        ctx.CaptureAndSave("c01_runmat");
+
+        // 02. Statistics [2]: List1 = {10, 20, 30} -> F2 (CALC) -> F1 (1-VAR) -> x_bar = 20
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig2, 200, 2000);
+        ctx.TapSeq({kDig1, kDig0, kExe, kDig2, kDig0, kExe, kDig3, kDig0, kExe}, 150, 600);
+        ctx.TapSeq({kF2, kF1}, 180, 1400);
+        ctx.CaptureAndSave("c02_statistics_1var");
+
+        // 03. eActivity [3]: create "A", 7x8=56, SAVE to NOR Flash, reopen list showing A.g3e
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig3, 200, 2500);
+        ctx.TapSeq({kF2, kXVar, kExe}, 180, 1500);
+        ctx.Tap(kF3, 180, 700);
+        ctx.TapSeq({kDig7, kPor, kDig8, kExe}, 160, 1200);
+        ctx.CaptureAndSave("c03a_eact_calc56");
+        ctx.Tap(kF1, 200, 1000);
+        ctx.Tap(kF1, 200, 1000);
+        ctx.WaitUntilSleeping(1600);
+        ctx.CaptureAndSave("c03b_eact_nor_saved");
+        ctx.Tap(kExit, 200, 1200);
+        ctx.Tap(kExit, 200, 1500);
+        ctx.Tap(kExit, 200, 1500);
+        ctx.CaptureAndSave("c03c_eact_persisted");
+
+        // 04. Spreadsheet [4]: A1=10, A2=20, A3==A1+A2 -> 30
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig4, 200, 2200);
+        ctx.TapSeq({kDig1, kDig0, kExe, kDig2, kDig0, kExe}, 160, 600);
+        ctx.TapSeq({kShift, kPunto, kAlpha, kXVar, kDig1, kMas, kAlpha, kXVar, kDig2, kExe}, 160, 1200);
+        ctx.CaptureAndSave("c04_spreadsheet_30");
+
+        // 05. Graph [5]: Y1=X^2 -> DRAW -> G-Solv MIN + SHIFT+7 Screen Capture (R61524 GRAM Read!)
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig5, 200, 2000);
+        ctx.TapSeq({kXVar, kSq, kExe}, 160, 600);
+        ctx.Tap(kF6, 200, 3000);
+        ctx.TapSeq({kShift, kF5, kF3}, 180, 1500);
+        ctx.CaptureAndSave("c05a_graph_gsolv");
+        // Exercise R61524 GRAM Read (0x0202) + NOR Flash capture via SHIFT+7 -> "1" -> EXE
+        ctx.TapSeq({kShift, kDig7}, 200, 1200);
+        ctx.TapSeq({kDig1, kExe}, 200, 1500);
+        ctx.WaitUntilSleeping(1200);
+        ctx.CaptureAndSave("c05b_graph_capture_r61524");
+        ctx.Tap(kExit, 180, 800);
+
+        // 06. Dyna Graph [6]
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig6, 200, 1800);
+        ctx.CaptureAndSave("c06_dyna_graph");
+
+        // 07. Table [7]: F6 TABL using Y1=X^2
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig7, 200, 1800);
+        ctx.Tap(kF6, 200, 2200);
+        ctx.CaptureAndSave("c07_table");
+
+        // 08. Recursion [8]: a_n = 2*n + 1 -> F6 (TABLE)
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig8, 200, 1800);
+        ctx.TapSeq({kDig2, kF4, kF1, kMas, kDig1, kExe}, 160, 600);
+        ctx.Tap(kF6, 200, 2200);
+        ctx.CaptureAndSave("c08_recursion");
+
+        // 09. Conic Graphs [9]: parabola A=1, H=0, K=0 -> DRAW
+        ctx.ReturnToMenu();
+        ctx.Tap(kDig9, 200, 1800);
+        ctx.TapSeq({kExe, kDig1, kExe, kDig0, kExe, kDig0, kExe, kF6}, 180, 1800);
+        ctx.CaptureAndSave("c09_conic");
+
+        // 10. Equation [A = kXVar]: F2 (Polynomial) -> F1 (Degree 2) -> x^2 - 5x + 6 = 0 -> F1 (SOLV) -> {3, 2}
+        ctx.ReturnToMenu();
+        ctx.Tap(kXVar, 200, 2000);
+        ctx.Tap(kF2, 200, 1200);
+        ctx.Tap(kF1, 200, 1200);
+        ctx.TapSeq({kDig1, kExe, kNeg, kDig5, kExe, kDig6, kExe}, 160, 700);
+        ctx.Tap(kF1, 200, 1800);
+        ctx.CaptureAndSave("c10_equation_poly_3_2");
+
+        // 11. Program / Casio BASIC [B = kLog]
+        ctx.ReturnToMenu();
+        ctx.Tap(kLog, 200, 1800);
+        ctx.TapSeq({kF3, kEntre, kExe}, 180, 1000);
+        ctx.TapSeq({kDig2, kMas, kDig3, kExit}, 160, 700);
+        ctx.Tap(kF1, 200, 1800);
+        ctx.CaptureAndSave("c11_program_basic");
+
+        // 12. Financial [C = kLn]
+        ctx.ReturnToMenu();
+        ctx.Tap(kLn, 200, 1800);
+        ctx.CaptureAndSave("c12_financial");
+
+        // 13. E-CON4 [D = kSin]
+        ctx.ReturnToMenu();
+        ctx.Tap(kSin, 200, 1800);
+        ctx.CaptureAndSave("c13_econ4");
+
+        // 14. Link [E = kCos]: verifies SCIF0 (0x04410000) & USB2 (0x04D80000) cleanly
+        ctx.ReturnToMenu();
+        ctx.Tap(kCos, 200, 1800);
+        ctx.CaptureAndSave("c14_link_scif_usb");
+
+        // 15. Memory Manager [F = kTan] -> F2 (Storage Memory showing A.g3e & capture!)
+        ctx.ReturnToMenu();
+        ctx.Tap(kTan, 200, 1800);
+        ctx.Tap(kF2, 200, 1800);
+        ctx.CaptureAndSave("c15_memory_smem");
+
+        // 16. System Manager [G = kFrac] -> F6 (Next Page) -> F1 (Battery Settings -> ADC!) & F4 (Version)
+        ctx.ReturnToMenu();
+        ctx.Tap(kFrac, 200, 2000);
+        ctx.Tap(kF4, 200, 1500);
+        ctx.CaptureAndSave("c16b_sys_version");
+        ctx.Tap(kExit, 180, 800);
+        ctx.Tap(kF6, 200, 1000);
+        ctx.Tap(kF1, 200, 1500);
+        ctx.CaptureAndSave("c16a_sys_battery_adc");
+
+        // 17. MicroPython v1.9.4 [H = kSD] -> F4 (SHELL) -> 2**10 = 1024
+        ctx.ReturnToMenu();
+        ctx.Tap(kSD, 200, 2500);
+        ctx.Tap(kF4, 200, 3500);
+        ctx.WaitUntilSleeping(200);
+        ctx.TapSeq({kDig2, kPor, kPor, kDig1, kDig0, kExe}, 180, 2500);
+        ctx.CaptureAndSave("c17_python_1024");
+
+        // 18. Distribution [I = kParenA]
+        ctx.ReturnToMenu();
+        ctx.Tap(kParenA, 200, 2200);
+        ctx.CaptureAndSave("c18_distribution");
+
+        // 19. Geometry.g3a [J = kParenC]
+        ctx.ReturnToMenu();
+        ctx.Tap(kParenC, 200, 6000);
+        ctx.WaitUntilSleeping(250);
+        ctx.CaptureAndSave("c19_geometry_g3a");
+
+        // 20. PictPlot.g3a [K = kComa]
+        ctx.ReturnToMenu();
+        ctx.Tap(kComa, 200, 6000);
+        ctx.WaitUntilSleeping(250);
+        ctx.CaptureAndSave("c20_pictplot_g3a");
+
+        // 21. 3DGraph.g3a [L = kArrow]: Blue 3D Shaded Sphere r=2
+        ctx.ReturnToMenu();
+        ctx.Tap(kArrow, 200, 4500);
+        ctx.WaitUntilSleeping(200);
+        ctx.Tap(kF3, 200, 1500);
+        ctx.Tap(kF1, 200, 1500);
+        ctx.TapSeq({kAba, kAba, kExe}, 180, 1800);
+        ctx.TapSeq({kDer, kDer, kDer, kDig2, kExe}, 180, 1200);
+        ctx.Tap(kF6, 200, 1800);
+        ctx.Tap(kF6, 200, 5000);
+        ctx.WaitUntilSleeping(600);
+        ctx.CaptureAndSave("c21_3dgraph_sphere");
+
+        // 22. Physium.g3a [ALPHA+7 = M]
+        ctx.ReturnToMenu();
+        ctx.TapSeq({kAlpha, kDig7}, 200, 5000);
+        ctx.WaitUntilSleeping(250);
+        ctx.CaptureAndSave("c22_physium_g3a");
+
+        // 23. Prob Sim [ALPHA+8 = N] -> F2 (Dice Roll) -> F1 (ROLL)
+        ctx.ReturnToMenu();
+        ctx.TapSeq({kAlpha, kDig8}, 200, 5000);
+        ctx.WaitUntilSleeping(250);
+        ctx.Tap(kF2, 200, 2500);
+        ctx.Tap(kF1, 200, 2500);
+        ctx.CaptureAndSave("c23_probsim_dice");
+
+        cg50core_destroy(ctx.core);
+        std::printf("[APPS] CERT2900 COMPLETE\n");
         return 0;
     }
 

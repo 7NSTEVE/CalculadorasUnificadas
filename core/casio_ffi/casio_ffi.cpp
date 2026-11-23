@@ -678,13 +678,9 @@ int casio_cg50_render_rgba_ex(
         }
     }
 
-    // Fallback to DMA scanout VRAM buffer (SAR0 or 0x08000000 / 0x08028800) if active
-    uint32_t sar0 = 0;
-    uint32_t vramBase = 0x08000000u;
-    if (handle->core->Read32(0xFE008020u, sar0) &&
-        (sar0 == 0x08000000u || sar0 == 0x08028800u)) {
-        vramBase = sar0;
-    }
+    // Fallback to DMA scanout VRAM buffer (last full-frame LCD DMA SAR or 0x08000000)
+    const uint32_t lastSar = handle->core->LastLcdDmaSar();
+    const uint32_t vramBase = (lastSar == 0x08028800u) ? 0x08028800u : 0x08000000u;
     uint16_t testWord = 0;
     bool hasNonEmpty = false;
     if (handle->core->Read16(vramBase, testWord)) {

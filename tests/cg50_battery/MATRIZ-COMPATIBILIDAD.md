@@ -296,3 +296,26 @@ Actualizado 2026-11-06 post-v22 (97 APROBADAS, `c52dc62`):
   - **RTC tiempo real + ABI `UserROM`/`.g3a`:** `casio_cg50_set_rtc_epoch`, `casio_cg50_export_user_rom_file`, `casio_cg50_import_user_rom_file`, `casio_cg50_load_addin_file` (validación cabecera Casio `0x7000` bytes).
   - **Límites físicos honestos:** puerto físico 3-pin `S-LINK` y USB `Mass Storage` de escritorio no emulan cable físico en Android (suplidos por respaldo/restauración de `UserROM` e importación `.g3a` desde menú `⋯`).
 
+---
+
+## Certificación v43 — Mapeo Completo Hardware SH7305 + R61524 + DMA 6-ch + Android 16 (`core/casio_cg50`, 2026-11-23)
+
+- **Resultado batería real (`cg50_battery`, 7 shards sobre `warm_state.bin` `v43` regenerado desde cero):** **`133/133 PASO` (`jugados=133`, `divergencias=0`, `decodificables=0`, `determinismo=SI 2/2`)**, 0 regresiones, sin ninguna DLL de Casio.
+  - Boot estable: `hash=DCE621980851884D`, `MENU->EXE=A4A67B44DADA367F`, `16/16` glifos calibrados exactos.
+- **Recibo verificado:** `recibos/v43-monorepo-133_battery_result.txt` (`9,430 B`)
+  - **SHA-256:** `3ACEF76DE4B9266ABFFC26122356F63B393C6F5C74182BF3C945E11985C3FAC2`
+- **Arranque frío `v43` (`gen_cg50_warm_state.exe`):** `MAIN MENU ready in 9.02s: inst=164466762 pc=0xA00206FC lcdWrites=499878`, **`UNKNOWN_LCD_CMDS=0`** (frente a `57` comandos desconocidos en `v42`), empaquetado a `cg50_warm_state.bin.gz` (`12,383,297 B`, sello `cg50_warm_v43.stamp`).
+- **Tests unitarios y de hardware (`ctest` MSVC x64 Release):** **`7/7 PASS` (`100%`, `10.91 s`)**:
+  - `cg50_android_smoke`, `cw2_headless_test`, `nx_regression_test`, `cg50_c_api_contract_test`, `cg50_flash_cfi_test`, `cg50_sh4a_isa_test`, y el nuevo **`cg50_sh7305_hw_test`** (valida `INTC2`, `ETMU0..5`, `ADC`, `TPU`, `SCIF0`, `USB2`, `ILRAM/XRAM/YRAM`, `Store Queues` + `PREF @Rn`, `ITLB`, `DMAC` 6 canales `TS/SM/DM` + `DEI`, `R61524` `0x0202` GRAM Read y registros `0x0000..0x06FF`, `NOTT`, `FPSCR.DN`, `NOR Flash` Unlock Bypass + Erase Suspend/Resume).
+- **Sonda exhaustiva `cert2900 v2` (`cg50_apps_probe.cpp`, `2,103,862,281` instrucciones SH-4A continuas, `27` capturas verificadas visualmente):**
+  - **`unsup=0 (0x0000)`**, **`mflt=0 (0x00000000)`**, **`CERT2900_V2_UNKNOWN_LCD_CMDS=0`**, `cpu=2 pc=0xA00206FC`.
+  - **Todas las 19 apps integradas + 5 add-ins `.g3a` operativos:** `Run-Matrix` (`2×3+4=10`), `Statistics` (`x̄=20, Σx=60, Σx²=1400, σx=8.1649658, sx=10, n=3`), `eActivity` (`7×8=56`, guardado NOR Flash `A.g3e : 288`), `Spreadsheet` (`A1=10, A2=20, A3==A1+A2 -> 30`), `Graph Y1=x²` + `G-Solv MIN=(0,0)` + **`SHIFT+7` Screen Capture #1 (`R61524` `0x0202` GRAM Read → carpeta `Capt/` persistida en NOR Flash)**, `Dyna Graph`, `Table` (`1,4,9,16`), `Recursion`, `Conic` (`X=Y²`), `Equation` (`x²-5x+6=0 -> X1=3, X2=2`), `Program BASIC` (`T: 2+3 -> 5`), `Financial`, `E-CON4`, `Link` (`SCIF0` + `USB2`, 0 cuelgues), `Memory Manager SMEM` (`6557696 Bytes Free`, mostrando `Capt/`, `CASIO/`, `3DGraph.g3a`, `A.g3e`, `EACTWORK.tmp`, `Geometry.g3a`), `System Manager` (`Battery Settings` + icono batería 100% vía `AdcUnit` + `OS 03.80.0212`), `MicroPython v1.9.4` (`2**10 -> 1024`), `Distribution`, `Geometry.g3a`, `PictPlot.g3a` (mostrando la carpeta `Capt/` capturada vía `R61524`), `3DGraph.g3a` (esfera 3D sombreada azul `r=2`), `Physium.g3a` y `Prob Sim` (histograma de dados en vivo).
+- **Corrección crítica DMA LCD (`lastLcdDmaSar_`):** al volver auténtico el post-incremento de `SAR0` en `ExecuteDmacChannel` (`0x08000000 + 0x28800 = 0x08028800`), se añadió `LastLcdDmaSar()` (serializado en chunk `95u`) en `cg50_native_core.h/.cpp` y se actualizó `rama-cg50_backend.cpp` y `casio_ffi.cpp`, manteniendo el registro `SAR0` fiel al silicio SH7305 sin desplazar el puntero de framebuffer.
+- **APK Release Android 16 KB `v43`:**
+  - `flutter analyze --no-pub`: **`0 issues`**; `flutter test --no-pub`: **`4/4 PASS`**.
+  - Archivo: `apps/android/build/app/outputs/flutter-apk/app-release.apk` (`80,676,337 B` / `76.9 MB`, SHA-256 `8624BA04DB12D1C82ABADB72376E21D7CD2411977377806476302C43BA74173E`).
+  - `zipalign -c -P 16 -v 4`: `EXIT=0`; `apksigner verify`: `EXIT=0`; `llvm-readelf -l`: todos los segmentos `LOAD` en `arm64-v8a` (`1,321,816 B`) y `x86_64` (`1,330,096 B`) alineados a `0x4000` (16 KB).
+  - Verificación en vivo en `Pixel_Phone_Android16_PlayStore` (`emulator-5554`, `1080×2400`, paquete `com.calculadorasunificadas.app`): **`10/10` pantallas interactivas confirmadas visualmente** (`MAIN MENU`, `eActivity 7×8=56`, `MicroPython 2**10=1024`, `3DGraph esfera azul`, `Graph Y1=x² + G-Solv MIN=(0,0)`, `sin⁻¹(0.5) → 1/6 π`, `S↔D → 0.5235987756`, `System Version OS 03.80.0212`, menú `⋯` Porcelana Claro y relanzamiento limpio tras `am force-stop`), con **`LOGCAT_BAD_LINES=0`**.
+- **Límites físicos externos honestos:** la electrónica interna de `SCIF0` y `USB2` está mapeada a nivel de registros/FIFOs/IRQs sin cuelgues del firmware, pero en Android no existe un cable físico 3-pin `S-LINK` ni conexión USB Mass Storage hacia un PC anfitrión; el intercambio de datos se realiza mediante respaldo/restauración de `UserROM`, carga directa de `.g3a` y captura PNG desde el menú `⋯`.
+
+

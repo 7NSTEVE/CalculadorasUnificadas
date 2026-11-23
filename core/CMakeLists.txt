@@ -198,6 +198,13 @@ if(BUILD_CORE_TESTS)
         target_compile_options(cg50_sh4a_isa_test PRIVATE /O2 /EHsc /utf-8)
     endif()
     add_test(NAME cg50_sh4a_isa_test COMMAND cg50_sh4a_isa_test)
+
+    add_executable(cg50_sh7305_hw_test "${CMAKE_CURRENT_SOURCE_DIR}/../tests/core/cg50_sh7305_hw_test.cpp")
+    target_link_libraries(cg50_sh7305_hw_test PRIVATE casio_cg50)
+    if(MSVC)
+        target_compile_options(cg50_sh7305_hw_test PRIVATE /O2 /EHsc /utf-8)
+    endif()
+    add_test(NAME cg50_sh7305_hw_test COMMAND cg50_sh7305_hw_test)
 endif()
 
 if(BUILD_CG50_BATTERY)

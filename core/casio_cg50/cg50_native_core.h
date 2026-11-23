@@ -2,6 +2,7 @@
 
 #include "cg50_core/cg50_flash_cfi.h"
 #include "cg50_core/cg50_peripheral_bus.h"
+#include "cg50_core/cg50_sh7305_periph.h"
 
 #include <array>
 #include <cstddef>
@@ -48,9 +49,33 @@ public:
     static constexpr std::size_t   kUserRomSize = 0x014A0000u;
     static constexpr std::size_t   kCombinedRomSize = kRomSize + kUserRomSize;
 
-    // Four consecutive P4 pages observed on the official CPU73050 page table.
+    // Four consecutive P4 pages observed on the official CPU73050 page table (RS-RAM).
     static constexpr std::uint32_t kOnChipRamBase = 0xFD800000u;
     static constexpr std::size_t   kOnChipRamSize = 0x00004000u;
+
+    // SH7305 dedicated on-chip high-speed memories (ILRAM 16 KB, XRAM 8 KB, YRAM 8 KB)
+    static constexpr std::uint32_t kIlramBase = 0xE5200000u;
+    static constexpr std::uint32_t kIlramPhysicalAlias = 0x05200000u;
+    static constexpr std::size_t   kIlramSize = 0x00004000u;
+    static constexpr std::uint32_t kXramBase = 0xE5007000u;
+    static constexpr std::uint32_t kXramPhysicalAlias = 0x05007000u;
+    static constexpr std::size_t   kXramSize = 0x00002000u;
+    static constexpr std::uint32_t kYramBase = 0xE5017000u;
+    static constexpr std::uint32_t kYramPhysicalAlias = 0x05017000u;
+    static constexpr std::size_t   kYramSize = 0x00002000u;
+
+    // SH-4A Store Queues (SQ0/SQ1, 2x32 B at 0xE0000000..0xE3FFFFFF) + QACR0/QACR1
+    static constexpr std::uint32_t kStoreQueueBase = 0xE0000000u;
+    static constexpr std::uint32_t kStoreQueueEnd = 0xE4000000u;
+    static constexpr std::uint32_t kQacr0Register = 0xFF000038u;
+    static constexpr std::uint32_t kQacr1Register = 0xFF00003Cu;
+
+    // SH-4A ITLB MMIO arrays (4 entries)
+    static constexpr std::uint32_t kItlbAddressArrayBase = 0xF2000000u;
+    static constexpr std::uint32_t kItlbDataArrayBase = 0xF3000000u;
+    static constexpr std::uint32_t kItlbDataArrayEnd = 0xF3800000u;
+    static constexpr std::uint32_t kItlbArraysEnd = 0xF4000000u;
+    static constexpr std::size_t   kItlbEntryCount = 4u;
 
     static constexpr std::uint32_t kCacheControlRegister = 0xFF00001Cu;
     static constexpr std::uint32_t kCacheControlWritableMask = 0x00000107u;
@@ -288,6 +313,11 @@ public:
     static constexpr std::size_t   kArea1PeripheralPageSize = 8192u;
 
     static constexpr std::uint32_t kLcdBase = 0x14000000u;
+    static constexpr std::uint32_t kLcdBusEnd = 0x15000000u;
+    static constexpr bool IsLcdBusPhysical(const std::uint32_t physical) noexcept
+    {
+        return physical >= kLcdBase && physical < kLcdBusEnd;
+    }
 
     static constexpr std::uint32_t kSrT = 0x00000001u;
     static constexpr std::uint32_t kSrS = 0x00000002u;
@@ -332,6 +362,23 @@ public:
     static constexpr std::uint32_t kEventKeyScan = 0x00000BE0u;
     static constexpr std::uint32_t kEventRtcCarry = 0x000004A0u;
     static constexpr std::uint32_t kEventRtcPeriodic = 0x000004E0u;
+    static constexpr std::uint32_t kEventDmacDei0 = 0x00000800u;
+    static constexpr std::uint32_t kEventDmacDei1 = 0x00000820u;
+    static constexpr std::uint32_t kEventDmacDei2 = 0x00000840u;
+    static constexpr std::uint32_t kEventDmacDei3 = 0x00000860u;
+    static constexpr std::uint32_t kEventDmacDei4 = 0x00000B80u;
+    static constexpr std::uint32_t kEventDmacDei5 = 0x00000BA0u;
+    static constexpr std::uint32_t kEventEtmu0 = 0x000009E0u;
+    static constexpr std::uint32_t kEventEtmu1 = 0x00000C20u;
+    static constexpr std::uint32_t kEventEtmu2 = 0x00000C40u;
+    static constexpr std::uint32_t kEventEtmu3 = 0x00000900u;
+    static constexpr std::uint32_t kEventEtmu4 = 0x00000D00u;
+    static constexpr std::uint32_t kEventEtmu5 = 0x00000FA0u;
+    static constexpr std::uint32_t kEventCmt = 0x00000F00u;
+    static constexpr std::uint32_t kEventScif0 = 0x00000C00u;
+    static constexpr std::uint32_t kEventAdc = 0x00000980u;
+    static constexpr std::uint32_t kEventTpu = 0x00000960u;
+    static constexpr std::uint32_t kEventUsb = 0x00000A20u;
 
     // ---- SH7305 SH-4A MMU (P4 control registers) ----
     static constexpr std::uint32_t kPtehRegister = 0xFF000000u;
@@ -567,6 +614,7 @@ public:
     static bool ValidateG3aHeader(const std::uint8_t* bytes, std::size_t size) noexcept;
     bool LoadG3aAddin(const std::uint8_t* bytes, std::size_t size);
     bool ReplaceUserRom(const std::uint8_t* bytes, std::size_t size);
+    std::uint32_t LastLcdDmaSar() const noexcept { return lastLcdDmaSar_; }
 
     // Real-time wall-clock RTC synchronization (localUnixSeconds since 1970-01-01)
     // and opt-in RTC carry IRQ delivery (default OFF to keep deterministic boot).
@@ -580,6 +628,14 @@ public:
     const cg50::PeripheralBus& Peripherals() const noexcept { return peripheralBus_; }
 
     const cg50::SpansionNorFlashCfi::Stats& FlashCfiStats() const noexcept { return flashCfi_.GetStats(); }
+    const cg50::Intc2Unit& Intc2() const noexcept { return intc2_; }
+    const cg50::EtmuUnit& Etmu() const noexcept { return etmu_; }
+    const cg50::AdcUnit& Adc() const noexcept { return adc_; }
+    const cg50::TpuUnit& Tpu() const noexcept { return tpu_; }
+    const cg50::Scif0Unit& Scif0() const noexcept { return scif0_; }
+    const cg50::Usb2Unit& Usb2() const noexcept { return usb2_; }
+    std::uint32_t Qacr0() const noexcept { return qacr0_; }
+    std::uint32_t Qacr1() const noexcept { return qacr1_; }
 
     static std::uint32_t DirectMappedPhysicalAddress(std::uint32_t address) noexcept;
 
@@ -599,6 +655,20 @@ private:
     // oficial lo expone en ceros, independiente del banco 8.
     std::vector<std::uint8_t> ramC_;
     std::array<std::uint8_t, kOnChipRamSize> onChipRam_{};
+    std::array<std::uint8_t, kIlramSize> ilram_{};
+    std::array<std::uint8_t, kXramSize> xram_{};
+    std::array<std::uint8_t, kYramSize> yram_{};
+    std::array<std::uint8_t, 64> storeQueues_{};
+    std::uint32_t qacr0_ = 0;
+    std::uint32_t qacr1_ = 0;
+    cg50::Intc2Unit intc2_{};
+    cg50::EtmuUnit etmu_{};
+    cg50::AdcUnit adc_{};
+    cg50::TpuUnit tpu_{};
+    cg50::Scif0Unit scif0_{};
+    cg50::Usb2Unit usb2_{};
+    std::uint32_t pendingEtmuIrq_ = 0;
+    std::uint32_t pendingDmacIrq_ = 0;
     std::vector<std::uint8_t> dsp0Space_;
     std::vector<std::uint8_t> dsp1Space_;
     std::array<std::uint8_t, kIlcPageSize> ilcPage_{};
@@ -684,6 +754,7 @@ private:
         bool dirty = false;                     // PTEL bit 2 (0x4) = D
     };
     std::array<UtlbEntry, kUtlbEntryCount> utlb_{};
+    std::array<UtlbEntry, kItlbEntryCount> itlb_{};
     std::uint32_t pteh_ = 0;
     std::uint32_t ptel_ = 0;
     std::uint32_t ptea_ = 0;
@@ -772,6 +843,10 @@ private:
 
     // ---- Standby (SBYCR) state reached through SLEEP ----
     bool standbyMode_ = false;
+    // Start physical address of the most recent full-frame LCD DMAC transfer
+    // (0x08000000 primary VRAM or 0x08028800 double buffer). Stored separately
+    // because authentic SH7305 DMAC increments SAR to SAR+totalBytes on finish.
+    std::uint32_t lastLcdDmaSar_ = 0x08000000u;
 
     const std::uint8_t* ReadPointer(std::uint32_t address, std::size_t bytes) const;
     std::uint8_t* WritePointer(std::uint32_t address, std::size_t bytes);
@@ -797,6 +872,11 @@ private:
     // aceptar y descartar (sin campo backing, declarado).
     std::uint32_t UtlbArrayRead(std::uint32_t address) const;
     void UtlbArrayWrite(std::uint32_t address, std::uint32_t value);
+    std::uint32_t ItlbArrayRead(std::uint32_t address) const;
+    void ItlbArrayWrite(std::uint32_t address, std::uint32_t value);
+    void FlushStoreQueue(std::uint32_t sqAddress);
+    void ExecuteDmacChannel(std::size_t channelIndex, std::size_t channelBase, std::uint32_t chcrValue);
+    bool IsInterruptMaskedByImr(std::uint32_t eventCode) const noexcept;
     // 2026-10-29: decode comun data word PTEL -> UtlbEntry para el data
     // array MMIO y para el registro PTEL (helper compartido, estatico:
     // no toca miembros).

@@ -42,6 +42,9 @@ public:
         WriteBufferConfirm,
         Autoselect,
         CfiQuery,
+        UnlockBypass,
+        UnlockBypassProgram,
+        UnlockBypassReset,
     };
 
     struct BufferedWord {
@@ -54,6 +57,8 @@ public:
         std::uint64_t bufferPrograms = 0;
         std::uint64_t wordPrograms = 0;
         std::uint64_t resets = 0;
+        std::uint64_t eraseSuspends = 0;
+        std::uint64_t unlockBypassPrograms = 0;
     };
 
     void Reset() noexcept
@@ -62,9 +67,11 @@ public:
         bufferSector_ = 0;
         bufferRemaining_ = 0;
         bufferCount_ = 0;
+        eraseSuspended_ = false;
     }
 
-    bool IsReadArray() const noexcept { return state_ == State::ReadArray; }
+    bool IsReadArray() const noexcept { return state_ == State::ReadArray || state_ == State::UnlockBypass; }
+    bool IsEraseSuspended() const noexcept { return eraseSuspended_; }
     State CurrentState() const noexcept { return state_; }
     const Stats& GetStats() const noexcept { return stats_; }
 
@@ -96,6 +103,13 @@ public:
             case 0x16u: outValue = 0x0000u; return true;
             case 0x1Bu: outValue = 0x0027u; return true; // Vcc min 2.7V
             case 0x1Cu: outValue = 0x0036u; return true; // Vcc max 3.6V
+            case 0x1Fu: outValue = 0x0007u; return true; // Typical word program timeout 2^7 us
+            case 0x20u: outValue = 0x0007u; return true; // Typical buffer write timeout 2^7 us
+            case 0x21u: outValue = 0x000Au; return true; // Typical sector erase timeout 2^10 ms
+            case 0x22u: outValue = 0x0000u; return true; // Chip erase not specified
+            case 0x23u: outValue = 0x0001u; return true; // Max word program multiplier
+            case 0x24u: outValue = 0x0005u; return true; // Max buffer write multiplier
+            case 0x25u: outValue = 0x0004u; return true; // Max sector erase multiplier
             case 0x27u: outValue = 0x0019u; return true; // Device size 2^25 = 32 MB
             case 0x28u: outValue = 0x0002u; return true; // x8/x16 interface
             case 0x29u: outValue = 0x0000u; return true;
@@ -111,6 +125,16 @@ public:
             case 0x42u: outValue = 0x0049u; return true; // 'I'
             case 0x43u: outValue = 0x0031u; return true; // '1'
             case 0x44u: outValue = 0x0033u; return true; // '3'
+            case 0x45u: outValue = 0x0014u; return true; // Address sensitive unlock + tech
+            case 0x46u: outValue = 0x0002u; return true; // Erase Suspend Read/Program
+            case 0x47u: outValue = 0x0001u; return true; // Sector protect
+            case 0x48u: outValue = 0x0001u; return true; // Temporary sector unprotect
+            case 0x49u: outValue = 0x0008u; return true; // Persistent protection
+            case 0x4Bu: outValue = 0x0000u; return true; // Burst mode
+            case 0x4Cu: outValue = 0x0002u; return true; // Page mode (8-word)
+            case 0x4Du: outValue = 0x00B5u; return true; // Vpp min
+            case 0x4Eu: outValue = 0x00C5u; return true; // Vpp max
+            case 0x4Fu: outValue = 0x0005u; return true; // Uniform top/bottom WP
             default:    outValue = 0x0000u; return true;
             }
         }
@@ -142,11 +166,55 @@ public:
                 state_ = State::CfiQuery;
                 return true;
             }
+            if (cmd == 0xB0u) {
+                // Erase Suspend: immediately returns to ReadArray cleanly
+                eraseSuspended_ = true;
+                ++stats_.eraseSuspends;
+                return true;
+            }
+            if (cmd == 0x30u && eraseSuspended_) {
+                // Erase Resume
+                eraseSuspended_ = false;
+                return true;
+            }
             if (cmd == 0xF0u) {
+                eraseSuspended_ = false;
                 ++stats_.resets;
                 return true;
             }
             return false;
+
+        case State::UnlockBypass:
+            if (cmd == 0xA0u) {
+                state_ = State::UnlockBypassProgram;
+                return true;
+            }
+            if (cmd == 0x90u) {
+                state_ = State::UnlockBypassReset;
+                return true;
+            }
+            if (cmd == 0xF0u) {
+                Reset();
+                ++stats_.resets;
+                return true;
+            }
+            return true;
+
+        case State::UnlockBypassProgram:
+            programWord(physical, value);
+            ++stats_.wordPrograms;
+            ++stats_.unlockBypassPrograms;
+            state_ = State::UnlockBypass;
+            return true;
+
+        case State::UnlockBypassReset:
+            if (cmd == 0x00u || cmd == 0xF0u) {
+                state_ = State::ReadArray;
+                ++stats_.resets;
+            } else {
+                state_ = State::UnlockBypass;
+            }
+            return true;
 
         case State::Autoselect:
         case State::CfiQuery:
@@ -191,6 +259,11 @@ public:
                 }
                 if (cmd == 0x90u) {
                     state_ = State::Autoselect;
+                    return true;
+                }
+                if (cmd == 0x20u) {
+                    // Spansion Unlock Bypass mode (fast consecutive word program)
+                    state_ = State::UnlockBypass;
                     return true;
                 }
                 if (cmd == 0xF0u) {
@@ -281,6 +354,7 @@ private:
     std::uint32_t bufferSector_ = 0;
     std::size_t bufferRemaining_ = 0;
     std::size_t bufferCount_ = 0;
+    bool eraseSuspended_ = false;
     std::array<BufferedWord, kMaxBufferWords> buffer_{};
     Stats stats_{};
 };

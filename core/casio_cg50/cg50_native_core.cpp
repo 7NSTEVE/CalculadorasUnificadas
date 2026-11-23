@@ -423,6 +423,22 @@ void Cg50NativeCore::Reset()
         }
     }
     std::fill(dsp0Space_.begin(), dsp0Space_.end(), std::uint8_t{0});
+    ilram_.fill(0u);
+    xram_.fill(0u);
+    yram_.fill(0u);
+    storeQueues_.fill(0u);
+    qacr0_ = 0u;
+    qacr1_ = 0u;
+    itlb_.fill(UtlbEntry{});
+    intc2_.Reset();
+    etmu_.Reset();
+    adc_.Reset();
+    tpu_.Reset();
+    scif0_.Reset();
+    usb2_.Reset();
+    pendingEtmuIrq_ = 0u;
+    pendingDmacIrq_ = 0u;
+    lastLcdDmaSar_ = 0x08000000u;
     std::fill(dsp1Space_.begin(), dsp1Space_.end(), std::uint8_t{0});
     std::fill(ilcPage_.begin(), ilcPage_.end(), std::uint8_t{0});
     std::fill(dmacPage_.begin(), dmacPage_.end(), std::uint8_t{0});
@@ -769,6 +785,37 @@ const std::uint8_t* Cg50NativeCore::ReadPointer(
         static_cast<std::uint64_t>(address) + bytes <= onChipRamEnd)
         return onChipRam_.data() + static_cast<std::size_t>(address - kOnChipRamBase);
 
+    if (address >= kIlramBase &&
+        static_cast<std::uint64_t>(address) + bytes <=
+            static_cast<std::uint64_t>(kIlramBase) + ilram_.size())
+        return ilram_.data() + static_cast<std::size_t>(address - kIlramBase);
+    if (physical >= kIlramPhysicalAlias &&
+        end <= static_cast<std::uint64_t>(kIlramPhysicalAlias) + ilram_.size())
+        return ilram_.data() + static_cast<std::size_t>(physical - kIlramPhysicalAlias);
+
+    if (address >= kXramBase &&
+        static_cast<std::uint64_t>(address) + bytes <=
+            static_cast<std::uint64_t>(kXramBase) + xram_.size())
+        return xram_.data() + static_cast<std::size_t>(address - kXramBase);
+    if (physical >= kXramPhysicalAlias &&
+        end <= static_cast<std::uint64_t>(kXramPhysicalAlias) + xram_.size())
+        return xram_.data() + static_cast<std::size_t>(physical - kXramPhysicalAlias);
+
+    if (address >= kYramBase &&
+        static_cast<std::uint64_t>(address) + bytes <=
+            static_cast<std::uint64_t>(kYramBase) + yram_.size())
+        return yram_.data() + static_cast<std::size_t>(address - kYramBase);
+    if (physical >= kYramPhysicalAlias &&
+        end <= static_cast<std::uint64_t>(kYramPhysicalAlias) + yram_.size())
+        return yram_.data() + static_cast<std::size_t>(physical - kYramPhysicalAlias);
+
+    if (address >= kStoreQueueBase && address < kStoreQueueEnd) {
+        const std::size_t sqOff = static_cast<std::size_t>(address & 0x3Fu);
+        if (sqOff + bytes <= storeQueues_.size()) {
+            return storeQueues_.data() + sqOff;
+        }
+    }
+
     const std::uint64_t dsp0End = static_cast<std::uint64_t>(kDsp0SpaceBase) + dsp0Space_.size();
     if (physical >= kDsp0SpaceBase && end <= dsp0End)
         return dsp0Space_.data() + static_cast<std::size_t>(physical - kDsp0SpaceBase);
@@ -875,6 +922,37 @@ std::uint8_t* Cg50NativeCore::WritePointer(
     if (address >= kOnChipRamBase &&
         static_cast<std::uint64_t>(address) + bytes <= onChipRamEnd)
         return onChipRam_.data() + static_cast<std::size_t>(address - kOnChipRamBase);
+
+    if (address >= kIlramBase &&
+        static_cast<std::uint64_t>(address) + bytes <=
+            static_cast<std::uint64_t>(kIlramBase) + ilram_.size())
+        return ilram_.data() + static_cast<std::size_t>(address - kIlramBase);
+    if (physical >= kIlramPhysicalAlias &&
+        end <= static_cast<std::uint64_t>(kIlramPhysicalAlias) + ilram_.size())
+        return ilram_.data() + static_cast<std::size_t>(physical - kIlramPhysicalAlias);
+
+    if (address >= kXramBase &&
+        static_cast<std::uint64_t>(address) + bytes <=
+            static_cast<std::uint64_t>(kXramBase) + xram_.size())
+        return xram_.data() + static_cast<std::size_t>(address - kXramBase);
+    if (physical >= kXramPhysicalAlias &&
+        end <= static_cast<std::uint64_t>(kXramPhysicalAlias) + xram_.size())
+        return xram_.data() + static_cast<std::size_t>(physical - kXramPhysicalAlias);
+
+    if (address >= kYramBase &&
+        static_cast<std::uint64_t>(address) + bytes <=
+            static_cast<std::uint64_t>(kYramBase) + yram_.size())
+        return yram_.data() + static_cast<std::size_t>(address - kYramBase);
+    if (physical >= kYramPhysicalAlias &&
+        end <= static_cast<std::uint64_t>(kYramPhysicalAlias) + yram_.size())
+        return yram_.data() + static_cast<std::size_t>(physical - kYramPhysicalAlias);
+
+    if (address >= kStoreQueueBase && address < kStoreQueueEnd) {
+        const std::size_t sqOff = static_cast<std::size_t>(address & 0x3Fu);
+        if (sqOff + bytes <= storeQueues_.size()) {
+            return storeQueues_.data() + sqOff;
+        }
+    }
 
     const std::uint64_t dsp0End = static_cast<std::uint64_t>(kDsp0SpaceBase) + dsp0Space_.size();
     if (physical >= kDsp0SpaceBase && end <= dsp0End)
@@ -1636,6 +1714,12 @@ bool Cg50NativeCore::Read8(const std::uint32_t address, std::uint8_t& value) con
         value = static_cast<std::uint8_t>(expmask_ & 0xFFu);
         return true;
     }
+    if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Read8(physical, value);
+    if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Read8(physical, value);
+    if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Read8(physical, value);
+    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Read8(physical, value);
+    if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Read8(physical, value);
+    if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Read8(physical, value);
     // (El status CFI 0x88 se aplica SOLO en Read16: los sondeos del driver
     // ILRAM usan mov.w; las copias usan mov.l/mov.b y deben leer el dato real.)
     // Watch de lecturas del string "System ERROR" (N-8): localiza el renderer.
@@ -1710,6 +1794,10 @@ bool Cg50NativeCore::Read16(const std::uint32_t address, std::uint16_t& value) c
     // 2026-10-29 M9: arrays MMIO de la UTLB ([0xF6000000, 0xF8000000)).
     // Interceptado ANTES del mapeo directo (P4 no mapea a fisico para esta
     // ventana). Solo Read16/Read32; acceso 8-bit no soportado (declarado).
+    if (address >= kItlbAddressArrayBase && address < kItlbArraysEnd) {
+        value = static_cast<std::uint16_t>(ItlbArrayRead(address));
+        return true;
+    }
     if (address >= kUtlbAddressArrayBase && address < kUtlbArraysEnd) {
         value = static_cast<std::uint16_t>(UtlbArrayRead(address));  // 2026-10-29 M9
         return true;
@@ -1858,6 +1946,14 @@ bool Cg50NativeCore::Read16(const std::uint32_t address, std::uint16_t& value) c
         value = 0;
         return true;
     }
+    if (address == kQacr0Register) {
+        value = static_cast<std::uint16_t>(qacr0_ & 0xFFFFu);
+        return true;
+    }
+    if (address == kQacr1Register) {
+        value = static_cast<std::uint16_t>(qacr1_ & 0xFFFFu);
+        return true;
+    }
     if (physical == kVpuClockControlRegisterPhysical) {
         value = static_cast<std::uint16_t>(vpuClockControl_ & 0xFFFFu);
         return true;
@@ -1897,6 +1993,11 @@ bool Cg50NativeCore::Read16(const std::uint32_t address, std::uint16_t& value) c
         value = static_cast<std::uint16_t>(status & 0xFFFFu);
         return true;
     }
+    if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Read16(physical, value);
+    if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Read16(physical, value);
+    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Read16(physical, value);
+    if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Read16(physical, value);
+    if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Read16(physical, value);
     const auto* p = ReadPointer(address, 2);
     if (p) {
         value = static_cast<std::uint16_t>(
@@ -1974,6 +2075,10 @@ bool Cg50NativeCore::Read32(const std::uint32_t address, std::uint32_t& value) c
     // Interceptado ANTES del mapeo directo: P4 no deja derivar fisico para
     // esta ventana. Solo Read16/Read32 (8-bit no soportado, declarado).
     // Referencia mmu.go:216-258.
+    if (address >= kItlbAddressArrayBase && address < kItlbArraysEnd) {
+        value = ItlbArrayRead(address);
+        return true;
+    }
     if (address >= kUtlbAddressArrayBase && address < kUtlbArraysEnd) {
         value = UtlbArrayRead(address);
         return true;
@@ -2152,6 +2257,16 @@ bool Cg50NativeCore::Read32(const std::uint32_t address, std::uint32_t& value) c
         value = 0;
         return true;
     }
+    if (address == kQacr0Register) {
+        value = qacr0_;
+        return true;
+    }
+    if (address == kQacr1Register) {
+        value = qacr1_;
+        return true;
+    }
+    if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Read32(physical, value);
+    if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Read32(physical, value);
     std::size_t maskIndex = 0;
     if (InterruptMaskRegisterIndex(physical, maskIndex)) {
         value = interruptMask_[maskIndex];
@@ -2313,6 +2428,12 @@ bool Cg50NativeCore::Write8(const std::uint32_t address, const std::uint8_t valu
         expmask_ = static_cast<std::uint32_t>(value & kExpmaskWritableMask);
         return true;
     }
+    if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Write8(physical, value);
+    if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Write8(physical, value);
+    if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Write8(physical, value);
+    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Write8(physical, value);
+    if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Write8(physical, value);
+    if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Write8(physical, value);
     auto* p = WritePointer(address, 1);
     if (p) {
         *p = value;
@@ -2377,10 +2498,19 @@ bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t va
     // 0xF8000000)) ANTES del mapeo directo. PTEA (>=0xF7800000): aceptar y
     // descartar (sin backing, declarado). Solo Write16/Write32 (8-bit no,
     // declarado). mmu.go:216-258.
+    if (address >= kItlbAddressArrayBase && address < kItlbArraysEnd) {
+        ItlbArrayWrite(address, value);
+        return true;
+    }
     if (address >= kUtlbAddressArrayBase && address < kUtlbArraysEnd) {
         UtlbArrayWrite(address, value);
         return true;
     }
+    if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Write16(physical, value);
+    if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Write16(physical, value);
+    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Write16(physical, value);
+    if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Write16(physical, value);
+    if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Write16(physical, value);
     if (PeriphDiagEnabled()) {
         if (physical >= 0x044A0000u && physical < 0x044A0100u) {
             std::printf("[LCDA16] W addr=0x%08X val=0x%04X pc=0x%08X inst=%llu\n",
@@ -2859,10 +2989,18 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
     // 2026-10-29 M9: arrays MMIO de la UTLB, escritura ([0xF6000000,
     // 0xF8000000)). PTEA (>=0xF7800000): aceptar y descartar. Solo
     // Write16/Write32 (8-bit no, declarado). mmu.go:216-258.
+    if (address >= kItlbAddressArrayBase && address < kItlbArraysEnd) {
+        ItlbArrayWrite(address, value);
+        return true;
+    }
     if (address >= kUtlbAddressArrayBase && address < kUtlbArraysEnd) {
         UtlbArrayWrite(address, value);
         return true;
     }
+    if (address == kQacr0Register) { qacr0_ = value & 0x0000001Cu; return true; }
+    if (address == kQacr1Register) { qacr1_ = value & 0x0000001Cu; return true; }
+    if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Write32(physical, value);
+    if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Write32(physical, value);
     if (address == kTtbRegister) { ttb_ = value; return true; }
     if (address == kTeaRegister) { tea_ = value; return true; }
     if (address == kPteaRegister) { ptea_ = value & 0x00000007u; return true; }
@@ -2981,6 +3119,7 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
         // as well so translation restarts from a clean table.
         if ((value & kMmuControlTlbInvalidateCommand) != 0) {
             utlb_.fill(UtlbEntry{});
+            itlb_.fill(UtlbEntry{});
         }
         mmuControl_ =
             (value & kMmuControlWritableMask) &
@@ -3019,88 +3158,24 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
         if (maskIndex == 5) interruptMask5_ = interruptMask_[5];
         return true;
     }
-    if (physical >= 0xFE008020u && physical <= 0xFE00805Cu && ((physical & 0xFu) == 0xCu)) {
-        const std::size_t channelBase = physical - 0xFE008000u - 0xCu;
-        dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((value >> 24) & 0xFFu);
-        dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
-        dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
-        dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(value & 0xFFu);
-
-        if ((value & 1u) != 0) { // DE = 1
-            const std::uint32_t sar =
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase]) << 24) |
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 1]) << 16) |
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 2]) << 8) |
-                static_cast<std::uint32_t>(dmarsPage_[channelBase + 3]);
-            const std::uint32_t dar =
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 4]) << 24) |
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 5]) << 16) |
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 6]) << 8) |
-                static_cast<std::uint32_t>(dmarsPage_[channelBase + 7]);
-            const std::uint32_t tcr =
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 8]) << 24) |
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 9]) << 16) |
-                (static_cast<std::uint32_t>(dmarsPage_[channelBase + 10]) << 8) |
-                static_cast<std::uint32_t>(dmarsPage_[channelBase + 11]);
-
-            const std::size_t totalBytes = ((value & 0x00100000u) != 0)
-                ? (static_cast<std::size_t>(tcr) * 32u)
-                : static_cast<std::size_t>(tcr);
-
-            const auto* src = ReadPointer(sar, totalBytes);
-            if (src && (DirectMappedPhysicalAddress(dar) == kLcdBase)) {
-                if (PeriphDiagEnabled()) {
-                    std::printf("[DMA-FRAME] SAR=0x%08X bytes=%zu inst=%llu\n",
-                                sar, totalBytes, static_cast<unsigned long long>(stats_.instructions));
-#ifdef CG50_ENABLE_DMA_DUMP
-                    if (DiagFileEnabled() && totalBytes == 165888) {
-                        char fname[128];
-                        std::snprintf(fname, sizeof(fname), "dma_frame_%010llu_%08X.raw",
-                                      static_cast<unsigned long long>(stats_.instructions), sar);
-                        if (FILE* fp = std::fopen(fname, "wb")) {
-                            std::fwrite(src, 1, totalBytes, fp);
-                            std::fclose(fp);
-                        }
-                    }
-#endif
-                }
-                for (std::size_t i = 0; i < totalBytes; i += 2) {
-                    const auto word = static_cast<std::uint16_t>(
-                        (static_cast<std::uint16_t>(src[i]) << 8) |
-                        static_cast<std::uint16_t>(src[i + 1]));
-                    peripheralBus_.Write16(kLcdBase, word);
-                }
-            } else if (src) {
-                auto* dst = WritePointer(dar, totalBytes);
-                if (dst) {
-                    std::memcpy(dst, src, totalBytes);
-                    if (PeriphDiagEnabled()) {
-                        std::printf("[DMA-XFER] SAR=0x%08X DAR=0x%08X bytes=%zu inst=%llu\n",
-                                    sar, dar, totalBytes,
-                                    static_cast<unsigned long long>(stats_.instructions));
-                    }
-                } else if (PeriphDiagEnabled()) {
-                    std::printf("[DMA-XFER-FAIL] dst-null SAR=0x%08X DAR=0x%08X bytes=%zu inst=%llu\n",
-                                sar, dar, totalBytes,
-                                static_cast<unsigned long long>(stats_.instructions));
-                }
-            } else if (PeriphDiagEnabled()) {
-                std::printf("[DMA-XFER-FAIL] src-null SAR=0x%08X DAR=0x%08X bytes=%zu inst=%llu\n",
-                            sar, dar, totalBytes,
-                            static_cast<unsigned long long>(stats_.instructions));
-            }
-
-            dmarsPage_[channelBase + 8] = 0;
-            dmarsPage_[channelBase + 9] = 0;
-            dmarsPage_[channelBase + 10] = 0;
-            dmarsPage_[channelBase + 11] = 0;
-
-            const std::uint32_t finalChcr = (value | 0x00000002u) & ~0x00000001u;
-            dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((finalChcr >> 24) & 0xFFu);
-            dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((finalChcr >> 16) & 0xFFu);
-            dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((finalChcr >> 8) & 0xFFu);
-            dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(finalChcr & 0xFFu);
+    // SH7305 DMAC0: 6 channels
+    //   CH0..CH3 at 0xFE008020, 0x30, 0x40, 0x50 (CHCR at +0x0C)
+    //   CH4..CH5 at 0xFE008070, 0x80             (CHCR at +0x0C)
+    if ((physical == 0xFE00802Cu || physical == 0xFE00803Cu ||
+         physical == 0xFE00804Cu || physical == 0xFE00805Cu ||
+         physical == 0xFE00807Cu || physical == 0xFE00808Cu)) {
+        const std::size_t channelBase = static_cast<std::size_t>(physical - 0xFE008000u - 0xCu);
+        std::size_t channelIndex = 0u;
+        switch (physical) {
+        case 0xFE00802Cu: channelIndex = 0u; break;
+        case 0xFE00803Cu: channelIndex = 1u; break;
+        case 0xFE00804Cu: channelIndex = 2u; break;
+        case 0xFE00805Cu: channelIndex = 3u; break;
+        case 0xFE00807Cu: channelIndex = 4u; break;
+        case 0xFE00808Cu: channelIndex = 5u; break;
+        default: break;
         }
+        ExecuteDmacChannel(channelIndex, channelBase, value);
         return true;
     }
     auto* p = WritePointer(address, 4);
@@ -3155,7 +3230,7 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
         userRom_[off + 3] = static_cast<std::uint8_t>(value & 0xFFu);
         return true;
     }
-    if (physical == kLcdBase) {
+    if (IsLcdBusPhysical(physical)) {
         const auto high = static_cast<std::uint16_t>((value >> 16) & 0xFFFFu);
         const auto low = static_cast<std::uint16_t>(value & 0xFFFFu);
         return peripheralBus_.Write16(physical, high) == cg50::PeripheralBus::Result::Accepted &&
@@ -3347,6 +3422,174 @@ void Cg50NativeCore::TickTimerUnit(const std::uint64_t cycles) noexcept
                 tcnt[3] = static_cast<std::uint8_t>(cur & 0xFFu);
             }
         }
+    }
+    pendingEtmuIrq_ |= etmu_.Tick(cycles);
+    tpu_.Tick(cycles);
+}
+
+void Cg50NativeCore::FlushStoreQueue(const std::uint32_t sqAddress)
+{
+    const bool isSq1 = (sqAddress & 0x20u) != 0u;
+    const std::uint8_t* sqData = storeQueues_.data() + (isSq1 ? 32u : 0u);
+    std::uint32_t destPhys = 0u;
+    if ((mmuControl_ & kMmuControlAtBit) != 0u) {
+        std::uint32_t exc = 0u;
+        if (!TranslateAddress(sqAddress & 0xFFFFFFE0u, true, false, destPhys, exc, nullptr)) {
+            const std::uint32_t qacr = isSq1 ? qacr1_ : qacr0_;
+            destPhys = ((qacr & 0x1Cu) << 24) | (sqAddress & 0x03FFFFE0u);
+        }
+    } else {
+        const std::uint32_t qacr = isSq1 ? qacr1_ : qacr0_;
+        destPhys = ((qacr & 0x1Cu) << 24) | (sqAddress & 0x03FFFFE0u);
+    }
+    if (IsLcdBusPhysical(destPhys)) {
+        for (std::size_t i = 0; i < 32u; i += 2u) {
+            const std::uint16_t word = static_cast<std::uint16_t>(
+                (static_cast<std::uint16_t>(sqData[i]) << 8) | sqData[i + 1u]);
+            (void)peripheralBus_.Write16(destPhys, word);
+        }
+        return;
+    }
+    if (auto* dst = WritePointer(destPhys, 32u)) {
+        std::memcpy(dst, sqData, 32u);
+    }
+}
+
+void Cg50NativeCore::ExecuteDmacChannel(const std::size_t channelIndex,
+                                        const std::size_t channelBase,
+                                        const std::uint32_t value)
+{
+    dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((value >> 24) & 0xFFu);
+    dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
+    dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
+    dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(value & 0xFFu);
+
+    if ((value & 1u) == 0u) return; // DE = 0
+
+    std::uint32_t sar =
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase]) << 24) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 1]) << 16) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 2]) << 8) |
+        static_cast<std::uint32_t>(dmarsPage_[channelBase + 3]);
+    std::uint32_t dar =
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 4]) << 24) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 5]) << 16) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 6]) << 8) |
+        static_cast<std::uint32_t>(dmarsPage_[channelBase + 7]);
+    const std::uint32_t tcr =
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 8]) << 24) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 9]) << 16) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 10]) << 8) |
+        static_cast<std::uint32_t>(dmarsPage_[channelBase + 11]);
+
+    // SH7305 CHCR TS[2:0]: bit 20 is TS[2], bits 4:3 are TS[1:0]
+    static constexpr std::array<std::size_t, 8> kUnitSizes = {
+        1u, 2u, 4u, 16u, 32u, 1u, 1u, 1u
+    };
+    const std::size_t tsCode =
+        static_cast<std::size_t>((((value >> 20) & 1u) << 2) | ((value >> 3) & 3u));
+    const std::size_t unitBytes = kUnitSizes[tsCode];
+    const std::uint32_t smMode = (value >> 12) & 0x3u; // 0=fixed, 1=inc, 2=dec
+    const std::uint32_t dmMode = (value >> 14) & 0x3u;
+    const std::size_t totalBytes = static_cast<std::size_t>(tcr) * unitBytes;
+
+    const std::uint32_t sarPhys = DirectMappedPhysicalAddress(sar);
+    const std::uint32_t darPhys = DirectMappedPhysicalAddress(dar);
+
+    if (PeriphDiagEnabled()) {
+        std::printf("[DMA-CH%zu] SAR=0x%08X DAR=0x%08X TCR=%u CHCR=0x%08X sm=%u dm=%u total=%zu inst=%llu\n",
+                    channelIndex, sar, dar, tcr, value, smMode, dmMode, totalBytes,
+                    static_cast<unsigned long long>(stats_.instructions));
+    }
+
+    if (totalBytes > 0u) {
+        // Fast path 1: contiguous memory -> CS5A R61524 LCD bus (all aliases in [0x14000000, 0x15000000))
+        if (IsLcdBusPhysical(darPhys) && smMode == 1u && dmMode == 0u) {
+            if (totalBytes == 165888u) {
+                lastLcdDmaSar_ = sarPhys;
+            }
+            if (const auto* src = ReadPointer(sar, totalBytes)) {
+                for (std::size_t i = 0; i + 1u < totalBytes; i += 2u) {
+                    const std::uint16_t word = static_cast<std::uint16_t>(
+                        (static_cast<std::uint16_t>(src[i]) << 8) | src[i + 1u]);
+                    (void)peripheralBus_.Write16(darPhys, word);
+                }
+                sar += static_cast<std::uint32_t>(totalBytes);
+            }
+        }
+        // Fast path 2: contiguous memory -> contiguous memory
+        else if (!IsLcdBusPhysical(sarPhys) && !IsLcdBusPhysical(darPhys) &&
+                 smMode == 1u && dmMode == 1u) {
+            const auto* src = ReadPointer(sar, totalBytes);
+            auto* dst = WritePointer(dar, totalBytes);
+            if (src && dst) {
+                std::memcpy(dst, src, totalBytes);
+                sar += static_cast<std::uint32_t>(totalBytes);
+                dar += static_cast<std::uint32_t>(totalBytes);
+            }
+        }
+        // General path: arbitrary SM/DM modes (fixed/inc/dec) & LCD GRAM read/write
+        else {
+            const std::int32_t sStep = (smMode == 1u) ? static_cast<std::int32_t>(unitBytes)
+                                     : (smMode == 2u) ? -static_cast<std::int32_t>(unitBytes) : 0;
+            const std::int32_t dStep = (dmMode == 1u) ? static_cast<std::int32_t>(unitBytes)
+                                     : (dmMode == 2u) ? -static_cast<std::int32_t>(unitBytes) : 0;
+            for (std::uint32_t k = 0; k < tcr; ++k) {
+                const std::uint32_t curSarPhys = DirectMappedPhysicalAddress(sar);
+                const std::uint32_t curDarPhys = DirectMappedPhysicalAddress(dar);
+                if (IsLcdBusPhysical(curDarPhys)) {
+                    if (const auto* sp = ReadPointer(sar, unitBytes)) {
+                        for (std::size_t i = 0; i + 1u < unitBytes; i += 2u) {
+                            const std::uint16_t w = static_cast<std::uint16_t>(
+                                (static_cast<std::uint16_t>(sp[i]) << 8) | sp[i + 1u]);
+                            (void)peripheralBus_.Write16(curDarPhys, w);
+                        }
+                    }
+                } else if (IsLcdBusPhysical(curSarPhys)) {
+                    if (auto* dp = WritePointer(dar, unitBytes)) {
+                        for (std::size_t i = 0; i + 1u < unitBytes; i += 2u) {
+                            std::uint16_t w = 0u;
+                            (void)peripheralBus_.Read16(curSarPhys, w);
+                            dp[i] = static_cast<std::uint8_t>(w >> 8);
+                            dp[i + 1u] = static_cast<std::uint8_t>(w & 0xFFu);
+                        }
+                    }
+                } else {
+                    const auto* sp = ReadPointer(sar, unitBytes);
+                    auto* dp = WritePointer(dar, unitBytes);
+                    if (sp && dp) {
+                        std::memcpy(dp, sp, unitBytes);
+                    }
+                }
+                sar = static_cast<std::uint32_t>(sar + sStep);
+                dar = static_cast<std::uint32_t>(dar + dStep);
+            }
+        }
+    }
+
+    // Write back updated SAR, DAR, TCR=0, and CHCR (TE=1, DE=0)
+    dmarsPage_[channelBase + 0] = static_cast<std::uint8_t>((sar >> 24) & 0xFFu);
+    dmarsPage_[channelBase + 1] = static_cast<std::uint8_t>((sar >> 16) & 0xFFu);
+    dmarsPage_[channelBase + 2] = static_cast<std::uint8_t>((sar >> 8) & 0xFFu);
+    dmarsPage_[channelBase + 3] = static_cast<std::uint8_t>(sar & 0xFFu);
+    dmarsPage_[channelBase + 4] = static_cast<std::uint8_t>((dar >> 24) & 0xFFu);
+    dmarsPage_[channelBase + 5] = static_cast<std::uint8_t>((dar >> 16) & 0xFFu);
+    dmarsPage_[channelBase + 6] = static_cast<std::uint8_t>((dar >> 8) & 0xFFu);
+    dmarsPage_[channelBase + 7] = static_cast<std::uint8_t>(dar & 0xFFu);
+    dmarsPage_[channelBase + 8] = 0u;
+    dmarsPage_[channelBase + 9] = 0u;
+    dmarsPage_[channelBase + 10] = 0u;
+    dmarsPage_[channelBase + 11] = 0u;
+
+    const std::uint32_t finalChcr = (value | 0x00000002u) & ~0x00000001u;
+    dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((finalChcr >> 24) & 0xFFu);
+    dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((finalChcr >> 16) & 0xFFu);
+    dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((finalChcr >> 8) & 0xFFu);
+    dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(finalChcr & 0xFFu);
+
+    // If CHCR.IE (bit 2) is enabled, queue DMAC Transfer-End IRQ (DEI0..5)
+    if ((value & 0x00000004u) != 0u && channelIndex < 6u) {
+        pendingDmacIrq_ |= (1u << channelIndex);
     }
 }
 
@@ -4002,12 +4245,27 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
         return true;
     }
 
+    // NOTT (0x0068): SH-4A invert T bit (T = !T)
+    if (op == 0x0068u) { SetT(!T()); stats_.cycles += 1; return true; }
+
     // SYNCO synchronizes memory operations. In a sequential functional core,
     // all previous reads and writes are already committed.
     if (op == 0x00ABu) { stats_.cycles += 1; return true; }
 
-    // PREF @Rn, OCBI @Rn, OCBP @Rn, OCBWB @Rn, PREFI @Rn cache operations.
-    if ((op & 0xF0FFu) == 0x0083u || (op & 0xF0FFu) == 0x0093u ||
+    // PREF @Rn (0x0n83): triggers 32-byte Store Queue burst flush when @Rn
+    // points into the Store Queue window [0xE0000000, 0xE4000000); otherwise
+    // acts as a cache prefetch hint.
+    if ((op & 0xF0FFu) == 0x0083u) {
+        const std::uint32_t addr = regs_.r[n];
+        if (addr >= kStoreQueueBase && addr < kStoreQueueEnd) {
+            FlushStoreQueue(addr);
+        }
+        stats_.cycles += 1;
+        return true;
+    }
+
+    // OCBI @Rn, OCBP @Rn, OCBWB @Rn, PREFI @Rn cache operations.
+    if ((op & 0xF0FFu) == 0x0093u ||
         (op & 0xF0FFu) == 0x00A3u || (op & 0xF0FFu) == 0x00B3u ||
         (op & 0xF0FFu) == 0x00D3u) {
         stats_.cycles += 1;
@@ -5001,6 +5259,27 @@ bool Cg50NativeCore::StepInstruction()
             opcode = static_cast<std::uint16_t>(
                 (static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
             fetched = true;
+        } else if (fetchAddress >= kIlramBase &&
+                   static_cast<std::uint64_t>(fetchAddress) + 2u <=
+                       static_cast<std::uint64_t>(kIlramBase) + ilram_.size()) {
+            const std::uint8_t* p = ilram_.data() + (fetchAddress - kIlramBase);
+            opcode = static_cast<std::uint16_t>(
+                (static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
+            fetched = true;
+        } else if (fetchAddress >= kXramBase &&
+                   static_cast<std::uint64_t>(fetchAddress) + 2u <=
+                       static_cast<std::uint64_t>(kXramBase) + xram_.size()) {
+            const std::uint8_t* p = xram_.data() + (fetchAddress - kXramBase);
+            opcode = static_cast<std::uint16_t>(
+                (static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
+            fetched = true;
+        } else if (fetchAddress >= kYramBase &&
+                   static_cast<std::uint64_t>(fetchAddress) + 2u <=
+                       static_cast<std::uint64_t>(kYramBase) + yram_.size()) {
+            const std::uint8_t* p = yram_.data() + (fetchAddress - kYramBase);
+            opcode = static_cast<std::uint16_t>(
+                (static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
+            fetched = true;
         }
     }
     if (!fetched && !Read16(fetchAddress, opcode)) {
@@ -5516,18 +5795,31 @@ bool Cg50NativeCore::ExecuteFpuOpcode(const std::uint32_t pc, const std::uint16_
         }
     };
 
+    const bool flushDenorm = (regs_.fpscr & kFpscrDn) != 0;
+    auto flushF = [&](const float v) -> float {
+        if (flushDenorm && std::fpclassify(v) == FP_SUBNORMAL) {
+            return std::signbit(v) ? -0.0f : 0.0f;
+        }
+        return v;
+    };
+    auto flushD = [&](const double v) -> double {
+        if (flushDenorm && std::fpclassify(v) == FP_SUBNORMAL) {
+            return std::signbit(v) ? -0.0 : 0.0;
+        }
+        return v;
+    };
     auto loadF = [&](const std::uint32_t i) {
-        return cg50::BitsToFloat(FrRef(i));
+        return flushF(cg50::BitsToFloat(FrRef(i)));
     };
     auto storeF = [&](const std::uint32_t i, const float v) {
-        FrRef(i) = cg50::FloatToBits(v);
+        FrRef(i) = cg50::FloatToBits(flushF(v));
     };
     auto loadD = [&](const std::uint32_t i) {
-        return cg50::BitsToDouble(FrRef(i), FrRef(i + 1u));
+        return flushD(cg50::BitsToDouble(FrRef(i), FrRef(i + 1u)));
     };
     auto storeD = [&](const std::uint32_t i, const double v) {
         std::uint32_t hi = 0, lo = 0;
-        cg50::DoubleToBits(v, hi, lo);
+        cg50::DoubleToBits(flushD(v), hi, lo);
         FrRef(i) = hi;
         FrRef(i + 1u) = lo;
     };
@@ -5935,12 +6227,42 @@ bool Cg50NativeCore::ExecuteFpuOpcode(const std::uint32_t pc, const std::uint16_
 // INTC priority resolution / timer + watchdog delivery
 // ============================================================================
 
+bool Cg50NativeCore::IsInterruptMaskedByImr(const std::uint32_t eventCode) const noexcept
+{
+    switch (eventCode) {
+    case kEventDmacDei0: return (interruptMask_[1] & 0x01u) != 0u;
+    case kEventDmacDei1: return (interruptMask_[1] & 0x02u) != 0u;
+    case kEventDmacDei2: return (interruptMask_[1] & 0x04u) != 0u;
+    case kEventDmacDei3: return (interruptMask_[1] & 0x08u) != 0u;
+    case kEventDmacDei4: return (interruptMask_[5] & 0x10u) != 0u;
+    case kEventDmacDei5: return (interruptMask_[5] & 0x20u) != 0u;
+    case kEventEtmu0:    return (interruptMask_[6] & 0x08u) != 0u;
+    case kEventEtmu1:    return (interruptMask_[6] & 0x10u) != 0u;
+    case kEventEtmu2:    return (interruptMask_[6] & 0x20u) != 0u;
+    case kEventEtmu3:    return (interruptMask_[6] & 0x40u) != 0u;
+    case kEventEtmu4:    return (interruptMask_[6] & 0x80u) != 0u;
+    case kEventEtmu5:    return (interruptMask_[10] & 0x01u) != 0u;
+    case kEventCmt:      return (interruptMask_[4] & 0x10u) != 0u;
+    case kEventScif0:    return (interruptMask_[5] & 0x01u) != 0u;
+    case kEventUsb:      return (interruptMask_[9] & 0x02u) != 0u;
+    case kEventAdc:      return (interruptMask_[8] & 0x10u) != 0u;
+    case kEventTpu:      return (interruptMask_[8] & 0x20u) != 0u;
+    default:             return false;
+    }
+}
+
 std::uint8_t Cg50NativeCore::ResolveInterruptPriority(
     const std::uint32_t eventCode) const noexcept
 {
     const std::uint16_t ipra = interruptPriority_[0];
     const std::uint16_t iprb = interruptPriority_[1];
+    const std::uint16_t ipre = interruptPriority_[4];
     const std::uint16_t iprf = interruptPriority_[5];
+    const std::uint16_t iprg = interruptPriority_[6];
+    const std::uint16_t iprh = interruptPriority_[7];
+    const std::uint16_t ipri = interruptPriority_[8];
+    const std::uint16_t iprj = interruptPriority_[9];
+    const std::uint16_t iprl = interruptPriority_[11];
     switch (eventCode) {
     case kEventTmu0:
         return static_cast<std::uint8_t>((ipra >> 12) & 0xFu);
@@ -5951,13 +6273,39 @@ std::uint8_t Cg50NativeCore::ResolveInterruptPriority(
     case kEventWatchdog:
     case kEventRtcCarry:
     case kEventRtcPeriodic:
-        // WDT/RTC fields in IPRB are best-effort (both remain 0 in the
-        // observed boot); a zero field masks the source like real hardware.
         return static_cast<std::uint8_t>((iprb >> 12) & 0xFu);
     case kEventKeyScan:
-        // Empirical: the OS writes IPRF=0xD000 at menu idle, i.e. KIU
-        // priority 13 in IPRF bits 15-12.
         return static_cast<std::uint8_t>((iprf >> 12) & 0xFu);
+    case kEventDmacDei0:
+    case kEventDmacDei1:
+    case kEventDmacDei2:
+    case kEventDmacDei3:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((ipre >> 12) & 0xFu);
+    case kEventDmacDei4:
+    case kEventDmacDei5:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprf >> 8) & 0xFu);
+    case kEventEtmu0:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprj >> 8) & 0xFu);
+    case kEventEtmu1:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprl >> 12) & 0xFu);
+    case kEventEtmu2:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprl >> 8) & 0xFu);
+    case kEventEtmu3:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((ipri >> 12) & 0xFu);
+    case kEventEtmu4:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprl >> 4) & 0xFu);
+    case kEventEtmu5:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((ipri >> 8) & 0xFu);
+    case kEventCmt:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>(iprf & 0xFu);
+    case kEventScif0:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprg >> 12) & 0xFu);
+    case kEventUsb:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprf >> 4) & 0xFu);
+    case kEventAdc:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprh >> 8) & 0xFu);
+    case kEventTpu:
+        return IsInterruptMaskedByImr(eventCode) ? 0u : static_cast<std::uint8_t>((iprh >> 4) & 0xFu);
     default:
         return 0u;
     }
@@ -6028,6 +6376,43 @@ void Cg50NativeCore::DeliverPendingInterrupts()
                         executingDelaySlot_ ? 1 : 0);
                     std::fclose(kd);
                 }
+            }
+        }
+    }
+
+    if (pendingDmacIrq_ != 0u) {
+        static constexpr std::array<std::uint32_t, 6> kDmacEvents = {
+            kEventDmacDei0, kEventDmacDei1, kEventDmacDei2,
+            kEventDmacDei3, kEventDmacDei4, kEventDmacDei5
+        };
+        for (std::size_t ch = 0; ch < 6u; ++ch) {
+            const std::uint32_t bit = 1u << ch;
+            if ((pendingDmacIrq_ & bit) == 0u) continue;
+            const std::uint8_t prio = ResolveInterruptPriority(kDmacEvents[ch]);
+            if (prio == 0u) {
+                pendingDmacIrq_ &= ~bit;
+                continue;
+            }
+            if (RaiseMaskableInterrupt(kDmacEvents[ch], prio)) {
+                pendingDmacIrq_ &= ~bit;
+                return;
+            }
+        }
+    }
+
+    if (pendingEtmuIrq_ != 0u) {
+        for (std::size_t ch = 0; ch < cg50::EtmuUnit::kChannelCount; ++ch) {
+            const std::uint32_t bit = 1u << ch;
+            if ((pendingEtmuIrq_ & bit) == 0u) continue;
+            const std::uint32_t ev = cg50::EtmuUnit::EventCode(ch);
+            const std::uint8_t prio = ResolveInterruptPriority(ev);
+            if (prio == 0u) {
+                pendingEtmuIrq_ &= ~bit;
+                continue;
+            }
+            if (RaiseMaskableInterrupt(ev, prio)) {
+                pendingEtmuIrq_ &= ~bit;
+                return;
             }
         }
     }
@@ -6260,6 +6645,44 @@ void Cg50NativeCore::UtlbArrayWrite(const std::uint32_t address,
         entry.valid = setV;
         entry.dirty = setD;
     }
+}
+
+std::uint32_t Cg50NativeCore::ItlbArrayRead(const std::uint32_t address) const
+{
+    const std::size_t index =
+        static_cast<std::size_t>((address >> 8) & 0x3u);
+    const UtlbEntry& entry = itlb_[index];
+    if (address < kItlbDataArrayBase) {
+        return (entry.virtualPageNumber << 10) |
+               (entry.valid ? 0x100u : 0u) |
+               (entry.asid & 0xFFu);
+    }
+    std::uint32_t word = entry.physicalPageNumber << 10;
+    if (entry.valid) word |= 0x100u;
+    if ((entry.pageSizeCode & 0x2u) != 0u) word |= 0x80u;
+    word |= (entry.protection & 0x3u) << 5;
+    if ((entry.pageSizeCode & 0x1u) != 0u) word |= 0x10u;
+    if (entry.shared) word |= 0x2u;
+    return word;
+}
+
+void Cg50NativeCore::ItlbArrayWrite(const std::uint32_t address,
+                                    const std::uint32_t value)
+{
+    if (address >= kItlbDataArrayEnd) return;
+    const std::size_t index =
+        static_cast<std::size_t>((address >> 8) & 0x3u);
+    if (address >= kItlbDataArrayBase) {
+        UtlbEntry entry = DecodeUtlbData(value);
+        entry.virtualPageNumber = itlb_[index].virtualPageNumber;
+        entry.asid = itlb_[index].asid;
+        itlb_[index] = entry;
+        return;
+    }
+    UtlbEntry& entry = itlb_[index];
+    entry.virtualPageNumber = (value >> 10) & 0x001FFFFFu;
+    entry.asid = value & 0xFFu;
+    entry.valid = (value & 0x100u) != 0;
 }
 
 // ============================================================================
@@ -6606,6 +7029,21 @@ bool Cg50NativeCore::ExportState(std::vector<std::uint8_t>& bytes) const
     StateWriteChunk(bytes, 80u, &tbr_, sizeof(tbr_));
     StateWriteChunk(bytes, 81u, &rteDelaySlotPrivilegedFetch_,
                     sizeof(rteDelaySlotPrivilegedFetch_));
+    // Optional trailing SH7305 full hardware state chunks (82..94)
+    StateWriteChunk(bytes, 82u, ilram_.data(), ilram_.size());
+    StateWriteChunk(bytes, 83u, xram_.data(), xram_.size());
+    StateWriteChunk(bytes, 84u, yram_.data(), yram_.size());
+    StateWriteChunk(bytes, 85u, storeQueues_.data(), storeQueues_.size());
+    StateWriteChunk(bytes, 86u, &qacr0_, sizeof(qacr0_));
+    StateWriteChunk(bytes, 87u, &qacr1_, sizeof(qacr1_));
+    StateWriteChunk(bytes, 88u, itlb_.data(), sizeof(itlb_));
+    StateWriteChunk(bytes, 89u, &intc2_, sizeof(intc2_));
+    StateWriteChunk(bytes, 90u, &etmu_, sizeof(etmu_));
+    StateWriteChunk(bytes, 91u, &adc_, sizeof(adc_));
+    StateWriteChunk(bytes, 92u, &tpu_, sizeof(tpu_));
+    StateWriteChunk(bytes, 93u, &scif0_, sizeof(scif0_));
+    StateWriteChunk(bytes, 94u, &usb2_, sizeof(usb2_));
+    StateWriteChunk(bytes, 95u, &lastLcdDmaSar_, sizeof(lastLcdDmaSar_));
     return true;
 }
 
@@ -6766,6 +7204,42 @@ bool Cg50NativeCore::ImportState(const std::uint8_t* bytes, const std::size_t si
                               sizeof(rteDelaySlotPrivilegedFetch_))) {
             return fail();
         }
+    }
+    ilram_.fill(0u);
+    xram_.fill(0u);
+    yram_.fill(0u);
+    storeQueues_.fill(0u);
+    qacr0_ = 0u;
+    qacr1_ = 0u;
+    itlb_.fill(UtlbEntry{});
+    intc2_.Reset();
+    etmu_.Reset();
+    adc_.Reset();
+    tpu_.Reset();
+    scif0_.Reset();
+    usb2_.Reset();
+    pendingEtmuIrq_ = 0u;
+    pendingDmacIrq_ = 0u;
+    lastLcdDmaSar_ = 0x08000000u;
+    auto readOptChunk = [&](const std::uint32_t id, void* dst, const std::size_t sz) {
+        if (reader.remaining < sizeof(std::uint32_t) + sizeof(std::uint64_t)) return true;
+        return reader.ReadChunk(id, dst, sz);
+    };
+    if (!readOptChunk(82u, ilram_.data(), ilram_.size()) ||
+        !readOptChunk(83u, xram_.data(), xram_.size()) ||
+        !readOptChunk(84u, yram_.data(), yram_.size()) ||
+        !readOptChunk(85u, storeQueues_.data(), storeQueues_.size()) ||
+        !readOptChunk(86u, &qacr0_, sizeof(qacr0_)) ||
+        !readOptChunk(87u, &qacr1_, sizeof(qacr1_)) ||
+        !readOptChunk(88u, itlb_.data(), sizeof(itlb_)) ||
+        !readOptChunk(89u, &intc2_, sizeof(intc2_)) ||
+        !readOptChunk(90u, &etmu_, sizeof(etmu_)) ||
+        !readOptChunk(91u, &adc_, sizeof(adc_)) ||
+        !readOptChunk(92u, &tpu_, sizeof(tpu_)) ||
+        !readOptChunk(93u, &scif0_, sizeof(scif0_)) ||
+        !readOptChunk(94u, &usb2_, sizeof(usb2_)) ||
+        !readOptChunk(95u, &lastLcdDmaSar_, sizeof(lastLcdDmaSar_))) {
+        return fail();
     }
 
     // Rebuild the keyboard matrix contacts from the serialized key state

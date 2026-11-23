@@ -37,14 +37,16 @@ void PeripheralBus::RefreshBoardWiring() noexcept
 PeripheralBus::Result PeripheralBus::Write16(const std::uint32_t address,
                                              const std::uint16_t value)
 {
-    if (address != kLcdBusAddress) return Result::Unmapped;
+    if (address < kLcdBusAddress || address >= kLcdBusAddress + 0x01000000u)
+        return Result::Unmapped;
     return lcd_.ObserveWrite16(value) ? Result::Accepted : Result::DeviceRejected;
 }
 
 PeripheralBus::Result PeripheralBus::Read16(const std::uint32_t address,
                                             std::uint16_t& value) const noexcept
 {
-    if (address != kLcdBusAddress) return Result::Unmapped;
+    if (address < kLcdBusAddress || address >= kLcdBusAddress + 0x01000000u)
+        return Result::Unmapped;
     return lcd_.ReadBus16(value) ? Result::Accepted : Result::DeviceRejected;
 }
 

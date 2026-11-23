@@ -11,6 +11,10 @@ void R61524::Reset()
     pins_ = Pins{};
     writes_.clear();
     gram_.assign(kVisibleWidth * kVisibleHeight, 0x0000);
+    regs_.fill(0x0000);
+    regs_[0x0000u] = kConfiguredId;
+    regs_[0x0003u] = 0x1030u;
+    regs_[0x05A1u] = 0x00D2u;
     indexRegister_ = 0;
     entryMode_ = 0x1030;
     displayControl_ = 0;
@@ -22,9 +26,10 @@ void R61524::Reset()
     winStartY_ = 0;
     winEndY_ = static_cast<std::uint16_t>(kVisibleHeight - 1);
     hasValidFrame_ = false;
+    gramReadDummyPending_ = false;
 }
 
-void R61524::AdvanceCursorAfterData() noexcept
+void R61524::AdvanceCursorAfterData() const noexcept
 {
     const bool incX = (entryMode_ & 0x0010) != 0;
     const bool incY = (entryMode_ & 0x0020) != 0;
@@ -94,7 +99,14 @@ bool R61524::ObserveWrite16(const std::uint16_t value)
     // RS = 1 -> Parameter / Data Write
     if (!pins_.registerSelect) {
         indexRegister_ = value;
+        if (indexRegister_ == 0x0202u || indexRegister_ == 0x0022u) {
+            gramReadDummyPending_ = true;
+        }
     } else {
+        if (indexRegister_ < kRegisterSpace &&
+            indexRegister_ != 0x0202u && indexRegister_ != 0x0022u) {
+            regs_[indexRegister_] = value;
+        }
         switch (indexRegister_) {
         case 0x0000: // NOP / Start Oscillation
             break;
@@ -112,18 +124,15 @@ bool R61524::ObserveWrite16(const std::uint16_t value)
             break;
         case 0x0200: // RAM Address Set (Horizontal / X)
             curX_ = std::min<std::uint16_t>(value, static_cast<std::uint16_t>(kVisibleWidth - 1));
+            gramReadDummyPending_ = true;
             break;
         case 0x0201: // RAM Address Set (Vertical / Y)
             curY_ = std::min<std::uint16_t>(value, static_cast<std::uint16_t>(kVisibleHeight - 1));
+            gramReadDummyPending_ = true;
             break;
         case 0x0022:
         case 0x0202: // RAM Data Write (GRAM)
         {
-            // SS flip (driver output control bit 8) is stored but NOT
-            // applied: the validated boot renders through this exact path
-            // and mirroring writes without official evidence would change
-            // the menu output. The store keeps the OS write visible for
-            // save-state and diagnostics.
             if (curX_ < kVisibleWidth && curY_ < kVisibleHeight) {
                 gram_[static_cast<std::size_t>(curY_) * kVisibleWidth + curX_] = value;
                 hasValidFrame_ = true;
@@ -144,9 +153,10 @@ bool R61524::ObserveWrite16(const std::uint16_t value)
             winEndY_ = std::min<std::uint16_t>(value, static_cast<std::uint16_t>(kVisibleHeight - 1));
             break;
         default:
-            // CG50_LCD_CMD_LOG=1: registra comandos fuera del conjunto
-            // implementado (evidencia de cobertura de comandos, N-7).
-            {
+            // All R61524 registers in [0x0000..0x06FF] (Power 0x0100..0x0111,
+            // Gamma 0x0300..0x0329, Base Image & Scroll 0x0400..0x0404,
+            // Backlight CABC 0x05A0..0x05A3, NVM 0x0606) are backed in regs_.
+            if (indexRegister_ >= kRegisterSpace) {
                 static const bool logUnknown =
                     std::getenv("CG50_LCD_CMD_LOG") != nullptr;
                 if (logUnknown) {
@@ -163,14 +173,26 @@ bool R61524::ObserveWrite16(const std::uint16_t value)
 
 bool R61524::ReadBus16(std::uint16_t& value) const noexcept
 {
-    // Read-back contract of the VALIDATED baseline (official-correlated):
-    // index 0 returns the panel ID and every other register reads 0. The
-    // richer read-back (entry mode, cursor, window, GRAM) regressed the OS
-    // boot at instruction ~7.03M (LCD driver poll at PC=0x8004E0A4 saw the
-    // stored entry mode instead of 0 and derailed the timeline); it stays
-    // disabled until CPU73050 evidence shows the real panel answers.
-    if (indexRegister_ == 0x0000) {
+    if (indexRegister_ == 0x0000u) {
         value = kConfiguredId;
+        return true;
+    }
+    // Authentic R61524 GRAM Read (0x0202 / 0x0022):
+    // Casio OS LCD read routine (PC=0x8004DA72) performs 1 dummy read followed
+    // by the RGB565 pixel read(s) with cursor auto-increment. Keeping 0x0003
+    // returning 0 preserves the validated OS boot contract at PC=0x8004E0A4.
+    if (indexRegister_ == 0x0202u || indexRegister_ == 0x0022u) {
+        if (gramReadDummyPending_) {
+            gramReadDummyPending_ = false;
+            value = 0x0000u;
+            return true;
+        }
+        if (!gram_.empty() && curX_ < kVisibleWidth && curY_ < kVisibleHeight) {
+            value = gram_[static_cast<std::size_t>(curY_) * kVisibleWidth + curX_];
+        } else {
+            value = 0x0000u;
+        }
+        AdvanceCursorAfterData();
         return true;
     }
     value = 0;
@@ -213,6 +235,12 @@ bool R61524::ExportState(std::vector<std::uint8_t>& out) const
     append16(winStartY_);
     append16(winEndY_);
     appendBool(hasValidFrame_);
+    // Optional trailing extension: key R61524 registers (scroll + backlight) + dummy latch
+    append16(regs_[0x0400u]);
+    append16(regs_[0x0401u]);
+    append16(regs_[0x0404u]);
+    append16(regs_[0x05A1u]);
+    appendBool(gramReadDummyPending_);
     return true;
 }
 
@@ -254,6 +282,8 @@ bool R61524::ImportState(const std::uint8_t* data, const std::size_t size)
         return static_cast<std::uint16_t>((hi << 8) | data[cursor++]);
     };
     if (!need(10u * 2u + 1u)) return false;
+    regs_.fill(0u);
+    regs_[0x0000u] = kConfiguredId;
     indexRegister_ = read16();
     entryMode_ = read16();
     displayControl_ = read16();
@@ -265,6 +295,19 @@ bool R61524::ImportState(const std::uint8_t* data, const std::size_t size)
     winStartY_ = read16();
     winEndY_ = read16();
     hasValidFrame_ = readBool();
+    regs_[0x0001u] = driverOutputControl_;
+    regs_[0x0003u] = entryMode_;
+    regs_[0x0007u] = displayControl_;
+    if (cursor + 9u <= size) {
+        regs_[0x0400u] = read16();
+        regs_[0x0401u] = read16();
+        regs_[0x0404u] = read16();
+        regs_[0x05A1u] = read16();
+        gramReadDummyPending_ = readBool();
+    } else {
+        regs_[0x05A1u] = 0x00D2u;
+        gramReadDummyPending_ = false;
+    }
     writes_.clear();
     return true;
 }

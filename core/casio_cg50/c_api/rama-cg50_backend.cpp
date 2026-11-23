@@ -281,9 +281,8 @@ bool Cg50Backend::CaptureFramebuffer()
     stages_.stage9_lcdActive = stages_.nativeFramebufferAvailable;
     if (!stages_.nativeFramebufferAvailable) return false;
 
-    std::uint32_t sar0 = 0;
-    impl_->native->Read32(0xFE008020u, sar0);
-    const std::uint32_t vramBase = (sar0 == 0x08028800u) ? 0x08028800u : 0x08000000u;
+    const std::uint32_t lastSar = impl_->native->LastLcdDmaSar();
+    const std::uint32_t vramBase = (lastSar == 0x08028800u) ? 0x08028800u : 0x08000000u;
 
     fbWidth_ = 384;
     fbHeight_ = 216;

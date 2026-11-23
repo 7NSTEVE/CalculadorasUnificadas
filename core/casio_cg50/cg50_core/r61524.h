@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -26,6 +27,7 @@ public:
 
     static constexpr std::size_t kVisibleWidth = 384;
     static constexpr std::size_t kVisibleHeight = 216;
+    static constexpr std::size_t kRegisterSpace = 0x0700;
     static constexpr std::uint16_t kConfiguredId = 0x1234;
     static constexpr std::uint8_t kConfiguredVcm = 0x41;
     static constexpr std::uint8_t kConfiguredVdv = 0x10;
@@ -40,13 +42,27 @@ public:
     bool ObserveWrite16(std::uint16_t value);
     bool ReadBus16(std::uint16_t& value) const noexcept;
 
-    void AdvanceCursorAfterData() noexcept;
+    void AdvanceCursorAfterData() const noexcept;
 
     const std::vector<BusCycle>& ObservedWrites() const noexcept { return writes_; }
     void ClearTrace() { writes_.clear(); }
     bool FramebufferAvailable() const noexcept { return hasValidFrame_ || !writes_.empty(); }
     const std::uint16_t* FramebufferData() const noexcept { return gram_.data(); }
     std::size_t FramebufferPixelCount() const noexcept { return gram_.size(); }
+    std::uint16_t BacklightDuty() const noexcept { return regs_[0x05A1u]; }
+    std::uint16_t VerticalScroll() const noexcept { return regs_[0x0404u]; }
+    std::uint16_t IndexRegister() const noexcept { return indexRegister_; }
+    std::uint16_t EntryMode() const noexcept { return entryMode_; }
+    std::uint16_t CurX() const noexcept { return curX_; }
+    std::uint16_t CurY() const noexcept { return curY_; }
+    std::uint16_t WinStartX() const noexcept { return winStartX_; }
+    std::uint16_t WinEndX() const noexcept { return winEndX_; }
+    std::uint16_t WinStartY() const noexcept { return winStartY_; }
+    std::uint16_t WinEndY() const noexcept { return winEndY_; }
+    std::uint16_t RegisterValue(std::uint16_t index) const noexcept
+    {
+        return index < kRegisterSpace ? regs_[index] : 0u;
+    }
 
     // Save-state support: serializes GRAM + cursor/window/entry-mode state
     // and the driven pins. The write trace (ObservedWrites) is intentionally
@@ -58,17 +74,19 @@ private:
     Pins pins_{};
     std::vector<BusCycle> writes_;
     std::vector<std::uint16_t> gram_;
+    std::array<std::uint16_t, kRegisterSpace> regs_{};
     std::uint16_t indexRegister_ = 0;
     std::uint16_t entryMode_ = 0x1030;
     std::uint16_t displayControl_ = 0;
-    std::uint16_t curX_ = 0;
-    std::uint16_t curY_ = 0;
+    mutable std::uint16_t curX_ = 0;
+    mutable std::uint16_t curY_ = 0;
     std::uint16_t winStartX_ = 0;
     std::uint16_t winEndX_ = static_cast<std::uint16_t>(kVisibleWidth - 1);
     std::uint16_t winStartY_ = 0;
     std::uint16_t winEndY_ = static_cast<std::uint16_t>(kVisibleHeight - 1);
     std::uint16_t driverOutputControl_ = 0;
     bool hasValidFrame_ = false;
+    mutable bool gramReadDummyPending_ = false;
 };
 
 } // namespace cg50

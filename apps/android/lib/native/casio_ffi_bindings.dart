@@ -335,7 +335,7 @@ class CasioRomStaging {
 
     // Decompress pre-baked CG50 warm state (.bin.gz) on first launch or core upgrade
     final warmBin = File('${dir.path}/cg50_warm_state.bin');
-    final warmStamp = File('${dir.path}/cg50_warm_v42.stamp');
+    final warmStamp = File('${dir.path}/cg50_warm_v43.stamp');
     if (!await warmBin.exists() ||
         await warmBin.length() < 1024 * 1024 ||
         !await warmStamp.exists()) {
