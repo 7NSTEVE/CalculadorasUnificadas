@@ -1,0 +1,993 @@
+{
+  "schemaVersion": "1.0.0",
+  "deterministicOffline": true,
+  "counts": {
+    "keys": 150,
+    "indicators": 38,
+    "procedures": 14,
+    "diagnostics": 10,
+    "errors": 6,
+    "tipsAndWarnings": 16,
+    "setupProfiles": 5,
+    "checklist": 8,
+    "comparisons": 10
+  },
+  "keys": [
+    {
+      "calcIdx": 0, "keyId": 0, "keyName": "SHIFT", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5, "demoSeq": [0],
+      "normal": {"available": true, "label": "SHIFT", "category": "Modificador", "summary": "Activa las funciones secundarias en color dorado ubicadas arriba de cada tecla.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{tecla}$", "latexExample": "$\\mathrm{SHIFT} + \\sin \\to \\sin^{-1}$", "tipOrWarning": "Aparece el indicador S arriba; se desactiva tras la siguiente tecla."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 1, "keyName": "ALPHA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5, "demoSeq": [1],
+      "normal": {"available": true, "label": "ALPHA", "category": "Modificador", "summary": "Activa letras de variables (A-F, x, y, M) y comandos en rojo.", "latexFormula": "$\\mathrm{ALPHA} + \\mathrm{tecla}$", "latexExample": "$\\mathrm{ALPHA} + (-) \\to A$", "tipOrWarning": "Aparece el indicador A arriba; util para escribir ecuaciones y fórmulas."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 2, "keyName": "ARRIBA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Arriba", "category": "Navegación", "summary": "Sube al numerador, historial previo o elemento superior del menú.", "latexFormula": "$\\uparrow$", "latexExample": "Revisar cálculos anteriores", "tipOrWarning": "Cuando aparece flecha arriba en el LCD hay historial disponible."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 3, "keyName": "IZQUIERDA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 11, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Izquierda", "category": "Navegación", "summary": "Mueve el cursor a la izquierda o edita desde el final de la expresión tras presionar =.", "latexFormula": "$\\leftarrow$", "latexExample": "Editar expresión anterior", "tipOrWarning": "En un mensaje ERROR, mueve el cursor al lugar exacto del fallo."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 4, "keyName": "DERECHA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 11, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Derecha", "category": "Navegación", "summary": "Sale del bloque actual (fracción, raíz, exponente, límite de integral) o avanza a la derecha.", "latexFormula": "$\\rightarrow$", "latexExample": "Salir de $\\sqrt{x}$ antes de sumar", "tipOrWarning": "Error común: seguir escribiendo dentro de la raíz por no presionar flecha derecha."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 5, "keyName": "ABAJO", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Abajo", "category": "Navegación", "summary": "Baja al denominador, límite inferior o historial reciente.", "latexFormula": "$\\downarrow$", "latexExample": "Pasar de numerador a denominador", "tipOrWarning": "Cuando aparece flecha abajo en LCD hay más opciones debajo."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 6, "keyName": "MENU", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 6, "demoSeq": [6],
+      "normal": {"available": true, "label": "MENU", "category": "Configuración", "summary": "Abre la cuadrícula de 12 aplicaciones (Calcular, Complejos, Matrices, Ecuación, Tabla, etc.).", "latexFormula": "$\\mathrm{MENU} \\to 1..C$", "latexExample": "$\\mathrm{MENU} \\to 1$ vuelve a Calcular", "tipOrWarning": "Verifica el indicador de modo antes de calcular."},
+      "shift": {"available": true, "label": "SET UP", "category": "Configuración", "summary": "Abre ajustes de Entrada/Salida (Math/Línea), Unidad angular (Deg/Rad/Gra) y Formato (Fix/Sci/Norm).", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{MENU}$", "latexExample": "$\\mathrm{SHIFT} \\to \\mathrm{MENU} \\to 2 \\to 1$ (Grados)", "tipOrWarning": "Si trigonometría da valores extraños, revisa Unidad angular aquí."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 7, "keyName": "ON", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 4, "demoSeq": [],
+      "normal": {"available": true, "label": "ON", "category": "Sistema", "summary": "Enciende la calculadora o reinicia la pantalla de entrada actual.", "latexFormula": "$\\mathrm{ON}$", "latexExample": "Recupera foco si se apagó", "tipOrWarning": "No borra variables guardadas con STO; si borra historial reciente."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 8, "keyName": "OPTN", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 19, "demoSeq": [8],
+      "normal": {"available": true, "label": "OPTN", "category": "Menú contextual", "summary": "Muestra funciones especiales del modo actual (Conjugado en Complejos, Matrices, Hiperbólicas, Unidad angular).", "latexFormula": "$\\mathrm{OPTN}$", "latexExample": "En Mat: $MatA, Det, Trn$", "tipOrWarning": "Cambia dinámicamente según el modo elegido en MENU."},
+      "shift": {"available": true, "label": "QR", "category": "Utilidad", "summary": "Genera un código QR del resultado o tabla actual en la calculadora física/emulador.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{OPTN}$", "latexExample": "QR de tabla $f(x)$", "tipOrWarning": "Se muestra en pantalla en modelos compatibles."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 9, "keyName": "CALC", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 21, "demoSeq": [41, 11, 43, 42, 9],
+      "normal": {"available": true, "label": "CALC", "category": "Álgebra", "summary": "Evalúa la expresión actual pidiendo valores para variables (X, A, B...).", "latexFormula": "$f(x) \\to \\mathrm{CALC} \\to x=?$", "latexExample": "Evaluar $x^{2}+3$ para $x=4 \\to 19$", "tipOrWarning": "Útil para comprobar múltiples valores sin reescribir la fórmula."},
+      "shift": {"available": true, "label": "SOLVE", "category": "Álgebra", "summary": "Resuelve numéricamente una ecuación usando método de Newton a partir de un valor inicial.", "latexFormula": "$f(x) = g(x) \\to x \\approx ?$", "latexExample": "$2x + 3 = 11 \\to x = 4$", "tipOrWarning": "SOLVE usa el signo = rojo (ALPHA + CALC), no el botón igual inferior."},
+      "alpha": {"available": true, "label": "=", "category": "Álgebra", "summary": "Inserta el signo de igualdad simbólico para ecuaciones de SOLVE u Hoja de cálculo.", "latexFormula": "$\\mathrm{ALPHA} + \\mathrm{CALC} \\to =$", "latexExample": "$x^{2} - 9 = 0$", "tipOrWarning": "Diferente al botón = evaluador inferior."}
+    },
+    {
+      "calcIdx": 0, "keyId": 10, "keyName": "INTEGRAL", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 17, "demoSeq": [10, 11, 14, 4, 45, 4, 42, 49],
+      "normal": {"available": true, "label": "Integral Definida", "category": "Cálculo", "summary": "Calcula la integral definida numérica de $f(x)$ entre $a$ y $b$.", "latexFormula": "$\\int_{a}^{b} f(x)\\,dx$", "latexExample": "$\\int_{0}^{3} (x^{2}+2x)\\,dx = 18$", "tipOrWarning": "La variable de integración debe ser x. Funciones discontinuas pueden tardar."},
+      "shift": {"available": true, "label": "Derivada d/dx", "category": "Cálculo", "summary": "Calcula la derivada numérica en un punto $x=a$.", "latexFormula": "$\\left.\\frac{d}{dx}f(x)\\right|_{x=a}$", "latexExample": "$\\left.\\frac{d}{dx}(x^{3})\\right|_{x=2} = 12$", "tipOrWarning": "Requiere modo Calcular y especificar un punto numérico en el cuadro derecho."},
+      "alpha": {"available": true, "label": ":", "category": "Multisentencia", "summary": "Separa varias expresiones en la misma línea para ejecutarlas en secuencia.", "latexFormula": "$A=3 : A^{2}+1$", "latexExample": "$2+3 : \\mathrm{Ans}\\times 4$", "tipOrWarning": "Aparece indicador de pausa entre sentencias."}
+    },
+    {
+      "calcIdx": 0, "keyId": 11, "keyName": "VARIABLE", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 15, "demoSeq": [11, 14, 43, 40],
+      "normal": {"available": true, "label": "Tecla x", "category": "Álgebra", "summary": "Ingresa directamente la variable $x$ con una sola pulsación sin usar ALPHA.", "latexFormula": "$x$", "latexExample": "$x^{2} + 2x$", "tipOrWarning": "Ideal para integrales, derivadas, Tabla f(x) y SOLVE."},
+      "shift": {"available": true, "label": "Sumatoria \\sum", "category": "Cálculo", "summary": "Calcula una sumatoria discreta desde $k=a$ hasta $b$.", "latexFormula": "$\\sum_{x=a}^{b} f(x)$", "latexExample": "$\\sum_{x=1}^{5} x = 15$", "tipOrWarning": "El índice de sumatoria siempre usa x y límites enteros."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 12, "keyName": "FRACCION", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 12, "demoSeq": [12, 42, 5, 35, 49],
+      "normal": {"available": true, "label": "Fracción", "category": "Básicas", "summary": "Inserta plantilla natural numerador / denominador.", "latexFormula": "$\\frac{a}{b}$", "latexExample": "$\\frac{3}{4} + \\frac{1}{2} = \\frac{5}{4}$", "tipOrWarning": "Si un valor supera 10 dígitos en totales, ClassWiz convierte a decimal."},
+      "shift": {"available": true, "label": "Fracción Mixta", "category": "Básicas", "summary": "Inserta plantilla de número mixto entero + fracción propia.", "latexFormula": "$a\\frac{b}{c}$", "latexExample": "$1\\frac{1}{2} = \\frac{3}{2}$", "tipOrWarning": "Usa S<=>D con SHIFT para alternar entre mixta e impropia."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 13, "keyName": "RAIZ", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [13, 41, 36, 49],
+      "normal": {"available": true, "label": "Raíz Cuadrada", "category": "Álgebra", "summary": "Calcula la raíz cuadrada principal positiva (o imaginaria en Complejos).", "latexFormula": "$\\sqrt{x}$", "latexExample": "$\\sqrt{25} = 5$", "tipOrWarning": "En Calcular, raíz par de número negativo genera Math ERROR."},
+      "shift": {"available": true, "label": "Raíz Cúbica", "category": "Álgebra", "summary": "Calcula la raíz cúbica real de números positivos o negativos.", "latexFormula": "$\\sqrt[3]{x}$", "latexExample": "$\\sqrt[3]{-27} = -3$", "tipOrWarning": "No da error para radicandos negativos reales."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 14, "keyName": "CUADRADO", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [41, 14, 49],
+      "normal": {"available": true, "label": "Cuadrado", "category": "Álgebra", "summary": "Eleva el valor o paréntesis anterior a la potencia 2.", "latexFormula": "$x^{2}$", "latexExample": "$(-3)^{2} = 9$", "tipOrWarning": "Cuidado: $-3^{2} = -9$ por prioridad de operadores; usa $(-3)^{2}$."},
+      "shift": {"available": true, "label": "Cubo", "category": "Álgebra", "summary": "Eleva la expresión al exponente 3.", "latexFormula": "$x^{3}$", "latexExample": "$2^{3} = 8$", "tipOrWarning": "Evita abrir exponente manual cuando solo necesitas grado 3."},
+      "alpha": {"available": true, "label": "DEC (Base-N)", "category": "Sistemas Numéricos", "summary": "Cambia o etiqueta ingreso decimal en modo Base-N.", "latexFormula": "$x_{10}$", "latexExample": "Conversión Base-N a decimal", "tipOrWarning": "Activo dentro de MENU -> 3 (Base-N)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 15, "keyName": "POTENCIA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [41, 15, 36, 49],
+      "normal": {"available": true, "label": "Potencia x^y", "category": "Álgebra", "summary": "Eleva la base a cualquier exponente entero, fraccionario o negativo.", "latexFormula": "$x^{n}$", "latexExample": "$2^{5} = 32$", "tipOrWarning": "Presiona flecha derecha para bajar del exponente."},
+      "shift": {"available": true, "label": "Raíz n-ésima", "category": "Álgebra", "summary": "Calcula la raíz de índice $n$ arbitrario.", "latexFormula": "$\\sqrt[n]{x}$", "latexExample": "$\\sqrt[4]{16} = 2$", "tipOrWarning": "Ingresa primero el índice o navega entre los dos cuadros."},
+      "alpha": {"available": true, "label": "HEX (Base-N)", "category": "Sistemas Numéricos", "summary": "Cambia a hexadecimal en modo Base-N.", "latexFormula": "$x_{16}$", "latexExample": "$\\mathrm{FF}_{16} = 255_{10}$", "tipOrWarning": "Las teclas A..F ingresan dígitos hexadecimales automáticamente en Base-N."}
+    },
+    {
+      "calcIdx": 0, "keyId": 16, "keyName": "LOG_B", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [16, 41, 4, 31, 49],
+      "normal": {"available": true, "label": "Logaritmo Base a", "category": "Álgebra", "summary": "Calcula $\\log_{a}(b)$ eligiendo base y argumento.", "latexFormula": "$\\log_{a}(b)$", "latexExample": "$\\log_{2}(8) = 3$", "tipOrWarning": "Para logaritmo decimal rápido también existe SHIFT + (-)."},
+      "shift": {"available": true, "label": "Base 10^x", "category": "Álgebra", "summary": "Función antilogaritmo decimal $10^{x}$.", "latexFormula": "$10^{x}$", "latexExample": "$10^{3} = 1000$", "tipOrWarning": "Diferente de la tecla x10^x inferior que escribe notación científica."},
+      "alpha": {"available": true, "label": "BIN (Base-N)", "category": "Sistemas Numéricos", "summary": "Cambia a binario en modo Base-N.", "latexFormula": "$x_{2}$", "latexExample": "$1010_{2} = 10_{10}$", "tipOrWarning": "Solo acepta dígitos 0 y 1 en ingreso binario."}
+    },
+    {
+      "calcIdx": 0, "keyId": 17, "keyName": "LN", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [17, 40, 49],
+      "normal": {"available": true, "label": "Logaritmo Natural", "category": "Álgebra", "summary": "Calcula logaritmo natural en base $e \\approx 2.7182818$.", "latexFormula": "$\\ln(x)$", "latexExample": "$\\ln(e) = 1$", "tipOrWarning": "Requiere $x > 0$ en números reales."},
+      "shift": {"available": true, "label": "Exponencial e^x", "category": "Álgebra", "summary": "Eleva el número de Euler $e$ a un exponente.", "latexFormula": "$e^{x}$", "latexExample": "$e^{0} = 1$", "tipOrWarning": "Usa flecha derecha para salir del exponente antes de sumar."},
+      "alpha": {"available": true, "label": "OCT (Base-N)", "category": "Sistemas Numéricos", "summary": "Cambia a octal en modo Base-N.", "latexFormula": "$x_{8}$", "latexExample": "$77_{8} = 63_{10}$", "tipOrWarning": "Disponible en MENU -> 3 (Base-N)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 18, "keyName": "NEGATIVO", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 10, "demoSeq": [18, 36, 43, 31, 49],
+      "normal": {"available": true, "label": "Signo Negativo (-)", "category": "Básicas", "summary": "Cambia el signo de un número o expresión (operador unario, distinto a la resta).", "latexFormula": "$-x$", "latexExample": "$(-5) + 8 = 3$", "tipOrWarning": "No confundir (-) con el botón resta [-] al iniciar exponentes negativos."},
+      "shift": {"available": true, "label": "log Base 10", "category": "Álgebra", "summary": "Ingresa $\\log($ directo en base 10 sin pedir caja de base.", "latexFormula": "$\\log_{10}(x)$", "latexExample": "$\\log(100) = 2$", "tipOrWarning": "Atajo rápido respecto a log_a(b)."},
+      "alpha": {"available": true, "label": "Variable A", "category": "Variables A-F,X,Y,M", "summary": "Ingresa la letra A (o dígito hex A en Base-N / opción Ecuación en MENU).", "latexFormula": "$A$", "latexExample": "$\\mathrm{STO} \\to A$", "tipOrWarning": "En MENU, permite entrar directo a Ecuación/Función."}
+    },
+    {
+      "calcIdx": 0, "keyId": 19, "keyName": "GRADOS", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [42, 45, 19, 35, 36, 19, 49],
+      "normal": {"available": true, "label": "Grados Min Seg", "category": "Trigonometría", "summary": "Ingresa o convierte ángulos y horas en formato sexagesimal ($\\circ\\,'\\,''$).", "latexFormula": "$d^{\\circ} m' s''$", "latexExample": "$30^{\\circ} 15' 0'' = 30.25^{\\circ}$", "tipOrWarning": "Presionar de nuevo tras un resultado alterna decimal y sexagesimal."},
+      "shift": {"available": true, "label": "FACT (Descomposición)", "category": "Aritmética", "summary": "Factoriza un entero resultado en producto de números primos.", "latexFormula": "$n = p_{1}^{a} \\cdot p_{2}^{b}$", "latexExample": "$360 = 2^{3}\\times 3^{2}\\times 5$", "tipOrWarning": "Se aplica sobre el último entero positivo mostrado en pantalla."},
+      "alpha": {"available": true, "label": "Variable B", "category": "Variables A-F,X,Y,M", "summary": "Inserta variable B o dígito hexadecimal B.", "latexFormula": "$B$", "latexExample": "$A + B$", "tipOrWarning": "En MENU selecciona Desigualdad (B)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 20, "keyName": "INVERSO", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [35, 20, 49],
+      "normal": {"available": true, "label": "Inverso Multiplicativo", "category": "Álgebra", "summary": "Calcula el recíproco multiplicativo $x^{-1} = \\frac{1}{x}$ para $x \\neq 0$; también invierte matrices cuadradas.", "latexFormula": "$x^{-1} = \\frac{1}{x}$", "latexExample": "$4^{-1} = \\frac{1}{4} = 0.25$", "tipOrWarning": "Inverso multiplicativo NO es cambio de signo (-). No dividir entre 0."},
+      "shift": {"available": true, "label": "Factorial x!", "category": "Combinatoria", "summary": "Calcula $n! = n(n-1)\\cdots 1$ para enteros $0 \\le n \\le 69$.", "latexFormula": "$n!$", "latexExample": "$5! = 120$", "tipOrWarning": "Por definición $0! = 1$. Valores $\\ge 70$ provocan Math ERROR."},
+      "alpha": {"available": true, "label": "Variable C", "category": "Variables A-F,X,Y,M", "summary": "Inserta variable C o dígito hexadecimal C.", "latexFormula": "$C$", "latexExample": "$\\mathrm{STO} \\to C$", "tipOrWarning": "En MENU selecciona Razón / Proporción (C)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 21, "keyName": "SIN", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [21, 42, 45, 27, 49],
+      "normal": {"available": true, "label": "Seno $\\sin$", "category": "Trigonometría", "summary": "Calcula el seno del ángulo según la unidad activa (D, R o G).", "latexFormula": "$\\sin(\\theta)$", "latexExample": "$\\sin(30^{\\circ}) = \\frac{1}{2}$", "tipOrWarning": "Revisa si arriba dice D (Grados) o R (Radianes) antes de interpretar el resultado."},
+      "shift": {"available": true, "label": "Arcoseno $\\sin^{-1}$", "category": "Trigonometría", "summary": "Calcula el ángulo cuyo seno es $x \\in [-1, 1]$.", "latexFormula": "$\\sin^{-1}(x)$", "latexExample": "$\\sin^{-1}(0.5) = 30^{\\circ}$", "tipOrWarning": "Si $|x| > 1$ produce Math ERROR."},
+      "alpha": {"available": true, "label": "Variable D", "category": "Variables A-F,X,Y,M", "summary": "Inserta variable $D$ o dígito hex $D$.", "latexFormula": "$D$", "latexExample": "$\\mathrm{STO} \\to D$", "tipOrWarning": "Se consulta luego con SHIFT + STO (RECALL)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 22, "keyName": "COS", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [22, 37, 45, 27, 49],
+      "normal": {"available": true, "label": "Coseno $\\cos$", "category": "Trigonometría", "summary": "Calcula el coseno en Grados, Radianes o Gradianes.", "latexFormula": "$\\cos(\\theta)$", "latexExample": "$\\cos(60^{\\circ}) = 0.5$", "tipOrWarning": "Comprueba el indicador angular D/R/G."},
+      "shift": {"available": true, "label": "Arcocoseno $\\cos^{-1}$", "category": "Trigonometría", "summary": "Calcula $\\arccos(x) \\in [0, 180^{\\circ}]$ o $[0, \\pi]$.", "latexFormula": "$\\cos^{-1}(x)$", "latexExample": "$\\cos^{-1}(0) = 90^{\\circ}$", "tipOrWarning": "Solo definido en reales para $-1 \\le x \\le 1$."},
+      "alpha": {"available": true, "label": "Variable E", "category": "Variables A-F,X,Y,M", "summary": "Inserta variable $E$ o dígito hex $E$.", "latexFormula": "$E$", "latexExample": "$\\mathrm{STO} \\to E$", "tipOrWarning": "Conserva su valor al apagar salvo RESET."}
+    },
+    {
+      "calcIdx": 0, "keyId": 23, "keyName": "TAN", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16, "demoSeq": [23, 35, 36, 27, 49],
+      "normal": {"available": true, "label": "Tangente $\\tan$", "category": "Trigonometría", "summary": "Calcula $\\tan(\\theta) = \\frac{\\sin\\theta}{\\cos\\theta}$.", "latexFormula": "$\\tan(\\theta)$", "latexExample": "$\\tan(45^{\\circ}) = 1$", "tipOrWarning": "$\\tan(90^{\\circ})$ no está definida y produce Math ERROR."},
+      "shift": {"available": true, "label": "Arcotangente $\\tan^{-1}$", "category": "Trigonometría", "summary": "Calcula $\\arctan(x) \\in (-90^{\\circ}, 90^{\\circ})$.", "latexFormula": "$\\tan^{-1}(x)$", "latexExample": "$\\tan^{-1}(1) = 45^{\\circ}$", "tipOrWarning": "Útil para hallar ángulos en triángulos y vectores."},
+      "alpha": {"available": true, "label": "Variable F", "category": "Variables A-F,X,Y,M", "summary": "Inserta variable $F$ o dígito hex $F$.", "latexFormula": "$F$", "latexExample": "$\\mathrm{STO} \\to F$", "tipOrWarning": "Disponible en Base-N para hex F."}
+    },
+    {
+      "calcIdx": 0, "keyId": 24, "keyName": "STO", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 15, "demoSeq": [],
+      "normal": {"available": true, "label": "STO (Guardar)", "category": "Memorias", "summary": "Asigna el resultado mostrado o ingresado a una variable (A-F, M, x, y). No requiere SHIFT en ClassWiz.", "latexFormula": "$\\mathrm{valor} \\to \\mathrm{Variable}$", "latexExample": "$5 \\to \\mathrm{STO} \\to (-) \\text{ (A=5)}$", "tipOrWarning": "En ClassWiz se pulsa STO directo (sin SHIFT) y luego la tecla de variable."},
+      "shift": {"available": true, "label": "RECALL", "category": "Memorias", "summary": "Muestra en una sola tabla todas las variables almacenadas (A..F, M, x, y).", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{STO}$", "latexExample": "Ver valores actuales de A..F, M", "tipOrWarning": "Presiona AC para cerrar la vista RECALL sin recuperar."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 25, "keyName": "ENG", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 13, "demoSeq": [40, 41, 42, 35, 49, 25],
+      "normal": {"available": true, "label": "Notación Ingeniería ->", "category": "Formato", "summary": "Desplaza el punto decimal a la derecha ajustando exponente a múltiplos de 3 ($10^{3}, 10^{6}, 10^{-3}$).", "latexFormula": "$m \\times 10^{3k}$", "latexExample": "$1234 \\to \\mathrm{ENG} \\to 1.234 \\times 10^{3}$", "tipOrWarning": "Ideal para unidades SI (mili, micro, kilo, mega)."},
+      "shift": {"available": true, "label": "ENG <- / Angulo polar", "category": "Complejos/Formato", "summary": "En Calcular desplaza exponente de ingeniería hacia la izquierda; en Complejos inserta el símbolo de ángulo polar.", "latexFormula": "$r\\angle\\theta$", "latexExample": "$2\\angle 45^{\\circ}$", "tipOrWarning": "Solo ingresa ángulo polar cuando estás en modo Complejos (MENU 2)."},
+      "alpha": {"available": true, "label": "Unidad imaginaria i", "category": "Complejos", "summary": "Inserta la unidad imaginaria $i = \\sqrt{-1}$ en modo Complejos.", "latexFormula": "$a + bi$", "latexExample": "$(3+4i)(1-2i) = 11-2i$", "tipOrWarning": "Solo válida dentro de MENU -> 2 (Complejos)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 26, "keyName": "PAREN_ABRE", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 18, "demoSeq": [0, 26, 18, 30, 49],
+      "normal": {"available": true, "label": "Paréntesis (", "category": "Edición", "summary": "Agrupa subexpresiones para alterar prioridad de operaciones.", "latexFormula": "$(a+b)\\times c$", "latexExample": "$(2+3)\\times 4 = 20$", "tipOrWarning": "La calculadora cierra automáticamente paréntesis finales abiertos, pero es más seguro cerrarlos manualmente."},
+      "shift": {"available": true, "label": "Valor Absoluto Abs", "category": "Álgebra", "summary": "Inserta barras de valor absoluto $|x|$ (o módulo $|z|$ en complejos).", "latexFormula": "$|x|$", "latexExample": "$|-7| = 7$", "tipOrWarning": "Para salir de las barras usa flecha derecha."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 27, "keyName": "PAREN_CIERRA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 15, "demoSeq": [26, 41, 43, 42, 27, 38, 35, 49],
+      "normal": {"available": true, "label": "Paréntesis )", "category": "Edición", "summary": "Cierra el paréntesis abierto más reciente.", "latexFormula": "$(...)$", "latexExample": "$\\sin(30) = 0.5$", "tipOrWarning": "Siempre cierra funciones trigonométricas antes de sumar otro término."},
+      "shift": {"available": true, "label": "Punto y coma ;", "category": "Sintaxis", "summary": "Separa argumentos en comandos de entrada lineal (ej: $\\log(base; val)$, Pol, Rec).", "latexFormula": "$\\mathrm{func}(a; b)$", "latexExample": "$\\mathrm{Pol}(3; 4)$", "tipOrWarning": "En entrada lineal usa ; y no coma decimal."},
+      "alpha": {"available": true, "label": "Variable X", "category": "Variables A-F,X,Y,M", "summary": "Inserta X (en Calcular también existe la tecla directa x arriba a la derecha).", "latexFormula": "$X$", "latexExample": "$X^{2} + 1$", "tipOrWarning": "Función idéntica a la variable x en memorias."}
+    },
+    {
+      "calcIdx": 0, "keyId": 28, "keyName": "SD", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 12, "demoSeq": [12, 42, 5, 35, 49, 28],
+      "normal": {"available": true, "label": "S<=>D", "category": "Formato", "summary": "Alterna el último resultado entre expresión simbólica exacta (fracción, radical, $\\pi$) y aproximación decimal.", "latexFormula": "$\\frac{3}{4} \\Leftrightarrow 0.75$", "latexExample": "$\\sqrt{2} \\Leftrightarrow 1.414213562$", "tipOrWarning": "Si el formato de salida es Mat/Decimal, S<=>D puede no revertir a fracción en expresiones complejas."},
+      "shift": {"available": true, "label": "a b/c <=> d/c", "category": "Formato", "summary": "Convierte el resultado entre fracción mixta $a\\frac{b}{c}$ y fracción impropia $\\frac{d}{c}$.", "latexFormula": "$1\\frac{1}{4} \\Leftrightarrow \\frac{5}{4}$", "latexExample": "$\\frac{7}{3} \\Leftrightarrow 2\\frac{1}{3}$", "tipOrWarning": "No requiere reevaluar el cálculo."},
+      "alpha": {"available": true, "label": "Variable Y", "category": "Variables A-F,X,Y,M", "summary": "Inserta la variable $Y$ (usada también junto a Tabla y memorias).", "latexFormula": "$Y$", "latexExample": "$2X + Y$", "tipOrWarning": "Se guarda con STO -> S<=>D."}
+    },
+    {
+      "calcIdx": 0, "keyId": 29, "keyName": "MAS_M", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 15, "demoSeq": [40, 45, 29],
+      "normal": {"available": true, "label": "M+ (Sumar a M)", "category": "Memorias", "summary": "Evalúa la pantalla actual y la suma acumulada a la memoria independiente $M$.", "latexFormula": "$M \\leftarrow M + \\mathrm{res}$", "latexExample": "$10\\,\\mathrm{M+} \\; ; \\; 5\\,\\mathrm{M+} \\Rightarrow M=15$", "tipOrWarning": "Cuando M != 0 aparece el indicador M en la fila superior LCD."},
+      "shift": {"available": true, "label": "M- (Restar de M)", "category": "Memorias", "summary": "Resta el resultado actual de la memoria independiente $M$.", "latexFormula": "$M \\leftarrow M - \\mathrm{res}$", "latexExample": "$M - 3$", "tipOrWarning": "Para limpiar M a cero: 0 -> STO -> M+."},
+      "alpha": {"available": true, "label": "Variable M", "category": "Variables A-F,X,Y,M", "summary": "Inserta el valor guardado en la memoria $M$ dentro de una expresión.", "latexFormula": "$M$", "latexExample": "$2 \\times M$", "tipOrWarning": "Usa SHIFT + STO (RECALL) para ver M en cualquier momento."}
+    },
+    {
+      "calcIdx": 0, "keyId": 30, "keyName": "7", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 40, "demoSeq": [30, 38, 31, 49],
+      "normal": {"available": true, "label": "Dígito 7", "category": "Numérico", "summary": "Ingresa el dígito 7 o elige la opción 7 en un menú.", "latexFormula": "$7$", "latexExample": "$7 \\times 8 = 56$", "tipOrWarning": "En MENU -> 7 seleccionas Distribución."},
+      "shift": {"available": true, "label": "CONST (47 constantes)", "category": "Física/Química", "summary": "Abre el catálogo de 47 constantes científicas CODATA ($c_{0}, h, g, N_{A}, R...$).", "latexFormula": "$c_{0} = 299792458\\,\\mathrm{m/s}$", "latexExample": "SHIFT + 7 -> 1 (Universal) -> 3 (c0)", "tipOrWarning": "Las unidades vienen en Sistema Internacional."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 31, "keyName": "8", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 26, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 8", "category": "Numérico", "summary": "Ingresa el dígito 8 o elige la opción 8 en un menú.", "latexFormula": "$8$", "latexExample": "$8^{2} = 64$", "tipOrWarning": "En MENU -> 8 seleccionas Hoja de cálculo."},
+      "shift": {"available": true, "label": "CONV (40 conversiones)", "category": "Unidades", "summary": "Convierte un valor multiplicándolo por una relación oficial (ej: pulgada a cm, atm a Pa, km/h a m/s).", "latexFormula": "$1\\,\\mathrm{in} = 2.54\\,\\mathrm{cm}$", "latexExample": "10 SHIFT + 8 -> in>cm", "tipOrWarning": "Primero escribe el número y luego inserta el comando de conversión."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 32, "keyName": "9", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 9, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 9", "category": "Numérico", "summary": "Ingresa el dígito 9 o selecciona Tabla (MENU 9).", "latexFormula": "$9$", "latexExample": "$\\sqrt{9} = 3$", "tipOrWarning": "MENU -> 9 abre rápidamente generación de tablas f(x)."},
+      "shift": {"available": true, "label": "RESET", "category": "Sistema", "summary": "Abre el menú para restablecer Configuración, Memorias o Inicializar todo.", "latexFormula": "$\\mathrm{SHIFT} + 9 \\to 1/2/3$", "latexExample": "Conf. datos devuelve ajustes por defecto", "tipOrWarning": "Inicializar todo borra memorias A-F, matrices, estadística e historial."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 33, "keyName": "DEL", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 11, "demoSeq": [30, 31, 33],
+      "normal": {"available": true, "label": "DEL (Borrar carácter)", "category": "Edición", "summary": "Elimina el carácter o plantilla a la izquierda del cursor.", "latexFormula": "$\\mathrm{DEL}$", "latexExample": "Corregir dígito sin perder la fórmula", "tipOrWarning": "Si te equivocaste en un número, usa DEL en lugar de AC."},
+      "shift": {"available": true, "label": "INS (Modo Insertar)", "category": "Edición", "summary": "En entrada lineal alterna entre inserción y sobrescritura.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{DEL}$", "latexExample": "Modo cursor bloque/raya", "tipOrWarning": "En entrada Math siempre está activo el modo insertar."},
+      "alpha": {"available": true, "label": "UNDO (Deshacer tecla)", "category": "Edición", "summary": "Revierte una edición o borrado accidental en la línea actual.", "latexFormula": "$\\mathrm{ALPHA} + \\mathrm{DEL}$", "latexExample": "Recupera término borrado por error", "tipOrWarning": "Útil si borraste una subexpresión completa con DEL o AC."}
+    },
+    {
+      "calcIdx": 0, "keyId": 34, "keyName": "AC", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 4, "demoSeq": [34],
+      "normal": {"available": true, "label": "AC (All Clear)", "category": "Edición", "summary": "Limpia la línea de entrada actual y cancela mensajes de error. Mantiene historial y variables.", "latexFormula": "$\\mathrm{AC}$", "latexExample": "Volver a entrada limpia", "tipOrWarning": "Para volver al cálculo previo tras AC, pulsa flecha Arriba."},
+      "shift": {"available": true, "label": "OFF (Apagar)", "category": "Sistema", "summary": "Apaga la calculadora ahorrando energía (el emulador conserva el modo activo o reanuda con ON).", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{AC}$", "latexExample": "Apagado seguro", "tipOrWarning": "Las variables guardadas con STO sobreviven al apagado."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 35, "keyName": "4", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 28, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 4", "category": "Numérico", "summary": "Ingresa 4 o selecciona Matriz (MENU 4).", "latexFormula": "$4$", "latexExample": "$4 \\times 4 = 16$", "tipOrWarning": "En MENU -> 4 entras al editor de MatA..MatD."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 36, "keyName": "5", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 31, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 5", "category": "Numérico", "summary": "Ingresa 5 o selecciona Vector (MENU 5).", "latexFormula": "$5$", "latexExample": "$5^{2} = 25$", "tipOrWarning": "En MENU -> 5 entras al editor VctA..VctD."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 37, "keyName": "6", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 22, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 6", "category": "Numérico", "summary": "Ingresa 6 o selecciona Estadística (MENU 6).", "latexFormula": "$6$", "latexExample": "$6! = 720$", "tipOrWarning": "En MENU -> 6 seleccionas 1-Variable o regresiones."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 38, "keyName": "POR", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 10, "demoSeq": [37, 38, 30, 49],
+      "normal": {"available": true, "label": "Multiplicación x", "category": "Básicas", "summary": "Multiplica números, fracciones, complejos o matrices.", "latexFormula": "$a \\times b$", "latexExample": "$6 \\times 7 = 42$", "tipOrWarning": "En multiplicación implícita recuerda su prioridad frente a divisores."},
+      "shift": {"available": true, "label": "Permutaciones nPr", "category": "Combinatoria", "summary": "Calcula variaciones sin repetición $P(n,r) = \\frac{n!}{(n-r)!}$.", "latexFormula": "$nPr = \\frac{n!}{(n-r)!}$", "latexExample": "$5\\,\\mathrm{P}\\,2 = 20$", "tipOrWarning": "Ingresa primero $n$, luego SHIFT + x, luego $r$."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 39, "keyName": "ENTRE", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 10, "demoSeq": [35, 35, 39, 35, 49],
+      "normal": {"available": true, "label": "División /", "category": "Básicas", "summary": "Realiza división estándar (en formato Math suele mostrar resultado fraccionario exacto).", "latexFormula": "$a \\div b$", "latexExample": "$15 \\div 4 = \\frac{15}{4}$", "tipOrWarning": "Dividir entre 0 produce Math ERROR."},
+      "shift": {"available": true, "label": "Combinaciones nCr", "category": "Combinatoria", "summary": "Calcula combinaciones $C(n,r) = \\frac{n!}{r!(n-r)!}$.", "latexFormula": "$C(n,r) = \\frac{n!}{r!(n-r)!}$", "latexExample": "$5\\,\\mathrm{C}\\,2 = 10$", "tipOrWarning": "No admite valores negativos ni $r > n$."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 40, "keyName": "1", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 6, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 1", "category": "Numérico", "summary": "Ingresa 1 o selecciona Calcular (MENU 1).", "latexFormula": "$1$", "latexExample": "MENU -> 1 vuelve al modo estándar", "tipOrWarning": "Atajo universal para volver a cálculos generales."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 41, "keyName": "2", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 20, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 2", "category": "Numérico", "summary": "Ingresa 2 o selecciona Complejos (MENU 2).", "latexFormula": "$2$", "latexExample": "MENU -> 2 activa i", "tipOrWarning": "En modo Complejos aparece indicador i."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 42, "keyName": "3", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 26, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 3", "category": "Numérico", "summary": "Ingresa 3 o selecciona Base-N (MENU 3).", "latexFormula": "$3$", "latexExample": "MENU -> 3 activa bin/oct/hex", "tipOrWarning": "En Base-N solo funcionan operaciones enteras."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 43, "keyName": "MAS", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 10, "demoSeq": [40, 41, 43, 30, 49],
+      "normal": {"available": true, "label": "Suma +", "category": "Básicas", "summary": "Suma dos términos numéricos, vectoriales o matriciales.", "latexFormula": "$a + b$", "latexExample": "$12 + 8 = 20$", "tipOrWarning": "Si el primer operando falta al pulsar +, usará Ans automáticamente."},
+      "shift": {"available": true, "label": "Pol(x, y)", "category": "Coordenadas", "summary": "Convierte coordenadas rectangulares $(x,y)$ a polares $(r,\\theta)$.", "latexFormula": "$r=\\sqrt{x^{2}+y^{2}},\\; \\theta=\\mathrm{atan2}(y,x)$", "latexExample": "$\\mathrm{Pol}(3; 4) \\to r=5$", "tipOrWarning": "Guarda automáticamente $r$ en $x$ y $\\theta$ en $y$."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 44, "keyName": "MENOS", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 10, "demoSeq": [41, 45, 44, 31, 49],
+      "normal": {"available": true, "label": "Resta -", "category": "Básicas", "summary": "Resta el segundo operando del primero (operador binario).", "latexFormula": "$a - b$", "latexExample": "$15 - 6 = 9$", "tipOrWarning": "Para signos negativos iniciales o dentro de potencias usa (-)."},
+      "shift": {"available": true, "label": "Rec(r, theta)", "category": "Coordenadas", "summary": "Convierte coordenadas polares $(r,\\theta)$ a rectangulares $(x,y)$.", "latexFormula": "$x=r\\cos\\theta,\\; y=r\\sin\\theta$", "latexExample": "$\\mathrm{Rec}(5; 53.13^{\\circ}) \\to x\\approx 3, y\\approx 4$", "tipOrWarning": "El ángulo $\\theta$ depende del indicador D/R/G activo."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 45, "keyName": "0", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 18, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 0", "category": "Numérico", "summary": "Ingresa 0.", "latexFormula": "$0$", "latexExample": "$10 + 0 = 10$", "tipOrWarning": "Cuidado al dividir entre 0."},
+      "shift": {"available": true, "label": "Rnd (Redondeo interno)", "category": "Álgebra/Precisión", "summary": "Redondea internamente el argumento a los dígitos mostrados según FIX/SCI.", "latexFormula": "$\\mathrm{Rnd}(x)$", "latexExample": "$\\mathrm{Rnd}(\\mathrm{Ans})$", "tipOrWarning": "FIX solo maquilla pantalla; usa Rnd cuando necesites truncar la precisión real en cálculos siguientes."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 46, "keyName": "COMA", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 18, "demoSeq": [45, 46, 36, 49],
+      "normal": {"available": true, "label": "Punto decimal .", "category": "Numérico", "summary": "Inserta el separador decimal en números reales.", "latexFormula": "$3.1416$", "latexExample": "$0.5 + 0.25 = 0.75$", "tipOrWarning": "No se usa para separar argumentos en Math (usa SHIFT + ) para ';')."},
+      "shift": {"available": true, "label": "Ran# (Aleatorio 0..1)", "category": "Probabilidad", "summary": "Genera un número pseudoaleatorio uniforme en $[0.000, 0.999]$.", "latexFormula": "$\\mathrm{Ran\\#} \\in [0, 1)$", "latexExample": "$1000\\,\\mathrm{Ran\\#}$", "tipOrWarning": "Cambia en cada ejecución con =."},
+      "alpha": {"available": true, "label": "RanInt#(a, b)", "category": "Probabilidad", "summary": "Genera un entero aleatorio entre $a$ y $b$ inclusive.", "latexFormula": "$\\mathrm{RanInt\\#}(a; b)$", "latexExample": "$\\mathrm{RanInt\\#}(1; 6)$", "tipOrWarning": "Separa límites con punto y coma (;)."}
+    },
+    {
+      "calcIdx": 0, "keyId": 47, "keyName": "EXP", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 13, "demoSeq": [42, 47, 36, 49],
+      "normal": {"available": true, "label": "Notación x10^x", "category": "Científica", "summary": "Ingresa mantisa por potencia de 10 ($a \\times 10^{b}$) sin crear multiplicación separada.", "latexFormula": "$a \\times 10^{b}$", "latexExample": "$6.022 \\times 10^{23}$", "tipOrWarning": "Atado como un solo número: más seguro que escribir x 10 ^ x en denominadores."},
+      "shift": {"available": true, "label": "Constante Pi", "category": "Constantes", "summary": "Inserta la constante matemática $\\pi \\approx 3.14159265359$.", "latexFormula": "$\\pi$", "latexExample": "$\\sin(\\pi) = 0 \\text{ (en Rad)}$", "tipOrWarning": "La salida exacta suele conservar $\\pi$ simbólico hasta pulsar S<=>D."},
+      "alpha": {"available": true, "label": "Constante e", "category": "Constantes", "summary": "Inserta la base de logaritmos naturales $e \\approx 2.71828182846$.", "latexFormula": "$e$", "latexExample": "$\\ln(e) = 1$", "tipOrWarning": "No confundir con variable E."}
+    },
+    {
+      "calcIdx": 0, "keyId": 48, "keyName": "ANS", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 15, "demoSeq": [],
+      "normal": {"available": true, "label": "Ans (Último resultado)", "category": "Memorias", "summary": "Inserta el resultado numérico o simbólico exacto de la última evaluación.", "latexFormula": "$\\mathrm{Ans}$", "latexExample": "$\\mathrm{Ans} + 5$", "tipOrWarning": "Ideal para métodos iterativos y cadenas paso a paso."},
+      "shift": {"available": true, "label": "Porcentaje %", "category": "Aritmética", "summary": "Divide el valor precedente por 100 ($x\\% = \\frac{x}{100}$).", "latexFormula": "$x\\% = \\frac{x}{100}$", "latexExample": "$150 \\times 20\\% = 30$", "tipOrWarning": "Muy práctico para porcentajes directos."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 0, "keyId": 49, "keyName": "IGUAL", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 9, "demoSeq": [41, 43, 42, 49],
+      "normal": {"available": true, "label": "Evaluar =", "category": "Ejecutador", "summary": "Evalúa la expresión actual y actualiza Ans.", "latexFormula": "$=$", "latexExample": "$2+3 = 5$", "tipOrWarning": "Captura de pantalla automática si está activa; copia según configuración."},
+      "shift": {"available": true, "label": "Aproximar Decimal ≈", "category": "Formato", "summary": "Fuerza la salida directa a número decimal saltándose la fracción o radical exacto.", "latexFormula": "$\\approx$", "latexExample": "$\\frac{1}{3} \\to \\mathrm{SHIFT+=} \\to 0.3333...$", "tipOrWarning": "Ahorra tener que presionar S<=>D después."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 0, "keyName": "SHIFT", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5, "demoSeq": [0],
+      "normal": {"available": true, "label": "SHIFT", "category": "Modificador", "summary": "Activa funciones doradas impresas sobre las teclas.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{tecla}$", "latexExample": "$\\mathrm{SHIFT} + \\mathrm{MODE} \\to \\mathrm{SETUP}$", "tipOrWarning": "Muestra indicador S en esquina superior izquierda."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 1, "keyName": "ON", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 4, "demoSeq": [],
+      "normal": {"available": true, "label": "ON", "category": "Sistema", "summary": "Enciende el equipo o limpia la pantalla activa retornando al prompt del modo actual.", "latexFormula": "$\\mathrm{ON}$", "latexExample": "Reanudar operación", "tipOrWarning": "Mantiene variables almacenadas en A..F, X, Y, M."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 2, "keyName": "ARRIBA", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Arriba", "category": "Navegación", "summary": "Desplaza hacia el historial de cálculos anteriores o hacia arriba en plantillas Natural-V.P.A.M.", "latexFormula": "$\\uparrow$", "latexExample": "Revisar expresión previa", "tipOrWarning": "Se activa cuando aparece flecha arriba en LCD."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 3, "keyName": "ALPHA", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5, "demoSeq": [3],
+      "normal": {"available": true, "label": "ALPHA", "category": "Modificador", "summary": "Activa letras rojas (A..F, X, Y, M), signo '=' para SOLVE y ':' multisentencia.", "latexFormula": "$\\mathrm{ALPHA} + \\mathrm{tecla}$", "latexExample": "$\\mathrm{ALPHA} + ) \\to X$", "tipOrWarning": "Muestra indicador A en la barra superior LCD."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 4, "keyName": "MODE", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6, "demoSeq": [4],
+      "normal": {"available": true, "label": "MODE", "category": "Configuración", "summary": "Abre el menú numérico 1-8 (1:COMP, 2:CMPLX, 3:STAT, 4:BASE-N, 5:EQN, 6:MATRIX, 7:TABLE, 8:VECTOR).", "latexFormula": "$\\mathrm{MODE} \\to 1..8$", "latexExample": "$\\mathrm{MODE} \\to 5$ (Ecuaciones)", "tipOrWarning": "En ES PLUS la navegación de modos es por número 1..8, no iconos."},
+      "shift": {"available": true, "label": "SETUP", "category": "Configuración", "summary": "Abre 1:MthIO, 2:LineIO, 3:Deg, 4:Rad, 5:Gra, 6:Fix, 7:Sci, 8:Norm (y más opciones con Abajo).", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{MODE}$", "latexExample": "$\\mathrm{SHIFT} + \\mathrm{MODE} \\to 3$ (Deg)", "tipOrWarning": "Siempre revisa D/R/G e indicador Math aquí."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 5, "keyName": "IZQUIERDA", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 43, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Izquierda", "category": "Navegación", "summary": "Mueve cursor a la izquierda; en pantallas de error coloca el cursor exactamente sobre el fallo.", "latexFormula": "$\\leftarrow$", "latexExample": "Corregir tras Syntax ERROR", "tipOrWarning": "Atajo indispensable al depurar fórmulas largas."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 6, "keyName": "DERECHA", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 11, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Derecha", "category": "Navegación", "summary": "Sale del bloque actual (fracción, raíz, integral) o mueve el cursor a la derecha.", "latexFormula": "$\\rightarrow$", "latexExample": "Avanzar entre límites de integral", "tipOrWarning": "Evita encerrar términos por error dentro de una raíz o exponente."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 7, "keyName": "ABAJO", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Abajo", "category": "Navegación", "summary": "Mueve al denominador/límite inferior o avanza en historial reciente.", "latexFormula": "$\\downarrow$", "latexExample": "Cambiar de numerador a denominador", "tipOrWarning": "En SETUP revela la segunda página de opciones."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 8, "keyName": "CALC", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 22, "demoSeq": [8],
+      "normal": {"available": true, "label": "CALC", "category": "Álgebra", "summary": "Evalúa expresiones sustituyendo valores en A, B, C, X, Y.", "latexFormula": "$f(X) \\to \\mathrm{CALC} \\to X=?$", "latexExample": "Evaluar $X^{2}+2$ para $X=3 \\to 11$", "tipOrWarning": "Conserva la expresión para probar otros valores."},
+      "shift": {"available": true, "label": "SOLVE", "category": "Álgebra", "summary": "Encuentra una raíz numérica de una ecuación con método de Newton.", "latexFormula": "$f(X) = g(X) \\to X \\approx ?$", "latexExample": "$2X + 3 = 11 \\to X = 4$", "tipOrWarning": "Introduce '=' usando ALPHA + CALC."},
+      "alpha": {"available": true, "label": "=", "category": "Álgebra", "summary": "Ingresa '=' simbólico para resolver con SOLVE.", "latexFormula": "$\\mathrm{ALPHA} + \\mathrm{CALC} \\to =$", "latexExample": "$X^{2} - 4 = 0$", "tipOrWarning": "No evalúa; sólo construye la ecuación."}
+    },
+    {
+      "calcIdx": 1, "keyId": 9, "keyName": "INTEGRAL", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16, "demoSeq": [9, 3, 27, 14, 6, 45, 6, 41, 49],
+      "normal": {"available": true, "label": "Integral Definida", "category": "Cálculo", "summary": "Calcula integrales numéricas definidas $\\int_a^b f(X)\\,dX$.", "latexFormula": "$\\int_{a}^{b} f(X)\\,dX$", "latexExample": "$\\int_{0}^{3} (X^{2}+2X)\\,dX = 18$", "tipOrWarning": "La variable debe llamarse X (ALPHA + ')')."},
+      "shift": {"available": true, "label": "Derivada d/dx", "category": "Cálculo", "summary": "Calcula la derivada numérica en un punto $X=a$.", "latexFormula": "$\\left.\\frac{d}{dX}f(X)\\right|_{X=a}$", "latexExample": "$\\left.\\frac{d}{dX}(\\sin X)\\right|_{X=0} = 1 \\text{ (en Rad)}$", "tipOrWarning": "Presiona flecha derecha para rellenar el valor $X=a$."},
+      "alpha": {"available": true, "label": ":", "category": "Multisentencia", "summary": "Separa cálculos en cadena mostrando indicador Disp entre pasos.", "latexFormula": "$A=2 : A\\times 5$", "latexExample": "$2+3 : \\mathrm{Ans}\\times 4$", "tipOrWarning": "Pulsa = para avanzar de una sentencia a la siguiente."}
+    },
+    {
+      "calcIdx": 1, "keyId": 10, "keyName": "INVERSO", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16, "demoSeq": [35, 10, 49],
+      "normal": {"available": true, "label": "Inverso Multiplicativo x^-1", "category": "Álgebra", "summary": "Calcula $\\frac{1}{x}$ para $x \\neq 0$ (y matriz inversa $MatA^{-1}$ en MATRIX).", "latexFormula": "$x^{-1} = \\frac{1}{x}$", "latexExample": "$4^{-1} = 0.25$", "tipOrWarning": "Inverso multiplicativo != negativo (-). Error común al invertir matrices."},
+      "shift": {"available": true, "label": "Factorial x!", "category": "Combinatoria", "summary": "Calcula $n!$ para enteros no negativos hasta $69!$.", "latexFormula": "$n!$", "latexExample": "$5! = 120$", "tipOrWarning": "En ENTEROS $\\ge 70$ da Math ERROR."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 11, "keyName": "LOG_B", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16, "demoSeq": [11, 41, 6, 31, 49],
+      "normal": {"available": true, "label": "Logaritmo Base a", "category": "Álgebra", "summary": "Calcula $\\log_{a}(b)$ en Natural-V.P.A.M.", "latexFormula": "$\\log_{a}(b)$", "latexExample": "$\\log_{2}(16) = 4$", "tipOrWarning": "En formato LineIO se ingresa como log(a, b)."},
+      "shift": {"available": true, "label": "Sumatoria Sigma", "category": "Cálculo", "summary": "Calcula $\\sum_{X=a}^{b} f(X)$ paso entero unitario.", "latexFormula": "$\\sum_{X=a}^{b} f(X)$", "latexExample": "$\\sum_{X=1}^{4} X = 10$", "tipOrWarning": "Usa ALPHA + ) para la variable X."},
+      "alpha": {"available": true, "label": "Productorio Pi", "category": "Cálculo", "summary": "Multiplicatoria o símbolo en modelos VN PLUS (reemplazado por variable/función según firmware).", "latexFormula": "$\\prod$", "latexExample": "Serie finita", "tipOrWarning": "Visible en serigrafía superior de log_b."}
+    },
+    {
+      "calcIdx": 1, "keyId": 12, "keyName": "FRACCION", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 10, "demoSeq": [12, 42, 7, 35, 49],
+      "normal": {"available": true, "label": "Fracción a/b", "category": "Básicas", "summary": "Inserta plantilla de fracción vertical natural.", "latexFormula": "$\\frac{a}{b}$", "latexExample": "$\\frac{3}{4} = 0.75$", "tipOrWarning": "Alterna fracción/decimal con S<=>D."},
+      "shift": {"available": true, "label": "Fracción Mixta", "category": "Básicas", "summary": "Inserta plantilla $a\\frac{b}{c}$.", "latexFormula": "$a\\frac{b}{c}$", "latexExample": "$1\\frac{1}{2} = \\frac{3}{2}$", "tipOrWarning": "Cambia entre mixta e impropia con SHIFT + S<=>D."},
+      "alpha": {"available": true, "label": "División Entera R", "category": "Aritmética", "summary": "Calcula cociente y residuo entero (disponible en VN PLUS).", "latexFormula": "$a \\div R\\, b$", "latexExample": "$17 \\div R\\, 5 \\to Q=3, R=2$", "tipOrWarning": "Función específica roja del modelo VN PLUS."}
+    },
+    {
+      "calcIdx": 1, "keyId": 13, "keyName": "RAIZ", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [13, 31, 49],
+      "normal": {"available": true, "label": "Raíz Cuadrada", "category": "Álgebra", "summary": "Calcula $\\sqrt{x}$ exacta en radical cuando es posible (ej: $\\sqrt{8} = 2\\sqrt{2}$).", "latexFormula": "$\\sqrt{x}$", "latexExample": "$\\sqrt{8} = 2\\sqrt{2}$", "tipOrWarning": "Presiona S<=>D para ver su aproximación decimal."},
+      "shift": {"available": true, "label": "Raíz Cúbica", "category": "Álgebra", "summary": "Calcula $\\sqrt[3]{x}$.", "latexFormula": "$\\sqrt[3]{x}$", "latexExample": "$\\sqrt[3]{27} = 3$", "tipOrWarning": "Acepta radicandos negativos reales."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 14, "keyName": "CUADRADO", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [36, 14, 49],
+      "normal": {"available": true, "label": "Cuadrado x^2", "category": "Álgebra", "summary": "Eleva al exponente 2.", "latexFormula": "$x^{2}$", "latexExample": "$5^{2} = 25$", "tipOrWarning": "Para números negativos usa paréntesis: $(-5)^{2}$."},
+      "shift": {"available": true, "label": "Cubo x^3", "category": "Álgebra", "summary": "Eleva al exponente 3.", "latexFormula": "$x^{3}$", "latexExample": "$3^{3} = 27$", "tipOrWarning": "Evita escribir x^box + 3."},
+      "alpha": {"available": true, "label": "DEC (Base-N)", "category": "Sistemas Numéricos", "summary": "Selecciona decimal en MODE 4 (BASE-N).", "latexFormula": "$x_{10}$", "latexExample": "Base decimal", "tipOrWarning": "Activo dentro de MODE -> 4."}
+    },
+    {
+      "calcIdx": 1, "keyId": 15, "keyName": "POTENCIA", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [41, 15, 37, 49],
+      "normal": {"available": true, "label": "Potencia x^n", "category": "Álgebra", "summary": "Eleva a cualquier potencia.", "latexFormula": "$x^{n}$", "latexExample": "$2^{6} = 64$", "tipOrWarning": "Sal del cuadro de exponente con flecha derecha."},
+      "shift": {"available": true, "label": "Raíz n-ésima", "category": "Álgebra", "summary": "Raíz de orden $n$.", "latexFormula": "$\\sqrt[n]{x}$", "latexExample": "$\\sqrt[4]{81} = 3$", "tipOrWarning": "Navega con flechas para rellenar índice y radicando."},
+      "alpha": {"available": true, "label": "HEX (Base-N)", "category": "Sistemas Numéricos", "summary": "Selecciona hexadecimal en MODE 4.", "latexFormula": "$x_{16}$", "latexExample": "Base 16", "tipOrWarning": "Usa teclas A-F directamente en BASE-N."}
+    },
+    {
+      "calcIdx": 1, "keyId": 16, "keyName": "LOG", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16, "demoSeq": [16, 40, 45, 45, 49],
+      "normal": {"available": true, "label": "Logaritmo Base 10", "category": "Álgebra", "summary": "Calcula $\\log_{10}(x)$ directamente (en ES PLUS esta tecla es base 10 por defecto).", "latexFormula": "$\\log(x)$", "latexExample": "$\\log(100) = 2$", "tipOrWarning": "En ClassWiz esta tecla pasó a log_a(b) y log fue a SHIFT+(-)."},
+      "shift": {"available": true, "label": "Potencia 10^x", "category": "Álgebra", "summary": "Calcula $10^{x}$.", "latexFormula": "$10^{x}$", "latexExample": "$10^{2} = 100$", "tipOrWarning": "Inversa de $\\log(x)$."},
+      "alpha": {"available": true, "label": "BIN (Base-N)", "category": "Sistemas Numéricos", "summary": "Selecciona binario en MODE 4.", "latexFormula": "$x_{2}$", "latexExample": "$101_{2} = 5$", "tipOrWarning": "Solo admite 0 y 1."}
+    },
+    {
+      "calcIdx": 1, "keyId": 17, "keyName": "LN", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16, "demoSeq": [17, 40, 49],
+      "normal": {"available": true, "label": "Logaritmo Natural", "category": "Álgebra", "summary": "Calcula $\\ln(x)$ en base $e$.", "latexFormula": "$\\ln(x)$", "latexExample": "$\\ln(1) = 0$", "tipOrWarning": "Solo para $x > 0$."},
+      "shift": {"available": true, "label": "Exponencial e^x", "category": "Álgebra", "summary": "Calcula $e^{x}$.", "latexFormula": "$e^{x}$", "latexExample": "$e^{1} \\approx 2.71828$", "tipOrWarning": "Inversa de $\\ln(x)$."},
+      "alpha": {"available": true, "label": "OCT (Base-N)", "category": "Sistemas Numéricos", "summary": "Selecciona octal en MODE 4.", "latexFormula": "$x_{8}$", "latexExample": "$10_{8} = 8$", "tipOrWarning": "Dígitos válidos 0..7."}
+    },
+    {
+      "calcIdx": 1, "keyId": 18, "keyName": "NEGATIVO", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 9, "demoSeq": [18, 35, 43, 30, 49],
+      "normal": {"available": true, "label": "Signo Negativo (-)", "category": "Básicas", "summary": "Signo unario negativo distinto al botón de resta '-'.", "latexFormula": "$-x$", "latexExample": "$(-4)\\times 2 = -8$", "tipOrWarning": "Usar en exponentes negativos: $10^{-3}$."},
+      "shift": {"available": true, "label": "Angulo polar", "category": "Complejos", "summary": "Inserta símbolo polar $\\angle$ en MODE 2 (CMPLX).", "latexFormula": "$r\\angle\\theta$", "latexExample": "$2\\angle 30^{\\circ}$", "tipOrWarning": "En ES PLUS el símbolo $\\angle$ está sobre (-), distinto de ClassWiz."},
+      "alpha": {"available": true, "label": "Variable A", "category": "Variables", "summary": "Ingresa variable A (ALPHA + (-)).", "latexFormula": "$A$", "latexExample": "$2A+1$", "tipOrWarning": "Conserva valor asignado con SHIFT+RCL(STO)."}
+    },
+    {
+      "calcIdx": 1, "keyId": 19, "keyName": "GRADOS", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [42, 45, 19, 42, 45, 19, 49],
+      "normal": {"available": true, "label": "Grados Min Seg", "category": "Trigonometría", "summary": "Ingresa o convierte sexagesimales $\\circ\\,'\\,''$.", "latexFormula": "$d^{\\circ}m's''$", "latexExample": "$45^{\\circ}30' = 45.5^{\\circ}$", "tipOrWarning": "Pulsa tras el = para convertir formato."},
+      "shift": {"available": true, "label": "FACT (Primos)", "category": "Aritmética", "summary": "Descompone un número entero en factores primos (en modelos VN PLUS).", "latexFormula": "$n = \\prod p_i^{k_i}$", "latexExample": "$120 = 2^{3}\\times 3\\times 5$", "tipOrWarning": "Requiere tener un entero en pantalla."},
+      "alpha": {"available": true, "label": "Variable B", "category": "Variables", "summary": "Inserta variable B.", "latexFormula": "$B$", "latexExample": "B en ecuaciones", "tipOrWarning": "Uso con ALPHA + grados."}
+    },
+    {
+      "calcIdx": 1, "keyId": 20, "keyName": "HYP", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [0, 20, 18, 32, 49],
+      "normal": {"available": true, "label": "Hiperbólicas hyp", "category": "Trigonometría", "summary": "Abre menú $\\sinh, \\cosh, \\tanh$ y sus inversas $\\sinh^{-1}, \\cosh^{-1}, \\tanh^{-1}$.", "latexFormula": "$\\sinh(x) = \\frac{e^{x}-e^{-x}}{2}$", "latexExample": "$\\mathrm{hyp}\\to 1 (\\sinh)\\; 0 = 0$", "tipOrWarning": "En ClassWiz las hiperbólicas pasaron dentro de OPTN."},
+      "shift": {"available": true, "label": "Abs (Valor Absoluto)", "category": "Álgebra", "summary": "Calcula valor absoluto $|x|$ o módulo complejo.", "latexFormula": "$|x|$", "latexExample": "$|-9| = 9$", "tipOrWarning": "En ES PLUS está sobre hyp; en ClassWiz sobre '('."},
+      "alpha": {"available": true, "label": "Variable C", "category": "Variables", "summary": "Inserta variable C.", "latexFormula": "$C$", "latexExample": "Variable C", "tipOrWarning": "También dígito hex C en BASE-N."}
+    },
+    {
+      "calcIdx": 1, "keyId": 21, "keyName": "SIN", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [21, 42, 45, 27, 49],
+      "normal": {"available": true, "label": "Seno $\\sin$", "category": "Trigonometría", "summary": "Calcula seno trigonométrico según D, R o G.", "latexFormula": "$\\sin(\\theta)$", "latexExample": "$\\sin(30^{\\circ}) = 0.5$", "tipOrWarning": "Verifica siempre la letra D/R/G arriba."},
+      "shift": {"available": true, "label": "Arcoseno $\\sin^{-1}$", "category": "Trigonometría", "summary": "Función inversa del seno.", "latexFormula": "$\\sin^{-1}(x)$", "latexExample": "$\\sin^{-1}(0.5) = 30^{\\circ}$", "tipOrWarning": "Dominio real $[-1, 1]$."},
+      "alpha": {"available": true, "label": "Variable D", "category": "Variables", "summary": "Inserta variable $D$.", "latexFormula": "$D$", "latexExample": "Variable $D$", "tipOrWarning": "Dígito hex D en BASE-N."}
+    },
+    {
+      "calcIdx": 1, "keyId": 22, "keyName": "COS", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [22, 37, 45, 27, 49],
+      "normal": {"available": true, "label": "Coseno $\\cos$", "category": "Trigonometría", "summary": "Calcula coseno trigonométrico.", "latexFormula": "$\\cos(\\theta)$", "latexExample": "$\\cos(60^{\\circ}) = 0.5$", "tipOrWarning": "El coseno de $90^{\\circ}$ es 0."},
+      "shift": {"available": true, "label": "Arcocoseno $\\cos^{-1}$", "category": "Trigonometría", "summary": "Función inversa del coseno.", "latexFormula": "$\\cos^{-1}(x)$", "latexExample": "$\\cos^{-1}(0.5) = 60^{\\circ}$", "tipOrWarning": "Dominio real $[-1, 1]$."},
+      "alpha": {"available": true, "label": "Variable E", "category": "Variables", "summary": "Inserta variable $E$.", "latexFormula": "$E$", "latexExample": "Variable $E$", "tipOrWarning": "Dígito hex E en BASE-N."}
+    },
+    {
+      "calcIdx": 1, "keyId": 23, "keyName": "TAN", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15, "demoSeq": [23, 35, 36, 27, 49],
+      "normal": {"available": true, "label": "Tangente $\\tan$", "category": "Trigonometría", "summary": "Calcula tangente trigonométrica.", "latexFormula": "$\\tan(\\theta)$", "latexExample": "$\\tan(45^{\\circ}) = 1$", "tipOrWarning": "Falla en asíntotas como $90^{\\circ}$."},
+      "shift": {"available": true, "label": "Arcotangente $\\tan^{-1}$", "category": "Trigonometría", "summary": "Función inversa de tangente.", "latexFormula": "$\\tan^{-1}(x)$", "latexExample": "$\\tan^{-1}(1) = 45^{\\circ}$", "tipOrWarning": "Útil para pendiente o fase."},
+      "alpha": {"available": true, "label": "Variable F", "category": "Variables", "summary": "Inserta variable $F$.", "latexFormula": "$F$", "latexExample": "Variable $F$", "tipOrWarning": "Dígito hex F en BASE-N."}
+    },
+    {
+      "calcIdx": 1, "keyId": 24, "keyName": "RCL", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "RCL (Recuperar variable)", "category": "Memorias", "summary": "Recupera e inserta el valor de una variable A..F, X, Y, M. Aparece indicador RCL.", "latexFormula": "$\\mathrm{RCL} \\to A$", "latexExample": "RCL -> A muestra contenido de A", "tipOrWarning": "Diferencia clave con ClassWiz: en ES PLUS la capa normal es RCL y STO está en SHIFT."},
+      "shift": {"available": true, "label": "STO (Guardar variable)", "category": "Memorias", "summary": "Guarda el valor actual en A..F, X, Y, M. Aparece indicador STO.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{RCL} \\to \\mathrm{var}$", "latexExample": "5 -> SHIFT + RCL -> (-) (A=5)", "tipOrWarning": "Observa si arriba aparece STO antes de elegir la letra."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 25, "keyName": "ENG", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 12, "demoSeq": [41, 36, 45, 45, 49, 25],
+      "normal": {"available": true, "label": "Ingeniería ENG ->", "category": "Formato", "summary": "Ajusta notación exponencial a potencias de 10 múltiples de 3.", "latexFormula": "$m \\times 10^{3k}$", "latexExample": "$2500 \\to 2.5 \\times 10^{3}$", "tipOrWarning": "SHIFT + ENG mueve el exponente al revés."},
+      "shift": {"available": true, "label": "ENG <-", "category": "Formato", "summary": "Desplaza el exponente de ingeniería a la izquierda ($10^{3} \\to 10^{6}$).", "latexFormula": "$\\leftarrow \\mathrm{ENG}$", "latexExample": "SHIFT + ENG", "tipOrWarning": "Muy útil en electrónica y física."},
+      "alpha": {"available": true, "label": "i (Imaginario)", "category": "Complejos", "summary": "Inserta unidad imaginaria $i$ en modo CMPLX (MODE 2).", "latexFormula": "$a + bi$", "latexExample": "$2 + 3i$", "tipOrWarning": "Muestra indicador CMPLX arriba cuando está habilitado."}
+    },
+    {
+      "calcIdx": 1, "keyId": 26, "keyName": "PAREN_ABRE", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 10, "demoSeq": [],
+      "normal": {"available": true, "label": "Paréntesis (", "category": "Edición", "summary": "Agrupa expresiones con prioridad.", "latexFormula": "$(...)$", "latexExample": "$(1+2)\\times 3 = 9$", "tipOrWarning": "Cierra manualmente con ')' cuando hay denominadores."},
+      "shift": {"available": true, "label": "Porcentaje %", "category": "Aritmética", "summary": "Convierte un número en fracción centesimal $\\frac{x}{100}$.", "latexFormula": "$x\\% = \\frac{x}{100}$", "latexExample": "$200 \\times 15\\% = 30$", "tipOrWarning": "En ES PLUS '%' está en SHIFT + '(' (en ClassWiz está sobre Ans)."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 27, "keyName": "PAREN_CIERRA", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 14, "demoSeq": [26, 41, 43, 42, 27, 38, 41, 49],
+      "normal": {"available": true, "label": "Paréntesis )", "category": "Edición", "summary": "Cierra grupo de paréntesis abierto.", "latexFormula": "$(a)$", "latexExample": "$\\sin(30)$", "tipOrWarning": "Indispensable tras funciones trigonométricas."},
+      "shift": {"available": true, "label": "Coma , (Separador)", "category": "Sintaxis", "summary": "Separa argumentos en Pol(x, y), Rec(r, theta), RanInt#(a, b).", "latexFormula": "$\\mathrm{Pol}(x, y)$", "latexExample": "$\\mathrm{Pol}(3, 4)$", "tipOrWarning": "ES PLUS usa coma ',' donde ClassWiz usa ';'."},
+      "alpha": {"available": true, "label": "Variable X", "category": "Variables", "summary": "Inserta la variable X (clave para integrales, derivadas, Tabla y SOLVE en ES PLUS).", "latexFormula": "$X$", "latexExample": "$\\int_{0}^{2} X^{2}\\,dX$", "tipOrWarning": "En ES PLUS X requiere ALPHA + ')', pues no hay tecla x dedicada."}
+    },
+    {
+      "calcIdx": 1, "keyId": 28, "keyName": "SD", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 10, "demoSeq": [12, 42, 7, 35, 49, 28],
+      "normal": {"available": true, "label": "S<=>D", "category": "Formato", "summary": "Alterna salida simbólica (fracción, radical, $\\pi$) a decimal y viceversa.", "latexFormula": "$\\frac{1}{4} \\Leftrightarrow 0.25$", "latexExample": "$\\sqrt{2} \\Leftrightarrow 1.414213562$", "tipOrWarning": "En LineIO o salida decimal no todas las expresiones vuelven a radical."},
+      "shift": {"available": true, "label": "a b/c <=> d/c", "category": "Formato", "summary": "Alterna fracción mixta e impropia.", "latexFormula": "$1\\frac{1}{3} \\Leftrightarrow \\frac{4}{3}$", "latexExample": "SHIFT + S<=>D", "tipOrWarning": "Rápido tras calcular fracciones impropias."},
+      "alpha": {"available": true, "label": "Variable Y", "category": "Variables", "summary": "Inserta la variable Y.", "latexFormula": "$Y$", "latexExample": "$X+Y$", "tipOrWarning": "Almacenamiento independiente."}
+    },
+    {
+      "calcIdx": 1, "keyId": 29, "keyName": "MAS_M", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 14, "demoSeq": [40, 45, 29],
+      "normal": {"available": true, "label": "M+ (Sumar a M)", "category": "Memorias", "summary": "Suma la expresión actual a la memoria M.", "latexFormula": "$M \\leftarrow M + x$", "latexExample": "$12\\,\\mathrm{M+}$", "tipOrWarning": "Enciende el indicador M en pantalla."},
+      "shift": {"available": true, "label": "M- (Restar de M)", "category": "Memorias", "summary": "Resta el valor actual de M.", "latexFormula": "$M \\leftarrow M - x$", "latexExample": "SHIFT + M+", "tipOrWarning": "No altera otras variables A..F."},
+      "alpha": {"available": true, "label": "Variable M", "category": "Variables", "summary": "Inserta el valor acumulado de M.", "latexFormula": "$M$", "latexExample": "$M \\times 2$", "tipOrWarning": "Para ver sin borrar: RCL -> M+."}
+    },
+    {
+      "calcIdx": 1, "keyId": 30, "keyName": "7", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 38, "demoSeq": [30, 38, 30, 49],
+      "normal": {"available": true, "label": "Dígito 7", "category": "Numérico", "summary": "Ingresa 7 (o TABLE con MODE 7).", "latexFormula": "$7$", "latexExample": "$7+3=10$", "tipOrWarning": "MODE -> 7 genera tablas $f(X)$."},
+      "shift": {"available": true, "label": "CONST (40 constantes)", "category": "Física/Química", "summary": "Solicita número de constante 01..40 de la tapa/manual (ej: 28 = $c_{0}$).", "latexFormula": "$c_{0}, h, G, g...$", "latexExample": "SHIFT + 7 -> 28", "tipOrWarning": "A diferencia de ClassWiz (menú), ES PLUS pide el código de 2 dígitos."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 31, "keyName": "8", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 30, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 8", "category": "Numérico", "summary": "Ingresa 8 (o VECTOR con MODE 8).", "latexFormula": "$8$", "latexExample": "$8\\div 2 = 4$", "tipOrWarning": "MODE -> 8 abre vectores VctA..VctC."},
+      "shift": {"available": true, "label": "CONV (40 conversiones)", "category": "Unidades", "summary": "Pide código de conversión 01..40 (ej: 01 = in>cm).", "latexFormula": "$\\mathrm{valor}\\,\\mathrm{CONV}\\,\\mathrm{cod}$", "latexExample": "10 SHIFT + 8 -> 01", "tipOrWarning": "Consulta códigos en manual p.30-40."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 32, "keyName": "9", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 2, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 9", "category": "Numérico", "summary": "Ingresa 9.", "latexFormula": "$9$", "latexExample": "$9^{2}=81$", "tipOrWarning": "Raíz exacta 3."},
+      "shift": {"available": true, "label": "CLR (Limpiar/Reset)", "category": "Sistema", "summary": "Abre menú 1:Setup, 2:Memory, 3:All.", "latexFormula": "$\\mathrm{SHIFT}+9 \\to 1/2/3$", "latexExample": "3 (=) para inicializar todo", "tipOrWarning": "Borrar All restablece Setup y memorias por completo."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 33, "keyName": "DEL", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 11, "demoSeq": [30, 31, 33],
+      "normal": {"available": true, "label": "DEL (Borrar)", "category": "Edición", "summary": "Borra un paso atrás en la expresión.", "latexFormula": "$\\mathrm{DEL}$", "latexExample": "Editar entrada actual", "tipOrWarning": "En errores regresando con flechas permite corregir sin borrar todo."},
+      "shift": {"available": true, "label": "INS (Insertar)", "category": "Edición", "summary": "Alterna inserción/sobrescritura en modo LineIO.", "latexFormula": "$\\mathrm{SHIFT}+\\mathrm{DEL}$", "latexExample": "Modo LineIO", "tipOrWarning": "En MthIO siempre inserta."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 34, "keyName": "AC", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 4, "demoSeq": [34],
+      "normal": {"available": true, "label": "AC (All Clear)", "category": "Edición", "summary": "Limpia pantalla o error manteniendo historial y memorias.", "latexFormula": "$\\mathrm{AC}$", "latexExample": "Limpiar expresión", "tipOrWarning": "Flecha Arriba recupera el cálculo previo."},
+      "shift": {"available": true, "label": "OFF", "category": "Sistema", "summary": "Apaga la calculadora.", "latexFormula": "$\\mathrm{SHIFT}+\\mathrm{AC}$", "latexExample": "Encender de nuevo con ON", "tipOrWarning": "Conserva variables en RAM."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 35, "keyName": "4", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 32, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 4", "category": "Numérico", "summary": "Ingresa 4 o selecciona BASE-N (MODE 4).", "latexFormula": "$4$", "latexExample": "4", "tipOrWarning": "También acceso secundario a menú MATRIX."},
+      "shift": {"available": true, "label": "Menú MATRIX", "category": "Matrices", "summary": "Abre operaciones matriciales (Dim, Data, MatA..MatC, Det, Trn) cuando estás en MODE 6.", "latexFormula": "$\\mathrm{SHIFT} + 4$", "latexExample": "SHIFT + 4 -> 3 (MatA)", "tipOrWarning": "En ClassWiz esto lo reemplazó la tecla OPTN."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 36, "keyName": "5", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 36, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 5", "category": "Numérico", "summary": "Ingresa 5 o selecciona EQN (MODE 5).", "latexFormula": "$5$", "latexExample": "MODE -> 5 (Ecuaciones)", "tipOrWarning": "En MODE 5 eliges tipo de ecuación 1..4."},
+      "shift": {"available": true, "label": "Menú VECTOR", "category": "Vectores", "summary": "Abre menú de vectores (Dim, Data, VctA..C, Dot) dentro de MODE 8.", "latexFormula": "$\\mathrm{SHIFT} + 5$", "latexExample": "Producto punto Dot", "tipOrWarning": "Solo activo en modo VECTOR."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 37, "keyName": "6", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 32, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 6", "category": "Numérico", "summary": "Ingresa 6 o selecciona MATRIX (MODE 6).", "latexFormula": "$6$", "latexExample": "MODE -> 6 (Matrices)", "tipOrWarning": "Atajo directo a matrices."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 38, "keyName": "POR", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 35, "demoSeq": [36, 38, 30, 49],
+      "normal": {"available": true, "label": "Multiplicación x", "category": "Básicas", "summary": "Multiplica números, matrices o vectores.", "latexFormula": "$a \\times b$", "latexExample": "$4 \\times 5 = 20$", "tipOrWarning": "Operador binario."},
+      "shift": {"available": true, "label": "Permutación nPr", "category": "Combinatoria", "summary": "Calcula $nPr$.", "latexFormula": "$nPr = \\frac{n!}{(n-r)!}$", "latexExample": "$6\\mathrm{P}2 = 30$", "tipOrWarning": "Requiere enteros $0 \\le r \\le n$."},
+      "alpha": {"available": true, "label": "GCD (M.C.D.)", "category": "Aritmética", "summary": "Máximo común divisor de dos enteros (en VN PLUS).", "latexFormula": "$\\mathrm{GCD}(a, b)$", "latexExample": "$\\mathrm{GCD}(24, 36) = 12$", "tipOrWarning": "Disponible en firmware VN PLUS."}
+    },
+    {
+      "calcIdx": 1, "keyId": 39, "keyName": "ENTRE", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 35, "demoSeq": [37, 39, 41, 49],
+      "normal": {"available": true, "label": "División /", "category": "Básicas", "summary": "Divide entre $b \\neq 0$.", "latexFormula": "$a \\div b$", "latexExample": "$9 \\div 2 = \\frac{9}{2}$", "tipOrWarning": "Cero en divisor dispara Math ERROR."},
+      "shift": {"available": true, "label": "Combinación nCr", "category": "Combinatoria", "summary": "Calcula $C(n,r)$ sin repeticiones.", "latexFormula": "$nCr = \\frac{n!}{r!(n-r)!}$", "latexExample": "$6\\mathrm{C}2 = 15$", "tipOrWarning": "Utilizado en probabilidad y binomio."},
+      "alpha": {"available": true, "label": "LCM (M.C.M.)", "category": "Aritmética", "summary": "Mínimo común múltiplo de dos enteros (en VN PLUS).", "latexFormula": "$\\mathrm{LCM}(a, b)$", "latexExample": "$\\mathrm{LCM}(12, 18) = 36$", "tipOrWarning": "Disponible en firmware VN PLUS."}
+    },
+    {
+      "calcIdx": 1, "keyId": 40, "keyName": "1", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 24, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 1", "category": "Numérico", "summary": "Ingresa 1 o vuelve a COMP (MODE 1).", "latexFormula": "$1$", "latexExample": "MODE -> 1 (Calcular)", "tipOrWarning": "Vuelve a cálculo estándar."},
+      "shift": {"available": true, "label": "Menú STAT / DIST", "category": "Estadística", "summary": "Abre menú estadístico (Type, Data, Sum, Var, Reg, Distr) en MODE 3.", "latexFormula": "$\\mathrm{SHIFT} + 1$", "latexExample": "Obtener media $\\bar{x}$ o desviación", "tipOrWarning": "Solo funcional dentro del modo STAT."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 41, "keyName": "2", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 20, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 2", "category": "Numérico", "summary": "Ingresa 2 o activa CMPLX (MODE 2).", "latexFormula": "$2$", "latexExample": "MODE -> 2 (Complejos)", "tipOrWarning": "Enciende indicador CMPLX arriba."},
+      "shift": {"available": true, "label": "Menú CMPLX", "category": "Complejos", "summary": "Abre 1:arg, 2:Conjg, 3:r<theta, 4:a+bi dentro de MODE 2.", "latexFormula": "$\\mathrm{SHIFT} + 2$", "latexExample": "$\\mathrm{SHIFT}+2\\to 3$ (a polar)", "tipOrWarning": "En ClassWiz esto pasó a OPTN."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 42, "keyName": "3", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 28, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 3", "category": "Numérico", "summary": "Ingresa 3 o activa BASE-N (MODE 3/4 según modelo).", "latexFormula": "$3$", "latexExample": "3", "tipOrWarning": "En ES PLUS: 3:STAT, 4:BASE-N."},
+      "shift": {"available": true, "label": "Menú BASE", "category": "Sistemas Numéricos", "summary": "Abre operadores lógicos (and, or, xor, Not) en MODE 4.", "latexFormula": "$\\mathrm{SHIFT} + 3$", "latexExample": "Operaciones bit a bit", "tipOrWarning": "Solo en modo BASE-N."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 43, "keyName": "MAS", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 8, "demoSeq": [41, 43, 35, 49],
+      "normal": {"available": true, "label": "Suma +", "category": "Básicas", "summary": "Adición estándar.", "latexFormula": "$a + b$", "latexExample": "$8+4=12$", "tipOrWarning": "Usa Ans si inicias una nueva operación con +."},
+      "shift": {"available": true, "label": "Pol(x, y)", "category": "Coordenadas", "summary": "Convierte rectangulares a polares $(r,\\theta)$.", "latexFormula": "$r=\\sqrt{x^{2}+y^{2}}$", "latexExample": "$\\mathrm{Pol}(3,4)$", "tipOrWarning": "Separa con coma ',' (SHIFT + ')')."},
+      "alpha": {"available": true, "label": "Int(x) (Parte entera)", "category": "Aritmética", "summary": "Mayor entero menor o igual a $x$.", "latexFormula": "$\\lfloor x \\rfloor$", "latexExample": "$\\mathrm{Int}(-2.4) = -3$", "tipOrWarning": "Redondea hacia menos infinito."}
+    },
+    {
+      "calcIdx": 1, "keyId": 44, "keyName": "MENOS", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 8, "demoSeq": [32, 44, 35, 49],
+      "normal": {"available": true, "label": "Resta -", "category": "Básicas", "summary": "Sustracción binaria.", "latexFormula": "$a - b$", "latexExample": "$10-3=7$", "tipOrWarning": "Distinta al signo negativo (-)."},
+      "shift": {"available": true, "label": "Rec(r, theta)", "category": "Coordenadas", "summary": "Convierte polares a rectangulares $(X,Y)$.", "latexFormula": "$x=r\\cos\\theta$", "latexExample": "$\\mathrm{Rec}(5, 30)$", "tipOrWarning": "Verifica D o R arriba."},
+      "alpha": {"available": true, "label": "Intg(x) (Truncar)", "category": "Aritmética", "summary": "Trunca parte fraccionaria de $x$.", "latexFormula": "$\\mathrm{trunc}(x)$", "latexExample": "$\\mathrm{Intg}(-2.4) = -2$", "tipOrWarning": "Difiere de Int() en negativos."}
+    },
+    {
+      "calcIdx": 1, "keyId": 45, "keyName": "0", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 0", "category": "Numérico", "summary": "Ingresa 0.", "latexFormula": "$0$", "latexExample": "$0$", "tipOrWarning": "Divisor cero invalida la operación."},
+      "shift": {"available": true, "label": "Rnd (Redondeo)", "category": "Precisión", "summary": "Redondea el valor interno al formato mostrado en pantalla.", "latexFormula": "$\\mathrm{Rnd}(x)$", "latexExample": "$\\mathrm{Rnd}(1/3)$", "tipOrWarning": "Imprescindible cuando usas FIX y quieres redondeo real interno."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 1, "keyId": 46, "keyName": "PUNTO", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6, "demoSeq": [45, 46, 36, 49],
+      "normal": {"available": true, "label": "Punto decimal .", "category": "Numérico", "summary": "Inserta separador decimal.", "latexFormula": "$0.5$", "latexExample": "$2.5 \\times 2 = 5$", "tipOrWarning": "El punto y la coma de argumentos son teclas distintas."},
+      "shift": {"available": true, "label": "Ran#", "category": "Probabilidad", "summary": "Pseudoaleatorio $[0, 1)$.", "latexFormula": "$\\mathrm{Ran\\#} \\in [0, 1)$", "latexExample": "SHIFT + .", "tipOrWarning": "Cada '=' genera uno nuevo."},
+      "alpha": {"available": true, "label": "RanInt#(a, b)", "category": "Probabilidad", "summary": "Entero aleatorio en $[a, b]$.", "latexFormula": "$\\mathrm{RanInt\\#}(a, b)$", "latexExample": "ALPHA + .", "tipOrWarning": "Separa a y b con coma ','."}
+    },
+    {
+      "calcIdx": 1, "keyId": 47, "keyName": "EXP", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 12, "demoSeq": [42, 47, 36, 49],
+      "normal": {"available": true, "label": "Notación x10^x", "category": "Científica", "summary": "Inserta potencia de diez integrada al número.", "latexFormula": "$a \\times 10^{b}$", "latexExample": "$3 \\times 10^{8}$", "tipOrWarning": "Se evalúa como unidad numérica indivisible en divisiones."},
+      "shift": {"available": true, "label": "Constante Pi", "category": "Constantes", "summary": "Inserta $\\pi$.", "latexFormula": "$\\pi$", "latexExample": "$2\\pi$", "tipOrWarning": "Se conserva simbólico en MthIO."},
+      "alpha": {"available": true, "label": "Constante e", "category": "Constantes", "summary": "Inserta número de Euler $e$.", "latexFormula": "$e$", "latexExample": "$e^{1}$", "tipOrWarning": "Muy útil en exponenciales y complejos."}
+    },
+    {
+      "calcIdx": 1, "keyId": 48, "keyName": "ANS", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 4, "demoSeq": [],
+      "normal": {"available": true, "label": "Ans", "category": "Memorias", "summary": "Último resultado calculado.", "latexFormula": "$\\mathrm{Ans}$", "latexExample": "$\\mathrm{Ans}\\times 2$", "tipOrWarning": "Se actualiza cada vez que pulsas = sin error."},
+      "shift": {"available": true, "label": "DRG> (Conversor angular)", "category": "Trigonometría", "summary": "Permite especificar unidad o gradiente de un ángulo puntual ($\\circ, r, g$).", "latexFormula": "$\\theta^{\\circ}, \\theta^{r}, \\theta^{g}$", "latexExample": "$\\sin(\\pi/2\\,r) = 1$ estando en Deg", "tipOrWarning": "No cambia tu SETUP global; solo etiqueta ese ángulo."},
+      "alpha": {"available": true, "label": "PreAns", "category": "Memorias", "summary": "Resultado penúltimo (en VN PLUS).", "latexFormula": "$\\mathrm{PreAns}$", "latexExample": "Sucesión de Fibonacci con Ans y PreAns", "tipOrWarning": "Excelente atajo para relaciones de recurrencia."}
+    },
+    {
+      "calcIdx": 1, "keyId": 49, "keyName": "IGUAL", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 4, "demoSeq": [41, 43, 42, 49],
+      "normal": {"available": true, "label": "Igual =", "category": "Ejecutador", "summary": "Evalúa y guarda resultado en Ans.", "latexFormula": "$=$", "latexExample": "$5+5=10$", "tipOrWarning": "SHIFT + '=' fuerza aproximación decimal directa."},
+      "shift": {"available": true, "label": "Aproximar ≈", "category": "Formato", "summary": "Evalúa directamente en formato decimal.", "latexFormula": "$\\approx$", "latexExample": "$\\sqrt{2} \\to 1.4142...$", "tipOrWarning": "Equivalente a '=' + S<=>D en un paso."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 0, "keyName": "F1", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 197, "demoSeq": [],
+      "normal": {"available": true, "label": "F1 (Softkey 1)", "category": "Menú de pantalla", "summary": "Ejecuta la opción inferior 1 en pantalla LCD a color (varía según aplicación).", "latexFormula": "$F1$", "latexExample": "Graph: Selección / estilo", "tipOrWarning": "F1..F6 corresponden de izquierda a derecha a los iconos inferiores del LCD."},
+      "shift": {"available": true, "label": "Trace (Rastrear)", "category": "Graficación", "summary": "Activa el cursor sobre la curva para leer coordenadas $(x, y)$ paso a paso.", "latexFormula": "$\\mathrm{SHIFT} + F1$", "latexExample": "Leer $y$ en curva $Y_{1}$", "tipOrWarning": "Luego puedes teclear un número $x$ directo para saltar ahí."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 1, "keyName": "F2", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 160, "demoSeq": [],
+      "normal": {"available": true, "label": "F2 (Softkey 2)", "category": "Menú de pantalla", "summary": "Ejecuta segunda etiqueta inferior LCD.", "latexFormula": "$F2$", "latexExample": "Run-Matrix: DEL / editar", "tipOrWarning": "Función dependiente del menú activo."},
+      "shift": {"available": true, "label": "Zoom", "category": "Graficación", "summary": "Abre controles de acercamiento/aleje/cuadro/Auto sobre gráficas.", "latexFormula": "$\\mathrm{SHIFT} + F2$", "latexExample": "Zoom -> Auto para encuadrar función", "tipOrWarning": "Usa Zoom -> Box para aislar raíces cercanas."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 2, "keyName": "F3", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 147, "demoSeq": [],
+      "normal": {"available": true, "label": "F3 (Softkey 3)", "category": "Menú de pantalla", "summary": "Tercer botón contextual inferior.", "latexFormula": "$F3$", "latexExample": "Ver menú Mat/Vct", "tipOrWarning": "Revisa barra inferior del LCD."},
+      "shift": {"available": true, "label": "V-Window", "category": "Graficación", "summary": "Configura límites de ejes $(X_{\\min}, X_{\\max}, Y_{\\min}, Y_{\\max})$ y escalas.", "latexFormula": "$\\mathrm{SHIFT} + F3$", "latexExample": "Preset Trig o Std", "tipOrWarning": "Si tu gráfica aparece en blanco, revisa V-Window."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 3, "keyName": "F4", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 190, "demoSeq": [],
+      "normal": {"available": true, "label": "F4 (Softkey 4)", "category": "Menú de pantalla", "summary": "Cuarto botón contextual (en Run-Matrix abre MATH).", "latexFormula": "$F4$", "latexExample": "Run-Matrix -> MATH ($\\int, d/dx, \\log_{a}b$)", "tipOrWarning": "Aquí es donde se encuentran plantillas de derivada e integral en CG50."},
+      "shift": {"available": true, "label": "Sketch", "category": "Graficación", "summary": "Dibuja rectas tangentes, normales, inversas o texto sobre gráficas.", "latexFormula": "$\\mathrm{SHIFT} + F4$", "latexExample": "Trazar Tangente en punto", "tipOrWarning": "Requiere tener gráfica trazada."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 4, "keyName": "F5", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 197, "demoSeq": [],
+      "normal": {"available": true, "label": "F5 (Softkey 5)", "category": "Menú de pantalla", "summary": "Quinto botón contextual.", "latexFormula": "$F5$", "latexExample": "Opciones avanzadas", "tipOrWarning": "Contexto dependiente de modo."},
+      "shift": {"available": true, "label": "G-Solv (Análisis gráfico)", "category": "Graficación", "summary": "Encuentra raíces (ROOT), máximos, mínimos, intersecciones e integral gráfica.", "latexFormula": "$\\mathrm{SHIFT} + F5$", "latexExample": "G-Solv -> ROOT halla ceros de $f(x)$", "tipOrWarning": "Herramienta fundamental de cálculo gráfico en fx-CG50."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 5, "keyName": "F6", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 145, "demoSeq": [],
+      "normal": {"available": true, "label": "F6 (Softkey 6)", "category": "Menú de pantalla", "summary": "Sexto botón contextual (en Graph es DRAW; en varios menús cambia página '>').", "latexFormula": "$F6$", "latexExample": "Graph: F6 (DRAW) grafica", "tipOrWarning": "El icono '>' en F6 indica más opciones."},
+      "shift": {"available": true, "label": "G<->T (Gráfica/Tabla)", "category": "Graficación", "summary": "Alterna rápidamente entre la pantalla gráfica y el editor/tabla de funciones.", "latexFormula": "$\\mathrm{SHIFT} + F6$", "latexExample": "Alternar pantalla visual y datos", "tipOrWarning": "Útil sin perder la ventana actual."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 6, "keyName": "SHIFT", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 4, "demoSeq": [6],
+      "normal": {"available": true, "label": "SHIFT", "category": "Modificador", "summary": "Activa funciones doradas sobre teclas (V-Window, G-Solv, SET UP, OFF, Pi).", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{tecla}$", "latexExample": "$\\mathrm{SHIFT} + \\mathrm{MENU} \\to \\mathrm{SET\\,UP}$", "tipOrWarning": "Se muestra icono 'S' en barra de estado superior."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 7, "keyName": "OPTN", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 58, "demoSeq": [],
+      "normal": {"available": true, "label": "OPTN", "category": "Menú contextual", "summary": "Abre catálogo inferior con LIST, MAT/VCT, CPLX, CALC, STAT, PROB, ANGL.", "latexFormula": "$\\mathrm{OPTN}$", "latexExample": "OPTN -> F4 (CALC) -> d/dx o Intg", "tipOrWarning": "Muchos comandos avanzados de Run-Matrix residen aquí."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 8, "keyName": "VARS", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 59, "demoSeq": [],
+      "normal": {"available": true, "label": "VARS", "category": "Variables/Sistema", "summary": "Permite insertar variables de sistema (V-Window, Graph Y1..Y20, Table, Picture).", "latexFormula": "$\\mathrm{VARS}$", "latexExample": "Insertar $Y_{1}$ en cálculo", "tipOrWarning": "Util para evaluar $Y_{1}(2)$ desde Run-Matrix."},
+      "shift": {"available": true, "label": "PRGM", "category": "Programación", "summary": "Comandos de control Casio BASIC en edición de programas.", "latexFormula": "$\\mathrm{SHIFT}+\\mathrm{VARS}$", "latexExample": "If/Then/For", "tipOrWarning": "Solo en aplicación Program."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 9, "keyName": "MENU", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 48, "demoSeq": [9],
+      "normal": {"available": true, "label": "MENU", "category": "Sistema", "summary": "Regresa al Menú Principal con iconos a color (1:Run-Matrix, 3:eActivity, 5:Graph, A:Equa...).", "latexFormula": "$\\mathrm{MENU}$", "latexExample": "MENU -> 1 (Run-Matrix)", "tipOrWarning": "Puedes entrar a iconos presionando su número o letra directamente."},
+      "shift": {"available": true, "label": "SET UP", "category": "Configuración", "summary": "Abre configuración global del modo activo (Input/Output Math, Angle Deg/Rad, Display Fix/Sci/Norm).", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{MENU}$", "latexExample": "SET UP -> Angle -> F1(Deg)/F2(Rad)", "tipOrWarning": "Al terminar usa EXIT."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 10, "keyName": "ARRIBA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Arriba", "category": "Navegación", "summary": "Sube en historial, menús o gráficas.", "latexFormula": "$\\uparrow$", "latexExample": "Subir en Run-Matrix", "tipOrWarning": "En Graph desplaza la vista arriba."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 11, "keyName": "IZQUIERDA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Izquierda", "category": "Navegación", "summary": "Izquierda en editor o gráfica.", "latexFormula": "$\\leftarrow$", "latexExample": "Mover cursor izquierdo", "tipOrWarning": "Usa Replay tras errores."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 12, "keyName": "DERECHA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Derecha", "category": "Navegación", "summary": "Sale del bloque fracción/raíz/exponente o derecha en gráfica.", "latexFormula": "$\\rightarrow$", "latexExample": "Avanzar en editor", "tipOrWarning": "Sale del nivel actual."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 13, "keyName": "ABAJO", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 14, "demoSeq": [],
+      "normal": {"available": true, "label": "Flecha Abajo", "category": "Navegación", "summary": "Baja al denominador o siguiente renglón.", "latexFormula": "$\\downarrow$", "latexExample": "Bajar opción", "tipOrWarning": "Navega listas y matrices."},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 14, "keyName": "ALPHA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 5, "demoSeq": [],
+      "normal": {"available": true, "label": "ALPHA", "category": "Modificador", "summary": "Activa letras A-Z en rojo para nombrar variables y texto.", "latexFormula": "$\\mathrm{ALPHA} + \\mathrm{tecla}$", "latexExample": "ALPHA + X,theta,T -> A", "tipOrWarning": "Para bloquear mayúsculas continua usa SHIFT + ALPHA."},
+      "shift": {"available": true, "label": "A-LOCK (Bloqueo alfa)", "category": "Modificador", "summary": "Mantiene modo alfabético fijo hasta volver a pulsar ALPHA.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{ALPHA}$", "latexExample": "Escribir nombres largos", "tipOrWarning": "Pulsa ALPHA una vez para desbloquear."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 15, "keyName": "X^2", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 62, "demoSeq": [36, 15, 49],
+      "normal": {"available": true, "label": "Cuadrado x^2", "category": "Álgebra", "summary": "Eleva al cuadrado.", "latexFormula": "$x^{2}$", "latexExample": "$5^{2} = 25$", "tipOrWarning": "Para negativos usa $(-5)^{2}$."},
+      "shift": {"available": true, "label": "Raíz Cuadrada", "category": "Álgebra", "summary": "Calcula $\\sqrt{x}$ (en CG50 está sobre $x^{2}$ en SHIFT).", "latexFormula": "$\\sqrt{x}$", "latexExample": "$\\mathrm{SHIFT}+x^{2}\\; 25 \\to 5$", "tipOrWarning": "Nota la diferencia con ClassWiz/ES PLUS: aquí la raíz requiere SHIFT."},
+      "alpha": {"available": true, "label": "Letra r", "category": "Alfabético", "summary": "Letra minúscula r (para funciones polares r=f(theta)).", "latexFormula": "$r$", "latexExample": "Polar $r = 2\\cos(\\theta)$", "tipOrWarning": "Disponible con ALPHA."}
+    },
+    {
+      "calcIdx": 2, "keyId": 16, "keyName": "POT", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 62, "demoSeq": [41, 16, 36, 49],
+      "normal": {"available": true, "label": "Potencia ^", "category": "Álgebra", "summary": "Eleva a cualquier exponente.", "latexFormula": "$x^{n}$", "latexExample": "$2^{5} = 32$", "tipOrWarning": "Usa flecha derecha para salir del exponente en entrada Math."},
+      "shift": {"available": true, "label": "Raíz n-ésima", "category": "Álgebra", "summary": "Raíz de orden arbitrario.", "latexFormula": "$\\sqrt[n]{x}$", "latexExample": "$\\sqrt[4]{16} = 2$", "tipOrWarning": "Está en SHIFT + '^'."},
+      "alpha": {"available": true, "label": "Símbolo theta", "category": "Alfabético", "summary": "Inserta $\\theta$.", "latexFormula": "$\\theta$", "latexExample": "Paramétrica/Polar", "tipOrWarning": "Usado en ecuaciones polares."}
+    },
+    {
+      "calcIdx": 2, "keyId": 17, "keyName": "EXIT", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 15, "demoSeq": [17],
+      "normal": {"available": true, "label": "EXIT (Salir submenú)", "category": "Navegación", "summary": "Retrocede un nivel desde cualquier menú, SET UP o pantalla gráfica.", "latexFormula": "$\\mathrm{EXIT}$", "latexExample": "Salir de SET UP a Run-Matrix", "tipOrWarning": "Equivalente al 'Atrás' universal en fx-CG50."},
+      "shift": {"available": true, "label": "QUIT", "category": "Navegación", "summary": "Sale del editor modal actual.", "latexFormula": "$\\mathrm{SHIFT} + \\mathrm{EXIT}$", "latexExample": "Cerrar pantalla", "tipOrWarning": "Alternativa a EXIT en depuración."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 18, "keyName": "X_THETA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 133, "demoSeq": [18],
+      "normal": {"available": true, "label": "Variable X,theta,T", "category": "Álgebra/Gráficas", "summary": "Inserta automáticamente $X$ en rectangulares, $\\theta$ en polares o $T$ en paramétricas.", "latexFormula": "$X,\\theta,T$", "latexExample": "$Y_{1} = \\sin(X)$", "tipOrWarning": "Imprescindible al escribir ecuaciones de gráfica y tablas."},
+      "shift": {"available": true, "label": "Angulo polar", "category": "Complejos", "summary": "Símbolo polar $\\angle$.", "latexFormula": "$r\\angle\\theta$", "latexExample": "$2\\angle 45$", "tipOrWarning": "Para complejos polares en Run-Matrix."},
+      "alpha": {"available": true, "label": "Variable A", "category": "Alfabético", "summary": "Letra A.", "latexFormula": "$A$", "latexExample": "$5 \\to A$", "tipOrWarning": "Asignable con flecha '->'."}
+    },
+    {
+      "calcIdx": 2, "keyId": 19, "keyName": "LOG", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 62, "demoSeq": [19, 40, 45, 45, 49],
+      "normal": {"available": true, "label": "Logaritmo base 10", "category": "Álgebra", "summary": "Calcula $\\log_{10}(x)$.", "latexFormula": "$\\log(x)$", "latexExample": "$\\log(1000) = 3$", "tipOrWarning": "Para otra base usa MATH -> logab(."},
+      "shift": {"available": true, "label": "Base 10^x", "category": "Álgebra", "summary": "Antilogaritmo $10^{x}$.", "latexFormula": "$10^{x}$", "latexExample": "$10^{2} = 100$", "tipOrWarning": "Inversa de log."},
+      "alpha": {"available": true, "label": "Variable B", "category": "Alfabético", "summary": "Letra B.", "latexFormula": "$B$", "latexExample": "Variable B", "tipOrWarning": "Asignable con ->."}
+    },
+    {
+      "calcIdx": 2, "keyId": 20, "keyName": "LN", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 62, "demoSeq": [20, 40, 49],
+      "normal": {"available": true, "label": "Logaritmo Natural", "category": "Álgebra", "summary": "Calcula $\\ln(x)$.", "latexFormula": "$\\ln(x)$", "latexExample": "$\\ln(e) = 1$", "tipOrWarning": "Base $e$."},
+      "shift": {"available": true, "label": "Exponencial e^x", "category": "Álgebra", "summary": "Calcula $e^{x}$.", "latexFormula": "$e^{x}$", "latexExample": "$e^{1}$", "tipOrWarning": "Inversa de ln."},
+      "alpha": {"available": true, "label": "Variable C", "category": "Alfabético", "summary": "Letra C.", "latexFormula": "$C$", "latexExample": "Variable C", "tipOrWarning": "ALPHA + ln."}
+    },
+    {
+      "calcIdx": 2, "keyId": 21, "keyName": "SIN", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 61, "demoSeq": [21, 42, 45, 49],
+      "normal": {"available": true, "label": "Seno $\\sin$", "category": "Trigonometría", "summary": "Calcula $\\sin(\\theta)$ según SET UP (Deg o Rad).", "latexFormula": "$\\sin(x)$", "latexExample": "$\\sin(30^{\\circ}) = 0.5$", "tipOrWarning": "La barra superior muestra Deg o Rad."},
+      "shift": {"available": true, "label": "Arcoseno $\\sin^{-1}$", "category": "Trigonometría", "summary": "Calcula $\\sin^{-1}(x)$.", "latexFormula": "$\\sin^{-1}(x)$", "latexExample": "$\\sin^{-1}(0.5) = 30^{\\circ}$", "tipOrWarning": "Dominio $[-1, 1]$."},
+      "alpha": {"available": true, "label": "Variable D", "category": "Alfabético", "summary": "Letra $D$.", "latexFormula": "$D$", "latexExample": "Variable $D$", "tipOrWarning": "ALPHA + sin."}
+    },
+    {
+      "calcIdx": 2, "keyId": 22, "keyName": "COS", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 61, "demoSeq": [22, 37, 45, 49],
+      "normal": {"available": true, "label": "Coseno $\\cos$", "category": "Trigonometría", "summary": "Calcula $\\cos(\\theta)$.", "latexFormula": "$\\cos(x)$", "latexExample": "$\\cos(60^{\\circ}) = 0.5$", "tipOrWarning": "Verifica unidad angular."},
+      "shift": {"available": true, "label": "Arcocoseno $\\cos^{-1}$", "category": "Trigonometría", "summary": "Calcula $\\cos^{-1}(x)$.", "latexFormula": "$\\cos^{-1}(x)$", "latexExample": "$\\cos^{-1}(0.5) = 60^{\\circ}$", "tipOrWarning": "Dominio $[-1, 1]$."},
+      "alpha": {"available": true, "label": "Variable E", "category": "Alfabético", "summary": "Letra $E$.", "latexFormula": "$E$", "latexExample": "Variable $E$", "tipOrWarning": "ALPHA + cos."}
+    },
+    {
+      "calcIdx": 2, "keyId": 23, "keyName": "TAN", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 61, "demoSeq": [23, 35, 36, 49],
+      "normal": {"available": true, "label": "Tangente $\\tan$", "category": "Trigonometría", "summary": "Calcula $\\tan(\\theta)$.", "latexFormula": "$\\tan(x)$", "latexExample": "$\\tan(45^{\\circ}) = 1$", "tipOrWarning": "Falla en asíntotas."},
+      "shift": {"available": true, "label": "Arcotangente $\\tan^{-1}$", "category": "Trigonometría", "summary": "Calcula $\\tan^{-1}(x)$.", "latexFormula": "$\\tan^{-1}(x)$", "latexExample": "$\\tan^{-1}(1) = 45^{\\circ}$", "tipOrWarning": "Rango principal $(-90^{\\circ}, 90^{\\circ})$."},
+      "alpha": {"available": true, "label": "Variable F", "category": "Alfabético", "summary": "Letra $F$.", "latexFormula": "$F$", "latexExample": "Variable $F$", "tipOrWarning": "ALPHA + tan."}
+    },
+    {
+      "calcIdx": 2, "keyId": 24, "keyName": "FRAC", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 56, "demoSeq": [24, 42, 13, 35, 49],
+      "normal": {"available": true, "label": "Fracción", "category": "Básicas", "summary": "Inserta fracción natural $\\frac{a}{b}$.", "latexFormula": "$\\frac{a}{b}$", "latexExample": "$\\frac{3}{4}$", "tipOrWarning": "Alterna fracción/decimal con F<->D."},
+      "shift": {"available": true, "label": "Fracción Mixta", "category": "Básicas", "summary": "Inserta entero + fracción.", "latexFormula": "$a\\frac{b}{c}$", "latexExample": "$1\\frac{1}{2}$", "tipOrWarning": "SHIFT + a/b."},
+      "alpha": {"available": true, "label": "Variable G", "category": "Alfabético", "summary": "Letra G.", "latexFormula": "$G$", "latexExample": "Variable G", "tipOrWarning": "ALPHA + a/b."}
+    },
+    {
+      "calcIdx": 2, "keyId": 25, "keyName": "SD", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 56, "demoSeq": [24, 42, 13, 35, 49, 25],
+      "normal": {"available": true, "label": "F<->D / S<=>D", "category": "Formato", "summary": "Alterna el resultado entre fracción/radical exacto y decimal.", "latexFormula": "$\\frac{3}{4} \\Leftrightarrow 0.75$", "latexExample": "$\\sqrt{2} \\Leftrightarrow 1.41421...$", "tipOrWarning": "En CG50 física aparece como F<->D / S<=>D."},
+      "shift": {"available": true, "label": "a b/c <-> d/c", "category": "Formato", "summary": "Alterna mixta e impropia.", "latexFormula": "$1\\frac{1}{2} \\Leftrightarrow \\frac{3}{2}$", "latexExample": "SHIFT + F<->D", "tipOrWarning": "Conversión inmediata."},
+      "alpha": {"available": true, "label": "Variable H", "category": "Alfabético", "summary": "Letra H.", "latexFormula": "$H$", "latexExample": "Variable H", "tipOrWarning": "ALPHA + F<->D."}
+    },
+    {
+      "calcIdx": 2, "keyId": 26, "keyName": "PAREN_A", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Paréntesis (", "category": "Edición", "summary": "Abre agrupación.", "latexFormula": "$(...)$", "latexExample": "$(2+3)\\times 4 = 20$", "tipOrWarning": "Ayuda a evitar ambigüedades en fórmulas."},
+      "shift": {"available": true, "label": "Raíz Cúbica", "category": "Álgebra", "summary": "Calcula $\\sqrt[3]{x}$ (en CG50 está en SHIFT + '(').", "latexFormula": "$\\sqrt[3]{x}$", "latexExample": "$\\sqrt[3]{-8} = -2$", "tipOrWarning": "Posición propia de la serie fx-CG."},
+      "alpha": {"available": true, "label": "Variable I", "category": "Alfabético", "summary": "Letra I.", "latexFormula": "$I$", "latexExample": "Variable I", "tipOrWarning": "ALPHA + '('."}
+    },
+    {
+      "calcIdx": 2, "keyId": 27, "keyName": "PAREN_C", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Paréntesis )", "category": "Edición", "summary": "Cierra agrupación.", "latexFormula": "$(...)$", "latexExample": "$\\sin(X)$", "tipOrWarning": "Siempre cierra funciones."},
+      "shift": {"available": true, "label": "Inverso x^-1", "category": "Álgebra", "summary": "Calcula recíproco $x^{-1}$ (en CG50 está en SHIFT + ')').", "latexFormula": "$x^{-1} = \\frac{1}{x}$", "latexExample": "$4^{-1} = 0.25$", "tipOrWarning": "No dividir por 0."},
+      "alpha": {"available": true, "label": "Variable J", "category": "Alfabético", "summary": "Letra J.", "latexFormula": "$J$", "latexExample": "Variable J", "tipOrWarning": "ALPHA + ')'."}
+    },
+    {
+      "calcIdx": 2, "keyId": 28, "keyName": "COMA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Coma ,", "category": "Sintaxis", "summary": "Separa argumentos en listas, matrices y comandos.", "latexFormula": "$f(a, b)$", "latexExample": "$\\mathrm{Pol}(3, 4)$", "tipOrWarning": "También separa pasos en ciertos comandos."},
+      "shift": {"available": true, "label": "Conversión fraccional/mixta", "category": "Formato", "summary": "Acceso secundario de formato rápido.", "latexFormula": "$a\\frac{b}{c}$", "latexExample": "SHIFT + ','", "tipOrWarning": "Formato de entrada."},
+      "alpha": {"available": true, "label": "Variable K", "category": "Alfabético", "summary": "Letra K.", "latexFormula": "$K$", "latexExample": "Variable K", "tipOrWarning": "ALPHA + ','."}
+    },
+    {
+      "calcIdx": 2, "keyId": 29, "keyName": "FLECHA", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 59, "demoSeq": [],
+      "normal": {"available": true, "label": "Asignar -> (STO)", "category": "Memorias", "summary": "Asigna el valor o matriz izquierda a la variable derecha.", "latexFormula": "$\\mathrm{valor} \\to \\mathrm{Variable}$", "latexExample": "$5 \\to \\mathrm{ALPHA}\\; A \\; \\mathrm{EXE}$", "tipOrWarning": "En CG50 '->' es tecla directa; reemplaza al STO de ClassWiz/ES."},
+      "shift": {"available": true, "label": "Cambio/Unidad", "category": "Edición", "summary": "Alterna vista o conversión en editores específicos.", "latexFormula": "$\\mathrm{SHIFT} + \\to$", "latexExample": "Uso contextual", "tipOrWarning": "Según aplicación."},
+      "alpha": {"available": true, "label": "Variable L", "category": "Alfabético", "summary": "Letra L.", "latexFormula": "$L$", "latexExample": "Variable L", "tipOrWarning": "ALPHA + '->'."}
+    },
+    {
+      "calcIdx": 2, "keyId": 30, "keyName": "7", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 7", "category": "Numérico", "summary": "Ingresa 7.", "latexFormula": "$7$", "latexExample": "7", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "CAPTURE", "category": "Utilidad", "summary": "Captura imagen de pantalla LCD en equipo físico.", "latexFormula": "$\\mathrm{SHIFT}+7$", "latexExample": "Captura interna CG50", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "M", "category": "Alfabético", "summary": "Letra M.", "latexFormula": "$M$", "latexExample": "Variable M", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 31, "keyName": "8", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 8", "category": "Numérico", "summary": "Ingresa 8.", "latexFormula": "$8$", "latexExample": "8", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "CLIP", "category": "Edición", "summary": "Copia la selección al portapapeles interno de la calculadora.", "latexFormula": "$\\mathrm{SHIFT}+8$", "latexExample": "Seleccionar y copiar fórmula", "tipOrWarning": "Se pega con PASTE (SHIFT+9)."},
+      "alpha": {"available": true, "label": "N", "category": "Alfabético", "summary": "Letra N.", "latexFormula": "$N$", "latexExample": "Variable N", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 32, "keyName": "9", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 9", "category": "Numérico", "summary": "Ingresa 9.", "latexFormula": "$9$", "latexExample": "9", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "PASTE", "category": "Edición", "summary": "Pega texto copiado con CLIP.", "latexFormula": "$\\mathrm{SHIFT}+9$", "latexExample": "Reutilizar expresiones largas", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "O", "category": "Alfabético", "summary": "Letra O.", "latexFormula": "$O$", "latexExample": "Variable O", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 33, "keyName": "DEL", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "DEL", "category": "Edición", "summary": "Borra carácter a la izquierda.", "latexFormula": "$\\mathrm{DEL}$", "latexExample": "Editar", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "INS", "category": "Edición", "summary": "Alterna inserción.", "latexFormula": "$\\mathrm{SHIFT}+\\mathrm{DEL}$", "latexExample": "Insertar", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "UNDO", "category": "Edición", "summary": "Deshacer acción en editor.", "latexFormula": "$\\mathrm{ALPHA}+\\mathrm{DEL}$", "latexExample": "Recuperar edición", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 34, "keyName": "AC", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 48, "demoSeq": [],
+      "normal": {"available": true, "label": "AC / ON", "category": "Edición/Sistema", "summary": "Limpia entrada o cancela error.", "latexFormula": "$\\mathrm{AC}$", "latexExample": "Limpiar", "tipOrWarning": "Con SHIFT apaga equipo."},
+      "shift": {"available": true, "label": "OFF", "category": "Sistema", "summary": "Apaga la calculadora.", "latexFormula": "$\\mathrm{SHIFT}+\\mathrm{AC}$", "latexExample": "Apagado", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 35, "keyName": "4", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 58, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 4", "category": "Numérico", "summary": "Ingresa 4.", "latexFormula": "$4$", "latexExample": "4", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "CATALOG", "category": "Referencia", "summary": "Lista alfabética de todos los comandos de fx-CG50 con descripción y ejemplos.", "latexFormula": "$\\mathrm{SHIFT}+4$", "latexExample": "Buscar cualquier función", "tipOrWarning": "Atajo indispensable si no recuerdas el submenú de un comando."},
+      "alpha": {"available": true, "label": "P", "category": "Alfabético", "summary": "Letra P.", "latexFormula": "$P$", "latexExample": "Variable P", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 36, "keyName": "5", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 5", "category": "Numérico", "summary": "Ingresa 5.", "latexFormula": "$5$", "latexExample": "5", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "FORMAT", "category": "Apariencia", "summary": "Cambia colores de texto/línea en programas, gráficas y tablas.", "latexFormula": "$\\mathrm{SHIFT}+5$", "latexExample": "Color de trazo", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "Q", "category": "Alfabético", "summary": "Letra Q.", "latexFormula": "$Q$", "latexExample": "Variable Q", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 37, "keyName": "6", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 6", "category": "Numérico", "summary": "Ingresa 6.", "latexFormula": "$6$", "latexExample": "6", "tipOrWarning": ""},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "R", "category": "Alfabético", "summary": "Letra R.", "latexFormula": "$R$", "latexExample": "Variable R", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 38, "keyName": "POR", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Multiplicación x", "category": "Básicas", "summary": "Multiplica valores.", "latexFormula": "$a \\times b$", "latexExample": "$4 \\times 5 = 20$", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "Llave {", "category": "Listas", "summary": "Abre llave de lista numérica $\\{1, 2, 3\\}$.", "latexFormula": "$\\{1,2,3\\}$", "latexExample": "$\\{2,4,6\\} \\to \\mathrm{List\\,1}$", "tipOrWarning": "Fundamental para listas en Run-Matrix."},
+      "alpha": {"available": true, "label": "S", "category": "Alfabético", "summary": "Letra S.", "latexFormula": "$S$", "latexExample": "Variable S", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 39, "keyName": "ENTRE", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "División /", "category": "Básicas", "summary": "Divide entre divisor no nulo.", "latexFormula": "$a \\div b$", "latexExample": "$12 \\div 3 = 4$", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "Llave }", "category": "Listas", "summary": "Cierra lista numérica.", "latexFormula": "$\\{...\\}$", "latexExample": "$\\{1,2,3\\}$", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "T", "category": "Alfabético", "summary": "Letra T.", "latexFormula": "$T$", "latexExample": "Variable T", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 40, "keyName": "1", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 1", "category": "Numérico", "summary": "Ingresa 1.", "latexFormula": "$1$", "latexExample": "1", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "List", "category": "Listas", "summary": "Inserta palabra reservada 'List'.", "latexFormula": "$\\mathrm{List}\\,1$", "latexExample": "$\\mathrm{List\\,1}[3]$", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "U", "category": "Alfabético", "summary": "Letra U.", "latexFormula": "$U$", "latexExample": "Variable U", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 41, "keyName": "2", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 91, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 2", "category": "Numérico", "summary": "Ingresa 2.", "latexFormula": "$2$", "latexExample": "2", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "Mat", "category": "Matrices", "summary": "Inserta palabra reservada 'Mat' para referenciar Mat A..Mat Z.", "latexFormula": "$\\mathrm{Mat\\,A}$", "latexExample": "$\\mathrm{Mat\\,A} \\times \\mathrm{Mat\\,B}$", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "V", "category": "Alfabético", "summary": "Letra V.", "latexFormula": "$V$", "latexExample": "Variable V", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 42, "keyName": "3", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 3", "category": "Numérico", "summary": "Ingresa 3.", "latexFormula": "$3$", "latexExample": "3", "tipOrWarning": ""},
+      "shift": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "W", "category": "Alfabético", "summary": "Letra W.", "latexFormula": "$W$", "latexExample": "Variable W", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 43, "keyName": "MAS", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Suma +", "category": "Básicas", "summary": "Suma.", "latexFormula": "$a+b$", "latexExample": "$2+3=5$", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "Corchete [", "category": "Matrices", "summary": "Abre corchete para definir matrices en línea $[[1,2],[3,4]]$.", "latexFormula": "$[[a,b],[c,d]]$", "latexExample": "$[[1,2],[3,4]] \\to \\mathrm{Mat\\,A}$", "tipOrWarning": "En CG50 puedes crear matrices directo sin editor separado."},
+      "alpha": {"available": true, "label": "X", "category": "Alfabético", "summary": "Letra X.", "latexFormula": "$X$", "latexExample": "Variable X", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 44, "keyName": "MENOS", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Resta -", "category": "Básicas", "summary": "Resta.", "latexFormula": "$a-b$", "latexExample": "$9-4=5$", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "Corchete ]", "category": "Matrices", "summary": "Cierra corchete de matriz.", "latexFormula": "$[[...]]$", "latexExample": "$[[1,2],[3,4]]$", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "Y", "category": "Alfabético", "summary": "Letra Y.", "latexFormula": "$Y$", "latexExample": "Variable Y", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 45, "keyName": "0", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 85, "demoSeq": [],
+      "normal": {"available": true, "label": "Dígito 0", "category": "Numérico", "summary": "Ingresa 0.", "latexFormula": "$0$", "latexExample": "0", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "i (Imaginario)", "category": "Complejos", "summary": "Unidad imaginaria $i$ en CG50 (siempre disponible sin cambiar de modo).", "latexFormula": "$a + bi$", "latexExample": "$(2+3i)^{2} = -5+12i$", "tipOrWarning": "Ventaja CG50: admite complejos directo en Run-Matrix."},
+      "alpha": {"available": true, "label": "Z", "category": "Alfabético", "summary": "Letra Z.", "latexFormula": "$Z$", "latexExample": "Variable Z", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 46, "keyName": "PUNTO", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Punto decimal .", "category": "Numérico", "summary": "Punto decimal.", "latexFormula": "$3.5$", "latexExample": "3.5", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "=", "category": "Sintaxis", "summary": "Inserta signo '=' relacional.", "latexFormula": "$A=B$", "latexExample": "Condiciones/Ecuaciones", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "SPACE", "category": "Alfabético", "summary": "Espacio en cadenas de texto.", "latexFormula": "$\"\\mathrm{a\\,b}\"$", "latexExample": "Texto en programas", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 47, "keyName": "EXP", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "x10^x", "category": "Científica", "summary": "Notación exponencial.", "latexFormula": "$a \\times 10^{b}$", "latexExample": "$6.02\\times 10^{23}$", "tipOrWarning": ""},
+      "shift": {"available": true, "label": "Constante Pi", "category": "Constantes", "summary": "Constante $\\pi$.", "latexFormula": "$\\pi$", "latexExample": "$\\sin(\\pi/2)$", "tipOrWarning": ""},
+      "alpha": {"available": true, "label": "Comillas \"", "category": "Alfabético", "summary": "Comillas para texto.", "latexFormula": "$\"\\mathrm{Hola}\"$", "latexExample": "Locate/Text", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 48, "keyName": "NEGATIVO", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 52, "demoSeq": [],
+      "normal": {"available": true, "label": "Negativo (-)", "category": "Básicas", "summary": "Signo negativo unario.", "latexFormula": "$-x$", "latexExample": "$(-5)+2 = -3$", "tipOrWarning": "En CG50 este botón está junto a EXE; su SHIFT es Ans."},
+      "shift": {"available": true, "label": "Ans", "category": "Memorias", "summary": "Último resultado calculado.", "latexFormula": "$\\mathrm{Ans}$", "latexExample": "$\\mathrm{SHIFT} + (-)$", "tipOrWarning": "Nota importante: en CG50 Ans está en SHIFT+(-)."},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    },
+    {
+      "calcIdx": 2, "keyId": 49, "keyName": "EXE", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 51, "demoSeq": [41, 43, 42, 49],
+      "normal": {"available": true, "label": "EXE (Ejecutar)", "category": "Ejecutador", "summary": "Evalúa la operación o confirma selección en menús.", "latexFormula": "$\\mathrm{EXE}$", "latexExample": "$2+3\\,\\mathrm{EXE} \\to 5$", "tipOrWarning": "Equivalente al '=' de las calculadoras científicas."},
+      "shift": {"available": true, "label": "Nueva línea", "category": "Programación", "summary": "Salto de línea.", "latexFormula": "$\\hookleftarrow$", "latexExample": "En programas", "tipOrWarning": ""},
+      "alpha": {"available": false, "label": "", "category": "", "summary": "", "latexFormula": "", "latexExample": "", "tipOrWarning": ""}
+    }
+  ],
+  "indicators": [
+    {"calcIdx": 0, "spriteIndex": 0, "symbol": "S", "title": "Indicador SHIFT", "meaning": "Teclado desplazado a segunda función (dorada).", "whenAppears": "Al presionar [SHIFT]. Se apaga después de la siguiente tecla.", "relatedKeys": "[SHIFT]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 0, "spriteIndex": 1, "symbol": "A", "title": "Indicador ALPHA", "meaning": "Modo alfabético/variables rojo activo.", "whenAppears": "Al presionar [ALPHA].", "relatedKeys": "[ALPHA]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 0, "spriteIndex": 2, "symbol": "M", "title": "Memoria Independiente", "meaning": "Existe un valor distinto de 0 guardado en la variable M.", "whenAppears": "Tras usar [M+] o guardar en M con [STO].", "relatedKeys": "[M+], [SHIFT]+[STO] (RECALL)", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 0, "spriteIndex": 3, "symbol": "STO", "title": "En espera de Guardar (STO)", "meaning": "El próximo botón de variable guardará el número en pantalla.", "whenAppears": "Después de presionar [STO].", "relatedKeys": "[STO] + A..F/x/y/M", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 0, "spriteIndex": 4, "symbol": "Math", "title": "Formato Natural", "meaning": "Entrada/salida en formato de libro de texto (fracciones y raíces).", "whenAppears": "Cuando SETUP Entrada/Salida = E Mat/S Mat o E Mat/S Dec.", "relatedKeys": "[SHIFT]+[MENU] -> 1", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 7},
+    {"calcIdx": 0, "spriteIndex": 5, "symbol": "D", "title": "Grados Sexagesimales (Deg)", "meaning": "La unidad angular activa es grados (360° por vuelta).", "whenAppears": "Por defecto al inicializar o en SETUP -> Unidad angular -> 1.", "relatedKeys": "[SHIFT]+[MENU] -> 2 -> 1", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16},
+    {"calcIdx": 0, "spriteIndex": 6, "symbol": "R", "title": "Radianes (Rad)", "meaning": "La unidad angular activa es radianes (2π rad por vuelta).", "whenAppears": "Al elegir SETUP -> Unidad angular -> 2.", "relatedKeys": "[SHIFT]+[MENU] -> 2 -> 2", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16},
+    {"calcIdx": 0, "spriteIndex": 7, "symbol": "G", "title": "Gradianes (Gra)", "meaning": "La unidad angular activa es gradianes (400g por vuelta).", "whenAppears": "Al elegir SETUP -> Unidad angular -> 3.", "relatedKeys": "[SHIFT]+[MENU] -> 2 -> 3", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16},
+    {"calcIdx": 0, "spriteIndex": 8, "symbol": "FIX", "title": "Decimales Fijos (Fix)", "meaning": "Los resultados visibles se redondean a N decimales fijos (0..9). No altera precisión interna salvo usar Rnd.", "whenAppears": "En SETUP -> Formato número -> 1 (Fijar dec.).", "relatedKeys": "[SHIFT]+[MENU] -> 3 -> 1", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 8},
+    {"calcIdx": 0, "spriteIndex": 9, "symbol": "SCI", "title": "Notación Científica (Sci)", "meaning": "Los resultados visibles muestran N cifras significativas (0..9).", "whenAppears": "En SETUP -> Formato número -> 2 (Not. científica).", "relatedKeys": "[SHIFT]+[MENU] -> 3 -> 2", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 8},
+    {"calcIdx": 0, "spriteIndex": 10, "symbol": "E", "title": "Indicador E / Notación", "meaning": "Indica notación exponencial o modo/estado especial E.", "whenAppears": "Según configuración de formato o pantalla.", "relatedKeys": "[ENG], SETUP", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 0, "spriteIndex": 11, "symbol": "i", "title": "Modo Complejos (i)", "meaning": "La calculadora está en modo Números Complejos (a + bi).", "whenAppears": "Al entrar en MENU -> 2.", "relatedKeys": "[MENU] -> 2", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 20},
+    {"calcIdx": 0, "spriteIndex": 12, "symbol": "Ang", "title": "Coordenadas Polares (Ang)", "meaning": "Modo polar activo o esperando magnitud/fase r∠θ.", "whenAppears": "En Complejos o al configurar salida polar.", "relatedKeys": "[OPTN], [SHIFT]+[ENG]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 20},
+    {"calcIdx": 0, "spriteIndex": 13, "symbol": "Menu+", "title": "Más elementos abajo", "meaning": "Indica desplazamiento disponible en listas o tablas.", "whenAppears": "Cuando un menú supera una pantalla.", "relatedKeys": "[ABAJO] / [ARRIBA]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 0, "spriteIndex": 14, "symbol": "<", "title": "Expresión a la Izquierda", "meaning": "Hay contenido oculto hacia la izquierda de la pantalla.", "whenAppears": "Al escribir o inspeccionar fórmulas largas.", "relatedKeys": "[IZQUIERDA]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 11},
+    {"calcIdx": 0, "spriteIndex": 15, "symbol": "v", "title": "Historial / Tabla abajo", "meaning": "Existen más filas o resultados debajo.", "whenAppears": "Después de encadenar varios cálculos o listas.", "relatedKeys": "[ABAJO]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 14},
+    {"calcIdx": 0, "spriteIndex": 16, "symbol": "^", "title": "Historial / Tabla arriba", "meaning": "Existen cálculos anteriores accesibles arriba.", "whenAppears": "Tras ejecutar al menos dos expresiones seguidas.", "relatedKeys": "[ARRIBA]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 14},
+    {"calcIdx": 0, "spriteIndex": 17, "symbol": ">", "title": "Expresión a la Derecha", "meaning": "La expresión continúa fuera del borde derecho LCD.", "whenAppears": "En fórmulas largas o resultados extensos.", "relatedKeys": "[DERECHA]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 11},
+    {"calcIdx": 0, "spriteIndex": 18, "symbol": "Pause", "title": "Pausa Multisentencia", "meaning": "Ejecución detenida entre sentencias separadas por ':'.", "whenAppears": "Después de presionar '=' en fórmula con ':'.", "relatedKeys": "[=], [ALPHA]+[INTEGRAL]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 13},
+    {"calcIdx": 0, "spriteIndex": 19, "symbol": "Solar", "title": "Indicador Solar", "meaning": "Símbolo de alimentación solar activa en el LCD.", "whenAppears": "Visible cuando el panel recibe luz suficiente.", "relatedKeys": "Panel solar superior", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 1, "spriteIndex": 0, "symbol": "S", "title": "Indicador SHIFT", "meaning": "Funciones doradas habilitadas para la próxima tecla.", "whenAppears": "Al presionar [SHIFT].", "relatedKeys": "[SHIFT]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 1, "spriteIndex": 1, "symbol": "A", "title": "Indicador ALPHA", "meaning": "Variables y funciones rojas habilitadas.", "whenAppears": "Al presionar [ALPHA].", "relatedKeys": "[ALPHA]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 1, "spriteIndex": 2, "symbol": "M", "title": "Memoria Independiente", "meaning": "Memoria M contiene un número distinto de 0.", "whenAppears": "Al acumular con [M+] o [SHIFT]+[RCL] -> M.", "relatedKeys": "[M+], [RCL]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 1, "spriteIndex": 3, "symbol": "STO", "title": "Guardar (STO)", "meaning": "Esperando tecla de variable A..F, X, Y, M para almacenar.", "whenAppears": "Tras presionar [SHIFT] + [RCL] (STO).", "relatedKeys": "[SHIFT]+[RCL]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 1, "spriteIndex": 4, "symbol": "RCL", "title": "Recuperar (RCL)", "meaning": "Esperando tecla de variable para consultar su valor.", "whenAppears": "Tras presionar [RCL].", "relatedKeys": "[RCL]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 5},
+    {"calcIdx": 1, "spriteIndex": 5, "symbol": "STAT", "title": "Modo Estadística", "meaning": "Calculadora en modo estadístico y regresiones.", "whenAppears": "Al pulsar [MODE] -> 3 (STAT).", "relatedKeys": "[MODE] -> 3", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 6, "symbol": "CMPLX", "title": "Modo Complejos", "meaning": "Admite unidad imaginaria i y coordenadas polares r<theta.", "whenAppears": "Al pulsar [MODE] -> 2 (CMPLX).", "relatedKeys": "[MODE] -> 2", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 7, "symbol": "MAT", "title": "Modo Matrices", "meaning": "Habilita MatA, MatB, MatC y operaciones matriciales.", "whenAppears": "Al pulsar [MODE] -> 6 (MATRIX).", "relatedKeys": "[MODE] -> 6", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 8, "symbol": "VCT", "title": "Modo Vectores", "meaning": "Habilita VctA, VctB, VctC y producto punto/cruz.", "whenAppears": "Al pulsar [MODE] -> 8 (VECTOR).", "relatedKeys": "[MODE] -> 8", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 9, "symbol": "D", "title": "Grados Sexagesimales (Deg)", "meaning": "Unidad angular en grados (360°).", "whenAppears": "SETUP -> 3 (Deg).", "relatedKeys": "[SHIFT]+[MODE] -> 3", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 10, "symbol": "R", "title": "Radianes (Rad)", "meaning": "Unidad angular en radianes (2π rad).", "whenAppears": "SETUP -> 4 (Rad).", "relatedKeys": "[SHIFT]+[MODE] -> 4", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 11, "symbol": "G", "title": "Gradianes (Gra)", "meaning": "Unidad angular en gradianes (400g).", "whenAppears": "SETUP -> 5 (Gra).", "relatedKeys": "[SHIFT]+[MODE] -> 5", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 12, "symbol": "FIX", "title": "Decimales Fijos", "meaning": "Presentación redondeada a N decimales visibles.", "whenAppears": "SETUP -> 6 (Fix) + dígito 0..9.", "relatedKeys": "[SHIFT]+[MODE] -> 6", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 13, "symbol": "SCI", "title": "Notación Científica", "meaning": "Presentación con N cifras significativas.", "whenAppears": "SETUP -> 7 (Sci) + dígito 0..9.", "relatedKeys": "[SHIFT]+[MODE] -> 7", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 14, "symbol": "Math", "title": "Visualización Natural", "meaning": "Modo MthIO (Natural-V.P.A.M.): fracciones y radicales en 2D.", "whenAppears": "SETUP -> 1 (MthIO).", "relatedKeys": "[SHIFT]+[MODE] -> 1", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6},
+    {"calcIdx": 1, "spriteIndex": 15, "symbol": "v", "title": "Historial abajo", "meaning": "Hay resultados o líneas adicionales debajo.", "whenAppears": "Cuando existen múltiples cálculos en memoria.", "relatedKeys": "[ABAJO]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15},
+    {"calcIdx": 1, "spriteIndex": 16, "symbol": "^", "title": "Historial arriba", "meaning": "Hay cálculos previos accesibles arriba.", "whenAppears": "Tras ejecutar varias operaciones seguidas.", "relatedKeys": "[ARRIBA]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15},
+    {"calcIdx": 1, "spriteIndex": 17, "symbol": "Disp", "title": "Pantalla en pausa (':')", "meaning": "Indica pausa intermedia dentro de un cálculo multisentencia.", "whenAppears": "Al usar [ALPHA] + [INTEGRAL] (':').", "relatedKeys": "[=], [ALPHA]+[INTEGRAL]", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 15}
+  ],
+  "procedures": [
+    {"id": "proc_def_integral", "category": "Cálculo", "title": "Integral definida en un intervalo [a, b]", "goalSummary": "Calcula numéricamente el área neta bajo la curva ingresando integrando y límites directamente.", "latexFormula": "$\\int_{0}^{3} (x^{2} + 2x)\\,dx = \\left[\\frac{x^{3}}{3} + x^{2}\\right]_{0}^{3} = 18$", "commonErrors": "Olvidar salir del integrando con [DERECHA], o escribir una letra distinta de x/X.", "tags": "integral area definida gauss calculo dx", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 40, 10, 11, 14, 43, 41, 11, 4, 45, 4, 42, 49], "stepsSummary": "[MENU]->[1] (Calcular), [INTEGRAL], [x], [x^2], [+], [2], [x], [DERECHA], [0], [DERECHA], [3], [=]", "expectedLcd": "18", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 17}, {"calcIdx": 1, "supported": true, "keys": [4, 40, 9, 3, 27, 14, 43, 41, 3, 27, 6, 45, 6, 42, 49], "stepsSummary": "[MODE]->[1] (COMP), [INTEGRAL], [ALPHA]+[)], [x^2], [+], [2], [ALPHA]+[)], [DERECHA], [0], [DERECHA], [3], [=]", "expectedLcd": "18", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[1] (Run-Matrix) -> [F4] (MATH) -> [F6] -> [F1] (Integral dx) -> ingresar f(X), 0, 3 -> [EXE]", "expectedLcd": "18", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 25}]},
+    {"id": "proc_num_deriv", "category": "Cálculo", "title": "Derivada numérica en un punto x = a", "goalSummary": "Evalúa la tasa instantánea de cambio $f'(a)$ mediante diferenciación central.", "latexFormula": "$\\left.\\frac{d}{dx}(x^{3})\\right|_{x=2} = 3(2)^{2} = 12$", "commonErrors": "Usar grados cuando se deriva una función trigonométrica (en cálculo usar Rad).", "tags": "derivada d/dx pendiente tangente calculo", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 40, 0, 10, 11, 15, 42, 4, 4, 41, 49], "stepsSummary": "[MENU]->[1], [SHIFT]+[INTEGRAL] (d/dx), [x], [x^n], [3], [DERECHA], [DERECHA], [2], [=]", "expectedLcd": "12", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 17}, {"calcIdx": 1, "supported": true, "keys": [4, 40, 0, 9, 3, 27, 15, 42, 6, 6, 41, 49], "stepsSummary": "[MODE]->[1], [SHIFT]+[INTEGRAL] (d/dx), [ALPHA]+[)] (X), [x^n], [3], [DERECHA], [DERECHA], [2], [=]", "expectedLcd": "12", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 16}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[1] (Run-Matrix) -> [F4] (MATH) -> [F4] (d/dx) -> X^3, X=2 -> [EXE]", "expectedLcd": "12", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 25}]},
+    {"id": "proc_frac_dec", "category": "Básicas", "title": "Convertir fracción o radical a decimal y viceversa (S<=>D)", "goalSummary": "Alterna al instante entre resultado exacto (fracción/raíz/$\\pi$) y número decimal.", "latexFormula": "$\\frac{3}{4} \\Longleftrightarrow 0.75$", "commonErrors": "Tener activado 'Mat/Decimal' en SETUP (siempre devuelve decimales y no vuelve a fracción).", "tags": "fraccion decimal s<=>d convertir exacta aproximada", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 40, 12, 42, 5, 35, 49, 28], "stepsSummary": "[MENU]->[1], [a/b], [3], [ABAJO], [4], [=], [S<=>D]", "expectedLcd": "3/4 <-> 0.75", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 12}, {"calcIdx": 1, "supported": true, "keys": [4, 40, 12, 42, 7, 35, 49, 28], "stepsSummary": "[MODE]->[1], [a/b], [3], [ABAJO], [4], [=], [S<=>D]", "expectedLcd": "3/4 <-> 0.75", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 10}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "Run-Matrix -> [a/b], [3], [ABAJO], [4], [EXE] -> [F<->D] (S<=>D)", "expectedLcd": "3/4 <-> 0.75", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 56}]},
+    {"id": "proc_trig_deg_rad", "category": "Trigonometría", "title": "Cambiar unidad angular entre Grados (Deg) y Radianes (Rad)", "goalSummary": "Configura el indicador D o R antes de evaluar $\\sin, \\cos, \\tan$ o números complejos polares.", "latexFormula": "$\\sin(30^{\\circ}) = \\frac{1}{2} \\quad | \\quad \\sin\\left(\\frac{\\pi}{6}\\right) = \\frac{1}{2}$", "commonErrors": "Evaluar sen(30) con la letra 'R' arriba produce -0.98803 en vez de 0.5.", "tags": "angulos grados radianes deg rad seno coseno tangente trigonometria", "models": [{"calcIdx": 0, "supported": true, "keys": [0, 6, 41, 40, 21, 42, 45, 27, 49], "stepsSummary": "[SHIFT]+[MENU] (SETUP), [2] (Unidad angular), [1] (Grados D), [sin], [3], [0], [)], [=]", "expectedLcd": "1/2 (con D en LCD)", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 16}, {"calcIdx": 1, "supported": true, "keys": [0, 4, 42, 21, 42, 45, 27, 49], "stepsSummary": "[SHIFT]+[MODE] (SETUP), [3] (Deg), [sin], [3], [0], [)], [=]", "expectedLcd": "1/2 (con D en LCD)", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[SHIFT]+[MENU] (SET UP) -> bajar hasta Angle -> [F1] (Deg) o [F2] (Rad) -> [EXIT]", "expectedLcd": "Indicador Deg / Rad", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 53}]},
+    {"id": "proc_quad_eqn", "category": "Álgebra", "title": "Resolver ecuación cuadrática $ax^{2} + bx + c = 0$", "goalSummary": "Obtiene ambas raíces reales o complejas (y vértice en ClassWiz) ingresando coeficientes.", "latexFormula": "$x^{2} - 5x + 6 = 0 \\implies x_{1} = 3,\\; x_{2} = 2$", "commonErrors": "Olvidar usar signo negativo (-) para coeficientes negativos (ej: -5) o dejar coeficientes viejos.", "tags": "cuadratica polinomial raices ecuacion x1 x2 parabola", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 18, 41, 41, 40, 49, 18, 36, 49, 37, 49, 49], "stepsSummary": "[MENU], [(-)] (A:Ecuación), [2] (Polinómica), [2] (Grado 2), [1][=][(-5)][=][6][=][=]", "expectedLcd": "x1 = 3, x2 = 2", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 27}, {"calcIdx": 1, "supported": true, "keys": [4, 36, 42, 40, 49, 18, 36, 49, 37, 49, 49], "stepsSummary": "[MODE], [5] (EQN), [3] (aX^2+bX+c=0), [1][=][(-5)][=][6][=][=]", "expectedLcd": "X1 = 3, X2 = 2", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 23}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[A] (Equation) -> [F2] (Polynomial) -> [F1] (Degree 2) -> ingresar a,b,c -> [F1] (SOLVE)", "expectedLcd": "x1 = 3, x2 = 2", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 138}]},
+    {"id": "proc_sys_2x2", "category": "Álgebra", "title": "Sistema de ecuaciones lineales 2x2 (simultáneas)", "goalSummary": "Resuelve sistemas de forma $a_{1}x + b_{1}y = c_{1}$, $a_{2}x + b_{2}y = c_{2}$ con 2, 3 o 4 incógnitas.", "latexFormula": "$2x + y = 5,\\; x - y = 1 \\implies x = 2,\\; y = 1$", "commonErrors": "Introducir los términos constantes al lado izquierdo con signo incorrecto (deben ir al lado derecho '=c').", "tags": "sistema ecuaciones simultaneas lineales 2x2 x y", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 18, 40, 41, 41, 49, 40, 49, 36, 49, 40, 49, 18, 40, 49, 40, 49, 49], "stepsSummary": "[MENU], [(-)] (A:Ecuación), [1] (Simul), [2] (incógnitas), [2][=][1][=][5][=][1][=][(-1)][=][1][=][=]", "expectedLcd": "x = 2, y = 1", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 27}, {"calcIdx": 1, "supported": true, "keys": [4, 36, 40, 41, 49, 40, 49, 36, 49, 40, 49, 18, 40, 49, 40, 49, 49], "stepsSummary": "[MODE], [5] (EQN), [1] (anX+bnY=cn), [2][=][1][=][5][=][1][=][(-1)][=][1][=][=]", "expectedLcd": "X = 2, Y = 1", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 22}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[A] (Equation) -> [F1] (Simultaneous) -> [F1] (2 unknowns) -> matriz 2x3 -> [F1] (SOLVE)", "expectedLcd": "x = 2, y = 1", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 136}]},
+    {"id": "proc_solve_linear", "category": "Álgebra", "title": "Despejar incógnita x con SOLVE (Newton)", "goalSummary": "Encuentra una raíz numérica de ecuaciones lineales o no lineales cerca de un valor inicial.", "latexFormula": "$2x + 3 = 11 \\implies x = 4$", "commonErrors": "Usar el botón igual de abajo (= evaluador) en vez de [ALPHA]+[CALC] (= ecuación).", "tags": "solve despejar ecuacion incognita newton valor inicial", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 40, 41, 11, 43, 42, 1, 9, 40, 40, 0, 9, 49, 49], "stepsSummary": "[MENU]->[1], [2], [x], [+], [3], [ALPHA]+[CALC](=), [1], [1], [SHIFT]+[CALC](SOLVE), [=] (semilla), [=]", "expectedLcd": "x = 4, L-R = 0", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 21}, {"calcIdx": 1, "supported": true, "keys": [4, 40, 41, 3, 27, 43, 42, 3, 8, 40, 40, 0, 8, 49, 49], "stepsSummary": "[MODE]->[1], [2], [ALPHA]+[)], [+], [3], [ALPHA]+[CALC](=), [1], [1], [SHIFT]+[CALC](SOLVE), [=], [=]", "expectedLcd": "X = 4, L-R = 0", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 22}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[A] (Equation) -> [F3] (Solver) -> ingresar 2X+3=11 -> [EXE] -> valor inicial -> [F6] (SOLVE)", "expectedLcd": "X = 4, Lft-Rgt=0", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 140}]},
+    {"id": "proc_complex_rect_polar", "category": "Complejos", "title": "Números complejos: suma, módulo y forma polar (r<theta)", "goalSummary": "Opera con $a+bi$ y convierte entre forma cartesiana y fasorial $r\\angle\\theta$.", "latexFormula": "$3 + 4i = 5\\angle 53.13^{\\circ}$", "commonErrors": "Intentar escribir 'i' en modo Calcular (MENU 1) da Syntax ERROR; hay que entrar al modo Complejos.", "tags": "complejos fasor polar rectangular i cmplx modulo argumento", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 41, 42, 43, 35, 1, 25, 49], "stepsSummary": "[MENU]->[2] (Complejos, aparece 'i'), [3], [+], [4], [ALPHA]+[ENG] (i), [=]; para polar usar [OPTN]->[ABAJO]->[1]", "expectedLcd": "3 + 4i", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 20}, {"calcIdx": 1, "supported": true, "keys": [4, 41, 42, 43, 35, 3, 25, 49], "stepsSummary": "[MODE]->[2] (CMPLX), [3], [+], [4], [ALPHA]+[ENG] (i), [=]; para polar usar [SHIFT]+[2] -> [3]", "expectedLcd": "3 + 4i", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 20}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "En Run-Matrix: [3][+][4][SHIFT]+[0](i)[EXE]; en [OPTN]->[F3] (CPLX) convertir a polar", "expectedLcd": "3 + 4i", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 85}]},
+    {"id": "proc_matrix_mult", "category": "Matrices", "title": "Definir y multiplicar matrices 2x2 (MatA x MatB)", "goalSummary": "Crea dos matrices en memoria, calcula su producto y permite determinante o inversa.", "latexFormula": "$A = [[2, 1], [1, 1]],\\; \\det(A) = 1$", "commonErrors": "Dimension ERROR cuando columnas de A no coinciden con filas de B.", "tags": "matriz matrices mata matb producto determinante inversa dimension", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 35, 40, 41, 41, 41, 49, 40, 49, 40, 49, 40, 49], "stepsSummary": "[MENU]->[4] (Matriz), [1] (MatA), [2] filas, [2] cols, ingresar [2][=][1][=][1][=][1][=]; luego [OPTN] para operar", "expectedLcd": "MatA [[2,1],[1,1]]", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 28}, {"calcIdx": 1, "supported": true, "keys": [4, 37, 40, 36, 41, 49, 40, 49, 40, 49, 40, 49], "stepsSummary": "[MODE]->[6] (MATRIX), [1] (MatA), [5] (2x2), ingresar [2][=][1][=][1][=][1][=]; luego [AC] y [SHIFT]+[4] para operar", "expectedLcd": "MatA 2x2", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 32}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[1] (Run-Matrix) -> [F3] (>MAT) definir Mat A 2x2 o escribir [[2,1],[1,1]] -> [->Mat A]", "expectedLcd": "Mat A 2x2", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 91}]},
+    {"id": "proc_table_fx", "category": "Álgebra", "title": "Generar tabla de valores numéricos f(x)", "goalSummary": "Evalúa una función en un rango [Inicio, Final] con paso fijo.", "latexFormula": "$f(x) = x^{2} + 1,\\; x \\in [0, 4],\\; \\Delta x = 1$", "commonErrors": "Definir un rango con demasiados pasos (máx. ~30-45 filas) causa Insufficient MEM / Range ERROR.", "tags": "tabla valores fx rango paso graficar", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 32, 11, 14, 43, 40, 49, 49, 45, 49, 35, 49, 40, 49, 49], "stepsSummary": "[MENU]->[9] (Tabla), f(x)=[x^2+1][=], g(x)=[=], Inicio=[0][=], Final=[4][=], Paso=[1][=][=]", "expectedLcd": "Tabla x=0..4 -> 1,2,5,10,17", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 30}, {"calcIdx": 1, "supported": true, "keys": [4, 30, 3, 27, 14, 43, 40, 49, 45, 49, 35, 49, 40, 49], "stepsSummary": "[MODE]->[7] (TABLE), f(X)=[X^2+1][=], Start=[0][=], End=[4][=], Step=[1][=]", "expectedLcd": "Tabla X=0..4", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 7}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[7] (Table) -> Y1=X^2+1 -> [F5] (SET) rango -> [F6] (TABL)", "expectedLcd": "Tabla color", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 7}]},
+    {"id": "proc_store_vars", "category": "Básicas", "title": "Guardar constantes propias en variables (A-F) y usar Ans", "goalSummary": "Almacena valores intermedios sin errores de redondeo manual y recupéralos en cálculos siguientes.", "latexFormula": "$9.81 \\to A,\\quad 5 \\times A = 49.05$", "commonErrors": "Confundir [STO] directa (ClassWiz) con [SHIFT]+[RCL] (ES PLUS) o con flecha [->] (CG50).", "tags": "guardar memoria sto rcl variables ans constante", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 40, 32, 46, 31, 40, 24, 18, 36, 38, 1, 18, 49], "stepsSummary": "[MENU]->[1], [9.81], [STO], [(-)] (A), luego [5], [x], [ALPHA]+[(-)] (A), [=]", "expectedLcd": "9.81 -> A ; 49.05", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 15}, {"calcIdx": 1, "supported": true, "keys": [4, 40, 32, 46, 31, 40, 0, 24, 18, 36, 38, 3, 18, 49], "stepsSummary": "[MODE]->[1], [9.81], [SHIFT]+[RCL] (STO), [(-)] (A), luego [5], [x], [ALPHA]+[(-)] (A), [=]", "expectedLcd": "9.81 -> A ; 49.05", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 4}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "En Run-Matrix: 9.81 [->] [ALPHA]+[A] [EXE]; luego 5 x ALPHA+A [EXE]", "expectedLcd": "49.05", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 3}]},
+    {"id": "proc_fix_sci_norm", "category": "Configuración", "title": "Configurar decimales fijos (FIX), notación científica (SCI) o Normal", "goalSummary": "Controla cómo se muestran números grandes, pequeños y decimales sin perder precisión interna.", "latexFormula": "$\\frac{100}{6} = 16.67\\;(\\mathrm{FIX\\,2}) \\quad|\\quad 1.67\\times 10^{1}\\;(\\mathrm{SCI\\,3})$", "commonErrors": "Creer que FIX redondea el número guardado en Ans para futuras multiplicaciones (solo cambia visualización salvo usar Rnd()).", "tags": "decimales redondeo fijar fix sci normal cientifica cifras significativas formato", "models": [{"calcIdx": 0, "supported": true, "keys": [6, 40, 0, 6, 42, 40, 41, 40, 45, 45, 39, 37, 49], "stepsSummary": "[SHIFT]+[MENU] (SETUP), [3] (Formato número), [1] (Fix), [2] (decimales); prueba 100 / 6 =", "expectedLcd": "16.67 (indicador FIX)", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 8}, {"calcIdx": 1, "supported": true, "keys": [4, 40, 0, 4, 37, 41, 40, 45, 45, 39, 37, 49], "stepsSummary": "[SHIFT]+[MODE] (SETUP), [6] (Fix), [2] (decimales); prueba 100 / 6 =", "expectedLcd": "16.67 (indicador FIX)", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 6}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[SHIFT]+[MENU] (SET UP) -> Display -> [F1] (Fix) / [F2] (Sci) / [F3] (Norm) -> [EXIT]", "expectedLcd": "FIX2 / SCI3", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 51}]},
+    {"id": "proc_reset_init", "category": "Configuración", "title": "Restablecer ajustes de fábrica (RESET Conf. datos / Setup)", "goalSummary": "Restaura formato Mat/Mat, grados Deg y Normal 1 para eliminar configuraciones accidentales.", "latexFormula": "$\\mathrm{SETUP} \\longrightarrow \\{\\mathrm{Mat/Mat},\\; \\mathrm{Deg},\\; \\mathrm{Norm\\,1}\\}$", "commonErrors": "Elegir 'Inicializar todo' cuando solo querías restaurar ajustes y perder variables/matrices.", "tags": "reset inicializar reiniciar limpiar configuracion fabrica defaults", "models": [{"calcIdx": 0, "supported": true, "keys": [0, 32, 40, 49, 34], "stepsSummary": "[SHIFT]+[9] (RESET), [1] (Conf. datos), [=] (Sí), [AC]", "expectedLcd": "Math + D activos", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 9}, {"calcIdx": 1, "supported": true, "keys": [0, 32, 40, 49, 34], "stepsSummary": "[SHIFT]+[9] (CLR), [1] (Setup), [=] (Yes), [AC]", "expectedLcd": "Math + D activos", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 2}, {"calcIdx": 2, "supported": false, "keys": [], "stepsSummary": "[MENU]->[G] (System) -> [F5] (Reset) -> [F1] (Setup Data) o [F2] (Main Memories)", "expectedLcd": "Setup limpio", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 48}]},
+    {"id": "proc_cg50_graph", "category": "Graficación", "title": "Graficar función y encontrar raíces con G-Solv (fx-CG50)", "goalSummary": "Traza $Y_{1}(x)$ en la pantalla a color de fx-CG50 y calcula ceros o intersecciones.", "latexFormula": "$Y_{1} = x^{2} - 4 \\implies \\mathrm{ROOT}:\\; x = -2,\\; x = 2$", "commonErrors": "Tener una curva antigua marcada o V-Window alejada del rango de la función.", "tags": "grafica graficar curva root raices g-solv v-window cg50", "models": [{"calcIdx": 0, "supported": false, "keys": [], "stepsSummary": "ClassWiz no cuenta con pantalla gráfica; usa MENU -> 9 (Tabla) o QR para visualizar en móvil.", "expectedLcd": "Solo tabla numérica", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 30}, {"calcIdx": 1, "supported": false, "keys": [], "stepsSummary": "fx-570ES PLUS no incluye graficación; usa MODE -> 7 (TABLE) para obtener pares (x, y).", "expectedLcd": "Solo tabla numérica", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 7}, {"calcIdx": 2, "supported": true, "keys": [9, 36, 49, 18, 15, 44, 35, 49, 5, 6, 4, 0], "stepsSummary": "[MENU]->[5] (Graph), escribir [X][x^2][-][4][EXE], [F6] (DRAW), luego [SHIFT]+[F5] (G-Solv)->[F1] (ROOT)", "expectedLcd": "Gráfica de X^2-4 y ceros en -2, +2", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 197}]}
+  ],
+  "diagnostics": [
+    {"id": "diag_trig_unexpected", "symptom": "¿Por qué sin(30) me da -0.9880316... en lugar de 0.5?", "category": "Unidad angular", "why": "Tu calculadora tiene seleccionada la unidad Radianes (indicador 'R' o 'Rad' en la fila superior LCD), por lo que interpreta 30 como 30 radianes y no 30 grados.", "latex": "$\\sin(30\\,\\mathrm{rad}) \\approx -0.98803 \\quad\\neq\\quad \\sin(30\\degree) = 0.5$", "fix": "Abre Configuración (SHIFT + MENU en ClassWiz/CG50 o SHIFT + MODE en ES PLUS) -> Unidad angular -> Grados (D).", "quickFixCalcIdx": 0, "quickFixSeq": [0, 6, 41, 40]},
+    {"id": "diag_frac_vs_dec", "symptom": "¿Por qué la calculadora muestra 0.75 en vez de 3/4 (o al revés)?", "category": "Formato Entrada/Salida", "why": "El formato de salida está configurado en Decimal (Mat/Dec o Line/Dec) o la expresión supera el límite de 10 dígitos para fracción.", "latex": "$\\mathrm{Mat/Mat}:\\; \\frac{3}{4} \\to \\mathrm{S\\Leftrightarrow D} \\to 0.75 \\quad|\\quad \\mathrm{Mat/Dec}:\\; 0.75$", "fix": "Pulsa [S<=>D] tras obtener el resultado, o entra a SETUP -> Entrada/Salida -> E Mat/S Mat (MthIO).", "quickFixCalcIdx": 0, "quickFixSeq": [0, 6, 40, 40]},
+    {"id": "diag_fix_rounding", "symptom": "¿Por qué el indicador FIX redondea en pantalla pero el cálculo siguiente no coincide?", "category": "Precisión vs Visualización", "why": "FIX y SCI solo formatean la salida visualizada. Internamente, CASIO sigue conservando toda la mantisa de 15 dígitos reales.", "latex": "$\\frac{4}{3} \\to \\mathrm{FIX\\,2} \\to 1.33$ (pantalla), aunque $\\mathrm{Ans} = 1.33333333333333$", "fix": "Si necesitas que el valor redondeado sea el real para el siguiente paso, aplica [SHIFT]+[0] (Rnd(Ans)), o regresa a Normal 1.", "quickFixCalcIdx": 0, "quickFixSeq": [0, 6, 42, 42, 40]},
+    {"id": "diag_sci_notation", "symptom": "¿Por qué sale 2.5 x 10^-4 en lugar de 0.00025?", "category": "Formato numérico Normal 1 vs Normal 2", "why": "En modo 'Normal 1' (predeterminado), todo valor menor que 0.01 (10^-2) salta automáticamente a notación exponencial; o bien está activado SCI.", "latex": "$\\mathrm{Norm\\,1}: |x| < 10^{-2} \\to a\\times 10^{n} \\quad|\\quad \\mathrm{Norm\\,2}: |x| < 10^{-9}$", "fix": "Cambia a Normal 2 en SETUP -> Formato número -> Normal -> 2 para ver decimales planos hasta 9 ceros.", "quickFixCalcIdx": 0, "quickFixSeq": [0, 6, 42, 42, 41]},
+    {"id": "diag_complex_mode", "symptom": "¿Por qué aparece 'i' o 'CMPLX' arriba o no funciona sqrt(-1)?", "category": "Modos especiales", "why": "En modo Calcular estándar los números imaginarios no están permitidos (sqrt(-1) produce Math ERROR). Al entrar al modo Complejos aparece 'i'/'CMPLX'.", "latex": "$\\sqrt{-4} = 2i \\;\\text{(solo válido en MENU 2 / MODE 2)}$", "fix": "Usa MENU -> 2 (ClassWiz) o MODE -> 2 (ES PLUS) para operar con complejos; o MENU/MODE -> 1 para volver a reales.", "quickFixCalcIdx": 0, "quickFixSeq": [6, 41]},
+    {"id": "diag_minus_sign", "symptom": "¿Por qué obtengo Syntax ERROR al escribir exponentes o matrices negativas?", "category": "Sintaxis de entrada", "why": "Se usó el botón de resta binaria '-' en lugar del signo negativo unario '(-)', o quedó un bloque de plantilla vacío.", "latex": "$(-5)^{2} \\text{ (correcto)} \\quad\\neq\\quad -\\text{binario al inicio de argumento}$", "fix": "Pulsa [IZQUIERDA] o [DERECHA] al ver Syntax ERROR: el cursor salta al punto exacto para cambiar el operador.", "quickFixCalcIdx": -1, "quickFixSeq": []},
+    {"id": "diag_neg_sq", "symptom": "¿Por qué -3^2 me da -9 en vez de +9?", "category": "Prioridad de operadores", "why": "En la jerarquía oficial CASIO, la potencia ($x^{2}$) tiene mayor prioridad que el signo negativo unario (-).", "latex": "$-3^{2} = -(3^{2}) = -9 \\quad\\neq\\quad (-3)^{2} = +9$", "fix": "Envuelve siempre los números negativos entre paréntesis antes de elevarlos al cuadrado o a potencia par.", "quickFixCalcIdx": -1, "quickFixSeq": []},
+    {"id": "diag_truncated_scroll", "symptom": "¿Por qué aparecen flechitas <, >, Arriba o Abajo en la barra superior LCD?", "category": "Indicadores LCD", "why": "La expresión excede el ancho visible o existen resultados previos en el historial de sesión.", "latex": "$\\leftarrow \\;\\text{y}\\; \\rightarrow \\text{ desplazan expresión};\\; \\uparrow \\;\\text{y}\\; \\downarrow \\text{ historial}$", "fix": "Usa las 4 flechas del pad direccional central para leer toda la fórmula o recuperar cálculos previos.", "quickFixCalcIdx": -1, "quickFixSeq": []},
+    {"id": "diag_memory_leftover", "symptom": "¿Por qué aparece la letra 'M' arriba si no estoy guardando nada?", "category": "Indicadores LCD", "why": "La memoria independiente M acumulada tiene un número distinto de 0 guardado de una operación anterior con [M+].", "latex": "$M \\neq 0 \\implies \\text{indicador } \\mathbf{M} \\text{ encendido}$", "fix": "Consulta su valor con RECALL ([SHIFT]+[STO] en CW o [RCL]+[M+] en ES) o ponla a cero con 0 -> STO -> M+.", "quickFixCalcIdx": -1, "quickFixSeq": []},
+    {"id": "diag_slow_integral", "symptom": "¿Por qué tarda mucho una integral definida o muestra 'Time Out'?", "category": "Cálculo numérico", "why": "La integración numérica Gauss-Kronrod requiere más subdivisiones en funciones oscilatorias o cerca de asíntotas/discontinuidades.", "latex": "$\\int_{a}^{b} f(x)\\,dx \\approx \\sum_{i} w_{i} f(x_{i})$", "fix": "Divide el intervalo de integración alrededor de picos, usa tolerancia tol mayor si aplica o verifica el dominio.", "quickFixCalcIdx": -1, "quickFixSeq": []}
+  ],
+  "errors": [
+    {"name": "Math ERROR (ERROR Cálculo)", "appliesTo": "Todas", "cause": "División entre 0, raíz par negativa en modo real, log(<=0), argumento > |1| en sin^-1/cos^-1 o resultado >= 10^100.", "resolution": "Pulsa [<] o [>] para editar la expresión o [AC] para limpiar. Verifica unidad angular y dominio real/complejo.", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 41},
+    {"name": "Syntax ERROR (ERROR Sintaxis)", "appliesTo": "Todas", "cause": "Formato de comando incorrecto, cuadro vacío en plantilla, dos operadores binarios seguidos o uso de '-' en lugar de '(-)'.", "resolution": "Pulsa [<] o [>] al ver el error: el cursor se posicionará exactamente donde ocurrió el fallo de sintaxis.", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 43},
+    {"name": "Stack ERROR (ERROR Pila)", "appliesTo": "Todas", "cause": "Capacidad de pila numérica (10 niveles en científicas) o pila de comandos excedida por demasiados paréntesis/funciones anidadas.", "resolution": "Simplifica la expresión en pasos usando variables (STO) o Ans para no anidar tanto.", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 41},
+    {"name": "Dimension ERROR", "appliesTo": "Matrices/Vectores/Listas", "cause": "Operación entre matrices o vectores de dimensiones incompatibles (ej: sumar 2x2 + 2x3) o usar matriz sin definir.", "resolution": "Revisa dimensiones m x n antes de sumar/multiplicar; en multiplicación A*B exige cols(A) == filas(B).", "pdfFile": "fx-570_991ES_PLUS_ES.pdf", "pdfPage": 44},
+    {"name": "Time Out (Tiempo agotado)", "appliesTo": "ClassWiz / ES", "cause": "El algoritmo numérico de integral o derivada no alcanzó convergencia dentro del número máximo de subdivisiones.", "resolution": "Aumenta el valor de tolerancia 'tol' o parte la integral evitando puntos donde la derivada salta.", "pdfFile": "fx-570_991LA_X_ES.pdf", "pdfPage": 42},
+    {"name": "Non-Real ERROR / Argument", "appliesTo": "fx-CG50", "cause": "Resultado complejo cuando SET UP Complex Mode está en Real, o relación de argumentos inválida como nCr(3, 10).", "resolution": "Cambia SET UP -> Complex Mode a 'a+bi' o verifica que n >= r >= 0.", "pdfFile": "fx-CG50_Soft_v370_ES.pdf", "pdfPage": 605}
+  ]
+}

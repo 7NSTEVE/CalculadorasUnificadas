@@ -1,0 +1,52 @@
+# CASIO ROMs, firmware dumps, add-ins, and snapshots
+assets/roms/
+*.raw
+*.rom
+rom.bin
+fx991cw_rom.bin
+*.ram
+*.g3a
+*.g3m
+*.mem
+*.bin.gz
+*warm_state*
+*Manager PLUS*
+official-ILRAM-*.bin
+
+# Build directories & artifacts
+build/
+build-*/
+cmake-build-*/
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.obj
+*.pdb
+*.ilk
+
+# Flutter / Android staging & build outputs
+apps/android/assets_staged/
+apps/android/build/
+apps/android/.dart_tool/
+apps/android/.flutter-plugins
+apps/android/.flutter-plugins-dependencies
+apps/android/android/.gradle/
+apps/android/android/app/build/
+apps/android/android/local.properties
+apps/android/android/key.properties
+*.jks
+*.keystore
+
+# Diagnostic logs
+key_diag.log
+lcd_diag.log
+queue_diag.log
+calc_debug.log
+*.log
+
+# Official CASIO manuals (PDF) and extracted page text: kept local only
+assets/manuals/
+

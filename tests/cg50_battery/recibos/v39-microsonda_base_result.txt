@@ -1,0 +1,80 @@
+RECIBO DE SONDA v39 - MICRO-CALIBRACION BASE (CG50 nativo)
+================================================================
+Fecha: 2026-11-21
+Ejecutable: build\cg50_battery_v39.exe
+  SHA-256 (16): 600AD74C9E9665FC
+  Tamano: 839.768 B
+Casos jugados: bas-f1, bas-f2 (DIAG; divergencia esperada, exit 7)
+Resultado crudo: recibos\v39-sonda_battery_result.txt
+  SHA-256 (16): 496FDD1C56DD7CF8
+  pasados=0 de 135 (jugados=2); divergencias=2; decodificables=0
+Salida completa: D:\Temp\opencode\battery-out-sonda-v39\
+Hojas de contacto: recibos\v39-sheet_f1_logic.png,
+                   recibos\v39-sheet_f2_start.png,
+                   recibos\v39-sheet_f2_rest.png
+
+PROPOSITO
+---------
+La v38 dejo dos preguntas abiertas sobre la ruta a las bases numericas
+('Bin / 'Oct) en RUN-MAT. La v39 no buscaba PASS: solo volcar frames por
+tecla para responderlas. Ambas quedaron RESPONDIDAS por los frames.
+
+PREGUNTA (a) - tiene el submenu LOGIC una pagina 2 con 'Dec|'Hex|'Bin|'Oct?
+RESPUESTA: NO. El submenu LOGIC de RUN-MAT tiene UNA SOLA pagina.
+  Evidencia (bas-f1, secuencia kMenu kDigUno kExit kOptn kF6 kF6 kF4
+  kF6 kF5 kF6):
+    p2  OPTN pag1 = LIST | MAT | CPLX | CALC | STAT | >
+    p3  OPTN pag2 = HYPERBL | PROB | NUMERIC | ANGLE | >
+    p4  OPTN pag3 = ENG-SYM | FINANCE | LOGIC | >
+    p5  kF4 abre LOGIC = And | Or | Not | Xor   (4 slots, kF1..kF4)
+    p6  kF6 -> MISMA pantalla (And|Or|Not|Xor): no hay pagina 2
+    p7  kF5 -> MISMA pantalla
+    p8  kF6 -> MISMA pantalla
+  Conclusion: 'Dec / 'Hex / 'Bin / 'Oct NO existen en OPTN->LOGIC.
+  Toda la via LOGIC (v34-v38) queda DESCARTADA como ruta a Base-N.
+
+PREGUNTA (b) - en que fila del SETUP vive el selector Mode (Dec/Hex/Bin/Oct)?
+RESPUESTA: en la fila 2, "Mode", y su strip es
+  [Comp] [Dec] [Hex] [Bin] [Oct] = kF1 .. kF5.
+  Evidencia (bas-f2, secuencia kMenu kDigUno kShift kMenu kShift
+  kAba x10):
+    p4  SHIFT+MENU abre SETUP. Cursor en la fila 1 "Input/Output :
+        Mth/Mix". El indicador S de SHIFT NO esta activo: SHIFT+MENU
+        consume el SHIFT (no queda pegado).
+    p5  kShift extra -> aparece el indicador S (shift pegajoso).
+    p6  kAba #1 -> SOLO apaga el indicador S; el cursor NO se mueve
+        (sigue en Input/Output). Leccion: el primer kAba tras un SHIFT
+        pegado se consume en limpiarlo.
+    p7  kAba #2 -> fila "Mode : Comp" seleccionada y strip
+        [Comp][Dec][Hex][Bin][Oct] (kF1..kF5).
+    p8  kAba #3 -> "Frac Result : d/c"        (strip [d/c][a b/c])
+    p9  kAba #4 -> "Func Type : Y="
+    p10 kAba #5 -> "Draw Type : Connect"
+    p11 kAba #6 -> "Derivative : Off"
+    p12 kAba #7 -> "Angle : Rad"              (strip [Deg][Rad][Gra])
+    p13 kAba #8 -> "Complex Mode : Real"      (strip [Real][a+bi][r<0])
+    p14 kAba #9 -> "Coord : On"
+    p15 kAba #10 -> "Grid : Line"             (strip [On][Off][Line])
+    final1 -> kExit devuelve a RUN-MAT con el historial intacto.
+  Orden completo del SETUP observado: Input/Output (1), Mode (2),
+  Frac Result (3), Func Type (4), Draw Type (5), Derivative (6),
+  Angle (7), Complex Mode (8), Coord (9), Grid (10)...
+
+CONSECUENCIA PARA setup-dD (registro de error propio)
+-----------------------------------------------------
+setup-dD (v32) pretendia llegar a "Display" con kAba x7 desde la fila 1.
+Con el orden medido, 7 bajadas desde la fila 1 caen en Complex Mode
+(fila 8), NO en Display (fila 13). Eso explica que setup-dD devolviera
+'1/3' en vez de '0.333' (la corrida v32 lo dio por divergente). No se
+corrige en este recibo: queda anotado para el frente de SETUP.
+
+RUTA QUE HABILITA LA v40
+------------------------
+  kMenu, kDigUno          -> RUN-MAT limpio (historial conservado)
+  <digitos>, kExe         -> valor decimal en pantalla
+  kShift, kMenu           -> SETUP (cursor en Input/Output, SHIFT consumido)
+  kAba                    -> baja a Mode (fila 2)
+  kF4                     -> Bin      (kF5 -> Oct)
+  kExit                   -> vuelve a RUN-MAT
+Pendiente de verificar con v40: si el cambio de Mode convierte el valor
+ya mostrado y con que formato lo pinta (prefijo/sufijo de base).

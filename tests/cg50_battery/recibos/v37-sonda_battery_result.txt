@@ -1,0 +1,7 @@
+eqn-cal determinismo=SI match1='4/3' match2='4/3' esperada='4/3'
+det-rB determinismo=SI match1='11' match2='11' esperada='11'
+stat-dA determinismo=NO match1='' match2='' esperada='n=5'
+stat-dB determinismo=NO match1='' match2='' esperada='n=4'
+bas-dA determinismo=NO match1='' match2='' esperada='10110'
+bas-dB determinismo=NO match1='' match2='' esperada='377'
+pasados=2 de 133 (jugados=6); divergencias=4; decodificables=0

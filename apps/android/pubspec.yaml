@@ -1,0 +1,24 @@
+name: calculadoras_unificadas
+description: "Suite unificada de calculadoras científicas y gráficas con motores nativos."
+publish_to: 'none'
+version: 2.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets_staged/roms/
+    - assets_staged/skins/

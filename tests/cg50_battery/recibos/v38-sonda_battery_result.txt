@@ -1,0 +1,3 @@
+bas-dA determinismo=NO match1='' match2='' esperada='10110'
+bas-dB determinismo=NO match1='' match2='' esperada='377'
+pasados=0 de 133 (jugados=2); divergencias=2; decodificables=0
