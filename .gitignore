@@ -1,17 +1,9 @@
-# CASIO ROMs, firmware dumps, add-ins, and snapshots
-assets/roms/
-*.raw
-*.rom
-rom.bin
-fx991cw_rom.bin
-*.ram
+# Uncompressed warm-state duplicate (cg50_warm_state.bin.gz is tracked instead) and ad-hoc dumps
+assets/roms/cg50_warm_state.bin
 *.g3a
 *.g3m
 *.mem
-*.bin.gz
-*warm_state*
 *Manager PLUS*
-official-ILRAM-*.bin
 
 # Build directories & artifacts
 build/
