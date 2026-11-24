@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CG50 Validation Master Ledger",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "repo_commit", "authenticity", "totals", "suites", "receipts_index"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "repo_commit": { "type": "string" },
+    "authenticity": {
+      "type": "object",
+      "required": [
+        "strict_no_hle", "host_math_fallback_allowed",
+        "rom_system_sha256", "rom_user_sha256", "rom_c2_sha256",
+        "env_overrides_active"
+      ]
+    },
+    "totals": {
+      "type": "object",
+      "required": [
+        "PASS", "FAIL", "BLOCKED", "NOT_TESTED", "NOT_APPLICABLE",
+        "official_emulator_verified_count", "physical_reference_verified_count"
+      ]
+    },
+    "suites": { "type": "array", "items": { "type": "object" } },
+    "receipts_index": { "type": "array", "items": { "type": "object" } }
+  }
+}

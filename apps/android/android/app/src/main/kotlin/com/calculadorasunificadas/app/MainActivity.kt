@@ -1,7 +1,13 @@
 package com.calculadorasunificadas.app
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -14,6 +20,7 @@ class MainActivity : FlutterActivity() {
         private const val CHANNEL = "com.calculadorasunificadas.app/files"
         private const val REQ_PICK_FILE = 4101
         private const val REQ_SAVE_FILE = 4102
+        private const val REQ_PICK_FILE_META = 4103
     }
 
     private var pendingResult: MethodChannel.Result? = null
@@ -25,7 +32,7 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "pickFile" -> {
+                    "pickFile", "pickFileWithMeta" -> {
                         if (pendingResult != null) {
                             result.error("BUSY", "Operacion de archivo en curso", null)
                             return@setMethodCallHandler
@@ -37,7 +44,12 @@ class MainActivity : FlutterActivity() {
                             addCategory(Intent.CATEGORY_OPENABLE)
                             type = mime
                         }
-                        startActivityForResult(intent, REQ_PICK_FILE)
+                        val reqCode = if (call.method == "pickFileWithMeta") {
+                            REQ_PICK_FILE_META
+                        } else {
+                            REQ_PICK_FILE
+                        }
+                        startActivityForResult(intent, reqCode)
                     }
 
                     "saveFile" -> {
@@ -62,16 +74,80 @@ class MainActivity : FlutterActivity() {
                         startActivityForResult(intent, REQ_SAVE_FILE)
                     }
 
+                    "copyImageToClipboard" -> {
+                        val sourcePath = call.argument<String>("sourcePath")
+                        val fileName = call.argument<String>("fileName") ?: "captura_cg50.png"
+                        if (sourcePath.isNullOrEmpty() || !File(sourcePath).exists()) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            val shareDir = File(cacheDir, "clipboard_share")
+                            if (!shareDir.exists()) shareDir.mkdirs()
+                            val dest = File(shareDir, fileName)
+                            File(sourcePath).copyTo(dest, overwrite = true)
+                            val uri = FileProvider.getUriForFile(
+                                this,
+                                "${applicationContext.packageName}.fileprovider",
+                                dest
+                            )
+                            val clipboard =
+                                getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newUri(contentResolver, "Captura", uri)
+                            clipboard.setPrimaryClip(clip)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+
+                    "openExternalUrl" -> {
+                        val url = call.argument<String>("url") ?: ""
+                        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun resolveDisplayName(uri: Uri): String {
+        try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (idx >= 0) {
+                            val name = cursor.getString(idx)
+                            if (!name.isNullOrBlank()) return name
+                        }
+                    }
+                }
+        } catch (_: Exception) {
+        }
+        return uri.lastPathSegment?.substringAfterLast('/') ?: "${pendingPickPrefix}.bin"
     }
 
     @Deprecated("Uses FlutterActivity onActivityResult for SAF document intents")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val callback = pendingResult ?: return
-        if (requestCode != REQ_PICK_FILE && requestCode != REQ_SAVE_FILE) {
+        if (requestCode != REQ_PICK_FILE &&
+            requestCode != REQ_PICK_FILE_META &&
+            requestCode != REQ_SAVE_FILE
+        ) {
             return
         }
         pendingResult = null
@@ -83,9 +159,11 @@ class MainActivity : FlutterActivity() {
             return
         }
 
-        if (requestCode == REQ_PICK_FILE) {
+        if (requestCode == REQ_PICK_FILE || requestCode == REQ_PICK_FILE_META) {
             try {
-                val outFile = File(cacheDir, "${pendingPickPrefix}_${System.currentTimeMillis()}.bin")
+                val displayName = resolveDisplayName(uri)
+                val safeName = displayName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                val outFile = File(cacheDir, "${pendingPickPrefix}_${System.currentTimeMillis()}_$safeName")
                 contentResolver.openInputStream(uri)?.use { input ->
                     FileOutputStream(outFile).use { output ->
                         input.copyTo(output)
@@ -94,7 +172,11 @@ class MainActivity : FlutterActivity() {
                     callback.success(null)
                     return
                 }
-                callback.success(outFile.absolutePath)
+                if (requestCode == REQ_PICK_FILE_META) {
+                    callback.success(mapOf("path" to outFile.absolutePath, "name" to displayName))
+                } else {
+                    callback.success(outFile.absolutePath)
+                }
             } catch (e: Exception) {
                 callback.error("PICK_IO", e.message, null)
             }

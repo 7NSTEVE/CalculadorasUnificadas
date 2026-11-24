@@ -1,9 +1,12 @@
 #include "cg50_native_core.h"
+#include "cg50_core/sh_exception.h"
+#include "cg50_core/sh_fpu.h"
 
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <vector>
 
 namespace {
@@ -39,7 +42,8 @@ void TestOnChipMemoriesAndIlramExec()
     // Execute 2 instructions directly from ILRAM (0xE5200000):
     //   0xE02A = mov #0x2A, r0
     //   0x0068 = nott (T = !T)
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     SetupMinimalCore(core, {0x0009u}); // NOP in ROM
 
     // Write values into ILRAM, XRAM, YRAM (distinct from RS-RAM 0xFD800000)
@@ -89,7 +93,8 @@ void TestStoreQueuesAndPref()
     // Program:
     //   mov.l @lit0, r1 (0xE0001000 -> SQ0 target offset 0x001000)
     //   pref @r1        (0x0183 -> flushes SQ0 to (QACR0<<24)|0x001000 = 0x08001000!)
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     SetupMinimalCore(core, {
         0xD101u, // mov.l @(4,pc) -> 0xA0000008, r1
         0x0183u, // pref @r1
@@ -119,7 +124,8 @@ void TestStoreQueuesAndPref()
 
 void TestItlbArraysAndInvalidate()
 {
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     SetupMinimalCore(core, {0x0009u});
     const std::uint32_t addrWord = (0x00300u << 10) | 0x100u | 0x05u; // VPN=0x300, V=1, ASID=5
     const std::uint32_t dataWord = (0x08080u << 10) | 0x100u | 0x060u; // PPN=0x8080, V=1, PR=3
@@ -135,7 +141,8 @@ void TestItlbArraysAndInvalidate()
 
 void TestDmac6ChannelsAndSizesAndLcdAlias()
 {
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     SetupMinimalCore(core, {0x0009u});
 
     // Enable LCD pins (v28sys=1, resetX=1, RS=0 then RS=1)
@@ -216,7 +223,8 @@ void TestDmac6ChannelsAndSizesAndLcdAlias()
 
 void TestEtmuIntc2AdcTpuScifUsb()
 {
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     SetupMinimalCore(core, {0x001Bu}); // SLEEP so AdvanceCycles ticks peripherals
 
     // 1. INTC2 mask set/clear + INTPRI00
@@ -276,7 +284,8 @@ void TestEtmuIntc2AdcTpuScifUsb()
     // 7. Save/Restore roundtrip preserves all new hardware modules
     std::vector<std::uint8_t> blob;
     Check(core.ExportState(blob) && blob.size() > 1000u, "ExportState with chunks 82..94");
-    Cg50NativeCore restored;
+    auto restoredPtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& restored = *restoredPtr;
     SetupMinimalCore(restored, {0x0009u});
     Check(restored.ImportState(blob.data(), blob.size()), "ImportState with chunks 82..94");
     std::uint32_t pri2 = 0;
@@ -318,7 +327,8 @@ void TestFlashCfiExtensionsAndFpuDn()
     //   lds r0, fpscr (0x406A) -> sets DN=1 (0x00080000)
     //   fmov.s @r1, fr0 (0xF018) -> loads subnormal 0x00000001
     //   fadd fr1, fr0   (0xF010) -> flushes subnormal to +0.0f!
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     SetupMinimalCore(core, {
         0xD002u, // mov.l @(8,pc) -> 0xA000000C, r0 = 0x00080000 (DN=1)
         0x406Au, // lds r0, fpscr
@@ -333,6 +343,493 @@ void TestFlashCfiExtensionsAndFpuDn()
     Check(core.Write32(0x88005000u, 0x00000001u), "Stage subnormal float 1e-45");
     core.RunInstructions(5);
     Check(core.GetRegisters().fr[0] == 0x00000000u, "FPSCR.DN flushed subnormal to +0.0f");
+
+    // 3. Fixed sh_fpu.h RM=01 (TowardZero) IEEE-754 mantissa rounding (NOT integer floor!)
+    //    1.75 in RM=01 must stay 1.75 (NOT 1.0 integer floor!); -1.75 must stay -1.75 (NOT -1.0!)
+    //    And 1.0 + 1e-7 truncated to float toward zero must be <= exact double and > 1.0!
+    cg50::FpuEventReport rep{};
+    const double f15 = cg50::FpuRoundToPrecision(1.75, false, cg50::kFpuRoundingZero, rep);
+    Check(std::fabs(f15 - 1.75) < 1e-6, "sh_fpu RM=01 1.75 == 1.75 (not integer floor!)");
+    const double fNeg = cg50::FpuRoundToPrecision(-1.75, false, cg50::kFpuRoundingZero, rep);
+    Check(std::fabs(fNeg - (-1.75)) < 1e-6, "sh_fpu RM=01 -1.75 == -1.75 (not integer ceil!)");
+    const double dVal = cg50::FpuRoundToPrecision(1.0 / 3.0, true, cg50::kFpuRoundingZero, rep);
+    Check(dVal > 0.333333333333 && dVal <= 0.33333333333333337, "sh_fpu RM=01 double 1/3 accurate");
+
+    // 4. SpansionNorFlashCfi programmable busy-poll window (DQ6 toggle + DQ7 complement)
+    cg50::SpansionNorFlashCfi cfiBusy;
+    cfiBusy.SetBusyWindowCycles(20u, 20u);
+    std::uint16_t flashWord = 0xFFFFu;
+    auto progB = [&](std::uint32_t, std::uint16_t v) noexcept { flashWord &= v; };
+    auto eraseB = [&](std::uint32_t) noexcept { flashWord = 0xFFFFu; };
+    Check(cfiBusy.HandleWrite16(0x00B60AAAu, 0x00AAu, progB, eraseB), "Busy unlock1");
+    Check(cfiBusy.HandleWrite16(0x00B60554u, 0x0055u, progB, eraseB), "Busy unlock2");
+    Check(cfiBusy.HandleWrite16(0x00B60AAAu, 0x00A0u, progB, eraseB), "Busy word-prog cmd");
+    Check(cfiBusy.HandleWrite16(0x00B60000u, 0x0080u, progB, eraseB), "Busy word-prog data 0x0080");
+    Check(cfiBusy.IsBusy(), "Flash CFI entered Busy window");
+    std::uint16_t poll1 = 0, poll2 = 0;
+    Check(cfiBusy.TryRead16(0x00B60000u, poll1), "Busy poll 1 intercepted");
+    Check(cfiBusy.TryRead16(0x00B60000u, poll2), "Busy poll 2 intercepted");
+    Check(((poll1 ^ poll2) & 0x0040u) != 0u, "Flash CFI DQ6 toggled between consecutive busy polls");
+    Check((poll1 & 0x0080u) == 0u, "Flash CFI DQ7 complemented programmed bit 7 (1->0)");
+    cfiBusy.TickBusy(20u);
+    Check(!cfiBusy.IsBusy() && cfiBusy.IsReadArray(), "Flash CFI exited Busy to ReadArray after cycles");
+}
+
+void TestSh4alDspStrictNoFpuAndClipDiv()
+{
+    // 1. Strict SH7305 No-FPU mode: 0xF000 raises EXPEVT 0x180 (General Illegal) when SR.DSP=0
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
+    SetupMinimalCore(core, {
+        0xD104u, // PC=0x00: mov.l @(lit0: 0x14), r1 = 0xA0001000 (VBR)
+        0x412Eu, // PC=0x02: ldc r1, vbr
+        0xD104u, // PC=0x04: mov.l @(lit1: 0x18), r1 = 0x40000000 (MD=1, BL=0)
+        0x410Eu, // PC=0x06: ldc r1, sr
+        0xF19Du, // PC=0x08: FLDI1 FR1 -> must trap EXPEVT 0x180 under strict SH7305!
+        0x0009u, // PC=0x0A: nop
+        0x0009u, 0x0009u, 0x0009u, 0x0009u, // pad to 0x14
+        0xA000u, 0x1000u, // 0x14: VBR = 0xA0001000
+        0x4000u, 0x0000u, // 0x18: SR  = 0x40000000
+    });
+    core.SetStrictSh7305NoFpu(true);
+    core.RunInstructions(5);
+    Check(core.GetRegisters().expevt == cg50::kExpevtIllegalInstruction,
+          "Strict SH7305 No-FPU traps 0xF19D with EXPEVT 0x180");
+    Check(core.GetRegisters().pc == 0xA0001100u, "Strict SH7305 No-FPU vectored to VBR+0x100");
+    Check(core.GetAuthenticityStats().fpuOpcodesExecuted == 0u, "Zero FPU opcodes executed");
+
+    // 2. SH4AL-DSP: SR.DSP=1, SETRC #3, LDRS, LDRE zero-overhead repeat loop + CLIPS.B/CLIPU.B/DIVS/DIVU
+    //    Loop body: add #1, r0 (1 instruction at PC=0x0E) repeated 3 times -> r0 == 3!
+    //    PC=0x00: mov.l @(lit0=0x20), r1 = 0x40001000 (MD=1, DSP=1)
+    //    PC=0x02: ldc r1, sr
+    //    PC=0x04: mov #0, r0
+    //    PC=0x06: ldrs @(0x02, pc) -> RS = 0x06+4+4 = 0x0E
+    //    PC=0x08: ldre @(0x01, pc) -> RE = 0x08+4+2 = 0x0E
+    //    PC=0x0A: setrc #3 (0x8203)
+    //    PC=0x0C: nop
+    //    PC=0x0E: add #1, r0 (0x7001)  <-- loop body (RS=RE=0x0E, executes 3 times!)
+    //    PC=0x10: mov.l @(lit1=0x24), r2 = 0x0000012C (300)
+    //    PC=0x12: clips.b r2 (0x4291) -> clamps 300 to +127 (0x7F)
+    //    PC=0x14: mov.l @(lit2=0x28), r3 = -5 (0xFFFFFFFB)
+    //    PC=0x16: clipu.b r3 (0x4385) -> unsigned 0xFFFFFFFB clamps to 0xFF
+    //    PC=0x18: mov #20, r4 (0xE414)
+    //    PC=0x1A: mov #3, r5  (0xE503)
+    //    PC=0x1C: divs r5, r4 (0x4494 -> r4 = 20/3 = 6)
+    SetupMinimalCore(core, {
+        0xD108u, // PC=0x00 -> (0x04)+0x20 = 0x24
+        0x410Eu, // PC=0x02: ldc r1, sr
+        0xE000u, // PC=0x04: mov #0, r0
+        0x8C02u, // PC=0x06: ldrs @(2, pc) -> 0x0E
+        0x8E01u, // PC=0x08: ldre @(1, pc) -> 0x0E
+        0x8203u, // PC=0x0A: setrc #3
+        0x0009u, // PC=0x0C: nop
+        0x7001u, // PC=0x0E: add #1, r0 (repeated 3x -> r0 == 3!)
+        0x6603u, // PC=0x10: mov r0, r6 (preserve repeat loop count!)
+        0xD205u, // PC=0x12 -> (0x14)+0x14 = 0x28
+        0x4291u, // PC=0x14: clips.b r2
+        0xD305u, // PC=0x16 -> (0x18)+0x14 = 0x2C
+        0x4381u, // PC=0x18: clipu.b r3
+        0xE014u, // PC=0x1A: mov #20, r0
+        0xE503u, // PC=0x1C: mov #3, r5
+        0x4594u, // PC=0x1E: divs r0, r5 (r0 = 20/3 = 6, r5 = 20%3 = 2)
+        0x0009u, // PC=0x20: nop
+        0x0009u, // PC=0x22: pad
+        0x4000u, 0x1000u, // 0x24: MD=1, DSP=1
+        0x0000u, 0x012Cu, // 0x28: 300
+        0xFFFFu, 0xFFFBu, // 0x2C: -5
+    });
+    core.RunInstructions(18);
+    Check(core.GetRegisters().r[6] == 3u, "SH4AL-DSP SETRC/LDRS/LDRE repeat loop ran exactly 3 times");
+    Check(core.GetRegisters().r[2] == 0x7Fu, "CLIPS.B clamped 300 -> 127");
+    Check(core.GetRegisters().r[3] == 0xFFu, "CLIPU.B clamped 0xFFFFFFFB -> 0xFF");
+    Check(core.GetRegisters().r[0] == 6u && core.GetRegisters().r[5] == 2u, "DIVS 20/3 == 6 rem 2");
+    Check(core.GetAuthenticityStats().dspOpcodesExecuted >= 3u, "DSP telemetry recorded opcodes");
+
+    // 3. Direct SH4AL-DSP parallel ALU (PMULS + PADD + PABS + PDMSB + PSHA)
+    cg50::ShDspState dsp;
+    dsp.Reset();
+    dsp.x0 = 0x00030000u; // 3.0 in Q16 high word
+    dsp.y0 = 0x00040000u; // 4.0 in Q16 high word
+    std::array<std::uint32_t, 16> gpr{};
+    auto r16 = [](std::uint32_t, std::uint16_t&) { return true; };
+    auto w16 = [](std::uint32_t, std::uint16_t) { return true; };
+    auto r32 = [](std::uint32_t, std::uint32_t&) { return true; };
+    auto w32 = [](std::uint32_t, std::uint32_t) { return true; };
+    // Parallel op1 = 0xF800 (no MOVX/MOVY), op2 = 0x4000 (PMULS X0, Y0, M0)
+    Check(dsp.ExecuteParallel32(0xF800u, 0x4000u, gpr, r16, w16, r32, w32), "DSP PMULS executed");
+    Check(dsp.m0 == 24u, "DSP PMULS signed 16x16*2 == 24");
+    dsp.a0 = 100;
+    dsp.y0 = 250;
+    // op2 = (aluOp=0x02 PADD << 8) | (sx=2 A0 << 6) | (sy=0 Y0 << 4) | (dz=2 A0) = 0x0282
+    Check(dsp.ExecuteParallel32(0xF800u, 0x0282u, gpr, r16, w16, r32, w32), "DSP PADD executed");
+    Check(dsp.a0 == 350, "DSP PADD A0 + Y0 == 350");
+
+    // 4. CPU73050.dll machine-code proof checks (Phase 1):
+    //    - 0x4n5A (LDS Rn, FPUL) raises EXPEVT 0x180 under strictSh7305NoFpu
+    //    - 0x4n6A / 0x0n6A access DSR (gated on SR.DSP), 0x4n7A..BA access A0/X0/X1/Y0/Y1
+    //    - 0xF000..0xF3FF executes 16-bit DSP MOVX/MOVY when SR.DSP=1
+    //    - RAMCR (0xFF000074) masks writes with 0x3E0
+    SetupMinimalCore(core, {
+        0xD108u, // PC=0x00 -> lit0 @ 0x24 = 0x40001000 (MD=1, DSP=1)
+        0x410Eu, // PC=0x02: ldc r1, sr
+        0xE255u, // PC=0x04: mov #0x55, r2
+        0x426Au, // PC=0x06: lds r2, dsr
+        0x086Au, // PC=0x08: sts dsr, r8 (unbanked!)
+        0xE277u, // PC=0x0A: mov #0x77, r2
+        0x428Au, // PC=0x0C: lds r2, x0
+        0x098Au, // PC=0x0E: sts x0, r9 (unbanked!)
+        0xF000u, // PC=0x10: 16-bit DSP NOPX/NOPY (valid when SR.DSP=1!)
+        0xD105u, // PC=0x12 -> lit1 @ 0x28 = 0xA0001000 (VBR)
+        0x412Eu, // PC=0x14: ldc r1, vbr
+        0x425Au, // PC=0x16: LDS R2, FPUL -> MUST raise EXPEVT 0x180!
+        0x0009u, // PC=0x18: nop
+        0x0009u, 0x0009u, 0x0009u, 0x0009u, 0x0009u,
+        0x4000u, 0x1000u, // 0x24: MD=1, DSP=1
+        0xA000u, 0x1000u, // 0x28: VBR
+    });
+    core.SetStrictSh7305NoFpu(true);
+    core.RunInstructions(12);
+    Check(core.GetRegisters().r[8] == 0x55u, "CPU73050 proof: 0x426A/0x086A accesses DSR");
+    Check(core.GetRegisters().r[9] == 0x77u, "CPU73050 proof: 0x428A/0x098A accesses X0");
+    Check(core.GetRegisters().expevt == cg50::kExpevtIllegalInstruction,
+          "CPU73050 proof: 0x425A (FPUL) raises EXPEVT 0x180");
+    Check(core.GetRegisters().pc == 0xA0001100u, "CPU73050 proof: 0x425A vectored to VBR+0x100");
+    Check(core.Write32(0xFF000074u, 0xFFFFFFFFu), "RAMCR write");
+    std::uint32_t ramcrVal = 0;
+    Check(core.Read32(0xFF000074u, ramcrVal) && ramcrVal == 0x000003E0u,
+          "CPU73050 proof: RAMCR (0xFF000074) masked to 0x3E0");
+}
+
+void TestCacheOcramItlbAndControlRegs()
+{
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
+    SetupMinimalCore(core, {
+        0xD102u, // PC=0x00: mov.l @(lit: 0x0C), r1 = 0x88001000
+        0x0193u, // PC=0x02: ocbi @r1
+        0x01A3u, // PC=0x04: ocbp @r1
+        0x01B3u, // PC=0x06: ocbwb @r1
+        0x01E3u, // PC=0x08: icbi @r1
+        0x0009u, // PC=0x0A: nop
+        0x8800u, 0x1000u, // 0x0C
+    });
+    // Enable OCE + ICE + ORA (OCRAM 16 KB at 0x7C000000)
+    const std::uint32_t ccr = cg50::ShCacheUnit::kCcrOce | cg50::ShCacheUnit::kCcrIce |
+                              cg50::ShCacheUnit::kCcrOra;
+    Check(core.Write32(Cg50NativeCore::kCacheControlRegister, ccr), "Write CCR OCE|ICE|ORA");
+    Check(core.Cache().OcramEnabled(), "OCRAM enabled");
+    Check(core.Write32(0x7C000000u, 0xDEADBEEFu), "Write32 OCRAM 0x7C000000");
+    Check(core.Write32(0x7C003FFCu, 0x12345678u), "Write32 OCRAM end 0x7C003FFC");
+    std::uint32_t v0 = 0, v1 = 0;
+    Check(core.Read32(0x7C000000u, v0) && v0 == 0xDEADBEEFu, "Read32 OCRAM start");
+    Check(core.Read32(0x7C003FFCu, v1) && v1 == 0x12345678u, "Read32 OCRAM end");
+
+    // MMIO OC address & data array access (0xF4000000 / 0xF5000000)
+    Check(core.Write32(0xF4000000u, 0x08001003u), "Write OC address array tag+V+D");
+    Check(core.Write32(0xF5000000u, 0xCAFEBABEu), "Write OC data array word 0");
+    std::uint32_t ocTag = 0, ocData = 0;
+    Check(core.Read32(0xF4000000u, ocTag) && ocTag == 0x08001003u, "Read OC address array");
+    Check(core.Read32(0xF5000000u, ocData) && ocData == 0xCAFEBABEu, "Read OC data array");
+
+    // Execute OCBI / OCBP / OCBWB / ICBI
+    core.RunInstructions(5);
+    Check(core.Cache().GetStats().ocbiOps == 1u &&
+          core.Cache().GetStats().ocbpOps == 1u &&
+          core.Cache().GetStats().ocbwbOps == 1u &&
+          core.Cache().GetStats().icbiOps == 1u,
+          "Cache instructions OCBI/OCBP/OCBWB/ICBI tracked in ShCacheUnit");
+
+    // RAMCR / PASCR / IRMCR / XSA..YEA (0xFF000050..0xFF000078)
+    Check(core.Write32(0xFF000074u, 0x00000200u), "Write RAMCR");
+    Check(core.Write32(0xFF000070u, 0x00000080u), "Write PASCR");
+    Check(core.Write32(0xFF000078u, 0x0000000Fu), "Write IRMCR");
+    Check(core.Write32(0xFF000050u, 0xE5007000u), "Write XSA");
+    std::uint32_t rRamcr = 0, rPascr = 0, rIrmcr = 0, rXsa = 0;
+    Check(core.Read32(0xFF000074u, rRamcr) && rRamcr == 0x00000200u, "Read RAMCR");
+    Check(core.Read32(0xFF000070u, rPascr) && rPascr == 0x00000080u, "Read PASCR");
+    Check(core.Read32(0xFF000078u, rIrmcr) && rIrmcr == 0x0000000Fu, "Read IRMCR");
+    Check(core.Read32(0xFF000050u, rXsa) && rXsa == 0xE5007000u, "Read XSA");
+}
+
+void TestIntc2NmiCmtWdtAdcSdhiScifPeerUsbUbcLcd()
+{
+    // 1. INTC2 External IRQ0 + NMI + USERIMASK
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    auto& core = *corePtr;
+    SetupMinimalCore(core, {
+        0xD103u, // PC=0x00: mov.l @(lit0: 0x10), r1 = 0xA0001000 (VBR)
+        0x412Eu, // PC=0x02: ldc r1, vbr
+        0xD103u, // PC=0x04: mov.l @(lit1: 0x14), r1 = 0x40000000 (MD=1, BL=0, IMASK=0)
+        0x410Eu, // PC=0x06: ldc r1, sr
+        0x0009u, // PC=0x08: nop
+        0x0009u, // PC=0x0A: nop
+        0x0009u, 0x0009u, // 0x0C..0x0E pad
+        0xA000u, 0x1000u, // 0x10: VBR
+        0x4000u, 0x0000u, // 0x14: SR
+    });
+    core.RunInstructions(4); // VBR set, BL=0, IMASK=0
+    // Test USERIMASK key check (0xA50000F0 accepted, 0x000000F0 ignored)
+    Check(core.Write32(0xA4141000u, 0x00000050u), "Write USERIMASK bad key");
+    std::uint32_t uim = 0;
+    Check(core.Read32(0xA4141000u, uim) && uim == 0u, "USERIMASK rejected bad key");
+    Check(core.Write32(0xA4141000u, 0xA5000070u), "Write USERIMASK valid key");
+    Check(core.Read32(0xA4141000u, uim) && uim == 0x70u, "USERIMASK accepted 0x70");
+
+    // Unmask IRQ0, set priority 10 (bits 31..28 of INTPRI00), raise IRQ0
+    Check(core.Write8(0xA4140064u, 0x01u), "Unmask IRQ0");
+    Check(core.Write32(0xA4140010u, 0xA0000000u), "IRQ0 prio=10");
+    core.Intc2Mut().RaiseExternalIrq(0u);
+    core.RunInstructions(1);
+    Check(core.GetRegisters().intevt == 0x0600u && core.GetRegisters().pc == 0xA0001600u,
+          "INTC2 delivered External IRQ0 (0x600) to VBR+0x600");
+
+    // Trigger NMI (clear BL first via new minimal run)
+    SetupMinimalCore(core, {
+        0xD103u, 0x412Eu, 0xD103u, 0x410Eu, 0x0009u, 0x0009u, 0x0009u, 0x0009u,
+        0xA000u, 0x1000u, 0x4000u, 0x00F0u, // BL=0, IMASK=15 (all maskables masked, NMI still fires!)
+    });
+    core.RunInstructions(4);
+    core.Intc2Mut().TriggerNmi();
+    core.RunInstructions(1);
+    Check(core.GetRegisters().expevt == 0x01C0u && core.GetRegisters().pc == 0xA0001100u,
+          "INTC2 NMI bypassed IMASK=15 and vectored to 0x1C0");
+
+    // 2. ADC at exact CPU73050.dll addresses 0xA4610080..0xA461008E + battery scaling + IRQ
+    core.SetBatteryPercent(15);
+    Check(core.Write16(0xA4610088u, 0x0060u), "ADC ADCSR @ 0xA4610088 ADIE|ADST");
+    std::uint16_t adcsr = 0, addrb = 0, addrc = 0;
+    Check(core.Read16(0xA4610088u, adcsr) && (adcsr & 0x00C0u) == 0x00C0u, "ADC ADF|ADIE set at 0x88");
+    Check(core.Read16(0xA4610082u, addrb) && addrb == static_cast<std::uint16_t>(0x03FFu << 6),
+          "ADC ADDRB (MEM.RYBY) == Ready");
+    Check(core.Read16(0xA4610084u, addrc) &&
+          addrc < static_cast<std::uint16_t>(cg50::AdcUnit::kHealthyBatteryRaw10 << 6),
+          "ADC ADDRC reflects 15% low battery");
+    Check(core.Adc().HasPendingIrq(), "ADC pending IRQ signaled");
+
+    // 3. SDHI at 0xA4CF001C..22 & DdBus at 0xA44C0000..20
+    std::uint16_t sdMask = 0;
+    Check(core.Read16(0xA4CF0020u, sdMask) && sdMask == 0xFFFFu, "SDHI SD_INFO1_MASK default 0xFFFF");
+    Check(core.Write16(0xA4CF0020u, 0x001Du), "SDHI write SD_INFO1_MASK");
+    Check(core.Read16(0xA4CF0020u, sdMask) && sdMask == 0x001Du, "SDHI readback SD_INFO1_MASK");
+    Check(core.Write8(0xA44C0006u, 0x05u), "DDCS_CNTR write");
+    std::uint8_t ddcs = 0;
+    Check(core.Read8(0xA44C0006u, ddcs) && ddcs == 0x05u, "DDCS_CNTR readback");
+
+    // 4. SCIF0 virtual 3-pin peer-to-peer cable between TWO Cg50NativeCore instances
+    {
+        auto calcAPtr = std::make_unique<Cg50NativeCore>();
+        auto calcBPtr = std::make_unique<Cg50NativeCore>();
+        auto& calcA = *calcAPtr;
+        auto& calcB = *calcBPtr;
+        SetupMinimalCore(calcA, {0x001Bu}); // SLEEP
+        SetupMinimalCore(calcB, {0x001Bu});
+        calcA.Scif0Mut().ConnectPeer(&calcB.Scif0Mut());
+        calcB.Scif0Mut().ConnectPeer(&calcA.Scif0Mut());
+        Check(calcA.Write8(0xA4410004u, 0x00u), "SCIF0 A BRR=0 (fast baud)");
+        Check(calcA.Write8(0xA441000Cu, 0x42u), "SCIF0 A TX 0x42");
+        Check(calcA.Write8(0xA441000Cu, 0x99u), "SCIF0 A TX 0x99");
+        calcA.RunInstructions(1);
+        calcA.AdvanceCycles(256u);
+        std::uint8_t b0 = 0, b1 = 0;
+        Check(calcB.Scif0().RxCount() == 2u, "SCIF0 B received 2 bytes over virtual 3-pin cable");
+        Check(calcB.Read8(0xA4410014u, b0) && b0 == 0x42u, "SCIF0 B byte 0 == 0x42");
+        Check(calcB.Read8(0xA4410014u, b1) && b1 == 0x99u, "SCIF0 B byte 1 == 0x99");
+    }
+
+    // 5. USB 2.0 virtual host VBUS attach + SETUP + Bulk OUT/IN pipes + IRQ
+    core.Usb2Mut().Reset();
+    Check(core.Write16(0xA4D80030u, cg50::Usb2Unit::kIntVbint | cg50::Usb2Unit::kIntCtrt |
+                                    cg50::Usb2Unit::kIntBrdy), "USB2 INTENB0");
+    core.Usb2Mut().SetVbusAttached(true);
+    std::uint16_t usbSts = 0;
+    Check(core.Read16(0xA4D80004u, usbSts) && usbSts == 0x0001u, "USB2 SYSSTS attached FS");
+    Check(core.Usb2().HasPendingIrq(), "USB2 VBUS attach raised IRQ");
+    core.Usb2Mut().InjectSetupPacket(0x0680u, 0x0100u, 0x0000u, 0x0012u); // GET_DESCRIPTOR
+    std::uint16_t uReq = 0, uLen = 0;
+    Check(core.Read16(0xA4D80054u, uReq) && uReq == 0x0680u, "USB2 USBREQ readback");
+    Check(core.Read16(0xA4D8005Au, uLen) && uLen == 0x0012u, "USB2 USBLENG readback");
+    // Host sends Bulk OUT bytes on pipe 1 -> guest reads CFIFO
+    const std::uint8_t bulkOut[4] = {0x55u, 0x53u, 0x42u, 0x43u}; // "USBC" CBW signature!
+    core.Usb2Mut().HostPushOutPipe(1u, bulkOut, 4u);
+    Check(core.Write16(0xA4D80020u, 0x0401u), "USB2 CFIFOSEL pipe=1 MBW=16");
+    std::uint16_t w0 = 0, w1 = 0;
+    Check(core.Read16(0xA4D80014u, w0) && w0 == 0x5553u, "USB2 CFIFO Bulk OUT word 0");
+    Check(core.Read16(0xA4D80014u, w1) && w1 == 0x4243u, "USB2 CFIFO Bulk OUT word 1");
+    // Guest writes Bulk IN bytes on pipe 2 -> host pops
+    Check(core.Write16(0xA4D80020u, 0x0402u), "USB2 CFIFOSEL pipe=2 MBW=16");
+    Check(core.Write16(0xA4D80014u, 0x5553u), "USB2 CFIFO Bulk IN word 0");
+    Check(core.Write16(0xA4D80014u, 0x4253u), "USB2 CFIFO Bulk IN word 1");
+    const auto inPkt = core.Usb2Mut().HostPopInPipe(2u);
+    Check(inPkt.size() == 4u && inPkt[0] == 0x55u && inPkt[3] == 0x53u, "USB2 Bulk IN CSW popped by host");
+
+    // 6. UBC hardware fetch breakpoint (EXPEVT 0x1E0 + CCMFR.MF0=1)
+    SetupMinimalCore(core, {
+        0xD103u, 0x412Eu, 0xD103u, 0x410Eu, 0x0009u, 0x0009u, 0x0009u, 0x0009u,
+        0xA000u, 0x1000u, 0x4000u, 0x0000u,
+    });
+    core.RunInstructions(4); // PC is now 0xA0000008, BL=0
+    Check(core.Write32(0xFF200008u, 0xA000000Au), "UBC CAR0 = 0xA000000A");
+    Check(core.Write32(0xFF20000Cu, 0x00000000u), "UBC CAMR0 = 0 (exact match)");
+    Check(core.Write32(0xFF200004u, 0x00000001u), "UBC CRR0 BIE=1");
+    Check(core.Write32(0xFF200000u, 0x00000011u), "UBC CBR0 CE=1 ID=01(fetch)");
+    core.RunInstructions(1); // executes 0xA0000008 -> PC=0xA000000A
+    Check(core.GetRegisters().pc == 0xA000000Au, "Reached breakpoint PC");
+    core.RunInstructions(1); // hits UBC breakpoint at 0xA000000A!
+    Check(core.GetRegisters().expevt == 0x01E0u && core.GetRegisters().pc == 0xA0001100u,
+          "UBC triggered hardware breakpoint EXPEVT 0x1E0");
+    Check((core.Ubc().Ccmfr() & 1u) != 0u && core.GetAuthenticityStats().ubcBreaks == 1u,
+          "UBC CCMFR.MF0 and telemetry incremented");
+
+    // 7. WDT Watchdog-mode reset (WT/IT=0 + SetWatchdogResetEnabled(true))
+    SetupMinimalCore(core, {0x001Bu}); // SLEEP
+    core.SetWatchdogResetEnabled(true);
+    Check(core.Write16(0xA4520000u, 0x5A00u | 0xFEu), "WTCNT = 0xFE");
+    Check(core.Write16(0xA4520004u, 0xA500u | 0x20u), "WTCSR TME=1 WT/IT=0 CKS=0 (div 1)");
+    core.RunInstructions(1);
+    core.AdvanceCycles(4u);
+    Check(core.GetAuthenticityStats().watchdogResets == 1u && core.GetRegisters().pc == 0xA0000000u,
+          "WDT watchdog-mode overflow triggered clean CPU reset");
+
+    // 8. R61524 scroll, mirror, CABC brightness, blanking, RenderDisplayRgb565, 60 Hz FMARK
+    cg50::R61524 lcd;
+    lcd.Reset();
+    cg50::R61524::Pins pins{};
+    pins.v28sys = true;
+    pins.resetX = true;
+    pins.chipSelect = false;
+    auto lcdReg = [&](std::uint16_t idx, std::uint16_t val) {
+        pins.registerSelect = false; lcd.SetPins(pins); lcd.ObserveWrite16(idx);
+        pins.registerSelect = true;  lcd.SetPins(pins); lcd.ObserveWrite16(val);
+    };
+    lcdReg(0x0007u, 0x0173u); // Display ON
+    lcdReg(0x0200u, 0x0000u); lcdReg(0x0201u, 0x0000u);
+    pins.registerSelect = false; lcd.SetPins(pins); lcd.ObserveWrite16(0x0202u);
+    pins.registerSelect = true;  lcd.SetPins(pins); lcd.ObserveWrite16(0xF800u); // Red at (0,0)
+    lcdReg(0x0401u, 0x0001u); // VLE=1 enable vertical scroll
+    lcdReg(0x0404u, 0x0001u); // Scroll by 1 line
+    lcdReg(0x05A1u, 0x0080u); // 50% backlight
+    std::vector<std::uint16_t> disp(cg50::R61524::kVisibleWidth * cg50::R61524::kVisibleHeight, 0u);
+    lcd.RenderDisplayRgb565(disp.data(), disp.size());
+    Check(disp[0] == 0x0000u, "R61524 vertical scroll shifted row 0");
+    // Blanking via Power Control 1 STB=1 (0x0100 bit 2) -> all black
+    lcdReg(0x0100u, 0x0004u);
+    Check(lcd.DisplayBlanked(), "R61524 STB standby blanks display");
+    lcd.RenderDisplayRgb565(disp.data(), disp.size());
+    Check(disp[0] == 0x0000u, "R61524 display blanking renders black");
+    // 60 Hz FMARK (~550,000 cycles/frame, 10% active pulse window)
+    lcd.TickFrameMark(550000u);
+    Check(lcd.FrameMarkActive(), "R61524 60 Hz FMARK pulsed active at frame boundary");
+    lcd.TickFrameMark(100000u);
+    Check(!lcd.FrameMarkActive(), "R61524 60 Hz FMARK returned inactive after pulse window");
+
+    // 9. Strict No-HLE compile-time & env audit check
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
+    Check(false, "CG50_ENABLE_LEGACY_DEBUG_HLE MUST NOT be defined in standard/cert builds!");
+#endif
+    std::vector<std::string> badEnvs;
+    Check(Cg50NativeCore::AuditForbiddenEnvOverrides(badEnvs) == 0u,
+          "Zero forbidden HLE env overrides active");
+
+    // 10. Extended Save/Restore roundtrip (chunks 96..105: DSP, UBC, SDHI, OCRAM, RAMCR)
+    SetupMinimalCore(core, {0x0009u});
+    Check(core.Write32(Cg50NativeCore::kCacheControlRegister, cg50::ShCacheUnit::kCcrOra), "Enable OCRAM");
+    Check(core.Write32(0x7C000100u, 0x55AA33CCu), "Write OCRAM pattern");
+    Check(core.Write32(0xFF000074u, 0x00000200u), "Write RAMCR pattern");
+    Check(core.Write16(0xA4CF0020u, 0x1357u), "Write SDHI mask");
+    Check(core.Write32(0xFF200008u, 0x80012340u), "Write UBC CAR0");
+    core.DspMut().a0 = 0x123456789ll;
+    std::vector<std::uint8_t> snap;
+    Check(core.ExportState(snap), "ExportState v44 chunks 96..105");
+    auto restoredPtr = std::make_unique<Cg50NativeCore>();
+    auto& restored = *restoredPtr;
+    SetupMinimalCore(restored, {0x0009u});
+    Check(restored.ImportState(snap.data(), snap.size()), "ImportState v44 chunks 96..105");
+    std::uint32_t rOcram = 0, rRamcr = 0, rCar0 = 0;
+    std::uint16_t rSdhi = 0;
+    Check(restored.Read32(0x7C000100u, rOcram) && rOcram == 0x55AA33CCu, "Restored OCRAM");
+    Check(restored.Read32(0xFF000074u, rRamcr) && rRamcr == 0x00000200u, "Restored RAMCR");
+    Check(restored.Read16(0xA4CF0020u, rSdhi) && rSdhi == 0x1357u, "Restored SDHI");
+    Check(restored.Read32(0xFF200008u, rCar0) && rCar0 == 0x80012340u, "Restored UBC CAR0");
+    Check(restored.Dsp().a0 == 0x123456789ll, "Restored SH4AL-DSP 40-bit A0");
+}
+
+void TestDspBcdCacheIntc2CornerCases()
+{
+    // 1. SH4AL-DSP LDS Rm, A0 (0x427A) with SR.DSP=0 MUST raise EXPEVT 0x180
+    {
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        SetupMinimalCore(core, {
+            0xD104u, // PC=0x00 -> lit 0x14: VBR=0xA0001000
+            0x412Eu, // PC=0x02: LDC R1, VBR
+            0xD104u, // PC=0x04 -> lit 0x18: SR=0x40000000 (MD=1, BL=0, DSP=0)
+            0x410Eu, // PC=0x06: LDC R1, SR
+            0xE255u, // PC=0x08: MOV #0x55, R2
+            0x427Au, // PC=0x0A: LDS R2, A0 -> MUST trap 0x180 when SR.DSP=0!
+            0x0009u, 0x0009u, 0x0009u, 0x0009u,
+            0xA000u, 0x1000u, // 0x14: VBR
+            0x4000u, 0x0000u, // 0x18: SR (DSP=0)
+        });
+        core.RunInstructions(6);
+        Check(core.GetRegisters().expevt == 0x180u && core.GetRegisters().pc == 0xA0001100u,
+              "LDS Rm, A0 traps EXPEVT 0x180 when SR.DSP=0");
+    }
+
+    // 2. SH4AL-DSP positive 32-bit saturation (DSR.S=1) & SETRC Rm (0x4n14) multi-bit RC
+    {
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        SetupMinimalCore(core, {
+            0xE204u, // PC=0x00: MOV #4, R2
+            0x4214u, // PC=0x02: SETRC R2 -> SR.RC = 4 (tests bits above bit 0!)
+            0x0009u,
+        });
+        core.RunInstructions(2);
+        const std::uint32_t rc = (core.GetRegisters().sr & Cg50NativeCore::kSrRcMask) >> 16;
+        Check(rc == 4u, "SETRC Rm preserves full 12-bit repeat count (RC == 4)");
+
+        core.DspMut().dsr = cg50::ShDspState::kDsrS;
+        core.DspMut().WriteReg40(2u, 0x123456789ll); // > 0x7FFFFFFF -> must saturate to 0x7FFFFFFF!
+        Check(core.Dsp().a0 == 0x7FFFFFFFll, "DSP WriteReg40 saturates positive overflow to 0x7FFFFFFF");
+    }
+
+    // 3. Hardware BCD ALU exact decimal carry boundary: 5 + 5 = 10 (s == 10 > 9!)
+    {
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        SetupMinimalCore(core, {0x0009u});
+        Check(core.Write32(0xA4CB0014u, 0x00000005u), "BCD FASSRA=5");
+        Check(core.Write32(0xA4CB0018u, 0x00000005u), "BCD FASSRB=5");
+        Check(core.Write16(0xA4CB0010u, 0x0001u), "BCD ADD 5+5");
+        std::uint32_t res = 0;
+        Check(core.Read32(0xA4CB001Cu, res) && res == 0x00000010u,
+              "BCD ALU exact decimal carry threshold 5+5 == 0x10");
+    }
+
+    // 4. SH-4A Cache CCR.OCI invalidates populated OC line
+    {
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        SetupMinimalCore(core, {0x0009u});
+        Check(core.Write32(0xF4000000u, 0x08001001u), "Seed valid OC line via MMIO address array (V=bit0)");
+        std::uint32_t tagBefore = 0, tagAfter = 0xFFFFFFFFu;
+        Check(core.Read32(0xF4000000u, tagBefore) && (tagBefore & 0x1u) != 0u, "OC line valid before CCR.OCI");
+        Check(core.Write32(Cg50NativeCore::kCacheControlRegister, cg50::ShCacheUnit::kCcrOci), "Write CCR.OCI");
+        Check(core.Read32(0xF4000000u, tagAfter) && (tagAfter & 0x1u) == 0u, "OC line invalidated by CCR.OCI");
+    }
+
+    // 5. INTC2 INTMSK00 suppresses masked external IRQ
+    {
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        SetupMinimalCore(core, {0x0009u});
+        Check(core.Write32(0xA4140010u, 0x0A000000u), "IRQ1 prio=10");
+        Check(core.Write8(0xA4140044u, 0x02u), "Mask IRQ1 via INTMSK00");
+        core.Intc2Mut().RaiseExternalIrq(1u);
+        std::uint32_t ev = 0; std::uint8_t pr = 0; std::size_t idx = 0;
+        Check(!core.Intc2().HighestPendingExternalIrq(ev, pr, idx),
+              "INTC2 INTMSK00 blocks masked IRQ1 from HighestPendingExternalIrq");
+    }
 }
 
 } // namespace
@@ -345,6 +842,10 @@ int main()
     TestDmac6ChannelsAndSizesAndLcdAlias();
     TestEtmuIntc2AdcTpuScifUsb();
     TestFlashCfiExtensionsAndFpuDn();
+    TestSh4alDspStrictNoFpuAndClipDiv();
+    TestCacheOcramItlbAndControlRegs();
+    TestIntc2NmiCmtWdtAdcSdhiScifPeerUsbUbcLcd();
+    TestDspBcdCacheIntc2CornerCases();
 
     if (gFailures == 0) {
         std::printf("[SH7305-HW-TEST] ALL PASS\n");

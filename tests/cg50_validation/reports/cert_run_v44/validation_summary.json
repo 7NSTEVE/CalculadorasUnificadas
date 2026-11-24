@@ -1,0 +1,14 @@
+{
+  "suite": "all",
+  "threads": 16,
+  "strict_no_hle_verified": true,
+  "strict_sh7305_no_fpu": true,
+  "total_cases": 3031,
+  "passed": 3031,
+  "casio_fidelity_notes": 0,
+  "failed": 0,
+  "total_instructions": 99647637546,
+  "total_bcd_alu_ops": 8965454,
+  "total_fpu_opcodes": 0,
+  "total_dsp_opcodes": 0
+}

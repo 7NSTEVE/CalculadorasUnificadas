@@ -1,4 +1,5 @@
 #include "BCDCalc.hpp"
+#include <cstring>
 
 #include "../Logger.hpp"
 #include "../Chipset/MMU.hpp"

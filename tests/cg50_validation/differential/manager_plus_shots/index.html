@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Official Casio DLL Oracle Evidence (CPU73050.dll + LCDR61524A.dll)</title>
+    <style>
+        body { font-family: system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f141c; color: #e6edf3; padding: 24px; }
+        h1 { color: #58a6ff; font-size: 24px; border-bottom: 1px solid #30363d; padding-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; background: #161b22; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #21262d; }
+        th { background: #21262d; color: #8b949e; font-size: 13px; text-transform: uppercase; }
+        .thumb-lcd { height: 120px; border-radius: 4px; border: 1px solid #30363d; background: #000; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .badge-pass { background: #238636; color: #fff; }
+        .badge-fail { background: #da3633; color: #fff; }
+        .ocr-text { font-family: monospace; font-size: 13px; color: #7ee787; }
+        .tokens { color: #8b949e; font-size: 11px; }
+        .hash { font-family: monospace; font-size: 11px; color: #8b949e; }
+    </style>
+</head>
+<body>
+    <h1>Official Casio DLL Oracle Evidence (CPU73050.dll + LCDR61524A.dll)</h1>
+    <p>Target: <strong>UNIFIED</strong> · Total pasos auditados: <strong>11</strong></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Paso</th>
+                <th>Operación</th>
+                <th>Estado</th>
+                <th>Display LCD</th>
+                <th>OCR / Tokens</th>
+                <th>Hash SHA-256</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr>
+                <td><strong>#1</strong></td>
+                <td><strong>run_matrix_ready</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="01_run_matrix_ready_lcd.png" target="_blank">
+                        <img src="01_run_matrix_ready_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">1000 log 1000 2 1000 3</div>
+                    <small class="tokens"></small>
+                </td>
+                <td><code class="hash">90B02E542911189D...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#2</strong></td>
+                <td><strong>CANCEL-001</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="02_CANCEL-001_lcd.png" target="_blank">
+                        <img src="02_CANCEL-001_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">1000 log 1000 1000 3 (1x1012+1)-1x1012 1</div>
+                    <small class="tokens">1: OK</small>
+                </td>
+                <td><code class="hash">74522B4AC6845FF7...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#3</strong></td>
+                <td><strong>CANCEL-002</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="03_CANCEL-002_lcd.png" target="_blank">
+                        <img src="03_CANCEL-002_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">log 1000 3 1</div>
+                    <small class="tokens">0: OK</small>
+                </td>
+                <td><code class="hash">CF2E3509ACD46B48...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#4</strong></td>
+                <td><strong>CANCEL-003</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="04_CANCEL-003_lcd.png" target="_blank">
+                        <img src="04_CANCEL-003_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">1 0.1+0.2-0.3</div>
+                    <small class="tokens">0: OK</small>
+                </td>
+                <td><code class="hash">608C4E0975E5ECEF...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#5</strong></td>
+                <td><strong>CANCEL-004</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="05_CANCEL-004_lcd.png" target="_blank">
+                        <img src="05_CANCEL-004_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">0.1+0.2-0.3 sin</div>
+                    <small class="tokens">0: OK</small>
+                </td>
+                <td><code class="hash">1E3C50257E922E77...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#6</strong></td>
+                <td><strong>CANCEL-005</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="06_CANCEL-005_lcd.png" target="_blank">
+                        <img src="06_CANCEL-005_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">U. 1+U.Z—U.3 sin</div>
+                    <small class="tokens">0: OK</small>
+                </td>
+                <td><code class="hash">CE5D3BA9EDD5A576...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#7</strong></td>
+                <td><strong>EE-FILTER-DB</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="07_EE-FILTER-DB_lcd.png" target="_blank">
+                        <img src="07_EE-FILTER-DB_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">-10x10g 5 -6. 989700043</div>
+                    <small class="tokens">6.989700043: OK</small>
+                </td>
+                <td><code class="hash">F7826A83935BD9C8...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#8</strong></td>
+                <td><strong>EE-RC-TAU</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="08_EE-RC-TAU_lcd.png" target="_blank">
+                        <img src="08_EE-RC-TAU_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">10x10g 5 6. 989700043 1-e-l ) 3. 160602794</div>
+                    <small class="tokens">3.160602794: OK</small>
+                </td>
+                <td><code class="hash">930088DAEBA7279A...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#9</strong></td>
+                <td><strong>INT-BASE-001</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="09_INT-BASE-001_lcd.png" target="_blank">
+                        <img src="09_INT-BASE-001_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">3. 160602794 x3 dx 81 Solve d/dx d2/dx2 fdx</div>
+                    <small class="tokens">81: OK, 4: OK</small>
+                </td>
+                <td><code class="hash">A3F7327FC1D6938E...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#10</strong></td>
+                <td><strong>ERR-DIV0</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="10_ERR-DIV0_lcd.png" target="_blank">
+                        <img src="10_ERR-DIV0_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">Ma ERROR 4 1 1+0 List Press: Lst*Hat Dim [EXIT] Fill( Se</div>
+                    <small class="tokens">ERROR: OK</small>
+                </td>
+                <td><code class="hash">022ED7E9EAD45B3A...</code></td>
+            </tr>
+            
+            <tr>
+                <td><strong>#11</strong></td>
+                <td><strong>GRAPH-POLAR-ROSE</strong></td>
+                <td><span class="badge badge-pass">PASS</span></td>
+                <td>
+                    <a href="11_GRAPH-POLAR-ROSE_lcd.png" target="_blank">
+                        <img src="11_GRAPH-POLAR-ROSE_lcd.png" class="thumb-lcd" alt="LCD" />
+                    </a>
+                </td>
+                <td>
+                    <div class="ocr-text">(Sin texto)</div>
+                    <small class="tokens"></small>
+                </td>
+                <td><code class="hash">1308D3F9F0D8E2E5...</code></td>
+            </tr>
+            
+        </tbody>
+    </table>
+</body>
+</html>

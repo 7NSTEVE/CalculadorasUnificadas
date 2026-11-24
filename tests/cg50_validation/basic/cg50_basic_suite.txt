@@ -1,0 +1,36 @@
+# Casio BASIC Certification Program Suite (fx-CG50 PRGM)
+# Verified syntax per fx-CG50 Software User's Guide Chapter 8 (Programming)
+
+[BASIC-01: For/Next Summation]
+0->A
+For 1->I To 100
+A+I^2->A
+Next
+Locate 1,1,"SUM100="
+Locate 8,1,A
+# Expected: 338350
+
+[BASIC-02: If/Then/Else + While Loop (Euclidean GCD)]
+1071->A
+462->B
+While B<>0
+A-B*Int(A/B)->R
+B->A
+R->B
+WhileEnd
+Locate 1,2,"GCD="
+Locate 5,2,A
+# Expected: 21
+
+[BASIC-03: Do/LpWhile + Plot/Line Graphics]
+ViewWindow -5,5,1,-5,5,1
+0->K
+Do
+Plot K-2,sin(K)
+K+0.5->K
+LpWhile K<=4
+Line
+
+[BASIC-04: Nested Recursion Stack Boundary Check]
+# Prog "REC" calling Prog "REC" triggers Go/Stack ERROR cleanly at max nesting depth 10,
+# recoverable via EXIT + AC/ON without core reset.

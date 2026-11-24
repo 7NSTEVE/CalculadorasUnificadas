@@ -1,0 +1,431 @@
+{
+  "oracle_engine": "mpmath+sympy",
+  "precision_digits": 50,
+  "circularity_policy": "EXTERNAL_AUDIT_ONLY_NEVER_CALLED_BY_EMULATOR",
+  "total_cases": 43,
+  "cases": [
+    {
+      "case_id": "INT-EXTREME-001",
+      "category": "extreme_integral",
+      "expression": "int_0^100 sin(100x)/(1+x^2) dx",
+      "exact_50dps": "0.010002954528456467982816632263277648385522978477572",
+      "display_10sig": "0.01000295453",
+      "casio_note": "Highly oscillatory (~1591 cycles); Gauss-Kronrod on CG50 may return Time Out or truncated precision — compare against Manager PLUS."
+    },
+    {
+      "case_id": "INT-EXTREME-002",
+      "category": "extreme_integral",
+      "expression": "int_-1^1 1/(1+10^8*x^2) dx",
+      "exact_50dps": "0.00031413926535904599051253100499747409792130424170663",
+      "display_10sig": "0.0003141392654",
+      "symbolic": "atan(10000)/5000",
+      "casio_note": "Sharp peak width ~1e-4 at x=0; adaptive quadrature stress test."
+    },
+    {
+      "case_id": "INT-EXTREME-003",
+      "category": "extreme_integral",
+      "expression": "int_0^10 exp(-x^2)*cos(20x)/(1+x^4) dx",
+      "exact_50dps": "0.0000011082938495397720822394135388860056665839622674524",
+      "display_10sig": "1.10829385e-6",
+      "casio_note": "Moderately oscillatory damped integral; exact reference verified via half-period splitting."
+    },
+    {
+      "case_id": "INT-BASE-001",
+      "category": "integral",
+      "expression": "int_0^3 x^3 dx",
+      "exact_50dps": "20.25",
+      "display_10sig": "20.25",
+      "symbolic": "81/4"
+    },
+    {
+      "case_id": "INT-BASE-002",
+      "category": "integral",
+      "expression": "int_0^pi sin(x) dx",
+      "exact_50dps": "2.0",
+      "display_10sig": "2",
+      "symbolic": "2"
+    },
+    {
+      "case_id": "INT-BASE-003",
+      "category": "integral",
+      "expression": "int_0^1 e^x dx",
+      "exact_50dps": "1.7182818284590452353602874713526624977572470937",
+      "display_10sig": "1.718281828",
+      "symbolic": "e - 1"
+    },
+    {
+      "case_id": "INT-BASE-004",
+      "category": "integral",
+      "expression": "int_0^1 1/(1+x^2) dx",
+      "exact_50dps": "0.78539816339744830961566084581987572104929234984378",
+      "display_10sig": "0.7853981634",
+      "symbolic": "pi/4"
+    },
+    {
+      "case_id": "CANCEL-001",
+      "category": "cancellation_bcd",
+      "expression": "(10^12+1)-10^12",
+      "exact_50dps": "1",
+      "display_10sig": "1",
+      "casio_bcd15_expected": "1"
+    },
+    {
+      "case_id": "CANCEL-002",
+      "category": "cancellation_bcd",
+      "expression": "(10^20+1)-10^20",
+      "exact_50dps": "1",
+      "display_10sig": "1",
+      "casio_bcd15_expected": "0",
+      "casio_note": "Casio 15-digit internal BCD loses +1 at 10^20 -> returns 0 (MATCH_CASIO_FIDELITY)."
+    },
+    {
+      "case_id": "CANCEL-003",
+      "category": "cancellation_bcd",
+      "expression": "0.1+0.2-0.3",
+      "exact_50dps": "0",
+      "display_10sig": "0",
+      "casio_bcd15_expected": "0",
+      "casio_note": "Exact 0 in Casio decimal BCD (unlike binary IEEE-754 ~5.55e-17)."
+    },
+    {
+      "case_id": "CANCEL-004",
+      "category": "cancellation_bcd",
+      "expression": "sin(pi) [RAD]",
+      "exact_50dps": "0",
+      "display_10sig": "0",
+      "casio_bcd15_expected": "0"
+    },
+    {
+      "case_id": "CANCEL-005",
+      "category": "cancellation_bcd",
+      "expression": "sqrt(10^16+1)-10^8",
+      "exact_50dps": "0.0000000049999999999999998750000000000000063299258140208737",
+      "display_10sig": "5.0e-9",
+      "casio_bcd15_expected": "0",
+      "casio_note": "10^16+1 exceeds 15 internal BCD digits -> rounds to 10^16 -> sqrt - 10^8 = 0 on Casio BCD15."
+    },
+    {
+      "case_id": "CANCEL-006",
+      "category": "cancellation_bcd",
+      "expression": "(1-cos(1e-8))/1e-16 [RAD]",
+      "exact_50dps": "0.49999999999999999583333333333333334108783749673204",
+      "display_10sig": "0.5",
+      "casio_bcd15_expected": "0",
+      "casio_note": "cos(1e-8) = 1 - 0.5e-16 rounds to 1 in 15-digit BCD -> 0 on Casio BCD15."
+    },
+    {
+      "case_id": "MAT-HILBERT-3x3",
+      "category": "ill_conditioned_matrix",
+      "expression": "Det(Hilbert(3))",
+      "symbolic": "1/2160",
+      "exact_50dps": "0.00046296296296296296296296296296296296296296296296296",
+      "display_10sig": "0.000462962963",
+      "condition_number_l1": "3230.1"
+    },
+    {
+      "case_id": "MAT-HILBERT-4x4",
+      "category": "ill_conditioned_matrix",
+      "expression": "Det(Hilbert(4))",
+      "symbolic": "1/6048000",
+      "exact_50dps": "0.00000016534391534391534391534391534391534391534391534392",
+      "display_10sig": "1.653439153e-7",
+      "condition_number_l1": "145463.31"
+    },
+    {
+      "case_id": "MAT-HILBERT-5x5",
+      "category": "ill_conditioned_matrix",
+      "expression": "Det(Hilbert(5))",
+      "symbolic": "1/266716800000",
+      "exact_50dps": "0.0000000000037492951325150871636132407107463796806200434318348",
+      "display_10sig": "3.749295133e-12",
+      "condition_number_l1": "6172431.2"
+    },
+    {
+      "case_id": "MAT-HILBERT-6x6",
+      "category": "ill_conditioned_matrix",
+      "expression": "Det(Hilbert(6))",
+      "symbolic": "1/186313420339200000",
+      "exact_50dps": "5.3672998873586877327888303539166891142434026086185e-18",
+      "display_10sig": "5.367299887e-18",
+      "condition_number_l1": "2.5172182e+8"
+    },
+    {
+      "case_id": "MAT-HILBERT-8x8",
+      "category": "ill_conditioned_matrix",
+      "expression": "Det(Hilbert(8))",
+      "symbolic": "1/365356847125734485878112256000000",
+      "exact_50dps": "2.7370501137915130166420432878193577392061742467178e-33",
+      "display_10sig": "2.737050114e-33",
+      "condition_number_l1": "3.8784712e+11"
+    },
+    {
+      "case_id": "MAT-HILBERT-10x10",
+      "category": "ill_conditioned_matrix",
+      "expression": "Det(Hilbert(10))",
+      "symbolic": "1/46206893947914691316295628839036278726983680000000000",
+      "exact_50dps": "2.1641792264314918690605949836507259090507621790197e-53",
+      "display_10sig": "2.164179226e-53",
+      "condition_number_l1": "5.601588e+14"
+    },
+    {
+      "case_id": "POLY-EXTREME-001",
+      "category": "polynomial",
+      "expression": "(x-1)^6 = 0",
+      "expanded": "x**6 - 6*x**5 + 15*x**4 - 20*x**3 + 15*x**2 - 6*x + 1",
+      "coefficients_desc": [
+        "1",
+        "-6",
+        "15",
+        "-20",
+        "15",
+        "-6",
+        "1"
+      ],
+      "exact_roots": [
+        "1 (mult 6)"
+      ]
+    },
+    {
+      "case_id": "POLY-EXTREME-002",
+      "category": "polynomial",
+      "expression": "(x^2-1)^3 = 0",
+      "expanded": "x**6 - 3*x**4 + 3*x**2 - 1",
+      "coefficients_desc": [
+        "1",
+        "0",
+        "-3",
+        "0",
+        "3",
+        "0",
+        "-1"
+      ],
+      "exact_roots": [
+        "1 (mult 3)",
+        "-1 (mult 3)"
+      ]
+    },
+    {
+      "case_id": "POLY-EXTREME-003",
+      "category": "polynomial",
+      "expression": "(x^2+1)^3 = 0",
+      "expanded": "x**6 + 3*x**4 + 3*x**2 + 1",
+      "coefficients_desc": [
+        "1",
+        "0",
+        "3",
+        "0",
+        "3",
+        "0",
+        "1"
+      ],
+      "exact_roots": [
+        "i (mult 3)",
+        "-i (mult 3)"
+      ]
+    },
+    {
+      "case_id": "POLY-EXTREME-004",
+      "category": "polynomial",
+      "expression": "Wilkinson deg-6 prod_{k=1..6}(x-k) = 0",
+      "expanded": "x**6 - 21*x**5 + 175*x**4 - 735*x**3 + 1624*x**2 - 1764*x + 720",
+      "coefficients_desc": [
+        "1",
+        "-21",
+        "175",
+        "-735",
+        "1624",
+        "-1764",
+        "720"
+      ],
+      "exact_roots": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    },
+    {
+      "case_id": "POLY-NEAR-ROOTS-001",
+      "category": "polynomial",
+      "expression": "(x-1)(x-1.001)(x-1.002) = 0",
+      "expanded": "x**3 - 3003*x**2/1000 + 1503001*x/500000 - 501501/500000",
+      "coefficients_desc": [
+        "1",
+        "-3003/1000",
+        "1503001/500000",
+        "-501501/500000"
+      ],
+      "exact_roots": [
+        "1",
+        "1.001",
+        "1.002"
+      ]
+    },
+    {
+      "case_id": "SUM-001",
+      "category": "summation",
+      "expression": "sum(x^2, x, 1, 100)",
+      "exact_50dps": "338350",
+      "display_10sig": "338350"
+    },
+    {
+      "case_id": "SUM-002",
+      "category": "summation",
+      "expression": "sum(x^3, x, 1, 100)",
+      "exact_50dps": "25502500",
+      "display_10sig": "25502500"
+    },
+    {
+      "case_id": "SUM-003",
+      "category": "summation",
+      "expression": "sum(1/x, x, 1, 100)",
+      "exact_50dps": "5.1873775176396202608051176756582531579089721267084",
+      "display_10sig": "5.187377518"
+    },
+    {
+      "case_id": "SUM-004",
+      "category": "summation",
+      "expression": "sum(1/x^2, x, 1, 500)",
+      "exact_50dps": "1.6429360655148941698027008979982509921582187657101",
+      "display_10sig": "1.642936066"
+    },
+    {
+      "case_id": "EE-RLC-ZMAG",
+      "category": "electrical_engineering",
+      "expression": "|100 + i*(2*pi*1000*0.01 - 1/(2*pi*1000*1e-6))|",
+      "exact_50dps": "138.84573335547688448639558407685506873168942295403",
+      "display_10sig": "138.8457334"
+    },
+    {
+      "case_id": "EE-RLC-ZREAL",
+      "category": "electrical_engineering",
+      "expression": "Re(Z_RLC)",
+      "exact_50dps": "100",
+      "display_10sig": "100"
+    },
+    {
+      "case_id": "EE-RLC-ZIMAG",
+      "category": "electrical_engineering",
+      "expression": "Im(Z_RLC)",
+      "exact_50dps": "-96.323090020099470999630895706924304350516257752954",
+      "display_10sig": "-96.32309002"
+    },
+    {
+      "case_id": "EE-RLC-FRES",
+      "category": "electrical_engineering",
+      "expression": "1/(2*pi*sqrt(0.01*1e-6))",
+      "exact_50dps": "1591.5494309189533576888376337251436203445964574046",
+      "display_10sig": "1591.549431"
+    },
+    {
+      "case_id": "EE-FILTER-DB",
+      "category": "electrical_engineering",
+      "expression": "-10*log10(5)",
+      "exact_50dps": "-6.9897000433601880478626110527550697323181011853789",
+      "display_10sig": "-6.989700043"
+    },
+    {
+      "case_id": "EE-RC-TAU",
+      "category": "electrical_engineering",
+      "expression": "5*(1-e^(-1))",
+      "exact_50dps": "3.1606027941427883920223811491926956627709443448412",
+      "display_10sig": "3.160602794"
+    },
+    {
+      "case_id": "EE-RMS-HARMONIC",
+      "category": "electrical_engineering",
+      "expression": "sqrt((12^2+5^2)/2)",
+      "exact_50dps": "9.1923881554251178172109767073630375107028671899502",
+      "display_10sig": "9.192388155"
+    },
+    {
+      "case_id": "EE-NODAL-6X6",
+      "category": "electrical_engineering",
+      "expression": "G6^-1 * [1,0,0,0,0,0]^T",
+      "symbolic": [
+        "6/7",
+        "5/7",
+        "4/7",
+        "3/7",
+        "2/7",
+        "1/7"
+      ],
+      "exact_50dps": [
+        "0.857142857142857142857142857143",
+        "0.714285714285714285714285714286",
+        "0.571428571428571428571428571429",
+        "0.428571428571428571428571428571",
+        "0.285714285714285714285714285714",
+        "0.142857142857142857142857142857"
+      ]
+    },
+    {
+      "case_id": "ULTRA-SYS-3X3",
+      "category": "ultra_extreme_v46",
+      "expression": "x+y+z=3; x+1.00000001y+z=3.00000001; x+y+1.00000001z=3.00000001",
+      "symbolic": [
+        "1",
+        "1",
+        "1"
+      ],
+      "exact_50dps": [
+        "1",
+        "1",
+        "1"
+      ],
+      "display_10sig": "1, 1, 1",
+      "condition_number_l1": "7.2e+9"
+    },
+    {
+      "case_id": "ULTRA-INT-OSC-1000",
+      "category": "ultra_extreme_v46",
+      "expression": "int_0^100 sin(1000x)*exp(-x/20) dx",
+      "exact_50dps": "0.001006733625592972568129352943585235902810732602689",
+      "display_10sig": "0.001006733626",
+      "casio_note": "15,915 oscillation cycles; Casio Gauss-Kronrod may time out or lose accuracy — differential check vs Manager PLUS."
+    },
+    {
+      "case_id": "ULTRA-CPLX-POW127",
+      "category": "ultra_extreme_v46",
+      "expression": "((3+4i)/(7-2i))^127",
+      "exact_50dps_re": "-1.2825824280631112559753043218191304305364400179306e-21",
+      "exact_50dps_im": "1.3953707453364852035862384841773859549755188299199e-21",
+      "exact_50dps_abs": "1.8952776054491764619833960972506764620606860216692e-21",
+      "exact_50dps_arg_rad": "2.3141020075438196908994447132813788779696487967645",
+      "display_10sig": "-1.282582428e-21 + 1.395370745e-21i",
+      "polar_10sig": "1.895277605e-21 < 2.314102008 rad"
+    },
+    {
+      "case_id": "ULTRA-BINOM-TAIL",
+      "category": "ultra_extreme_v46",
+      "expression": "P(X>=950), X~Bin(1000, 0.9)",
+      "exact_50dps": "0.000000005995167632379620315021317300439634658104071692741",
+      "display_10sig": "5.995167632e-9"
+    },
+    {
+      "case_id": "ULTRA-LOGISTIC-10K",
+      "category": "ultra_extreme_v46",
+      "expression": "x_{n+1}=4*x_n*(1-x_n), x0=0.123456789, n=10000",
+      "ieee754_float64_n10000": "0.086720117307108061",
+      "ieee754_float32_n10000": "0",
+      "exact_50dps_n20": "0.98691402542364340472933234789174947101374213086271",
+      "casio_note": "Chaotic Lyapunov exponent ln(2); validates exact floating-point / BCD reproducibility vs Manager PLUS."
+    },
+    {
+      "case_id": "ULTRA-TRIPLE-INT",
+      "category": "ultra_extreme_v46",
+      "expression": "int_0^1 int_0^1 int_0^1 exp(xyz)/(1+x^2+y^2+z^2) dx dy dz",
+      "exact_50dps": "0.59591828253721035416796222517393964712396512850107",
+      "display_10sig": "0.5959182825"
+    },
+    {
+      "case_id": "NESTED-FRAC-RAD-001",
+      "category": "ultra_extreme_v46",
+      "expression": "sqrt(1 + 1/(1 + 1/(1 + 1/(1 + sqrt(2)))))",
+      "exact_50dps": "1.259280126749765296715308947721655163752941899049",
+      "display_10sig": "1.259280127"
+    }
+  ]
+}

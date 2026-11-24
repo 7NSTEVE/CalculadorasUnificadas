@@ -1,0 +1,210 @@
+{
+  "generated_at_utc": "2026-11-24T02:25:57.822670+00:00",
+  "oracle_engine": "Casio Official DLL Stack (CPU73050.dll + LCDR61524A.dll + GCalAppIF.dll + DLSim32E.dll via Core Oficial host)",
+  "mode": "core-oficial",
+  "boot_diag": "CG50: READY",
+  "exe_path": "D:\\OneDrive\\Desktop\\Calculadoras (blanca y gris)\\Calculadora Unificada - Core Oficial\\CalculadoraUnificada.exe",
+  "exe_sha256": "F7641CF818CE60D4E2B0838D09A9E8EA218AA7662ADBE870E28DA47D7EC02199",
+  "cpu73050_dll_path": "D:\\OneDrive\\Desktop\\Calculadoras (blanca y gris)\\Calculadora Unificada - Core Oficial\\runtime\\CPU73050.dll",
+  "cpu73050_dll_sha256": "CC0C58E78E9BBB42242FFF7653EF46BF9DE1E332058C0CFFD611936355C2098B",
+  "lcdr61524a_dll_path": "D:\\OneDrive\\Desktop\\Calculadoras (blanca y gris)\\Calculadora Unificada - Core Oficial\\runtime\\LCDR61524A.dll",
+  "lcdr61524a_dll_sha256": "36F4CA9F21AA46CC4D7D3FD6B5EE3E545F1B078249ACBDF2FF033CEF5D6BD570",
+  "status": "CONFIRMED",
+  "error_note": "",
+  "official_emulator_verified": true,
+  "physical_reference_verified": false,
+  "total_cases": 10,
+  "passed_cases": 10,
+  "math_passed_cases": 9,
+  "results": [
+    {
+      "case_id": "CANCEL-001",
+      "kind": "math",
+      "expression": "(10^12+1)-10^12",
+      "ocr_text": "1000 log 1000 1000 3 (1x1012+1)-1x1012 1",
+      "ocr_result_col": "1000 3 x1012 1",
+      "ocr_lines": [
+        "1000",
+        "log 1000",
+        "1000",
+        "3",
+        "(1x1012+1)-1x1012",
+        "1"
+      ],
+      "expected_tokens": {
+        "1": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\02_CANCEL-001_lcd.png",
+      "lcd_sha256": "74522B4AC6845FF7BC25EBCF59A60E41B88DBA949105096F0852F75A45CB2321"
+    },
+    {
+      "case_id": "CANCEL-002",
+      "kind": "math",
+      "expression": "(10^20+1)-10^20",
+      "ocr_text": "log 1000 3 1",
+      "ocr_result_col": "1 geDown",
+      "ocr_lines": [
+        "log 1000",
+        "3",
+        "1"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\03_CANCEL-002_lcd.png",
+      "lcd_sha256": "CF2E3509ACD46B484A748C00D849E84B538CF8C98FC9775DEEAC21D75D3BA549"
+    },
+    {
+      "case_id": "CANCEL-003",
+      "kind": "math",
+      "expression": "0.1+0.2-0.3",
+      "ocr_text": "1 0.1+0.2-0.3",
+      "ocr_result_col": "20 YeDown",
+      "ocr_lines": [
+        "1",
+        "0.1+0.2-0.3"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\04_CANCEL-003_lcd.png",
+      "lcd_sha256": "608C4E0975E5ECEF37849C180E36F9CF864F2E67039F1ED5B60600C63D5C26FF"
+    },
+    {
+      "case_id": "CANCEL-004",
+      "kind": "math",
+      "expression": "sin(pi) [Rad]",
+      "ocr_text": "0.1+0.2-0.3 sin",
+      "ocr_result_col": "geDown",
+      "ocr_lines": [
+        "0.1+0.2-0.3",
+        "sin"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\05_CANCEL-004_lcd.png",
+      "lcd_sha256": "1E3C50257E922E777BEFB9CDF6C0437B28D83A78F8A64C8FE5A0E114B3C1D3CD"
+    },
+    {
+      "case_id": "CANCEL-005",
+      "kind": "math",
+      "expression": "sqrt(10^16+1)-10^8",
+      "ocr_text": "U. 1+U.Z—U.3 sin",
+      "ocr_result_col": "(108",
+      "ocr_lines": [
+        "U. 1+U.Z—U.3",
+        "sin"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\06_CANCEL-005_lcd.png",
+      "lcd_sha256": "CE5D3BA9EDD5A576A2688368E1B801547AD8B34A90EB8A16BF5B5CDEE9BA61AA"
+    },
+    {
+      "case_id": "EE-FILTER-DB",
+      "kind": "math",
+      "expression": "-10*log(5)",
+      "ocr_text": "-10x10g 5 -6. 989700043",
+      "ocr_result_col": "108 989700043",
+      "ocr_lines": [
+        "-10x10g 5",
+        "-6. 989700043"
+      ],
+      "expected_tokens": {
+        "6.989700043": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\07_EE-FILTER-DB_lcd.png",
+      "lcd_sha256": "F7826A83935BD9C8CC6C12D047BC06A8ACE32D491C4063A8A2D1A4AE5A41493D"
+    },
+    {
+      "case_id": "EE-RC-TAU",
+      "kind": "math",
+      "expression": "5*(1-e^(-1))",
+      "ocr_text": "10x10g 5 6. 989700043 1-e-l ) 3. 160602794",
+      "ocr_result_col": "989700043 160602794",
+      "ocr_lines": [
+        "10x10g 5",
+        "6. 989700043",
+        "1-e-l )",
+        "3. 160602794"
+      ],
+      "expected_tokens": {
+        "3.160602794": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\08_EE-RC-TAU_lcd.png",
+      "lcd_sha256": "930088DAEBA7279A85BAAE48A8A9A0DC375F324FE207EA0F36BCF3D1D69C7CEC"
+    },
+    {
+      "case_id": "INT-BASE-001",
+      "kind": "math",
+      "expression": "int(x^3, 0, 3)",
+      "ocr_text": "3. 160602794 x3 dx 81 Solve d/dx d2/dx2 fdx",
+      "ocr_result_col": "160602794 81 4",
+      "ocr_lines": [
+        "3. 160602794",
+        "x3 dx",
+        "81",
+        "Solve d/dx d2/dx2 fdx"
+      ],
+      "expected_tokens": {
+        "81": true,
+        "4": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\09_INT-BASE-001_lcd.png",
+      "lcd_sha256": "A3F7327FC1D6938EE9CE6AAD82A8A332E201FCA97730A4085FC0B8316B122891"
+    },
+    {
+      "case_id": "ERR-DIV0",
+      "kind": "math",
+      "expression": "1/0 -> Ma ERROR",
+      "ocr_text": "Ma ERROR 4 1 1+0 List Press: Lst*Hat Dim [EXIT] Fill( Se",
+      "ocr_result_col": "[EXIT] 4 1",
+      "ocr_lines": [
+        "Ma ERROR",
+        "4",
+        "1",
+        "1+0",
+        "List",
+        "Press:",
+        "Lst*Hat Dim",
+        "[EXIT]",
+        "Fill( Se"
+      ],
+      "expected_tokens": {
+        "ERROR": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\10_ERR-DIV0_lcd.png",
+      "lcd_sha256": "022ED7E9EAD45B3A6EB4968DC760A8A88ECC3A36B212D40F19049F5792F6EEE3"
+    },
+    {
+      "case_id": "GRAPH-POLAR-ROSE",
+      "kind": "graph",
+      "expression": "Polar r1=cos(11*theta)",
+      "ocr_text": "",
+      "ocr_lines": [],
+      "expected_tokens": {},
+      "graph_metrics": {
+        "width": 608,
+        "height": 342,
+        "unique_colors": 5,
+        "non_white_ratio": 0.2335,
+        "blue_curve_ratio": 0.0846,
+        "black_ink_pixels": 21528
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_shots\\11_GRAPH-POLAR-ROSE_lcd.png",
+      "lcd_sha256": "1308D3F9F0D8E2E57423039267A011228BE50F87565AB9A79800BE11134B5164"
+    }
+  ]
+}

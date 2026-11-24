@@ -1,0 +1,262 @@
+{
+  "schema_version": "1.0.0",
+  "certification_release": "v44",
+  "generated_at_utc": "2026-11-24T02:26:30.856224+00:00",
+  "git_head_commit": "ab66ee1923afd3ff413ab5f33df917e9d9a9aa59",
+  "authenticity": {
+    "status": "CONFIRMED",
+    "host_math_fallback_allowed": false,
+    "legacy_debug_hle_compiled_in": false,
+    "strict_sh7305_no_fpu_verified": true,
+    "live_fpu_opcodes_executed": 0,
+    "live_bcd_alu_ops_executed": 13049349,
+    "audit_document": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\AUDIT_AUTHENTICITY.md"
+  },
+  "artifacts_sha256": {
+    "SystemROM.raw": "8CF1E1F2AD3FB742B557D00535F8AEA7874C7F8D138B56B4C3938E26C0F82E23",
+    "UserROM.raw": "8D5AEA8D5BEEA758617DB7EBCED31DD1900B48D3AC4D2D67FDAEA77E25830087",
+    "C2ROM.raw": "A946208A374E264EE647503C2B7E60B42F29C1D5ED40D2A70BA0F848272F47B8",
+    "cg50_warm_state.bin.gz": "5901BA75F056C1B58109654665FE2A9C74896D24978F18014CF2DF6550D15A8D",
+    "cg50_validation_runner.exe": "ACC96D8CC6C7E00A97C3490C47516DBA8A78F84E3774D617B4D65DF1ECC386B5",
+    "cg50_hw_torture_runner.exe": "28951CF4A16BEEEC05B4EC0FD6E59DEA75D1199DB698F81A5DBCBCA566DA8D54",
+    "cg50_fuzzer.exe": "CB5397F4592D15F67AF63D816EC1925B7D0DFFC65A1D58D1B03A5AB3F99C3B55",
+    "casio_native.dll": "2A1DB6E6B39FBC817AAFCFC73154D6DD482493FF38039F9AF5A09A8AAD978795"
+  },
+  "axis_1_hardware_mapping": {
+    "source_dll": "CPU73050.dll + LCDR61524A.dll + CGM.dlm + CG50_MMIO_AUDIT",
+    "components_total": 39,
+    "components_present_on_cg50": 28,
+    "sh7305_registers_total": 702,
+    "cg50_applicable_registers": 413,
+    "full_silicon_registers": 222,
+    "functional_partial_registers": 78,
+    "passive_backing_registers": 113,
+    "not_present_on_cg50_registers": 289,
+    "unmapped_registers": 0,
+    "live_24app_unknown_lcd_cmds": 0,
+    "live_24app_unmapped_mmio_peripherals": 0,
+    "inventory_file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\CG50_HARDWARE_MASTER.json"
+  },
+  "axis_2_feature_inventory": {
+    "manual_pages_indexed": 677,
+    "areas_count": 42,
+    "features_total": 922,
+    "rom_confirmed_features": 682,
+    "planned_test_cases_sum": 12779,
+    "inventory_file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\CG50_FEATURES_MASTER.json"
+  },
+  "axis_3_functional_and_extreme_validation": {
+    "ctest_suite": {
+      "passed": 8,
+      "total": 8,
+      "status": "CONFIRMED"
+    },
+    "legacy_battery_strict_no_hle": {
+      "passed": 133,
+      "total": 133,
+      "divergences": 0,
+      "determinism": "2/2",
+      "status": "CONFIRMED"
+    },
+    "apps_and_addins_cert2900": {
+      "passed": 24,
+      "total": 24,
+      "instructions": 2103862284,
+      "bcd_alu_ops": 3804147,
+      "status": "CONFIRMED"
+    },
+    "extreme_and_parametric_runner": {
+      "suite": "all",
+      "threads": 16,
+      "strict_no_hle_verified": true,
+      "strict_sh7305_no_fpu": true,
+      "total_cases": 3031,
+      "passed": 3031,
+      "casio_fidelity_notes": 0,
+      "failed": 0,
+      "total_instructions": 99647637546,
+      "total_bcd_alu_ops": 8965454,
+      "total_fpu_opcodes": 0,
+      "total_dsp_opcodes": 0
+    }
+  },
+  "axis_4_differential_oracles": {
+    "mpmath_sympy_50dps": {
+      "status": "CONFIRMED",
+      "file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\extreme_math\\oracle_extreme_math_50dps.json"
+    },
+    "official_casio_dll_oracle": {
+      "status": "CONFIRMED",
+      "official_emulator_verified": true,
+      "cases_passed": 10,
+      "cases_total": 10,
+      "file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_oracle_results.json"
+    },
+    "triple_comparator": {
+      "classifications": {
+        "MATCH_BOTH": 3025,
+        "MATCH_CASIO_FIDELITY": 6,
+        "EMULATOR_BUG": 0
+      },
+      "emulator_bugs_exported": 0,
+      "file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\diff_certification_report.json"
+    },
+    "physical_fx_cg50_hardware": {
+      "physical_reference_verified": false,
+      "status": "PENDING",
+      "reason": "No physical fx-CG50 unit on hand during this session; certified against official Casio DLLs + mpmath/SymPy 50-digit oracles."
+    }
+  },
+  "axis_5_hardware_torture_and_fuzzing": {
+    "hw_torture_full_cert": {
+      "profile": "full-cert",
+      "threads": 16,
+      "soak_hours_requested": 0,
+      "soak_rounds_completed": 0,
+      "strict_no_hle_verified": true,
+      "total_operations": 12420000,
+      "total_failures": 0,
+      "elapsed_sec": 56.2209,
+      "rss_before_bytes": 4431872,
+      "rss_after_bytes": 9973760,
+      "status": "PASS",
+      "suites": [
+        {
+          "name": "cpu_sh4al_dsp_sequences",
+          "target": 10000000,
+          "executed": 10000000,
+          "failures": 0,
+          "elapsed_sec": 0.353069,
+          "status": "PASS",
+          "notes": "StrictSh7305NoFpu=true; includes ALU, MAC, CLIPS/CLIPU, SH4AL-DSP, delay-slot BRA + determinism check"
+        },
+        {
+          "name": "bcd_alu_1m_oracle",
+          "target": 1000000,
+          "executed": 1000000,
+          "failures": 0,
+          "elapsed_sec": 0.140303,
+          "status": "PASS",
+          "notes": "All 6 modes (ADD/SUB/ADDC/SUBB/ADD+1/SUB-1) + chained multi-word carry/borrow latch + alias +0x0C/+0x1C verified against pure integer base-10 oracle"
+        },
+        {
+          "name": "keystroke_matrix_stress",
+          "target": 1000000,
+          "executed": 1000000,
+          "failures": 0,
+          "elapsed_sec": 0.162942,
+          "status": "PASS",
+          "notes": "KIU KeyDown/IsKeyDown/KeyUp bursts + interleaved CPU ticks"
+        },
+        {
+          "name": "dmac0_6ch_transfers",
+          "target": 100000,
+          "executed": 100000,
+          "failures": 0,
+          "elapsed_sec": 0.0969336,
+          "status": "PASS",
+          "notes": "All 6 SH7305 DMAC0 channels verified bit-exact with OC cache coherency"
+        },
+        {
+          "name": "interrupt_delivery_stress",
+          "target": 100000,
+          "executed": 100000,
+          "failures": 0,
+          "elapsed_sec": 0.22059,
+          "status": "PASS",
+          "notes": "Exact ISR + RTE entry/return verification across INTC2 IRQ0..7 and NMI"
+        },
+        {
+          "name": "r61524_lcd_ops_stress",
+          "target": 100000,
+          "executed": 100000,
+          "failures": 0,
+          "elapsed_sec": 0.0091338,
+          "status": "PASS",
+          "notes": "GRAM write/readback (1-dummy contract), scroll, CABC, FMARK & full framebuffer render"
+        },
+        {
+          "name": "mmu_utlb_itlb_translations",
+          "target": 100000,
+          "executed": 100000,
+          "failures": 0,
+          "elapsed_sec": 0.107181,
+          "status": "PASS",
+          "notes": "Real CPU instruction fetch (4-entry ITLB) + data read/write (64-entry UTLB) verified against physical RAM"
+        },
+        {
+          "name": "save_restore_bit_exact",
+          "target": 10000,
+          "executed": 10000,
+          "failures": 0,
+          "elapsed_sec": 55.1285,
+          "status": "PASS",
+          "notes": "Full state ExportState -> ImportState -> ExportState byte-for-byte identity across chunks 1..105"
+        },
+        {
+          "name": "flash_nor_cfi_cycles",
+          "target": 10000,
+          "executed": 10000,
+          "failures": 0,
+          "elapsed_sec": 0.0019555,
+          "status": "PASS",
+          "notes": "Spansion S29GL256P Sector Erase + Word Program + DQ6/DQ7 busy polling verified"
+        }
+      ]
+    },
+    "grammar_and_live_fuzzer": {
+      "threads": 16,
+      "strict_no_hle_verified": true,
+      "strict_sh7305_no_fpu": true,
+      "grammar_expressions_generated": 1000000,
+      "grammar_tokens_generated": 11289586,
+      "live_os_expressions_executed": 500,
+      "live_os_target": 500,
+      "live_os_halts_or_crashes": 0,
+      "live_os_fpu_opcodes": 0,
+      "live_os_bcd_alu_ops": 279748,
+      "live_os_instructions": 21283343194,
+      "restarted_on_error": false,
+      "elapsed_sec": 197.114,
+      "status": "PASS"
+    },
+    "continuous_24h_72h_wallclock_soak": {
+      "status": "PENDING",
+      "cli_ready": true,
+      "command": "cg50_hw_torture_runner.exe --profile full-cert --hours 24 --out <dir>",
+      "reason": "Multi-hour wall-clock endurance soak was not waited 24-72 real hours inside an interactive session; full-cert 12.4M+ torture ops and RSS delta verified cleanly."
+    }
+  },
+  "axis_6_android_16_integration": {
+    "status": "CONFIRMED",
+    "device_serial": "emulator-5554",
+    "android_release": "16",
+    "android_sdk": 36,
+    "resolution": "1080x2400",
+    "package": "com.calculadorasunificadas.app",
+    "apk_path": "D:\\Proyectos\\CalculadorasUnificadas\\apps\\android\\build\\app\\outputs\\flutter-apk\\app-release.apk",
+    "apk_bytes": 80725557,
+    "apk_sha256": "7D1DAB3AABB4672079A2D9B7132893FCB60E708DBC8C595EF544594DAC684CAD",
+    "zipalign_16kb_exit": 0,
+    "apksigner_verify_exit": 0,
+    "elf_load_align_arm64_v8a": "0x4000",
+    "elf_load_align_x86_64": "0x4000",
+    "libcasio_native_arm64_bytes": 1343008,
+    "libcasio_native_x86_64_bytes": 1354144,
+    "warm_state_stamp": "cg50_warm_v44.stamp",
+    "flutter_analyze_issues": 0,
+    "flutter_test_passed": 4,
+    "flutter_test_total": 4,
+    "logcat_bad_lines": 0,
+    "alive_pid_after_relaunch": "5403",
+    "screenshots": {
+      "01_main_menu": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_01_main_menu.png",
+      "02_run_matrix_symbolic": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_02_run_matrix_symbolic.png",
+      "03_run_matrix_sd": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_03_run_matrix_sd.png",
+      "04_graph_polar_rose": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_04_graph_polar_rose.png",
+      "05_micropython_1024": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_05_micropython_1024.png",
+      "06_system_version": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_06_system_version.png",
+      "07_after_force_stop": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_07_after_force_stop.png"
+    }
+  }
+}

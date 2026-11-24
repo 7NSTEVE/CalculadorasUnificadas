@@ -3,10 +3,17 @@
 #include "cg50_core/cg50_flash_cfi.h"
 #include "cg50_core/cg50_peripheral_bus.h"
 #include "cg50_core/cg50_sh7305_periph.h"
+#include "cg50_core/cg50_ubc.h"
+#include "cg50_core/sh_cache.h"
+#include "cg50_core/sh_dsp.h"
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+#include "cg50_core/cg50_coverage_collector.h"
+#endif
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -78,7 +85,9 @@ public:
     static constexpr std::size_t   kItlbEntryCount = 4u;
 
     static constexpr std::uint32_t kCacheControlRegister = 0xFF00001Cu;
-    static constexpr std::uint32_t kCacheControlWritableMask = 0x00000107u;
+    // Persistent CCR bits: IIX(15), ICE(8), OIX(7), ORA(5), CB(2), WT(1), OCE(0)
+    // (OCI bit 3 and ICI bit 11 are self-clearing invalidate commands).
+    static constexpr std::uint32_t kCacheControlWritableMask = 0x000081A7u;
     static constexpr std::uint32_t kMmuControlRegister = 0xFF000010u;
     static constexpr std::uint32_t kMmuControlWritableMask = 0xFCFCFD85u;
     static constexpr std::uint32_t kMmuControlTlbInvalidateCommand = 0x00000004u;
@@ -177,6 +186,7 @@ public:
     static constexpr std::uint32_t kPortADataRegisterPhysical = 0x04050120u;
     static constexpr std::uint32_t kPortHDataRegisterPhysical = 0x0405012Eu;
     static constexpr std::uint32_t kPortJDataRegisterPhysical = 0x04050130u;
+    static constexpr std::uint32_t kPortLDataRegisterPhysical = 0x04050134u;
     static constexpr std::uint32_t kPortMDataRegister = 0xA4050136u;
     static constexpr std::uint32_t kPortMDataRegisterPhysical = 0x04050136u;
     static constexpr std::uint32_t kPortNDataRegister = 0xA4050138u;
@@ -324,12 +334,14 @@ public:
     static constexpr std::uint32_t kSrImask = 0x000000F0u;
     static constexpr std::uint32_t kSrQ = 0x00000100u;
     static constexpr std::uint32_t kSrM = 0x00000200u;
+    static constexpr std::uint32_t kSrDsp = 0x00001000u;
     static constexpr std::uint32_t kSrFd = 0x00008000u;
+    static constexpr std::uint32_t kSrRcMask = 0x0FFF0000u;
     static constexpr std::uint32_t kSrBl = 0x10000000u;
     static constexpr std::uint32_t kSrRb = 0x20000000u;
     static constexpr std::uint32_t kSrMd = 0x40000000u;
     static constexpr std::uint32_t kSrWritableMask =
-        kSrMd | kSrRb | kSrBl | kSrFd | kSrM | kSrQ | kSrImask | kSrS | kSrT;
+        kSrMd | kSrRb | kSrBl | kSrRcMask | kSrFd | kSrDsp | kSrM | kSrQ | kSrImask | kSrS | kSrT;
     static constexpr std::uint32_t kResetSr = kSrMd | kSrRb | kSrBl | kSrImask;
 
     // ---- SH-4A FPU (FPSCR) ----
@@ -360,6 +372,7 @@ public:
     static constexpr std::uint32_t kEventTmu2 = 0x00000440u;
     static constexpr std::uint32_t kEventWatchdog = 0x00000560u;
     static constexpr std::uint32_t kEventKeyScan = 0x00000BE0u;
+    static constexpr std::uint32_t kEventRtcAlarm = 0x00000480u;
     static constexpr std::uint32_t kEventRtcCarry = 0x000004A0u;
     static constexpr std::uint32_t kEventRtcPeriodic = 0x000004E0u;
     static constexpr std::uint32_t kEventDmacDei0 = 0x00000800u;
@@ -508,7 +521,23 @@ public:
         std::uint8_t lastInterruptPriority = 0;
     };
 
+    // Separate from Stats so save-state chunk 17 (sizeof(Stats)) stays 100% compatible.
+    struct AuthenticityStats {
+        std::uint64_t fpuOpcodesExecuted = 0;
+        std::uint64_t dspOpcodesExecuted = 0;
+        std::uint64_t bcdAluOpsExecuted = 0;
+        std::uint64_t appIfTrapsExecuted = 0;
+        std::uint64_t hostMathFallbacksExecuted = 0; // Guaranteed 0 without CG50_ENABLE_LEGACY_DEBUG_HLE
+        std::uint64_t strictNoHleViolations = 0;
+        std::uint64_t watchdogResets = 0;
+        std::uint64_t ubcBreaks = 0;
+    };
+
     Cg50NativeCore();
+    ~Cg50NativeCore();
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    bool DumpCoverageJson(const std::string& path) const;
+#endif
 
     bool LoadFirmware(const std::uint8_t* bytes, std::size_t size);
     bool LoadFirmwareParts(const std::uint8_t* systemRom, std::size_t systemSize,
@@ -628,14 +657,58 @@ public:
     const cg50::PeripheralBus& Peripherals() const noexcept { return peripheralBus_; }
 
     const cg50::SpansionNorFlashCfi::Stats& FlashCfiStats() const noexcept { return flashCfi_.GetStats(); }
+    cg50::SpansionNorFlashCfi& FlashCfiMut() noexcept { return flashCfi_; }
     const cg50::Intc2Unit& Intc2() const noexcept { return intc2_; }
+    cg50::Intc2Unit& Intc2Mut() noexcept { return intc2_; }
     const cg50::EtmuUnit& Etmu() const noexcept { return etmu_; }
     const cg50::AdcUnit& Adc() const noexcept { return adc_; }
-    const cg50::TpuUnit& Tpu() const noexcept { return tpu_; }
+    cg50::AdcUnit& AdcMut() noexcept { return adc_; }
+    const cg50::DdBusUnit& Tpu() const noexcept { return tpu_; }
+    const cg50::DdBusUnit& DdBus() const noexcept { return tpu_; }
+    const cg50::SdhiUnit& Sdhi() const noexcept { return sdhi_; }
     const cg50::Scif0Unit& Scif0() const noexcept { return scif0_; }
+    cg50::Scif0Unit& Scif0Mut() noexcept { return scif0_; }
     const cg50::Usb2Unit& Usb2() const noexcept { return usb2_; }
+    cg50::Usb2Unit& Usb2Mut() noexcept { return usb2_; }
+
+    // Virtual USB cable & external SCIF0 serial link controls (v45)
+    void SetUsbCableConnected(bool connected) noexcept;
+    bool IsUsbCableConnected() const noexcept { return usb2_.VbusAttached(); }
+    void SetExternalLinkEnabled(bool enabled) noexcept;
+    bool IsExternalLinkEnabled() const noexcept { return externalLinkEnabled_; }
+    std::size_t LinkPushRx(const std::uint8_t* data, std::size_t len) noexcept;
+    std::size_t LinkPopTx(std::uint8_t* out, std::size_t maxLen) noexcept;
+
+    // Direct storage backing access for verified bit-exact Fugue FTL + FAT16 SMEM manager
+    std::vector<std::uint8_t>& UserRomMut() noexcept { return userRom_; }
+    std::vector<std::uint8_t>& C2RomMut() noexcept { return c2Rom_; }
+    void NotifyFlashStorageMutated() noexcept;
+    const cg50::ShDspState& Dsp() const noexcept { return dsp_; }
+    cg50::ShDspState& DspMut() noexcept { return dsp_; }
+    const cg50::ShCacheUnit& Cache() const noexcept { return cache_; }
+    cg50::ShCacheUnit& CacheMut() noexcept { return cache_; }
+    const cg50::UbcUnit& Ubc() const noexcept { return ubc_; }
+    const AuthenticityStats& GetAuthenticityStats() const noexcept { return authStats_; }
+    void SetStrictSh7305NoFpu(bool enabled) noexcept { strictSh7305NoFpu_ = enabled; }
+    bool StrictSh7305NoFpu() const noexcept { return strictSh7305NoFpu_; }
+    void SetWatchdogResetEnabled(bool enabled) noexcept { watchdogResetEnabled_ = enabled; }
+    void SetBatteryPercent(int percent) noexcept { adc_.SetBatteryPercent(percent); }
+    static std::size_t AuditForbiddenEnvOverrides(std::vector<std::string>& activeOut);
     std::uint32_t Qacr0() const noexcept { return qacr0_; }
     std::uint32_t Qacr1() const noexcept { return qacr1_; }
+    std::uint32_t Ramcr() const noexcept { return ramcr_; }
+    std::uint32_t Pascr() const noexcept { return pascr_; }
+    std::uint32_t Irmcr() const noexcept { return irmcr_; }
+    const cg50::HudiUnit& Hudi() const noexcept { return hudi_; }
+    cg50::HudiUnit& HudiMut() noexcept { return hudi_; }
+    const cg50::PrlckUnit& Prlck() const noexcept { return prlck_; }
+    cg50::SdhiUnit& SdhiMut() noexcept { return sdhi_; }
+    const cg50::RtcExtState& RtcExt() const noexcept { return rtcExt_; }
+    const cg50::Dmac0ExtState& DmacExt() const noexcept { return dmacExt_; }
+    const cg50::ExtLy755aState& ExtLy755a() const noexcept { return extLy755a_; }
+    std::uint32_t BscRefreshCount() const noexcept { return bscRefreshCount_; }
+    std::uint32_t EffectiveCpuClockHz() const noexcept;
+    bool IsCpgModuleStopped(std::uint32_t mstpcrIndex, std::uint32_t bitMask) const noexcept;
 
     static std::uint32_t DirectMappedPhysicalAddress(std::uint32_t address) noexcept;
 
@@ -664,11 +737,33 @@ private:
     cg50::Intc2Unit intc2_{};
     cg50::EtmuUnit etmu_{};
     cg50::AdcUnit adc_{};
-    cg50::TpuUnit tpu_{};
+    cg50::DdBusUnit tpu_{};
+    cg50::SdhiUnit sdhi_{};
+    cg50::HudiUnit hudi_{};
+    cg50::PrlckUnit prlck_{};
+    cg50::RtcExtState rtcExt_{};
+    cg50::Dmac0ExtState dmacExt_{};
+    cg50::ExtLy755aState extLy755a_{};
+    std::uint64_t bscRefreshPrescaler_ = 0;
+    std::uint32_t bscRefreshCount_ = 0;
     cg50::Scif0Unit scif0_{};
+    cg50::Scif0Unit externalLinkSink_{};
+    bool externalLinkEnabled_ = false;
     cg50::Usb2Unit usb2_{};
+    cg50::ShDspState dsp_{};
+    cg50::ShCacheUnit cache_{};
+    cg50::UbcUnit ubc_{};
     std::uint32_t pendingEtmuIrq_ = 0;
     std::uint32_t pendingDmacIrq_ = 0;
+    bool pendingCmtIrq_ = false;
+    std::uint32_t ramcr_ = 0;
+    std::uint32_t pascr_ = 0;
+    std::uint32_t irmcr_ = 0;
+    std::array<std::uint32_t, 8> xyDspCtrl_{}; // XSA, YSA, XDA, YDA, XPR, YPR, XEA, YEA
+    std::size_t itlbNextVictim_ = 0;
+    bool strictSh7305NoFpu_ = false;
+    bool watchdogResetEnabled_ = false;
+    AuthenticityStats authStats_{};
     std::vector<std::uint8_t> dsp0Space_;
     std::vector<std::uint8_t> dsp1Space_;
     std::array<std::uint8_t, kIlcPageSize> ilcPage_{};
@@ -821,15 +916,13 @@ private:
     // (modelo de hardware casio-cg50 cont.18c/18e).
     std::uint32_t bcdCarryLatch_ = 0;
 
-    // HLE del ultimo paso (#409-#411): al (14,11) del EXE (duracion > 3M
-    // instr) se agenda la escritura del resultado; cuando el evaluador
-    // deposite el valor crudo en 88186BF6 se escribe el campo 880D4034 y
-    // el caracter de la display-list 88186700.
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
     bool resultHlePending_ = false;
     std::uint64_t resultHleSince_ = 0;
     std::uint64_t resultHleSinceCycles_ = 0;
-    std::uint32_t evalStartInst_ = 0;
     void CheckResultHlePending();
+#endif
+    std::uint32_t evalStartInst_ = 0;
 
     // Gate de retencion del formateador (#395): salta la tarea 800F5592
     // hasta el notify(14,11). VERIFICADO: el salto TERMINA la hebra de la
@@ -843,6 +936,9 @@ private:
 
     // ---- Standby (SBYCR) state reached through SLEEP ----
     bool standbyMode_ = false;
+    // Cached next instruction boundary for TickRtc() (eliminates 64-bit % 32000 per instruction).
+    // Not serialized; recomputed deterministically in Reset() and ImportState().
+    std::uint64_t rtcCarryNextInst_ = kRtcInstructionsPerSecond;
     // Start physical address of the most recent full-frame LCD DMAC transfer
     // (0x08000000 primary VRAM or 0x08028800 double buffer). Stored separately
     // because authentic SH7305 DMAC increments SAR to SAR+totalBytes on finish.
@@ -857,11 +953,30 @@ private:
                                std::uint32_t vectorOffset = 0x100u);
     void ScheduleBranch(std::uint32_t target) noexcept;
     void HaltUnsupported(std::uint32_t pc, std::uint16_t opcode);
+    bool HandleAppIfTrap(std::uint32_t pc);
+    void LogStepDiagnostics(std::uint32_t pc);
+    bool HaltFetchOutOfMap(std::uint32_t pc);
     bool FailMemory(std::uint32_t pc, std::uint16_t opcode,
                     std::uint32_t address, bool write);
     void TickCompareMatchTimer(std::uint64_t cycles) noexcept;
     void TickTimerUnit(std::uint64_t cycles) noexcept;
+    void TickBscRefresh(std::uint64_t cycles) noexcept;
+    void TickRtcAlarmsAndPeriodic(std::uint64_t cycles) noexcept;
     void TickWatchdog(std::uint64_t cycles);
+    [[nodiscard]] bool HasAnyPendingInterrupt() const noexcept
+    {
+        return pendingTimerIrq_ != 0u ||
+               pendingKeyScanIrq_ ||
+               pendingCmtIrq_ ||
+               pendingDmacIrq_ != 0u ||
+               pendingEtmuIrq_ != 0u ||
+               rtcCarryFlag_ ||
+               rtcExt_.pendingIrqMask != 0u ||
+               intc2_.AnyPending() ||
+               scif0_.HasPendingIrq() ||
+               usb2_.HasPendingIrq() ||
+               adc_.HasPendingIrq();
+    }
     void DeliverPendingInterrupts();
     bool TranslateAddress(std::uint32_t address, bool write, bool isFetch,
                           std::uint32_t& physical, std::uint32_t& exceptionCode,
@@ -898,4 +1013,7 @@ private:
     bool T() const noexcept;
     void SetSr(std::uint32_t value) noexcept;
     void InitArea1PeripheralPages() noexcept;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    mutable std::unique_ptr<cg50::CoverageCollector> cov_;
+#endif
 };

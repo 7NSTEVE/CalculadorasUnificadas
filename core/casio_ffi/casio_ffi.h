@@ -134,6 +134,24 @@ CASIO_EXPORT int casio_cg50_export_user_rom_file(const CasioCg50Handle* handle, 
 CASIO_EXPORT int casio_cg50_import_user_rom_file(CasioCg50Handle* handle, const char* path);
 CASIO_EXPORT int casio_cg50_load_addin_file(CasioCg50Handle* handle, const char* path);
 
+// Direct SMEM (Fugue FTL + FAT16/LFN) file exchange
+CASIO_EXPORT int casio_cg50_smem_list_json(CasioCg50Handle* handle, const char* path, char* out_json, int out_size);
+CASIO_EXPORT int64_t casio_cg50_smem_read_file(CasioCg50Handle* handle, const char* path, uint8_t* out_buf, size_t out_size);
+CASIO_EXPORT int casio_cg50_smem_write_file(CasioCg50Handle* handle, const char* path, const uint8_t* data, size_t size, int overwrite);
+CASIO_EXPORT int casio_cg50_smem_delete(CasioCg50Handle* handle, const char* path, int recursive);
+CASIO_EXPORT int casio_cg50_smem_mkdir(CasioCg50Handle* handle, const char* path);
+CASIO_EXPORT int casio_cg50_smem_remount_os(CasioCg50Handle* handle);
+
+// Virtual USB 2.0 Host & External SCIF0 3-pin Link
+CASIO_EXPORT int casio_cg50_usb_set_connected(CasioCg50Handle* handle, int connected);
+CASIO_EXPORT int casio_cg50_usb_get_status_json(CasioCg50Handle* handle, char* out_json, int out_size);
+CASIO_EXPORT int casio_cg50_link_set_enabled(CasioCg50Handle* handle, int enabled);
+CASIO_EXPORT int casio_cg50_link_push_rx(CasioCg50Handle* handle, const uint8_t* data, size_t len);
+CASIO_EXPORT int casio_cg50_link_pop_tx(CasioCg50Handle* handle, uint8_t* out_buf, size_t max_len);
+
+// Native ISO-18004 QR decoder on current 384x216 LCD frame
+CASIO_EXPORT int casio_cg50_decode_lcd_qr(CasioCg50Handle* handle, char* out_text, int out_size);
+
 #ifdef __cplusplus
 }
 #endif

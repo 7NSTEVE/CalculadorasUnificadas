@@ -97,6 +97,32 @@ typedef _CgSetRtcEpochNative = Int32 Function(
     Pointer<Void> h, Int64 localUnixSeconds);
 typedef CasioCgSetRtcEpochDart = int Function(
     Pointer<Void> h, int localUnixSeconds);
+typedef _CgSmemListNative = Int32 Function(
+    Pointer<Void> h, Pointer<Uint8> path, Pointer<Uint8> outJson, Int32 outSize);
+typedef CasioCgSmemListDart = int Function(
+    Pointer<Void> h, Pointer<Uint8> path, Pointer<Uint8> outJson, int outSize);
+typedef _CgSmemReadNative = Int64 Function(
+    Pointer<Void> h, Pointer<Uint8> path, Pointer<Uint8> outBuf, IntPtr outSize);
+typedef CasioCgSmemReadDart = int Function(
+    Pointer<Void> h, Pointer<Uint8> path, Pointer<Uint8> outBuf, int outSize);
+typedef _CgSmemWriteNative = Int32 Function(
+    Pointer<Void> h, Pointer<Uint8> path, Pointer<Uint8> data, IntPtr size, Int32 overwrite);
+typedef CasioCgSmemWriteDart = int Function(
+    Pointer<Void> h, Pointer<Uint8> path, Pointer<Uint8> data, int size, int overwrite);
+typedef _CgSmemDeleteNative = Int32 Function(
+    Pointer<Void> h, Pointer<Uint8> path, Int32 recursive);
+typedef CasioCgSmemDeleteDart = int Function(
+    Pointer<Void> h, Pointer<Uint8> path, int recursive);
+typedef _CgBoolSetNative = Int32 Function(Pointer<Void> h, Int32 flag);
+typedef CasioCgBoolSetDart = int Function(Pointer<Void> h, int flag);
+typedef _CgStringQueryNative = Int32 Function(
+    Pointer<Void> h, Pointer<Uint8> outBuf, Int32 outSize);
+typedef CasioCgStringQueryDart = int Function(
+    Pointer<Void> h, Pointer<Uint8> outBuf, int outSize);
+typedef _CgLinkBufNative = Int32 Function(
+    Pointer<Void> h, Pointer<Uint8> buf, IntPtr len);
+typedef CasioCgLinkBufDart = int Function(
+    Pointer<Void> h, Pointer<Uint8> buf, int len);
 
 class CasioNativeBindings {
   final DynamicLibrary lib;
@@ -153,6 +179,18 @@ class CasioNativeBindings {
   late final CasioFileOpDart cgExportUserRomFile;
   late final CasioFileOpDart cgImportUserRomFile;
   late final CasioFileOpDart cgLoadAddinFile;
+  late final CasioCgSmemListDart cgSmemListJson;
+  late final CasioCgSmemReadDart cgSmemReadFile;
+  late final CasioCgSmemWriteDart cgSmemWriteFile;
+  late final CasioCgSmemDeleteDart cgSmemDelete;
+  late final CasioFileOpDart cgSmemMkdir;
+  late final CasioIntQueryDart cgSmemRemountOs;
+  late final CasioCgBoolSetDart cgUsbSetConnected;
+  late final CasioCgStringQueryDart cgUsbGetStatusJson;
+  late final CasioCgBoolSetDart cgLinkSetEnabled;
+  late final CasioCgLinkBufDart cgLinkPushRx;
+  late final CasioCgLinkBufDart cgLinkPopTx;
+  late final CasioCgStringQueryDart cgDecodeLcdQr;
 
   CasioNativeBindings(this.lib, [this.libraryPath]) {
     alloc = lib.lookupFunction<_AllocNative, CasioAllocDart>('casio_alloc');
@@ -249,6 +287,38 @@ class CasioNativeBindings {
         'casio_cg50_import_user_rom_file');
     cgLoadAddinFile = lib.lookupFunction<_FileOpNative, CasioFileOpDart>(
         'casio_cg50_load_addin_file');
+    cgSmemListJson =
+        lib.lookupFunction<_CgSmemListNative, CasioCgSmemListDart>(
+            'casio_cg50_smem_list_json');
+    cgSmemReadFile =
+        lib.lookupFunction<_CgSmemReadNative, CasioCgSmemReadDart>(
+            'casio_cg50_smem_read_file');
+    cgSmemWriteFile =
+        lib.lookupFunction<_CgSmemWriteNative, CasioCgSmemWriteDart>(
+            'casio_cg50_smem_write_file');
+    cgSmemDelete =
+        lib.lookupFunction<_CgSmemDeleteNative, CasioCgSmemDeleteDart>(
+            'casio_cg50_smem_delete');
+    cgSmemMkdir = lib.lookupFunction<_FileOpNative, CasioFileOpDart>(
+        'casio_cg50_smem_mkdir');
+    cgSmemRemountOs = lib.lookupFunction<_IntQueryNative, CasioIntQueryDart>(
+        'casio_cg50_smem_remount_os');
+    cgUsbSetConnected =
+        lib.lookupFunction<_CgBoolSetNative, CasioCgBoolSetDart>(
+            'casio_cg50_usb_set_connected');
+    cgUsbGetStatusJson =
+        lib.lookupFunction<_CgStringQueryNative, CasioCgStringQueryDart>(
+            'casio_cg50_usb_get_status_json');
+    cgLinkSetEnabled =
+        lib.lookupFunction<_CgBoolSetNative, CasioCgBoolSetDart>(
+            'casio_cg50_link_set_enabled');
+    cgLinkPushRx = lib.lookupFunction<_CgLinkBufNative, CasioCgLinkBufDart>(
+        'casio_cg50_link_push_rx');
+    cgLinkPopTx = lib.lookupFunction<_CgLinkBufNative, CasioCgLinkBufDart>(
+        'casio_cg50_link_pop_tx');
+    cgDecodeLcdQr =
+        lib.lookupFunction<_CgStringQueryNative, CasioCgStringQueryDart>(
+            'casio_cg50_decode_lcd_qr');
   }
 
   static CasioNativeBindings open([String? overridePath]) {
@@ -335,7 +405,7 @@ class CasioRomStaging {
 
     // Decompress pre-baked CG50 warm state (.bin.gz) on first launch or core upgrade
     final warmBin = File('${dir.path}/cg50_warm_state.bin');
-    final warmStamp = File('${dir.path}/cg50_warm_v43.stamp');
+    final warmStamp = File('${dir.path}/cg50_warm_v44.stamp');
     if (!await warmBin.exists() ||
         await warmBin.length() < 1024 * 1024 ||
         !await warmStamp.exists()) {
@@ -349,7 +419,7 @@ class CasioRomStaging {
         final decoded = await Isolate.run(() => gzip.decode(gzBytes));
         if (decoded.length > 1024 * 1024) {
           await _writeAtomic(warmBin, decoded);
-          await _writeAtomic(warmStamp, utf8.encode('v42-cfi-sh4a'));
+          await _writeAtomic(warmStamp, utf8.encode('v44-sh7305-dsp-cache-nohle'));
         }
       } catch (_) {
         // Optional warm state; CG50 falls back to cold boot if absent.
@@ -376,6 +446,8 @@ abstract class CasioEngineController extends ChangeNotifier {
 
   void pressDown(CasioKeyDef key);
   void releaseUp(CasioKeyDef key);
+  void pressCodeDown(int matrixCode);
+  void releaseCodeUp(int matrixCode);
   void setPaused(bool paused);
   Future<bool> savePersistentState();
   void resetEngine({bool cold = false});
@@ -667,6 +739,16 @@ class CasioNxEngine extends CasioEngineController {
   @override
   void releaseUp(CasioKeyDef key) {
     _txPort?.send({'op': 'up', 'code': key.matrixCode});
+  }
+
+  @override
+  void pressCodeDown(int matrixCode) {
+    _txPort?.send({'op': 'down', 'code': matrixCode});
+  }
+
+  @override
+  void releaseCodeUp(int matrixCode) {
+    _txPort?.send({'op': 'up', 'code': matrixCode});
   }
 
   @override
@@ -1022,6 +1104,16 @@ class CasioCw2Engine extends CasioEngineController {
   }
 
   @override
+  void pressCodeDown(int matrixCode) {
+    _txPort?.send({'op': 'down', 'code': matrixCode});
+  }
+
+  @override
+  void releaseCodeUp(int matrixCode) {
+    _txPort?.send({'op': 'up', 'code': matrixCode});
+  }
+
+  @override
   void setPaused(bool paused) {
     _txPort?.send({'op': 'pause', 'value': paused});
   }
@@ -1106,6 +1198,144 @@ int _currentLocalUnixSeconds() {
   return (now.millisecondsSinceEpoch ~/ 1000) + now.timeZoneOffset.inSeconds;
 }
 
+class Cg50SmemEntry {
+  final String name;
+  final String shortName;
+  final String path;
+  final bool isDir;
+  final int size;
+  final int modDate;
+  final int modTime;
+
+  const Cg50SmemEntry({
+    required this.name,
+    required this.shortName,
+    required this.path,
+    required this.isDir,
+    required this.size,
+    required this.modDate,
+    required this.modTime,
+  });
+
+  factory Cg50SmemEntry.fromJson(Map<String, dynamic> j) {
+    return Cg50SmemEntry(
+      name: j['name'] as String? ?? '',
+      shortName: j['shortName'] as String? ?? '',
+      path: j['path'] as String? ?? '/',
+      isDir: j['isDir'] as bool? ?? false,
+      size: (j['size'] as num?)?.toInt() ?? 0,
+      modDate: (j['modDate'] as num?)?.toInt() ?? 0,
+      modTime: (j['modTime'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'shortName': shortName,
+        'path': path,
+        'isDir': isDir,
+        'size': size,
+        'modDate': modDate,
+        'modTime': modTime,
+      };
+}
+
+class Cg50SmemListing {
+  final String path;
+  final String volumeLabel;
+  final int totalBytes;
+  final int freeBytes;
+  final int usedBytes;
+  final int clusterSize;
+  final bool fatEqual;
+  final List<Cg50SmemEntry> entries;
+
+  const Cg50SmemListing({
+    required this.path,
+    required this.volumeLabel,
+    required this.totalBytes,
+    required this.freeBytes,
+    required this.usedBytes,
+    required this.clusterSize,
+    required this.fatEqual,
+    required this.entries,
+  });
+
+  factory Cg50SmemListing.fromJson(Map<String, dynamic> j) {
+    final rawList = (j['entries'] as List<dynamic>?) ?? const [];
+    return Cg50SmemListing(
+      path: j['path'] as String? ?? '/',
+      volumeLabel: j['volumeLabel'] as String? ?? '',
+      totalBytes: (j['totalBytes'] as num?)?.toInt() ?? 0,
+      freeBytes: (j['freeBytes'] as num?)?.toInt() ?? 0,
+      usedBytes: (j['usedBytes'] as num?)?.toInt() ?? 0,
+      clusterSize: (j['clusterSize'] as num?)?.toInt() ?? 4096,
+      fatEqual: j['fatEqual'] as bool? ?? false,
+      entries: rawList
+          .whereType<Map<String, dynamic>>()
+          .map(Cg50SmemEntry.fromJson)
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'path': path,
+        'volumeLabel': volumeLabel,
+        'totalBytes': totalBytes,
+        'freeBytes': freeBytes,
+        'usedBytes': usedBytes,
+        'clusterSize': clusterSize,
+        'fatEqual': fatEqual,
+        'entries': entries.map((e) => e.toJson()).toList(),
+      };
+}
+
+class Cg50UsbStatus {
+  final bool connected;
+  final bool vbus;
+  final bool configured;
+  final int deviceAddress;
+  final int vid;
+  final int pid;
+  final String mode;
+  final bool linkEnabled;
+
+  const Cg50UsbStatus({
+    required this.connected,
+    required this.vbus,
+    required this.configured,
+    required this.deviceAddress,
+    required this.vid,
+    required this.pid,
+    required this.mode,
+    required this.linkEnabled,
+  });
+
+  factory Cg50UsbStatus.fromJson(Map<String, dynamic> j) {
+    return Cg50UsbStatus(
+      connected: j['connected'] as bool? ?? false,
+      vbus: j['vbus'] as bool? ?? false,
+      configured: j['configured'] as bool? ?? false,
+      deviceAddress: (j['deviceAddress'] as num?)?.toInt() ?? 0,
+      vid: (j['vid'] as num?)?.toInt() ?? 0x07CF,
+      pid: (j['pid'] as num?)?.toInt() ?? 0x6102,
+      mode: j['mode'] as String? ?? 'disconnected',
+      linkEnabled: j['linkEnabled'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'connected': connected,
+        'vbus': vbus,
+        'configured': configured,
+        'deviceAddress': deviceAddress,
+        'vid': vid,
+        'pid': pid,
+        'mode': mode,
+        'linkEnabled': linkEnabled,
+      };
+}
+
 bool _cgFileOp(
     CasioNativeBindings b, CasioFileOpDart fn, Pointer<Void> cg, String path) {
   if (path.isEmpty) return false;
@@ -1141,8 +1371,10 @@ void _cg50IsolateMain(_CgWorkerInit init) {
   final cycPtr = b.alloc(8).cast<Uint64>();
   final pcPtr = b.alloc(4).cast<Uint32>();
   final lcdPtr = b.alloc(8).cast<Uint64>();
+  final linkTxPtr = b.alloc(1024).cast<Uint8>();
 
   bool bootedOnce = false;
+  bool linkEnabled = false;
   if (init.preferSnapshot) {
     bootedOnce = _importCgFile(b, cg, init.liveSnapshotPath) ||
         _importCgFile(b, cg, init.warmSnapshotPath);
@@ -1304,6 +1536,240 @@ void _cg50IsolateMain(_CgWorkerInit init) {
           final String srcPath = (cmd['path'] as String?) ?? '';
           final bool ok = _cgFileOp(b, b.cgLoadAddinFile, cg, srcPath);
           init.mainPort.send({'type': 'saved', 'reqId': reqId, 'ok': ok});
+        } else if (op == 'smem_list') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final String path = (cmd['path'] as String?) ?? '/';
+          final pPtr = b.allocCString(path);
+          String? jsonOut;
+          try {
+            final needed = b.cgSmemListJson(cg, pPtr, nullptr, 0);
+            if (needed > 0) {
+              final buf = b.alloc(needed + 16).cast<Uint8>();
+              try {
+                final got = b.cgSmemListJson(cg, pPtr, buf, needed + 16);
+                if (got >= 0) {
+                  jsonOut = utf8.decode(buf.asTypedList(got), allowMalformed: true);
+                }
+              } finally {
+                b.free(buf.cast());
+              }
+            }
+          } finally {
+            b.free(pPtr.cast());
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': jsonOut});
+        } else if (op == 'smem_read') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final String path = (cmd['path'] as String?) ?? '';
+          final pPtr = b.allocCString(path);
+          TransferableTypedData? xfer;
+          try {
+            final sz = b.cgSmemReadFile(cg, pPtr, nullptr, 0);
+            if (sz >= 0) {
+              if (sz == 0) {
+                xfer = TransferableTypedData.fromList([Uint8List(0)]);
+              } else {
+                final buf = b.alloc(sz).cast<Uint8>();
+                try {
+                  final got = b.cgSmemReadFile(cg, pPtr, buf, sz);
+                  if (got == sz) {
+                    xfer = TransferableTypedData.fromList(
+                        [Uint8List.fromList(buf.asTypedList(sz))]);
+                  }
+                } finally {
+                  b.free(buf.cast());
+                }
+              }
+            }
+          } finally {
+            b.free(pPtr.cast());
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': xfer});
+        } else if (op == 'smem_write') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final String path = (cmd['path'] as String?) ?? '';
+          final xfer = cmd['bytes'] as TransferableTypedData?;
+          final bool overwrite = cmd['overwrite'] as bool? ?? true;
+          final bool remount = cmd['remountOs'] as bool? ?? false;
+          bool ok = false;
+          if (xfer != null && path.isNotEmpty) {
+            final bytes = xfer.materialize().asUint8List();
+            final pPtr = b.allocCString(path);
+            final dPtr = b.alloc(bytes.isEmpty ? 1 : bytes.length).cast<Uint8>();
+            try {
+              if (bytes.isNotEmpty) {
+                dPtr.asTypedList(bytes.length).setAll(0, bytes);
+              }
+              ok = b.cgSmemWriteFile(
+                      cg, pPtr, dPtr, bytes.length, overwrite ? 1 : 0) ==
+                  1;
+            } finally {
+              b.free(pPtr.cast());
+              b.free(dPtr.cast());
+            }
+          }
+          if (ok && remount) {
+            b.cgSmemRemountOs(cg);
+            b.cgSetRtcEpoch(cg, _currentLocalUnixSeconds());
+            bootedOnce = false;
+            sleepStreak = 0;
+            heldKeyCode = -1;
+            heldKeySteps = 0;
+            releaseRequested = false;
+            idleCounter = 2;
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
+        } else if (op == 'smem_delete') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final String path = (cmd['path'] as String?) ?? '';
+          final bool recursive = cmd['recursive'] as bool? ?? false;
+          final bool remount = cmd['remountOs'] as bool? ?? false;
+          bool ok = false;
+          if (path.isNotEmpty) {
+            final pPtr = b.allocCString(path);
+            try {
+              ok = b.cgSmemDelete(cg, pPtr, recursive ? 1 : 0) == 1;
+            } finally {
+              b.free(pPtr.cast());
+            }
+          }
+          if (ok && remount) {
+            b.cgSmemRemountOs(cg);
+            b.cgSetRtcEpoch(cg, _currentLocalUnixSeconds());
+            bootedOnce = false;
+            sleepStreak = 0;
+            heldKeyCode = -1;
+            heldKeySteps = 0;
+            releaseRequested = false;
+            idleCounter = 2;
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
+        } else if (op == 'smem_mkdir') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final String path = (cmd['path'] as String?) ?? '';
+          final bool remount = cmd['remountOs'] as bool? ?? false;
+          final bool ok = _cgFileOp(b, b.cgSmemMkdir, cg, path);
+          if (ok && remount) {
+            b.cgSmemRemountOs(cg);
+            b.cgSetRtcEpoch(cg, _currentLocalUnixSeconds());
+            bootedOnce = false;
+            sleepStreak = 0;
+            heldKeyCode = -1;
+            heldKeySteps = 0;
+            releaseRequested = false;
+            idleCounter = 2;
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
+        } else if (op == 'smem_remount') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final bool ok = b.cgSmemRemountOs(cg) == 1;
+          if (ok) {
+            b.cgSetRtcEpoch(cg, _currentLocalUnixSeconds());
+            bootedOnce = false;
+            sleepStreak = 0;
+            heldKeyCode = -1;
+            heldKeySteps = 0;
+            releaseRequested = false;
+            idleCounter = 2;
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
+        } else if (op == 'usb_set') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final bool conn = cmd['connected'] as bool? ?? false;
+          final bool ok = b.cgUsbSetConnected(cg, conn ? 1 : 0) == 1;
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
+        } else if (op == 'usb_status') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final buf = b.alloc(1024).cast<Uint8>();
+          String? jsonOut;
+          try {
+            final got = b.cgUsbGetStatusJson(cg, buf, 1024);
+            if (got > 0 && got < 1024) {
+              jsonOut = utf8.decode(buf.asTypedList(got), allowMalformed: true);
+            }
+          } finally {
+            b.free(buf.cast());
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': jsonOut});
+        } else if (op == 'link_set') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final bool en = cmd['enabled'] as bool? ?? false;
+          final bool ok = b.cgLinkSetEnabled(cg, en ? 1 : 0) == 1;
+          if (ok) linkEnabled = en;
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
+        } else if (op == 'link_push_rx') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final xfer = cmd['bytes'] as TransferableTypedData?;
+          int pushed = 0;
+          if (xfer != null) {
+            final bytes = xfer.materialize().asUint8List();
+            if (bytes.isNotEmpty) {
+              final dPtr = b.alloc(bytes.length).cast<Uint8>();
+              try {
+                dPtr.asTypedList(bytes.length).setAll(0, bytes);
+                pushed = b.cgLinkPushRx(cg, dPtr, bytes.length);
+              } finally {
+                b.free(dPtr.cast());
+              }
+            }
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': pushed});
+        } else if (op == 'decode_qr') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final buf = b.alloc(2048).cast<Uint8>();
+          String? decoded;
+          try {
+            final got = b.cgDecodeLcdQr(cg, buf, 2048);
+            if (got > 0 && got < 2048) {
+              decoded = utf8.decode(buf.asTypedList(got), allowMalformed: true);
+            }
+          } finally {
+            b.free(buf.cast());
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': decoded});
+        } else if (op == 'export_state_bytes') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          TransferableTypedData? xfer;
+          final needed = b.cgExportState(cg, nullptr, 0);
+          if (needed > 0) {
+            final buf = b.alloc(needed).cast<Uint8>();
+            try {
+              final got = b.cgExportState(cg, buf, needed);
+              if (got == needed) {
+                xfer = TransferableTypedData.fromList(
+                    [Uint8List.fromList(buf.asTypedList(needed))]);
+              }
+            } finally {
+              b.free(buf.cast());
+            }
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': xfer});
+        } else if (op == 'import_state_bytes') {
+          final int reqId = cmd['reqId'] as int? ?? 0;
+          final xfer = cmd['bytes'] as TransferableTypedData?;
+          bool ok = false;
+          if (xfer != null) {
+            final bytes = xfer.materialize().asUint8List();
+            if (bytes.isNotEmpty) {
+              final buf = b.alloc(bytes.length).cast<Uint8>();
+              try {
+                buf.asTypedList(bytes.length).setAll(0, bytes);
+                ok = b.cgImportState(cg, buf, bytes.length) == 1;
+              } finally {
+                b.free(buf.cast());
+              }
+            }
+          }
+          if (ok) {
+            b.cgSetRtcEpoch(cg, _currentLocalUnixSeconds());
+            bootedOnce = true;
+            sleepStreak = 4;
+            heldKeyCode = -1;
+            heldKeySteps = 0;
+            releaseRequested = false;
+            reportFrame(2, forceCopy: true);
+          }
+          init.mainPort.send({'type': 'rpc', 'reqId': reqId, 'data': ok});
         }
       }
       if (!running) break;
@@ -1343,13 +1809,24 @@ void _cg50IsolateMain(_CgWorkerInit init) {
         }
       }
 
+      if (linkEnabled) {
+        final txLen = b.cgLinkPopTx(cg, linkTxPtr, 1024);
+        if (txLen > 0) {
+          final copy = Uint8List.fromList(linkTxPtr.asTypedList(txLen));
+          init.mainPort.send({
+            'type': 'link_tx',
+            'bytes': TransferableTypedData.fromList([copy]),
+          });
+        }
+      }
+
       idleCounter++;
       if (bootedOnce || (idleCounter % 3 == 0)) {
         reportFrame(st);
       }
 
       if (bootedOnce && st == 2 && heldKeyCode < 0 && queue.isEmpty) {
-        await Future<void>.delayed(const Duration(milliseconds: 28));
+        await Future<void>.delayed(Duration(milliseconds: linkEnabled ? 12 : 28));
       } else {
         await Future<void>.delayed(Duration.zero);
       }
@@ -1361,6 +1838,7 @@ void _cg50IsolateMain(_CgWorkerInit init) {
     b.free(cycPtr.cast());
     b.free(pcPtr.cast());
     b.free(lcdPtr.cast());
+    b.free(linkTxPtr.cast());
     cmdPort.close();
   }
 
@@ -1388,6 +1866,11 @@ class CasioCg50Engine extends CasioEngineController {
   Uint8List? _lastRgba;
   int _nextReqId = 1;
   final Map<int, Completer<bool>> _saveWaiters = {};
+  final Map<int, Completer<dynamic>> _rpcWaiters = {};
+  final StreamController<Uint8List> _linkTxController =
+      StreamController<Uint8List>.broadcast();
+
+  Stream<Uint8List> get onLinkTx => _linkTxController.stream;
 
   CasioCg50Engine({
     required this.romDir,
@@ -1443,6 +1926,14 @@ class CasioCg50Engine extends CasioEngineController {
     } else if (type == 'saved') {
       final reqId = msg['reqId'] as int? ?? 0;
       _saveWaiters.remove(reqId)?.complete(msg['ok'] as bool? ?? false);
+    } else if (type == 'rpc') {
+      final reqId = msg['reqId'] as int? ?? 0;
+      _rpcWaiters.remove(reqId)?.complete(msg['data']);
+    } else if (type == 'link_tx') {
+      final xfer = msg['bytes'] as TransferableTypedData?;
+      if (xfer != null && !_linkTxController.isClosed) {
+        _linkTxController.add(xfer.materialize().asUint8List());
+      }
     } else if (type == 'frame') {
       final booted = msg['booted'] as bool? ?? false;
       _statusLabel = booted ? 'Lista' : 'Iniciando...';
@@ -1481,6 +1972,16 @@ class CasioCg50Engine extends CasioEngineController {
   }
 
   @override
+  void pressCodeDown(int matrixCode) {
+    _txPort?.send({'op': 'down', 'code': matrixCode});
+  }
+
+  @override
+  void releaseCodeUp(int matrixCode) {
+    _txPort?.send({'op': 'up', 'code': matrixCode});
+  }
+
+  @override
   void setPaused(bool paused) {
     _txPort?.send({'op': 'pause', 'value': paused});
   }
@@ -1508,6 +2009,147 @@ class CasioCg50Engine extends CasioEngineController {
   Future<bool> loadAddinFromFile(String path) {
     return _sendFileRequest('load_addin', path,
         timeout: const Duration(seconds: 8));
+  }
+
+  Future<dynamic> _sendRpc(
+    Map<String, dynamic> payload, {
+    Duration timeout = const Duration(seconds: 10),
+  }) {
+    final port = _txPort;
+    if (!_ready || port == null || _disposed) {
+      return Future.value(null);
+    }
+    final reqId = _nextReqId++;
+    final c = Completer<dynamic>();
+    _rpcWaiters[reqId] = c;
+    port.send({...payload, 'reqId': reqId});
+    return c.future.timeout(timeout, onTimeout: () {
+      _rpcWaiters.remove(reqId);
+      return null;
+    });
+  }
+
+  Future<Cg50SmemListing?> listSmem(String path) async {
+    final res = await _sendRpc({'op': 'smem_list', 'path': path});
+    if (res is! String || res.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(res);
+      if (decoded is Map<String, dynamic>) {
+        return Cg50SmemListing.fromJson(decoded);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Uint8List?> readSmemFile(String path) async {
+    final res = await _sendRpc({'op': 'smem_read', 'path': path},
+        timeout: const Duration(seconds: 15));
+    if (res is TransferableTypedData) {
+      return res.materialize().asUint8List();
+    }
+    return null;
+  }
+
+  Future<bool> writeSmemFile(
+    String path,
+    Uint8List data, {
+    bool overwrite = true,
+    bool remountOs = false,
+  }) async {
+    final res = await _sendRpc(
+      {
+        'op': 'smem_write',
+        'path': path,
+        'bytes': TransferableTypedData.fromList([data]),
+        'overwrite': overwrite,
+        'remountOs': remountOs,
+      },
+      timeout: const Duration(seconds: 15),
+    );
+    return res == true;
+  }
+
+  Future<bool> deleteSmemPath(
+    String path, {
+    bool recursive = false,
+    bool remountOs = false,
+  }) async {
+    final res = await _sendRpc({
+      'op': 'smem_delete',
+      'path': path,
+      'recursive': recursive,
+      'remountOs': remountOs,
+    });
+    return res == true;
+  }
+
+  Future<bool> mkdirSmem(String path, {bool remountOs = false}) async {
+    final res = await _sendRpc({
+      'op': 'smem_mkdir',
+      'path': path,
+      'remountOs': remountOs,
+    });
+    return res == true;
+  }
+
+  Future<bool> remountSmemOs() async {
+    final res = await _sendRpc({'op': 'smem_remount'});
+    return res == true;
+  }
+
+  Future<bool> setUsbConnected(bool connected) async {
+    final res = await _sendRpc({'op': 'usb_set', 'connected': connected});
+    return res == true;
+  }
+
+  Future<Cg50UsbStatus?> getUsbStatus() async {
+    final res = await _sendRpc({'op': 'usb_status'});
+    if (res is! String || res.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(res);
+      if (decoded is Map<String, dynamic>) {
+        return Cg50UsbStatus.fromJson(decoded);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<bool> setLinkEnabled(bool enabled) async {
+    final res = await _sendRpc({'op': 'link_set', 'enabled': enabled});
+    return res == true;
+  }
+
+  Future<int> linkPushRx(Uint8List data) async {
+    final res = await _sendRpc({
+      'op': 'link_push_rx',
+      'bytes': TransferableTypedData.fromList([data]),
+    });
+    return (res is int) ? res : 0;
+  }
+
+  Future<String?> decodeLcdQr() async {
+    final res = await _sendRpc({'op': 'decode_qr'});
+    return (res is String && res.isNotEmpty) ? res : null;
+  }
+
+  Future<Uint8List?> exportStateBytes() async {
+    final res = await _sendRpc({'op': 'export_state_bytes'},
+        timeout: const Duration(seconds: 12));
+    if (res is TransferableTypedData) {
+      return res.materialize().asUint8List();
+    }
+    return null;
+  }
+
+  Future<bool> importStateBytes(Uint8List bytes) async {
+    final res = await _sendRpc(
+      {
+        'op': 'import_state_bytes',
+        'bytes': TransferableTypedData.fromList([bytes]),
+      },
+      timeout: const Duration(seconds: 12),
+    );
+    return res == true;
   }
 
   Future<bool> _sendFileRequest(
@@ -1544,6 +2186,11 @@ class CasioCg50Engine extends CasioEngineController {
       if (!w.isCompleted) w.complete(false);
     }
     _saveWaiters.clear();
+    for (final w in _rpcWaiters.values) {
+      if (!w.isCompleted) w.complete(null);
+    }
+    _rpcWaiters.clear();
+    unawaited(_linkTxController.close());
     _txPort?.send({'op': 'dispose'});
     _rxPort?.close();
     _isolate?.kill(priority: Isolate.beforeNextEvent);

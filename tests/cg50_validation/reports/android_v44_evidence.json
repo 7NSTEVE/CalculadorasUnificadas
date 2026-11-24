@@ -1,0 +1,32 @@
+{
+  "status": "CONFIRMED",
+  "device_serial": "emulator-5554",
+  "android_release": "16",
+  "android_sdk": 36,
+  "resolution": "1080x2400",
+  "package": "com.calculadorasunificadas.app",
+  "apk_path": "D:\\Proyectos\\CalculadorasUnificadas\\apps\\android\\build\\app\\outputs\\flutter-apk\\app-release.apk",
+  "apk_bytes": 80725557,
+  "apk_sha256": "7D1DAB3AABB4672079A2D9B7132893FCB60E708DBC8C595EF544594DAC684CAD",
+  "zipalign_16kb_exit": 0,
+  "apksigner_verify_exit": 0,
+  "elf_load_align_arm64_v8a": "0x4000",
+  "elf_load_align_x86_64": "0x4000",
+  "libcasio_native_arm64_bytes": 1343008,
+  "libcasio_native_x86_64_bytes": 1354144,
+  "warm_state_stamp": "cg50_warm_v44.stamp",
+  "flutter_analyze_issues": 0,
+  "flutter_test_passed": 4,
+  "flutter_test_total": 4,
+  "logcat_bad_lines": 0,
+  "alive_pid_after_relaunch": "5403",
+  "screenshots": {
+    "01_main_menu": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_01_main_menu.png",
+    "02_run_matrix_symbolic": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_02_run_matrix_symbolic.png",
+    "03_run_matrix_sd": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_03_run_matrix_sd.png",
+    "04_graph_polar_rose": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_04_graph_polar_rose.png",
+    "05_micropython_1024": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_05_micropython_1024.png",
+    "06_system_version": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_06_system_version.png",
+    "07_after_force_stop": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_07_after_force_stop.png"
+  }
+}

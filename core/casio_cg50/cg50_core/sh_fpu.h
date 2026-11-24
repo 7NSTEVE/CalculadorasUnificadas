@@ -1,23 +1,23 @@
 #pragma once
 
+#include <cfenv>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 
 namespace cg50 {
 
-// SH-4A FPU numeric helpers. Bank selection, memory addressing and exception
-// entry live in Cg50NativeCore::ExecuteFpuOpcode; everything here is pure
-// arithmetic over IEEE-754 bit patterns so it stays unit-testable on its own.
+// SH-4A FPU numeric helpers (opt-in legacy SH-4A profile; note Casio SH7305
+// silicon is SH4AL-DSP without a hardware FPU per CPU73050.dll audit).
 //
-// FPSCR rounding modes (RM bits 1-0): 00 nearest, 01 to zero, 10 toward
-// +infinity, 11 toward -infinity. Flag/cause grouping per the SH-4 manual:
-// inexact/overflow share one bit, underflow/divide-by-zero share one bit and
-// invalid uses its own bit (enable 10-12, cause 13-15, flag 16-18).
+// SH-4A FPSCR.RM (bits 1-0):
+//   00 = Round to Nearest (IEEE-754 FE_TONEAREST)
+//   01 = Round to Zero    (IEEE-754 FE_TOWARDZERO)
+//   10, 11 = Reserved in SH-4A (fall back to FE_TONEAREST).
 inline constexpr std::uint32_t kFpuRoundingNearest = 0u;
 inline constexpr std::uint32_t kFpuRoundingZero = 1u;
-inline constexpr std::uint32_t kFpuRoundingPositiveInfinity = 2u;
-inline constexpr std::uint32_t kFpuRoundingNegativeInfinity = 3u;
+inline constexpr std::uint32_t kFpuRoundingPositiveInfinity = 2u; // Reserved in SH-4A
+inline constexpr std::uint32_t kFpuRoundingNegativeInfinity = 3u; // Reserved in SH-4A
 
 inline float BitsToFloat(const std::uint32_t bits)
 {
@@ -56,47 +56,49 @@ struct FpuEventReport {
     bool invalid = false;
 };
 
-// Rounds a value computed in host double precision to the destination
-// precision selected by FPSCR.PR, honouring FPSCR.RM. Reports the IEEE event
-// classification for the cause/flag triplets.
+// Exact IEEE-754 mantissa rounding to float or double precision honoring
+// SH-4A FPSCR.RM (00 = Nearest, 01 = TowardZero; 10/11 reserved -> Nearest).
+// Fixes the historical floor()/ceil() integer-truncation bug.
 inline double FpuRoundToPrecision(const double value,
                                   const bool doublePrecision,
                                   const std::uint32_t roundingMode,
                                   FpuEventReport& report)
 {
     double rounded = value;
+    const std::uint32_t rm = roundingMode & 3u;
+
     if (!doublePrecision) {
-        float narrow = 0.0f;
-        switch (roundingMode & 3u) {
-        case kFpuRoundingNearest:
-            narrow = static_cast<float>(value);
-            break;
-        case kFpuRoundingZero:
-            narrow = static_cast<float>(value >= 0.0 ? std::floor(value) : std::ceil(value));
-            break;
-        case kFpuRoundingPositiveInfinity:
-            narrow = static_cast<float>(std::ceil(value));
-            break;
-        default:
-            narrow = static_cast<float>(std::floor(value));
-            break;
+        if (std::isnan(value) || std::isinf(value) || value == 0.0) {
+            rounded = static_cast<double>(static_cast<float>(value));
+        } else if (rm == kFpuRoundingZero) {
+            // Exact software round-toward-zero from IEEE-754 double to float
+            // (portable across MSVC/Clang/GCC without relying on FENV_ACCESS).
+            float nearest = static_cast<float>(value);
+            if (std::isinf(nearest)) {
+                // Overflow toward zero saturates to +/- FLT_MAX
+                constexpr std::uint32_t kFltMaxBits = 0x7F7FFFFFu;
+                const std::uint32_t sign = (value < 0.0) ? 0x80000000u : 0u;
+                nearest = BitsToFloat(sign | kFltMaxBits);
+            } else if (std::fabs(static_cast<double>(nearest)) > std::fabs(value)) {
+                // Nearest rounded away from zero -> step 1 ULP back toward zero.
+                const std::uint32_t bits = FloatToBits(nearest);
+                if ((bits & 0x7FFFFFFFu) > 0u) {
+                    nearest = BitsToFloat(bits - 1u);
+                }
+            }
+            rounded = static_cast<double>(nearest);
+        } else {
+            // RM == 00 (Nearest) and reserved 10/11 -> IEEE-754 round-to-nearest-even
+            const int prev = std::fegetround();
+            if (prev != FE_TONEAREST) std::fesetround(FE_TONEAREST);
+            volatile double vd = value;
+            volatile float vf = static_cast<float>(vd);
+            rounded = static_cast<double>(vf);
+            if (prev != FE_TONEAREST) std::fesetround(prev);
         }
-        rounded = static_cast<double>(narrow);
     } else {
-        switch (roundingMode & 3u) {
-        case kFpuRoundingNearest:
-            rounded = value;
-            break;
-        case kFpuRoundingZero:
-            rounded = value >= 0.0 ? std::floor(value) : std::ceil(value);
-            break;
-        case kFpuRoundingPositiveInfinity:
-            rounded = std::ceil(value);
-            break;
-        default:
-            rounded = std::floor(value);
-            break;
-        }
+        // Double precision result is already in IEEE-754 binary64; never truncate to integer!
+        rounded = value;
     }
 
     report.inexactOrOverflow = (rounded != value) ||
@@ -106,20 +108,14 @@ inline double FpuRoundToPrecision(const double value,
         report.underflowOrDivZero =
             (rounded != 0.0 && std::fpclassify(rounded) == FP_SUBNORMAL);
     } else {
-        // Single-precision destination: anything that rounds below the float
-        // minimum normal counts as underflow.
         report.underflowOrDivZero =
             (rounded != 0.0 && std::fabs(rounded) < 1.1754943508222875e-38) ||
             (rounded != 0.0 && std::fpclassify(rounded) == FP_SUBNORMAL);
     }
-    // Documented simplification: any NaN result (NaN operand or generated
-    // inf-inf / 0*inf) reports invalid.
     report.invalid = std::isnan(rounded);
     if (std::isnan(rounded)) {
-        // Normalize the quiet NaN the host produces to the SH-4 default NaN
-        // (all-ones payload), so behaviour does not depend on the host libc.
-        if (!doublePrecision) rounded = std::nanf("");
-        else rounded = std::nan("");
+        if (!doublePrecision) rounded = BitsToDouble(0x7FF80000u, 0x00000000u);
+        else rounded = BitsToDouble(0x7FF80000u, 0x00000000u);
     }
     return rounded;
 }

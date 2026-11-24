@@ -3,6 +3,9 @@
 #include "calcemu.h"
 #include "casio_cw2.h"
 #include "cg50_native_core.h"
+#include "cg50_core/cg50_lcd_qr.h"
+#include "cg50_core/cg50_smem_fs.h"
+#include "cg50_core/cg50_usb_host.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -134,6 +137,47 @@ constexpr uint8_t kCw2Palette[4][3] = {
     {0x14, 0x24, 0x3A}  // Level 3: full ink
 };
 
+std::string EscapeJsonString(const std::string& in)
+{
+    std::string out;
+    out.reserve(in.size() + 8u);
+    for (unsigned char c : in) {
+        switch (c) {
+            case '"':  out += "\\\""; break;
+            case '\\': out += "\\\\"; break;
+            case '\b': out += "\\b"; break;
+            case '\f': out += "\\f"; break;
+            case '\n': out += "\\n"; break;
+            case '\r': out += "\\r"; break;
+            case '\t': out += "\\t"; break;
+            default:
+                if (c < 0x20u) {
+                    char buf[8];
+                    std::snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned>(c));
+                    out += buf;
+                } else {
+                    out.push_back(static_cast<char>(c));
+                }
+                break;
+        }
+    }
+    return out;
+}
+
+int CopyCStringToOut(const std::string& s, char* out_buf, int out_size)
+{
+    const int needed = static_cast<int>(s.size()) + 1;
+    if (!out_buf || out_size <= 0) return needed;
+    if (out_size < needed) {
+        std::memcpy(out_buf, s.data(), static_cast<size_t>(out_size - 1));
+        out_buf[out_size - 1] = '\0';
+        return needed;
+    }
+    std::memcpy(out_buf, s.data(), s.size());
+    out_buf[s.size()] = '\0';
+    return static_cast<int>(s.size());
+}
+
 } // namespace
 
 struct CasioNxHandle {
@@ -159,7 +203,18 @@ struct CasioCg50Handle {
     std::vector<uint16_t> pressedKeys;
     uint64_t lastFrameHash = 0;
     bool hasFrameHash = false;
+    bool usbConnected = false;
+    bool linkEnabled = false;
 };
+
+static bool MountCg50Smem(CasioCg50Handle* handle, cg50::Cg50SmemFs& fs)
+{
+    if (!handle || !handle->core || !handle->core->HasUserRom()) return false;
+    auto& userRom = handle->core->UserRomMut();
+    const uint8_t* c2Ptr = handle->core->HasC2Rom() ? handle->core->C2RomData() : nullptr;
+    const size_t c2Size = handle->core->HasC2Rom() ? handle->core->C2RomSize() : 0u;
+    return fs.Mount(userRom.data(), userRom.size(), c2Ptr, c2Size);
+}
 
 extern "C" {
 
@@ -795,6 +850,175 @@ int casio_cg50_load_addin_file(CasioCg50Handle* handle, const char* path)
     std::vector<uint8_t> buf;
     if (!ReadBinaryFile(path, buf)) return 0;
     return handle->core->LoadG3aAddin(buf.data(), buf.size()) ? 1 : 0;
+}
+
+int casio_cg50_smem_list_json(CasioCg50Handle* handle, const char* path, char* out_json, int out_size)
+{
+    if (!handle || !handle->core) return -1;
+    cg50::Cg50SmemFs fs;
+    if (!MountCg50Smem(handle, fs)) return -1;
+
+    const std::string dirPath = (path && path[0]) ? std::string(path) : std::string("/");
+    cg50::SmemVolumeInfo vol{};
+    std::vector<cg50::SmemEntry> entries;
+    if (!fs.GetVolumeInfo(vol) || !fs.ListDirectory(dirPath, entries)) {
+        return -1;
+    }
+
+    std::string json;
+    json.reserve(512u + entries.size() * 128u);
+    json += "{\"path\":\"" + EscapeJsonString(dirPath) + "\"";
+    json += ",\"volumeLabel\":\"" + EscapeJsonString(vol.volumeLabel) + "\"";
+    json += ",\"totalBytes\":" + std::to_string(vol.totalBytes);
+    json += ",\"freeBytes\":" + std::to_string(vol.freeBytes);
+    json += ",\"usedBytes\":" + std::to_string(vol.usedBytes);
+    json += ",\"clusterSize\":" + std::to_string(vol.clusterSize);
+    json += ",\"fatEqual\":";
+    json += vol.fatTablesEqual ? "true" : "false";
+    json += ",\"entries\":[";
+    for (size_t i = 0; i < entries.size(); ++i) {
+        if (i > 0) json.push_back(',');
+        const auto& e = entries[i];
+        json += "{\"name\":\"" + EscapeJsonString(e.name) + "\"";
+        json += ",\"shortName\":\"" + EscapeJsonString(e.shortName) + "\"";
+        json += ",\"path\":\"" + EscapeJsonString(e.fullPath) + "\"";
+        json += ",\"isDir\":";
+        json += e.isDir ? "true" : "false";
+        json += ",\"size\":" + std::to_string(e.size);
+        json += ",\"modDate\":" + std::to_string(e.modDate);
+        json += ",\"modTime\":" + std::to_string(e.modTime);
+        json += "}";
+    }
+    json += "]}";
+    return CopyCStringToOut(json, out_json, out_size);
+}
+
+int64_t casio_cg50_smem_read_file(CasioCg50Handle* handle, const char* path, uint8_t* out_buf, size_t out_size)
+{
+    if (!handle || !handle->core || !path || !path[0]) return -1;
+    cg50::Cg50SmemFs fs;
+    if (!MountCg50Smem(handle, fs)) return -1;
+    std::vector<uint8_t> data;
+    if (!fs.ReadFile(path, data)) return -1;
+    if (!out_buf || out_size < data.size()) {
+        return static_cast<int64_t>(data.size());
+    }
+    if (!data.empty()) {
+        std::memcpy(out_buf, data.data(), data.size());
+    }
+    return static_cast<int64_t>(data.size());
+}
+
+int casio_cg50_smem_write_file(CasioCg50Handle* handle, const char* path, const uint8_t* data, size_t size, int overwrite)
+{
+    if (!handle || !handle->core || !path || !path[0]) return 0;
+    if (size > 0 && !data) return 0;
+    cg50::Cg50SmemFs fs;
+    if (!MountCg50Smem(handle, fs)) return 0;
+    if (!fs.WriteFile(path, data, size, overwrite != 0)) return 0;
+    handle->core->NotifyFlashStorageMutated();
+    return 1;
+}
+
+int casio_cg50_smem_delete(CasioCg50Handle* handle, const char* path, int recursive)
+{
+    if (!handle || !handle->core || !path || !path[0]) return 0;
+    cg50::Cg50SmemFs fs;
+    if (!MountCg50Smem(handle, fs)) return 0;
+    if (!fs.DeletePath(path, recursive != 0)) return 0;
+    handle->core->NotifyFlashStorageMutated();
+    return 1;
+}
+
+int casio_cg50_smem_mkdir(CasioCg50Handle* handle, const char* path)
+{
+    if (!handle || !handle->core || !path || !path[0]) return 0;
+    cg50::Cg50SmemFs fs;
+    if (!MountCg50Smem(handle, fs)) return 0;
+    if (!fs.MakeDirectory(path)) return 0;
+    handle->core->NotifyFlashStorageMutated();
+    return 1;
+}
+
+int casio_cg50_smem_remount_os(CasioCg50Handle* handle)
+{
+    if (!handle || !handle->core) return 0;
+    handle->core->NotifyFlashStorageMutated();
+    handle->core->Reset();
+    handle->hasFrameHash = false;
+    handle->pressedKeys.clear();
+    return 1;
+}
+
+int casio_cg50_usb_set_connected(CasioCg50Handle* handle, int connected)
+{
+    if (!handle || !handle->core) return 0;
+    handle->usbConnected = (connected != 0);
+    handle->core->SetUsbCableConnected(handle->usbConnected);
+    return 1;
+}
+
+int casio_cg50_usb_get_status_json(CasioCg50Handle* handle, char* out_json, int out_size)
+{
+    if (!handle || !handle->core) return -1;
+    const auto& usb = handle->core->Usb2();
+    const bool vbus = usb.VbusAttached();
+    const uint8_t addr = usb.DeviceAddress();
+    const bool configured = handle->usbConnected && vbus && addr != 0u;
+    const char* mode = !handle->usbConnected ? "disconnected"
+                                             : (configured ? "connected" : "vbus_ready");
+    std::string json = "{";
+    json += "\"connected\":";
+    json += handle->usbConnected ? "true" : "false";
+    json += ",\"vbus\":";
+    json += vbus ? "true" : "false";
+    json += ",\"configured\":";
+    json += configured ? "true" : "false";
+    json += ",\"deviceAddress\":" + std::to_string(static_cast<unsigned>(addr));
+    json += ",\"vid\":1999"; // 0x07CF CASIO
+    json += ",\"pid\":24834"; // 0x6102 CASIO MassStorage Device
+    json += ",\"mode\":\"" + std::string(mode) + "\"";
+    json += ",\"linkEnabled\":";
+    json += handle->linkEnabled ? "true" : "false";
+    json += "}";
+    return CopyCStringToOut(json, out_json, out_size);
+}
+
+int casio_cg50_link_set_enabled(CasioCg50Handle* handle, int enabled)
+{
+    if (!handle || !handle->core) return 0;
+    handle->linkEnabled = (enabled != 0);
+    handle->core->SetExternalLinkEnabled(handle->linkEnabled);
+    return 1;
+}
+
+int casio_cg50_link_push_rx(CasioCg50Handle* handle, const uint8_t* data, size_t len)
+{
+    if (!handle || !handle->core) return -1;
+    return static_cast<int>(handle->core->LinkPushRx(data, len));
+}
+
+int casio_cg50_link_pop_tx(CasioCg50Handle* handle, uint8_t* out_buf, size_t max_len)
+{
+    if (!handle || !handle->core) return -1;
+    return static_cast<int>(handle->core->LinkPopTx(out_buf, max_len));
+}
+
+int casio_cg50_decode_lcd_qr(CasioCg50Handle* handle, char* out_text, int out_size)
+{
+    if (!handle || !handle->core) return -1;
+    constexpr int kW = static_cast<int>(cg50::R61524::kVisibleWidth);
+    constexpr int kH = static_cast<int>(cg50::R61524::kVisibleHeight);
+    std::vector<uint8_t> rgba(static_cast<size_t>(kW) * static_cast<size_t>(kH) * 4u, 0xFFu);
+    if (casio_cg50_render_rgba_ex(handle, rgba.data(), static_cast<int>(rgba.size()), 1) < 0) {
+        return -1;
+    }
+    std::string decoded;
+    if (!cg50::DecodeLcdQrRgba(rgba.data(), kW, kH, decoded) || decoded.empty()) {
+        if (out_text && out_size > 0) out_text[0] = '\0';
+        return 0;
+    }
+    return CopyCStringToOut(decoded, out_text, out_size);
 }
 
 } // extern "C"

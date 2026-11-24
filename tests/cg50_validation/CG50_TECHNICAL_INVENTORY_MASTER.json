@@ -1,0 +1,2126 @@
+{
+  "schema": "cg50_technical_inventory_master_v46",
+  "generated_utc": "2026-11-24T08:15:10.143063+00:00",
+  "repo_git_head": "ab66ee1923afd3ff413ab5f33df917e9d9a9aa59",
+  "rom_sha256": {
+    "SystemROM.raw": "8CF1E1F2AD3FB742B557D00535F8AEA7874C7F8D138B56B4C3938E26C0F82E23",
+    "UserROM.raw": "8D5AEA8D5BEEA758617DB7EBCED31DD1900B48D3AC4D2D67FDAEA77E25830087",
+    "C2ROM.raw": "A946208A374E264EE647503C2B7E60B42F29C1D5ED40D2A70BA0F848272F47B8"
+  },
+  "audited_denominators": {
+    "os380_syscalls_total": 8040,
+    "os380_syscalls_unique_handlers": 8030,
+    "os380_syscalls_gint_named_crossref": 80,
+    "internal_error_messages_found": 141,
+    "diagnostic_and_mode_strings_found": 34,
+    "bundled_g3a_addins_detected": 61,
+    "setup_orthogonal_combinations": 1152,
+    "regional_variants_compared": 3
+  },
+  "syscalls_os380": {
+    "trampoline_rom_offset": "0x00020070",
+    "trampoline_hex": "d2024008002e402b00090000806b01dc",
+    "table_virtual_address": "0x806B01DC",
+    "table_rom_offset": "0x006B01DC",
+    "total_syscalls": 8040,
+    "first_id": "0x0000",
+    "last_id": "0x1F67",
+    "unique_handler_addresses": 8030,
+    "known_gint_prizmsdk_crossref_count": 80,
+    "known_gint_prizmsdk_crossref": [
+      {
+        "id": "0x0002",
+        "name": "RTC_Reset",
+        "subsystem": "rtc",
+        "handler_va": "0x8002C50E"
+      },
+      {
+        "id": "0x0003",
+        "name": "RTC_SetDateTime",
+        "subsystem": "rtc",
+        "handler_va": "0x8002C552"
+      },
+      {
+        "id": "0x0004",
+        "name": "RTC_GetTime",
+        "subsystem": "rtc",
+        "handler_va": "0x8002C5FA"
+      },
+      {
+        "id": "0x0005",
+        "name": "RTC_GetTicks",
+        "subsystem": "rtc",
+        "handler_va": "0x8002C77C"
+      },
+      {
+        "id": "0x0006",
+        "name": "RTC_Elapsed_ms",
+        "subsystem": "rtc",
+        "handler_va": "0x8002C78C"
+      },
+      {
+        "id": "0x002B",
+        "name": "DisplayStatusArea",
+        "subsystem": "display",
+        "handler_va": "0x8002E936"
+      },
+      {
+        "id": "0x003B",
+        "name": "PowerOff",
+        "subsystem": "power",
+        "handler_va": "0x8002F28A"
+      },
+      {
+        "id": "0x0121",
+        "name": "Bdisp_AllClr_VRAM",
+        "subsystem": "display",
+        "handler_va": "0x80046DFA"
+      },
+      {
+        "id": "0x0131",
+        "name": "Bdisp_AreaClr_VRAM",
+        "subsystem": "display",
+        "handler_va": "0x8004711C"
+      },
+      {
+        "id": "0x0160",
+        "name": "Bdisp_PutDisp_DD",
+        "subsystem": "display",
+        "handler_va": "0x8004B2A4"
+      },
+      {
+        "id": "0x0161",
+        "name": "Bdisp_PutDisp_DD_stripe",
+        "subsystem": "display",
+        "handler_va": "0x8004B3E6"
+      },
+      {
+        "id": "0x01E6",
+        "name": "GetVRAMAddress",
+        "subsystem": "display",
+        "handler_va": "0x8004F33A"
+      },
+      {
+        "id": "0x025F",
+        "name": "Bdisp_SetPoint_VRAM",
+        "subsystem": "display",
+        "handler_va": "0x8005518C"
+      },
+      {
+        "id": "0x0260",
+        "name": "Bdisp_GetPoint_VRAM",
+        "subsystem": "display",
+        "handler_va": "0x80055192"
+      },
+      {
+        "id": "0x0272",
+        "name": "Bdisp_EnableColor",
+        "subsystem": "display",
+        "handler_va": "0x80055568"
+      },
+      {
+        "id": "0x02A3",
+        "name": "SetBackGround",
+        "subsystem": "display",
+        "handler_va": "0x80055D5A"
+      },
+      {
+        "id": "0x02C1",
+        "name": "PrintMini",
+        "subsystem": "text",
+        "handler_va": "0x80057A1C"
+      },
+      {
+        "id": "0x02C7",
+        "name": "PrintCXY",
+        "subsystem": "text",
+        "handler_va": "0x80057BE8"
+      },
+      {
+        "id": "0x02D0",
+        "name": "PrintXY",
+        "subsystem": "text",
+        "handler_va": "0x80057D1E"
+      },
+      {
+        "id": "0x02DB",
+        "name": "DrawFrame",
+        "subsystem": "display",
+        "handler_va": "0x800594D0"
+      },
+      {
+        "id": "0x02DE",
+        "name": "EnableStatusArea",
+        "subsystem": "display",
+        "handler_va": "0x80059720"
+      },
+      {
+        "id": "0x02DF",
+        "name": "DefineStatusAreaFlags",
+        "subsystem": "display",
+        "handler_va": "0x800598D0"
+      },
+      {
+        "id": "0x02E0",
+        "name": "DefineStatusMessage",
+        "subsystem": "display",
+        "handler_va": "0x8005990A"
+      },
+      {
+        "id": "0x02EE",
+        "name": "GetSetupSetting",
+        "subsystem": "setup",
+        "handler_va": "0x80059D48"
+      },
+      {
+        "id": "0x02EF",
+        "name": "SetSetupSetting",
+        "subsystem": "setup",
+        "handler_va": "0x80059D4E"
+      },
+      {
+        "id": "0x0407",
+        "name": "Timer_Install",
+        "subsystem": "timer",
+        "handler_va": "0x800626FA"
+      },
+      {
+        "id": "0x0408",
+        "name": "Timer_Deinstall",
+        "subsystem": "timer",
+        "handler_va": "0x80062A66"
+      },
+      {
+        "id": "0x0409",
+        "name": "Timer_Start",
+        "subsystem": "timer",
+        "handler_va": "0x80062A84"
+      },
+      {
+        "id": "0x040A",
+        "name": "Timer_Stop",
+        "subsystem": "timer",
+        "handler_va": "0x80062AA4"
+      },
+      {
+        "id": "0x0412",
+        "name": "CMT_Delay_100micros",
+        "subsystem": "timer",
+        "handler_va": "0x80063E40"
+      },
+      {
+        "id": "0x0413",
+        "name": "CMT_Delay_micros",
+        "subsystem": "timer",
+        "handler_va": "0x80063E54"
+      },
+      {
+        "id": "0x090F",
+        "name": "GetKey",
+        "subsystem": "keyboard",
+        "handler_va": "0x800C8BCE"
+      },
+      {
+        "id": "0x0924",
+        "name": "GetKeyWait_OS",
+        "subsystem": "keyboard",
+        "handler_va": "0x800CE6A2"
+      },
+      {
+        "id": "0x0C68",
+        "name": "PRGM_GetKey_OS",
+        "subsystem": "keyboard",
+        "handler_va": "0x8016FA0E"
+      },
+      {
+        "id": "0x0DA3",
+        "name": "Bfile_CloseFile_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B1FC"
+      },
+      {
+        "id": "0x0DA4",
+        "name": "Bfile_CreateEntry_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B278"
+      },
+      {
+        "id": "0x0DA5",
+        "name": "Bfile_DeleteEntry",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B2FC"
+      },
+      {
+        "id": "0x0DA6",
+        "name": "Bfile_FindClose",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B36A"
+      },
+      {
+        "id": "0x0DA7",
+        "name": "Bfile_FindFirst",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B3F0"
+      },
+      {
+        "id": "0x0DA8",
+        "name": "Bfile_FindNext",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B440"
+      },
+      {
+        "id": "0x0DA9",
+        "name": "Bfile_GetFileSize_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B53E"
+      },
+      {
+        "id": "0x0DAA",
+        "name": "Bfile_OpenFile_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B5F2"
+      },
+      {
+        "id": "0x0DAC",
+        "name": "Bfile_ReadFile_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B6C0"
+      },
+      {
+        "id": "0x0DAF",
+        "name": "Bfile_SeekFile_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018B974"
+      },
+      {
+        "id": "0x0DB0",
+        "name": "Bfile_WriteFile_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018BAE2"
+      },
+      {
+        "id": "0x0DB4",
+        "name": "Bfile_RenameEntry",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018C084"
+      },
+      {
+        "id": "0x0DB5",
+        "name": "Bfile_GetMediaFree_OS",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018C130"
+      },
+      {
+        "id": "0x0DD0",
+        "name": "Bfile_NameToStr_ncpy",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018E7EC"
+      },
+      {
+        "id": "0x0DD1",
+        "name": "Bfile_StrToName_ncpy",
+        "subsystem": "bfile_fugue",
+        "handler_va": "0x8018E83E"
+      },
+      {
+        "id": "0x0EAB",
+        "name": "GetMainBatteryVoltage",
+        "subsystem": "power",
+        "handler_va": "0x80198684"
+      },
+      {
+        "id": "0x0F42",
+        "name": "MCS_CreateDirectory",
+        "subsystem": "mcs",
+        "handler_va": "0x801AA678"
+      },
+      {
+        "id": "0x0F43",
+        "name": "MCS_WriteItem",
+        "subsystem": "mcs",
+        "handler_va": "0x801AA8C4"
+      },
+      {
+        "id": "0x0F44",
+        "name": "MCS_DeleteDirectory",
+        "subsystem": "mcs",
+        "handler_va": "0x801AAA54"
+      },
+      {
+        "id": "0x0F45",
+        "name": "MCS_DeleteItem",
+        "subsystem": "mcs",
+        "handler_va": "0x801AB43A"
+      },
+      {
+        "id": "0x0F46",
+        "name": "MCS_GetState",
+        "subsystem": "mcs",
+        "handler_va": "0x801AAC22"
+      },
+      {
+        "id": "0x0F47",
+        "name": "MCS_GetCapa",
+        "subsystem": "mcs",
+        "handler_va": "0x801AAC8A"
+      },
+      {
+        "id": "0x0F48",
+        "name": "MCS_GetDlen2",
+        "subsystem": "mcs",
+        "handler_va": "0x801AB45E"
+      },
+      {
+        "id": "0x0F49",
+        "name": "MCS_GetData1",
+        "subsystem": "mcs",
+        "handler_va": "0x801AACB6"
+      },
+      {
+        "id": "0x0F4E",
+        "name": "MCS_SearchDirectory",
+        "subsystem": "mcs",
+        "handler_va": "0x801AB298"
+      },
+      {
+        "id": "0x0F4F",
+        "name": "MCS_SearchItem",
+        "subsystem": "mcs",
+        "handler_va": "0x801AAA74"
+      },
+      {
+        "id": "0x1186",
+        "name": "Serial_ReadOneByte",
+        "subsystem": "serial",
+        "handler_va": "0x801E1876"
+      },
+      {
+        "id": "0x1187",
+        "name": "Serial_ReadNBytes",
+        "subsystem": "serial",
+        "handler_va": "0x801E19C4"
+      },
+      {
+        "id": "0x1188",
+        "name": "Serial_BufferedTransmitOneByte",
+        "subsystem": "serial",
+        "handler_va": "0x801E1A26"
+      },
+      {
+        "id": "0x1189",
+        "name": "Serial_BufferedTransmitNBytes",
+        "subsystem": "serial",
+        "handler_va": "0x801E1A54"
+      },
+      {
+        "id": "0x118C",
+        "name": "Serial_PollRX",
+        "subsystem": "serial",
+        "handler_va": "0x801E1AA6"
+      },
+      {
+        "id": "0x118D",
+        "name": "Serial_PollTX",
+        "subsystem": "serial",
+        "handler_va": "0x801E1AAA"
+      },
+      {
+        "id": "0x118E",
+        "name": "Serial_ClearRX",
+        "subsystem": "serial",
+        "handler_va": "0x801E1AAE"
+      },
+      {
+        "id": "0x118F",
+        "name": "Serial_ClearTX",
+        "subsystem": "serial",
+        "handler_va": "0x801E1B78"
+      },
+      {
+        "id": "0x1197",
+        "name": "Serial_Open",
+        "subsystem": "serial",
+        "handler_va": "0x801E1D48"
+      },
+      {
+        "id": "0x1198",
+        "name": "Serial_Close",
+        "subsystem": "serial",
+        "handler_va": "0x801E1D7C"
+      },
+      {
+        "id": "0x12BF",
+        "name": "Comm_Open",
+        "subsystem": "usb_comm",
+        "handler_va": "0x801E9210"
+      },
+      {
+        "id": "0x12C0",
+        "name": "Comm_Close",
+        "subsystem": "usb_comm",
+        "handler_va": "0x801E9234"
+      },
+      {
+        "id": "0x12C1",
+        "name": "Comm_TryCheckPacket",
+        "subsystem": "usb_comm",
+        "handler_va": "0x801E9B62"
+      },
+      {
+        "id": "0x18F9",
+        "name": "PrintXY_2",
+        "subsystem": "text",
+        "handler_va": "0x802C734C"
+      },
+      {
+        "id": "0x19C4",
+        "name": "sys_malloc",
+        "subsystem": "heap",
+        "handler_va": "0x802E920A"
+      },
+      {
+        "id": "0x19C5",
+        "name": "sys_free",
+        "subsystem": "heap",
+        "handler_va": "0x802E93FA"
+      },
+      {
+        "id": "0x19C6",
+        "name": "sys_realloc",
+        "subsystem": "heap",
+        "handler_va": "0x802E94DA"
+      },
+      {
+        "id": "0x1D81",
+        "name": "OS_InnerWait_ms",
+        "subsystem": "timer",
+        "handler_va": "0x80374D54"
+      },
+      {
+        "id": "0x1E62",
+        "name": "App_Init",
+        "subsystem": "app",
+        "handler_va": "0x803839D0"
+      },
+      {
+        "id": "0x1E63",
+        "name": "App_RegisterAddins",
+        "subsystem": "app",
+        "handler_va": "0x803839E4"
+      }
+    ],
+    "handler_address_buckets": {
+      "0x80000000..0x800FFFFF": 2687,
+      "0x80100000..0x801FFFFF": 2396,
+      "0x80200000..0x802FFFFF": 1607,
+      "0x80300000..0x803FFFFF": 1350
+    }
+  },
+  "internal_error_catalog": [
+    {
+      "message": "            ERROR",
+      "first_rom_offset": "0x00140CEF"
+    },
+    {
+      "message": "         Error  ",
+      "first_rom_offset": "0x00425339"
+    },
+    {
+      "message": "      ERROR",
+      "first_rom_offset": "0x00750480"
+    },
+    {
+      "message": "     DATA ERROR!     ",
+      "first_rom_offset": "0x0013FF96"
+    },
+    {
+      "message": " Argument ERROR  ",
+      "first_rom_offset": "0x0013E28F"
+    },
+    {
+      "message": " Card ERROR      ",
+      "first_rom_offset": "0x0013FF2A"
+    },
+    {
+      "message": " Circular ERROR  ",
+      "first_rom_offset": "0x00140EE4"
+    },
+    {
+      "message": " Color Link ERROR   ",
+      "first_rom_offset": "0x001419FA"
+    },
+    {
+      "message": " Com ERROR       ",
+      "first_rom_offset": "0x0013E2FB"
+    },
+    {
+      "message": " Communication ERROR",
+      "first_rom_offset": "0x00408AA8"
+    },
+    {
+      "message": " Condition ERROR ",
+      "first_rom_offset": "0x0013E0A9"
+    },
+    {
+      "message": " Data ERROR      ",
+      "first_rom_offset": "0x0013FEF4"
+    },
+    {
+      "message": " Dimension ERROR ",
+      "first_rom_offset": "0x0013E2C5"
+    },
+    {
+      "message": " Domain ERROR    ",
+      "first_rom_offset": "0x0013E43F"
+    },
+    {
+      "message": " Download ERROR  ",
+      "first_rom_offset": "0x0013F94C"
+    },
+    {
+      "message": " Duplicate ERROR ",
+      "first_rom_offset": "0x0013FA10"
+    },
+    {
+      "message": " ERROR",
+      "first_rom_offset": "0x00142084"
+    },
+    {
+      "message": " ERROR Dato      ",
+      "first_rom_offset": "0x0077E33C"
+    },
+    {
+      "message": " ERROR Tarjeta   ",
+      "first_rom_offset": "0x0077E350"
+    },
+    {
+      "message": " ERROR grave",
+      "first_rom_offset": "0x00783F4F"
+    },
+    {
+      "message": " ERROR versi",
+      "first_rom_offset": "0x0077F288"
+    },
+    {
+      "message": " ERRORE",
+      "first_rom_offset": "0x007EEBF2"
+    },
+    {
+      "message": " ERRORE Go       ",
+      "first_rom_offset": "0x007EB02B"
+    },
+    {
+      "message": " ERRORE Ma       ",
+      "first_rom_offset": "0x007EAFF5"
+    },
+    {
+      "message": " ERRORE argomento",
+      "first_rom_offset": "0x007EB0CD"
+    },
+    {
+      "message": " ERRORE circolare",
+      "first_rom_offset": "0x007ED911"
+    },
+    {
+      "message": " ERRORE com      ",
+      "first_rom_offset": "0x007EB139"
+    },
+    {
+      "message": " ERRORE condiz.  ",
+      "first_rom_offset": "0x007EAEEC"
+    },
+    {
+      "message": " ERRORE dati     ",
+      "first_rom_offset": "0x007ECB61"
+    },
+    {
+      "message": " ERRORE dimens.  ",
+      "first_rom_offset": "0x007EB103"
+    },
+    {
+      "message": " ERRORE impilam. ",
+      "first_rom_offset": "0x007EB097"
+    },
+    {
+      "message": " ERRORE interv.  ",
+      "first_rom_offset": "0x007EB4D7"
+    },
+    {
+      "message": " ERRORE memoria  ",
+      "first_rom_offset": "0x007EAF89"
+    },
+    {
+      "message": " ERRORE nidificaz",
+      "first_rom_offset": "0x007EB061"
+    },
+    {
+      "message": " ERRORE non reale",
+      "first_rom_offset": "0x007EB2B2"
+    },
+    {
+      "message": " ERRORE overflow",
+      "first_rom_offset": "0x007EB247"
+    },
+    {
+      "message": " ERRORE ricezione",
+      "first_rom_offset": "0x007EB1A5"
+    },
+    {
+      "message": " ERRORE scheda",
+      "first_rom_offset": "0x007ECB97"
+    },
+    {
+      "message": " ERRORE sintassi ",
+      "first_rom_offset": "0x007EAFBF"
+    },
+    {
+      "message": " ERRORE sistema",
+      "first_rom_offset": "0x007EAF55"
+    },
+    {
+      "message": " ERRORE trasmiss.",
+      "first_rom_offset": "0x007EB16F"
+    },
+    {
+      "message": " ERRORE versione",
+      "first_rom_offset": "0x007EDAC3"
+    },
+    {
+      "message": " Fatal ERROR",
+      "first_rom_offset": "0x00147A41"
+    },
+    {
+      "message": " Go ERROR        ",
+      "first_rom_offset": "0x0013E1ED"
+    },
+    {
+      "message": " Ma ERROR        ",
+      "first_rom_offset": "0x0013E1B7"
+    },
+    {
+      "message": " Memory ERROR    ",
+      "first_rom_offset": "0x0013E14B"
+    },
+    {
+      "message": " Nesting ERROR   ",
+      "first_rom_offset": "0x0013E223"
+    },
+    {
+      "message": " Non-Real ERROR  ",
+      "first_rom_offset": "0x0013E475"
+    },
+    {
+      "message": " Overflow ERROR  ",
+      "first_rom_offset": "0x0013E409"
+    },
+    {
+      "message": " Range ERROR     ",
+      "first_rom_offset": "0x0013E6A3"
+    },
+    {
+      "message": " Receive ERROR   ",
+      "first_rom_offset": "0x0013E367"
+    },
+    {
+      "message": " Remove ERROR    ",
+      "first_rom_offset": "0x0013F9AE"
+    },
+    {
+      "message": " Stack ERROR     ",
+      "first_rom_offset": "0x0013E259"
+    },
+    {
+      "message": " Stack Overflow!",
+      "first_rom_offset": "0x003AE489"
+    },
+    {
+      "message": " Syntax ERROR    ",
+      "first_rom_offset": "0x0013E181"
+    },
+    {
+      "message": " System ERROR    ",
+      "first_rom_offset": "0x0013E115"
+    },
+    {
+      "message": " Time Out        ",
+      "first_rom_offset": "0x0013E0DF"
+    },
+    {
+      "message": " Transmit ERROR  ",
+      "first_rom_offset": "0x0013E331"
+    },
+    {
+      "message": " Version ERROR   ",
+      "first_rom_offset": "0x001410D7"
+    },
+    {
+      "message": "Ambiguity ERROR!",
+      "first_rom_offset": "0x00144A5C"
+    },
+    {
+      "message": "Application ERROR",
+      "first_rom_offset": "0x0013E583"
+    },
+    {
+      "message": "ArithmeticError",
+      "first_rom_offset": "0x0070B1EF"
+    },
+    {
+      "message": "AssertionError",
+      "first_rom_offset": "0x0070B203"
+    },
+    {
+      "message": "AttributeError",
+      "first_rom_offset": "0x0070B217"
+    },
+    {
+      "message": "COM ERROR",
+      "first_rom_offset": "0x004FAB78"
+    },
+    {
+      "message": "Connect ERROR",
+      "first_rom_offset": "0x004FAA80"
+    },
+    {
+      "message": "Conversion ERROR",
+      "first_rom_offset": "0x0014146F"
+    },
+    {
+      "message": "EOFError",
+      "first_rom_offset": "0x0070B3CB"
+    },
+    {
+      "message": "ERROR",
+      "first_rom_offset": "0x0002311C"
+    },
+    {
+      "message": "ERROR            ",
+      "first_rom_offset": "0x0077EF84"
+    },
+    {
+      "message": "ERROR                 ",
+      "first_rom_offset": "0x003CE48C"
+    },
+    {
+      "message": "ERROR Conversi",
+      "first_rom_offset": "0x0077F5FC"
+    },
+    {
+      "message": "ERROR DATO!     ",
+      "first_rom_offset": "0x0077E381"
+    },
+    {
+      "message": "ERROR Go         ",
+      "first_rom_offset": "0x0077CCC6"
+    },
+    {
+      "message": "ERROR Matem",
+      "first_rom_offset": "0x0077CCB1"
+    },
+    {
+      "message": "ERROR agrupaci",
+      "first_rom_offset": "0x0077CCDA"
+    },
+    {
+      "message": "ERROR aplicaci",
+      "first_rom_offset": "0x0077CE1E"
+    },
+    {
+      "message": "ERROR argumento  ",
+      "first_rom_offset": "0x0077CD03"
+    },
+    {
+      "message": "ERROR capacidad  ",
+      "first_rom_offset": "0x0077CD90"
+    },
+    {
+      "message": "ERROR com.       ",
+      "first_rom_offset": "0x0077CD2C"
+    },
+    {
+      "message": "ERROR de memoria ",
+      "first_rom_offset": "0x0077CC89"
+    },
+    {
+      "message": "ERROR de sintaxis",
+      "first_rom_offset": "0x0077CC9D"
+    },
+    {
+      "message": "ERROR de sistema ",
+      "first_rom_offset": "0x0077CC75"
+    },
+    {
+      "message": "ERROR dimensi",
+      "first_rom_offset": "0x0077CD17"
+    },
+    {
+      "message": "ERROR dominio    ",
+      "first_rom_offset": "0x0077CDA4"
+    },
+    {
+      "message": "ERROR duplicaci",
+      "first_rom_offset": "0x0077DF61"
+    },
+    {
+      "message": "ERROR extr.      ",
+      "first_rom_offset": "0x0077DF21"
+    },
+    {
+      "message": "ERROR gama       ",
+      "first_rom_offset": "0x0077CED7"
+    },
+    {
+      "message": "ERROR no real    ",
+      "first_rom_offset": "0x0077CDB8"
+    },
+    {
+      "message": "ERROR protecci",
+      "first_rom_offset": "0x0077F261"
+    },
+    {
+      "message": "ERROR recepc.    ",
+      "first_rom_offset": "0x0077CD54"
+    },
+    {
+      "message": "ERROR registro   ",
+      "first_rom_offset": "0x0077CCEF"
+    },
+    {
+      "message": "ERROR sist. arch.",
+      "first_rom_offset": "0x007811DA"
+    },
+    {
+      "message": "ERROR trans.     ",
+      "first_rom_offset": "0x0077CD40"
+    },
+    {
+      "message": "ERRORE",
+      "first_rom_offset": "0x007ED73A"
+    },
+    {
+      "message": "ERRORE applic.   ",
+      "first_rom_offset": "0x007EB3BA"
+    },
+    {
+      "message": "ERRORE convers.",
+      "first_rom_offset": "0x007EDE4A"
+    },
+    {
+      "message": "Econ Setup ERROR",
+      "first_rom_offset": "0x004089F4"
+    },
+    {
+      "message": "Error",
+      "first_rom_offset": "0x00147186"
+    },
+    {
+      "message": "Error  CSV",
+      "first_rom_offset": "0x0077FDCE"
+    },
+    {
+      "message": "Error DOF",
+      "first_rom_offset": "0x001462CD"
+    },
+    {
+      "message": "Error Mean Square",
+      "first_rom_offset": "0x00146023"
+    },
+    {
+      "message": "Error SOS",
+      "first_rom_offset": "0x001462D7"
+    },
+    {
+      "message": "Error cuadr. med.",
+      "first_rom_offset": "0x00782A1E"
+    },
+    {
+      "message": "Error de         ",
+      "first_rom_offset": "0x0077DECF"
+    },
+    {
+      "message": "Error est",
+      "first_rom_offset": "0x00782BFA"
+    },
+    {
+      "message": "Error loading operating system",
+      "first_rom_offset": "0x0071F683"
+    },
+    {
+      "message": "Errore CSV",
+      "first_rom_offset": "0x007EE720"
+    },
+    {
+      "message": "Errore standard",
+      "first_rom_offset": "0x007F1772"
+    },
+    {
+      "message": "File System ERROR",
+      "first_rom_offset": "0x001448BD"
+    },
+    {
+      "message": "ImportError",
+      "first_rom_offset": "0x0070B483"
+    },
+    {
+      "message": "IndentationError",
+      "first_rom_offset": "0x0070B493"
+    },
+    {
+      "message": "IndexError",
+      "first_rom_offset": "0x0070B4A7"
+    },
+    {
+      "message": "Insufficient     ",
+      "first_rom_offset": "0x00140FA5"
+    },
+    {
+      "message": "KeyError",
+      "first_rom_offset": "0x0070B4B7"
+    },
+    {
+      "message": "LookupError",
+      "first_rom_offset": "0x0070B4EF"
+    },
+    {
+      "message": "MaERROR",
+      "first_rom_offset": "0x003B9994"
+    },
+    {
+      "message": "Mem ERROR",
+      "first_rom_offset": "0x001445E1"
+    },
+    {
+      "message": "Mem Error",
+      "first_rom_offset": "0x001428B1"
+    },
+    {
+      "message": "MemoryError",
+      "first_rom_offset": "0x0070B4FF"
+    },
+    {
+      "message": "NameError",
+      "first_rom_offset": "0x0070B51B"
+    },
+    {
+      "message": "No Real Roots",
+      "first_rom_offset": "0x0041BB44"
+    },
+    {
+      "message": "No Real Roots    ",
+      "first_rom_offset": "0x0014083E"
+    },
+    {
+      "message": "Non-Real",
+      "first_rom_offset": "0x0041BA74"
+    },
+    {
+      "message": "NotImplementedError",
+      "first_rom_offset": "0x0070B553"
+    },
+    {
+      "message": "OSError",
+      "first_rom_offset": "0x0070B56B"
+    },
+    {
+      "message": "Overflow",
+      "first_rom_offset": "0x0041BA58"
+    },
+    {
+      "message": "OverflowError",
+      "first_rom_offset": "0x0070B587"
+    },
+    {
+      "message": "Range ERROR",
+      "first_rom_offset": "0x004089E8"
+    },
+    {
+      "message": "Read Error",
+      "first_rom_offset": "0x00142855"
+    },
+    {
+      "message": "RuntimeError",
+      "first_rom_offset": "0x0070B5AF"
+    },
+    {
+      "message": "Standard Error",
+      "first_rom_offset": "0x001461DD"
+    },
+    {
+      "message": "SyntaxError",
+      "first_rom_offset": "0x0070B603"
+    },
+    {
+      "message": "System ERROR",
+      "first_rom_offset": "0x003ABC64"
+    },
+    {
+      "message": "TLB ERROR",
+      "first_rom_offset": "0x003ABCA8"
+    },
+    {
+      "message": "Time Out",
+      "first_rom_offset": "0x0041BB20"
+    },
+    {
+      "message": "TypeError",
+      "first_rom_offset": "0x0070B637"
+    },
+    {
+      "message": "UnicodeError",
+      "first_rom_offset": "0x0070B677"
+    },
+    {
+      "message": "ValueError",
+      "first_rom_offset": "0x0070B68F"
+    },
+    {
+      "message": "ZeroDivisionError",
+      "first_rom_offset": "0x0070B69F"
+    },
+    {
+      "message": "n ERROR  ",
+      "first_rom_offset": "0x0077CC55"
+    }
+  ],
+  "diagnostic_menus_and_test_modes": {
+    "known_key_chords": [
+      {
+        "chord": "OPTN + EXP + AC/ON (at cold boot)",
+        "purpose": "Casio factory Diagnostic / Test Menu (ROM/RAM/LCD/KEY/USB/Serial/Flash)"
+      },
+      {
+        "chord": "F2 + 4 + AC/ON",
+        "purpose": "OS Update / Recovery Bootloader Mode"
+      },
+      {
+        "chord": "COS + 7 + AC/ON",
+        "purpose": "Examination Mode entry"
+      }
+    ],
+    "rom_strings_found": [
+      {
+        "string": "   Examination",
+        "first_rom_offset": "0x00147AFF"
+      },
+      {
+        "string": "   Examination Mode",
+        "first_rom_offset": "0x00144CEB"
+      },
+      {
+        "string": "   Examination Mode consumes",
+        "first_rom_offset": "0x00147088"
+      },
+      {
+        "string": " Examination Mode function,",
+        "first_rom_offset": "0x00144FB8"
+      },
+      {
+        "string": " Examination Mode.",
+        "first_rom_offset": "0x0014516A"
+      },
+      {
+        "string": " and Examination Mode",
+        "first_rom_offset": "0x001451C9"
+      },
+      {
+        "string": " the Examination Mode.",
+        "first_rom_offset": "0x00144EF9"
+      },
+      {
+        "string": "----- TEST MODE -----",
+        "first_rom_offset": "0x00622434"
+      },
+      {
+        "string": "03.80.0010",
+        "first_rom_offset": "0x00020020"
+      },
+      {
+        "string": "=DIAGNOSTIC MODE=",
+        "first_rom_offset": "0x004F9DC0"
+      },
+      {
+        "string": "Examination Mode",
+        "first_rom_offset": "0x00144E08"
+      },
+      {
+        "string": "Examination Mode ",
+        "first_rom_offset": "0x00144D40"
+      },
+      {
+        "string": "Examination Mode 1",
+        "first_rom_offset": "0x00147C5F"
+      },
+      {
+        "string": "Examination Mode 2",
+        "first_rom_offset": "0x00147C72"
+      },
+      {
+        "string": "Examination Mode Menu",
+        "first_rom_offset": "0x00144CC8"
+      },
+      {
+        "string": "Examination Mode for IB",
+        "first_rom_offset": "0x00147FB8"
+      },
+      {
+        "string": "Examination Mode for NL",
+        "first_rom_offset": "0x00147FEB"
+      },
+      {
+        "string": "Examination Mode for Texas (US)",
+        "first_rom_offset": "0x00148017"
+      },
+      {
+        "string": "Examination Mode for UK",
+        "first_rom_offset": "0x00147FD0"
+      },
+      {
+        "string": "Examination Mode?",
+        "first_rom_offset": "0x00145362"
+      },
+      {
+        "string": "Examination Modes",
+        "first_rom_offset": "0x00147B36"
+      },
+      {
+        "string": "MicroPython %s",
+        "first_rom_offset": "0x00707758"
+      },
+      {
+        "string": "This Examination",
+        "first_rom_offset": "0x00147AC2"
+      },
+      {
+        "string": "This Examination Mode is",
+        "first_rom_offset": "0x00147B65"
+      },
+      {
+        "string": "This Examination Mode is not",
+        "first_rom_offset": "0x00147BAA"
+      },
+      {
+        "string": "To enter Examination Mode",
+        "first_rom_offset": "0x00144D64"
+      },
+      {
+        "string": "To enter Examination Mode 1",
+        "first_rom_offset": "0x00147B49"
+      },
+      {
+        "string": "To enter Examination Mode 2",
+        "first_rom_offset": "0x00147B8E"
+      },
+      {
+        "string": "To exit Examination Mode",
+        "first_rom_offset": "0x00144E9E"
+      },
+      {
+        "string": "Your OS Version",
+        "first_rom_offset": "0x00147CA5"
+      },
+      {
+        "string": "[6]:EXAM MODE",
+        "first_rom_offset": "0x003F5060"
+      },
+      {
+        "string": "[KEY TEST]",
+        "first_rom_offset": "0x004FA0A8"
+      },
+      {
+        "string": "[LCD TEST]",
+        "first_rom_offset": "0x004FA0B4"
+      },
+      {
+        "string": "http://wes.casio.com/math/index.php?q=",
+        "first_rom_offset": "0x003D75FC"
+      }
+    ]
+  },
+  "version_markers_in_rom": [
+    "03.80.0010",
+    "http://wes.casio.com/math/index.php?q="
+  ],
+  "addin_and_file_formats_abi": {
+    "g3a_binary_abi": {
+      "header_size_bytes": 28672,
+      "magic_offset": "0x0000",
+      "magic_bytes_inverted": "AA AC BD AF 90 88 9A 8D (~'USBPower')",
+      "size_offset_be32": "0x001C",
+      "app_name_offset": "0x0040",
+      "version_offset": "0x01B0",
+      "mmu_virtual_load_base": "0x00300000",
+      "detected_in_local_roms": [
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x0013B000",
+          "name": "",
+          "version": "C\ufffd\ufffdmqE\ufffd\ufffdS\ufffdcMh\ufffd\ufffd\ufffd",
+          "declared_size_bytes": 3091791872,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x001C9000",
+          "name": "",
+          "version": "e\nK\ufffd\ufffdX\ufffd\ufffdX\ufffd\ufffd\ufffdg\ufffd",
+          "declared_size_bytes": 298450944,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x001D7000",
+          "name": "",
+          "version": "\ufffdC\ufffdAF\ufffdT\ufffd\ufffdB)\ufffd\u001a]\ufffd\u0014",
+          "declared_size_bytes": 2622816256,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x001E9000",
+          "name": "",
+          "version": "Ep\ufffd_\ufffdL\r\ufffd\ufffd\ufffd\u0018\ufffd\ufffd\ufffd1T",
+          "declared_size_bytes": 1090846720,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x001EB000",
+          "name": "",
+          "version": "\ufffd\u0013\ufffd\r\ufffde:\ufffd<\ufffd\ufffdp\u0012\ufffd'[",
+          "declared_size_bytes": 713883648,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x00291000",
+          "name": "",
+          "version": "",
+          "declared_size_bytes": 701890560,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x0029E000",
+          "name": "",
+          "version": "\u0003\u00142\ufffd0\ufffd0(\ufffd\ufffd!\ufffdH\u0003\ufffd\ufffd",
+          "declared_size_bytes": 4221108224,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "C2ROM.raw",
+          "offset": "0x0038C000",
+          "name": "",
+          "version": "\bfM\ufffd\b\ufffdrV\u0010\ufffd\u001b\ufffd\ufffds",
+          "declared_size_bytes": 993525760,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x0000B000",
+          "name": "",
+          "version": "\ufffd\ufffd\ufffdDf\ufffd\ufffd\u0006",
+          "declared_size_bytes": 2675179520,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x000F3000",
+          "name": "",
+          "version": "\ufffd\ufffdX\ufffd\ufffd3P\u0013\u0010\ufffd\ufffdX|\ufffd\ufffd0",
+          "declared_size_bytes": 280297472,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x000FD000",
+          "name": "",
+          "version": "\ufffd\u0005\u0004\ufffd\u0019\u000b\u0010b\ufffd.t\ufffd%\u000b\ufffd`",
+          "declared_size_bytes": 336068608,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00102000",
+          "name": "Prob Sim",
+          "version": "",
+          "declared_size_bytes": 1445077729,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x001B5000",
+          "name": "",
+          "version": "DH\ufffd\ufffd\ufffd@%.x\ufffd\ufffdn\u001a\ufffdu\ufffd",
+          "declared_size_bytes": 775225344,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x001DB000",
+          "name": "",
+          "version": "m$\ufffd\ufffd\ufffdd\u0006a8(\ufffd\u0018C\ufffd5?",
+          "declared_size_bytes": 3090808832,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x001EC000",
+          "name": "",
+          "version": "3\ufffd\u0003\u0010\ufffd\ufffd\ufffd!\ufffd\ufffd\u0001\ufffdP\ufffd\ufffd\ufffd",
+          "declared_size_bytes": 1706688512,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x001F4000",
+          "name": "",
+          "version": "\u0005(!\u0014G\ufffd\n\ufffd\ufffd\u0004\u0017\b\ufffd~\ufffd\u000f",
+          "declared_size_bytes": 738918400,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00256000",
+          "name": "",
+          "version": "\u0014\ufffd\ufffd\ufffd\ufffdR\ufffdP\ufffdB\u00186\ufffd\ufffd\ufffd\ufffd",
+          "declared_size_bytes": 634322944,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x002A7000",
+          "name": "",
+          "version": "\u0001\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\u0003'\ufffdT\u007f\ufffd\u0014\u001b\ufffd",
+          "declared_size_bytes": 617086976,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x002B4000",
+          "name": "",
+          "version": "pAyV\ufffdw\ufffd\ufffdw\ufffd\ufffd\ufffd\ufffd\ufffd!\ufffd",
+          "declared_size_bytes": 2710110208,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x0038E000",
+          "name": "",
+          "version": ",\ufffd\ufffd\ufffd\ufffd4\ufffd\u0017\ufffdK\ufffd#\ufffd\u001c\ufffd\ufffd",
+          "declared_size_bytes": 4279173120,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x003C4000",
+          "name": "",
+          "version": ")i\ufffd3\ufffd\ufffdF!\ufffdL#\ufffd\ufffd=\ufffd\ufffd",
+          "declared_size_bytes": 3084058624,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x003D8000",
+          "name": "",
+          "version": "W\u0001\ufffd\ufffd\ufffd/ZN=K5\ufffdH\ufffd\ufffd\ufffd",
+          "declared_size_bytes": 1135017984,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x003E3000",
+          "name": "",
+          "version": "$-\ufffd\ufffd\ufffdn\ufffd\ufffd\ufffd/\ufffd\ufffd\u0006=L\ufffd",
+          "declared_size_bytes": 248119296,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x003F2000",
+          "name": "",
+          "version": "4\ufffd\u0011;GVz\ufffd\ufffd\ufffd\ufffd\r\ufffdb8#",
+          "declared_size_bytes": 1940389888,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00410000",
+          "name": "",
+          "version": "_\ufffdf\u001e7\ufffd\ufffd\ufffd\n\ufffd\ufffd\ufffd\ufffdA\ufffd\ufffd",
+          "declared_size_bytes": 3644260352,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x0048A000",
+          "name": "",
+          "version": "B\ufffdK\ufffd\ufffdP\ufffd\ufffd\ufffdM\ufffd\ufffd\ufffdR\ufffd(",
+          "declared_size_bytes": 2883649536,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x004DD000",
+          "name": "",
+          "version": "\ufffdSm\u000eCA`,\ufffd\u000eR\u001eR\u001d\ufffd\ufffd",
+          "declared_size_bytes": 3211329536,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00561000",
+          "name": "",
+          "version": "",
+          "declared_size_bytes": 571342848,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00572000",
+          "name": "",
+          "version": "\u000f\ufffd.\ufffd\ufffd$\ufffdn\ufffdZ\ufffdW3D{\ufffd",
+          "declared_size_bytes": 3336699904,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00576000",
+          "name": "",
+          "version": "xr\ufffd\ufffd\ufffd\ufffd\ufffdDka\ufffd\ufffd\ufffd)\ufffd\ufffd",
+          "declared_size_bytes": 2462449664,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x0057B000",
+          "name": "",
+          "version": "M\u0011\ufffdf;\u0005t\ufffd \u0006_\ufffd>P\ufffd\ufffd",
+          "declared_size_bytes": 1945305088,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x006A2000",
+          "name": "",
+          "version": "\ufffd<_\ufffd\u0012\u0003\u000e\u000e8\ufffdL\ufffd\ufffd\ufffd\u0017\ufffd",
+          "declared_size_bytes": 2578448384,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x006B4000",
+          "name": "",
+          "version": "}\u0019\ufffd\u0018\ufffd\ufffd\ufffd)\ufffdp@\ufffd\ufffd(\ufffd+",
+          "declared_size_bytes": 4183097344,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x006C5000",
+          "name": "",
+          "version": "\ufffd*\ufffd\u0006 \ufffd(\ufffd\ufffd\ufffd\ufffd\ufffdH5\t8",
+          "declared_size_bytes": 1932328960,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x006CB000",
+          "name": "",
+          "version": "\u0010\"x/\ufffd$\u0007\ufffd{\ufffd\ufffd\ufffdV\ufffdF\u0004",
+          "declared_size_bytes": 2907963392,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x006D7000",
+          "name": "",
+          "version": "\ufffd\u0010\ufffd\ufffdE\ufffd\ufffd\ufffdQ\ufffd\u001f\ufffdL+M\ufffd",
+          "declared_size_bytes": 1646460928,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00702000",
+          "name": "",
+          "version": "lM<\ufffd\ufffdpM\ufffd\ufffd\ufffd\ufffdA\ufffdR2",
+          "declared_size_bytes": 1503264768,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00B94000",
+          "name": "PHYISUM",
+          "version": "",
+          "declared_size_bytes": 3847255495,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00C71000",
+          "name": "Conversion",
+          "version": "",
+          "declared_size_bytes": 0,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00D63000",
+          "name": "",
+          "version": "\ufffd\ufffd\ufffd\ufffdb\u0015\ufffd\u0016H:\ufffdZ\ufffd\u0013\u00062",
+          "declared_size_bytes": 1244135424,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00DA7000",
+          "name": "Geometry",
+          "version": "",
+          "declared_size_bytes": 2094541131,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00DB4000",
+          "name": "PictPlot",
+          "version": "",
+          "declared_size_bytes": 3635970038,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E2B000",
+          "name": "",
+          "version": "\ufffd\u000e\ufffd\ufffd\ufffd\\J\u0014\u0012\u0002\u0014\ufffdI!\ufffd\ufffd",
+          "declared_size_bytes": 4182769664,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E33000",
+          "name": "",
+          "version": "\ufffd\ufffdj\ufffdr\ufffdy\ufffdHa\ufffd\u000f}\ufffd\ufffd",
+          "declared_size_bytes": 25493504,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E3D000",
+          "name": "",
+          "version": "E\ufffd\ufffd\ufffd\ufffdq9~\ufffdbD\ufffd\ufffd\ufffd{p",
+          "declared_size_bytes": 1403584512,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E44000",
+          "name": "",
+          "version": "\u0003K@\u000bSi\ufffd\ufffd\u001aT9\u0001K\ufffde\ufffd",
+          "declared_size_bytes": 1754267648,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E5A000",
+          "name": "",
+          "version": "\b'#\u0004D\f\\\ufffd\ufffda\ufffd\ufffd\ufffd\ufffdTK",
+          "declared_size_bytes": 144703488,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E6B000",
+          "name": "",
+          "version": "Th2\ufffdJ\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\u0005\u000b(\ufffd\ufffd",
+          "declared_size_bytes": 1136197632,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E74000",
+          "name": "",
+          "version": "\ufffd\ufffd\u0017m/\ufffd\ufffd\ufffd\ufffd2}\ufffd{\ufffd[,",
+          "declared_size_bytes": 2662662144,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00E83000",
+          "name": "",
+          "version": "\ufffd}\ufffd_\ufffd\ufffd\ufffd\ufffd}\ufffd_\ufffd\ufffd\ufffd\ufffd}",
+          "declared_size_bytes": 1369899008,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00EBC000",
+          "name": "",
+          "version": "|\ufffd\ufffd\ufffd\u0003\ufffd\ufffdY\u0011>G\ufffd\ufffdD\ufffd\ufffd",
+          "declared_size_bytes": 3275882496,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00EC7000",
+          "name": "",
+          "version": "\ufffdI\ufffd\ufffd\ufffdd&\u0004\ufffd\u001c\ufffd\u001c1\u001ci",
+          "declared_size_bytes": 679673856,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00F06000",
+          "name": "",
+          "version": "\\;\u0003\ufffd\u0018]\ufffdW-\u0018(\ufffd\b\ufffd\ufffd\ufffd",
+          "declared_size_bytes": 2969960448,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00F0D000",
+          "name": "",
+          "version": "\u0006\u0003\ufffd\ufffd\u0002 \u0001H\n\ufffd\ufffd\ufffdp}\ufffd\ufffd",
+          "declared_size_bytes": 752091136,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00F19000",
+          "name": "3D Graph",
+          "version": "",
+          "declared_size_bytes": 2688612065,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00F27000",
+          "name": "",
+          "version": "\ufffd\ufffd\ufffd\ufffdn\ufffdS\u000f\u001cOx\ufffd\ufffd\ufffd\"\ufffd",
+          "declared_size_bytes": 1317928960,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00F39000",
+          "name": "",
+          "version": "\ufffd\ufffd",
+          "declared_size_bytes": 3185508352,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00F46000",
+          "name": "",
+          "version": "V\ufffd\ufffd#\u0010h\u00172I|\ufffd\u001e.\u0007\u0012\ufffd",
+          "declared_size_bytes": 3927834624,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00FA3000",
+          "name": "",
+          "version": "\ufffd\ufffdF\ufffdG\ufffd\ufffdZV@AX\ufffd\ufffdk&",
+          "declared_size_bytes": 689373184,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00FB4000",
+          "name": "",
+          "version": "\ufffd:\ufffd\u0004\ufffd@\"i\ufffd\ufffd\ufffd8@\ufffd\u000b\u0005",
+          "declared_size_bytes": 4120379392,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        },
+        {
+          "storage": "UserROM.raw",
+          "offset": "0x00FCF000",
+          "name": "",
+          "version": "\ufffd:\ufffd\ufffd^u zq\ufffd\ufffd\ufffd*<5\u0016",
+          "declared_size_bytes": 361365504,
+          "header_size_bytes": 28672,
+          "mmu_load_va": "0x00300000"
+        }
+      ]
+    },
+    "storage_formats": [
+      {
+        "ext": ".g3a",
+        "desc": "Native SH-4A Add-in executable (28 KB header + MMU mapped at 0x00300000)"
+      },
+      {
+        "ext": ".g3m",
+        "desc": "Main Memory container (BASIC programs, lists, matrices, equations, setup)"
+      },
+      {
+        "ext": ".g3e",
+        "desc": "eActivity document (sections + embedded strips)"
+      },
+      {
+        "ext": ".g3p",
+        "desc": "Picture/Plot color RGB565 background image (384x192)"
+      },
+      {
+        "ext": ".g3l",
+        "desc": "Language pack add-in"
+      },
+      {
+        "ext": ".g3b",
+        "desc": "Flipbook animation"
+      },
+      {
+        "ext": ".py",
+        "desc": "MicroPython UTF-8 script stored on SMEM FAT16+LFN"
+      },
+      {
+        "ext": ".csv",
+        "desc": "Spreadsheet / List / Matrix CSV exchange on SMEM FAT16+LFN"
+      },
+      {
+        "ext": ".bmp",
+        "desc": "Screen capture (Capt/) 24-bit BMP"
+      }
+    ],
+    "filesystem_layer": "Casio Fugue FTL (128 KB NOR erase blocks, 512 B logical sectors) -> FAT16 + VFAT LFN"
+  },
+  "setup_dependency_matrix": {
+    "axes": {
+      "Angle": [
+        "Deg",
+        "Rad",
+        "Gra"
+      ],
+      "Input_Output": [
+        "Math",
+        "Linear"
+      ],
+      "Complex_Mode": [
+        "Real",
+        "a+bi",
+        "r\u2220\u03b8"
+      ],
+      "Display_Format": [
+        "Norm1",
+        "Norm2",
+        "Fix0..9",
+        "Sci0..9"
+      ],
+      "Fraction_Result": [
+        "d/c",
+        "ab/c"
+      ],
+      "Func_Type": [
+        "Y=",
+        "r=",
+        "Parm",
+        "X="
+      ],
+      "Derivative": [
+        "Off",
+        "On"
+      ]
+    },
+    "total_orthogonal_states": 1152,
+    "key_interactions": [
+      "Angle x Complex(r\u2220\u03b8): argument \u03b8 reported in Deg/Rad/Gra",
+      "Input/Output(Math vs Linear) x Display: exact surd/\u03c0/fraction vs decimal BCD",
+      "Complex(Real) x sqrt(-1): raises Non-Real ERROR whereas a+bi returns i",
+      "Display(Norm1 vs Norm2): scientific threshold 10^-2 vs 10^-9",
+      "Angle x Calculus(d/dx, \u222b): trig derivatives/integrals scale by \u03c0/180 in Deg"
+    ]
+  },
+  "os_370_vs_380_diff": {
+    "manual_baseline": "Casio fx-CG50 Software Version 3.70 User's Guide (official PDF)",
+    "firmware_tested": "Casio OS 03.80.0212 (extracted from local SystemROM.raw)",
+    "verified_differences": [
+      {
+        "area": "OS Identity & QR Prefix",
+        "v3_70": "03.70.xxxx / I-8100370xxxx",
+        "v3_80": "03.80.0212 / I-81003800212 (verified live in QR dialog)"
+      },
+      {
+        "area": "MicroPython",
+        "v3_70": "MicroPython 1.9.4 / basic math+random+casioplot",
+        "v3_80": "Updated MicroPython runtime with expanded modules & shell history"
+      },
+      {
+        "area": "3D Graph (.g3a)",
+        "v3_70": "3DGraph add-in v3.70",
+        "v3_80": "Updated 3DGraph add-in bundled in C2ROM/UserROM"
+      },
+      {
+        "area": "Distribution App",
+        "v3_70": "Standard Normal/Binomial/Poisson/t/Chi2/F",
+        "v3_80": "Enhanced distribution graphics & tail selection"
+      },
+      {
+        "area": "Examination Mode",
+        "v3_70": "Single international exam profile",
+        "v3_80": "Regional UK/NL/TX/IB/AU/FR exam mode profiles (differing across fx-CG50 / AU / GRAPH90+ E DLLs)"
+      }
+    ]
+  },
+  "regional_variants_diff": {
+    "regional_binaries": {
+      "fx-CG50_International": {
+        "exists": true,
+        "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\fx-CG50 Manager PLUS Subscription\\fxCG50.dll",
+        "size_bytes": 31429936,
+        "sha256": "419041982417B103BA126078A154617DCDB615AA126987CCFA6831148A5CB96E",
+        "identity_strings_sample": [
+          "fx-CG50 files (*.g1*;*.",
+          "fx-CG50 files (*.g1e;*."
+        ]
+      },
+      "fx-CG50_AU": {
+        "exists": true,
+        "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\fx-CG50 AU Manager PLUS Subscription\\fxCG50.dll",
+        "size_bytes": 31429936,
+        "sha256": "419041982417B103BA126078A154617DCDB615AA126987CCFA6831148A5CB96E",
+        "identity_strings_sample": [
+          "fx-CG50 files (*.g1*;*.",
+          "fx-CG50 files (*.g1e;*."
+        ]
+      },
+      "GRAPH90+E_France": {
+        "exists": true,
+        "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\GRAPH90+ E Manager PLUS Subscription\\GRAPH90+E.dll",
+        "size_bytes": 31429936,
+        "sha256": "CF28A58D40C3DFBFBE8D47CDE78065E7647F3B77B737B9C0C0B1C3F1AEF8993A",
+        "identity_strings_sample": [
+          "GRAPH90+ E files (*.g1*",
+          "GRAPH90+ E files (*.g1e",
+          "GRAPH90+E.dll"
+        ]
+      }
+    },
+    "pairwise_binary_diffs": {
+      "fx-CG50_International_vs_fx-CG50_AU": {
+        "size_equal": true,
+        "total_compared_bytes": 31429936,
+        "differing_bytes": 0,
+        "differing_4kb_blocks": 0,
+        "percent_identical": 100.0,
+        "first_10_diff_blocks": []
+      },
+      "fx-CG50_International_vs_GRAPH90+E_France": {
+        "size_equal": true,
+        "total_compared_bytes": 31429936,
+        "differing_bytes": 26885729,
+        "differing_4kb_blocks": 7308,
+        "percent_identical": 14.458213,
+        "first_10_diff_blocks": [
+          {
+            "offset": "0x00000000",
+            "diff_bytes": 11
+          },
+          {
+            "offset": "0x00003000",
+            "diff_bytes": 3
+          },
+          {
+            "offset": "0x00004000",
+            "diff_bytes": 27
+          },
+          {
+            "offset": "0x00005000",
+            "diff_bytes": 4
+          },
+          {
+            "offset": "0x00006000",
+            "diff_bytes": 23
+          },
+          {
+            "offset": "0x00007000",
+            "diff_bytes": 19
+          },
+          {
+            "offset": "0x00008000",
+            "diff_bytes": 4
+          },
+          {
+            "offset": "0x00009000",
+            "diff_bytes": 6
+          },
+          {
+            "offset": "0x0000A000",
+            "diff_bytes": 59
+          },
+          {
+            "offset": "0x0000B000",
+            "diff_bytes": 52
+          }
+        ]
+      },
+      "fx-CG50_AU_vs_GRAPH90+E_France": {
+        "size_equal": true,
+        "total_compared_bytes": 31429936,
+        "differing_bytes": 26885729,
+        "differing_4kb_blocks": 7308,
+        "percent_identical": 14.458213,
+        "first_10_diff_blocks": [
+          {
+            "offset": "0x00000000",
+            "diff_bytes": 11
+          },
+          {
+            "offset": "0x00003000",
+            "diff_bytes": 3
+          },
+          {
+            "offset": "0x00004000",
+            "diff_bytes": 27
+          },
+          {
+            "offset": "0x00005000",
+            "diff_bytes": 4
+          },
+          {
+            "offset": "0x00006000",
+            "diff_bytes": 23
+          },
+          {
+            "offset": "0x00007000",
+            "diff_bytes": 19
+          },
+          {
+            "offset": "0x00008000",
+            "diff_bytes": 4
+          },
+          {
+            "offset": "0x00009000",
+            "diff_bytes": 6
+          },
+          {
+            "offset": "0x0000A000",
+            "diff_bytes": 59
+          },
+          {
+            "offset": "0x0000B000",
+            "diff_bytes": 52
+          }
+        ]
+      }
+    }
+  },
+  "community_sh7305_comparison_matrix": [
+    {
+      "component": "SH4AL-DSP (16b MOVX/MOVY/MOVS + 32b Parallel + SR.DSP)",
+      "hexbinoct_casio_cg50": "Pending (omitted per Open Questions)",
+      "gint_ecosystem": "Supported on HW",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED (65,536 opcodes & 256 DSP2 audited vs CPU73050.dll)"
+    },
+    {
+      "component": "ITLB + Instruction/Data Cache (IC/OC + OCRAM + RAMCR 0x3E0)",
+      "hexbinoct_casio_cg50": "Pending (ITLB & IC omitted)",
+      "gint_ecosystem": "Used on HW",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED (IC/OC/ITLB/UTLB/RAMCR)"
+    },
+    {
+      "component": "Spansion S29GL256P NOR Flash CFI (Autoselect/CFI/WriteBuffer/Suspend)",
+      "hexbinoct_casio_cg50": "Partial CFI ID reads",
+      "gint_ecosystem": "Bfile/Fugue",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED + LIVE SMEM FUGUE FTL"
+    },
+    {
+      "component": "USB 2.0 Function Controller (57 regs + Virtual Host BOT/SCSI/P7/ScreenRecv)",
+      "hexbinoct_casio_cg50": "No full USB emulation",
+      "gint_ecosystem": "fxlink USB driver",
+      "our_v46_core": "IMPLEMENTED + LIVE TESTED"
+    },
+    {
+      "component": "SCIF0 3-pin Serial + Interrupts + Virtual Link",
+      "hexbinoct_casio_cg50": "No serial IRQs",
+      "gint_ecosystem": "Serial driver",
+      "our_v46_core": "IMPLEMENTED + PEER-TO-PEER VERIFIED"
+    },
+    {
+      "component": "DMAC0 (6 ch + DMAOR round-robin + DMARS0..2 + AE error detection)",
+      "hexbinoct_casio_cg50": "Partial LCD DMA issues",
+      "gint_ecosystem": "gint DMA driver",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED (including AE negative test)"
+    },
+    {
+      "component": "CPG (14 regs + FRQCR/PLL/FLL Hz + MSTPCR0/2 active gating)",
+      "hexbinoct_casio_cg50": "Clock frequency discrepancies",
+      "gint_ecosystem": "Ptune/CPG driver",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED vs CPU73050.dll"
+    },
+    {
+      "component": "PFC (86 regs) + ExtLY755A (POWERON/DDPOWER/USB_DET/_AppIF)",
+      "hexbinoct_casio_cg50": "Incomplete keyboard/power pins",
+      "gint_ecosystem": "KEYSC/PFC driver",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED vs CGM.dlm & ExtLY755A.dll"
+    },
+    {
+      "component": "BCD Hardware ALU (0xA4CB0010..1C)",
+      "hexbinoct_casio_cg50": "Physically tested (202 cases)",
+      "gint_ecosystem": "OS-internal",
+      "our_v46_core": "IMPLEMENTED + 1M TORTURE + 133/133 BATTERY + 50+ MANAGER PLUS DIFF"
+    },
+    {
+      "component": "BSC SDRAM Refresh (RTCSR 0xA55A key + RTCNT/RTCOR) + HUDI + PRLCK + SDHI",
+      "hexbinoct_casio_cg50": "Passive / omitted",
+      "gint_ecosystem": "Partial",
+      "our_v46_core": "IMPLEMENTED + UNIT_VERIFIED vs CPU73050.dll dataflow"
+    }
+  ]
+}

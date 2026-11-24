@@ -1,15 +1,19 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'connectivity/cg50_local_bridge_server.dart';
+import 'keylog/cg50_keylog.dart';
 import 'native/calc_models.dart';
 import 'native/casio_ffi_bindings.dart';
 import 'theme/tema_interfaz.dart';
+import 'ui/cg50_capture_and_lcd_sheets.dart';
+import 'ui/cg50_connectivity_sheet.dart';
+import 'ui/cg50_keylog_sheet.dart';
 import 'ui/native_calculator_view.dart';
 
 void main() {
@@ -100,6 +104,10 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
   final Set<CasioCalcKind> _dirtyEngines = {};
   final Set<CasioCalcKind> _savingEngines = {};
   final List<CapturedHistoryEntry> _history = [];
+  final Cg50KeyLogController _keyLog = Cg50KeyLogController();
+  Cg50LocalBridgeServer? _bridgeServer;
+  Cg50LinkPeerClient? _linkClient;
+  bool _checkingQr = false;
 
   @override
   void initState() {
@@ -183,6 +191,9 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
           liveSnapshotPath: '$dir/cg50_live_state.bin',
         );
         await cg.start();
+        final backend = Cg50EngineBridgeBackend(cg);
+        _bridgeServer = Cg50LocalBridgeServer(backend);
+        _linkClient = Cg50LinkPeerClient(backend);
         engine = cg;
         break;
       case CasioCalcKind.cw2:
@@ -276,6 +287,9 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
 
   void _onKeyLogged(CasioKeyDef key, CasioEngineController engine) {
     _dirtyEngines.add(engine.kind);
+    if (engine.kind == CasioCalcKind.cg50 && _keyLog.isRecording) {
+      _keyLog.recordKeyPress(key);
+    }
     final skin = skinForKind(engine.kind);
     final bool eval =
         key.name == 'IGUAL' || key.name == 'EXE' || key.name == 'OK';
@@ -383,39 +397,202 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     }
   }
 
-  Future<void> _captureActiveLcdPng() async {
+  Future<Map<String, String>?> _pickFileWithMeta({
+    String mimeType = '*/*',
+    String prefix = 'picked',
+  }) async {
+    if (!Platform.isAndroid) return null;
+    try {
+      final raw = await _fileChannel.invokeMethod<dynamic>('pickFileWithMeta', {
+        'mimeType': mimeType,
+        'prefix': prefix,
+      });
+      if (raw is Map) {
+        final path = raw['path']?.toString() ?? '';
+        final name = raw['name']?.toString() ?? 'archivo.bin';
+        if (path.isNotEmpty) return {'path': path, 'name': name};
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<bool> _copyImageToClipboard({
+    required String sourcePath,
+    required String fileName,
+  }) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final ok = await _fileChannel.invokeMethod<bool>('copyImageToClipboard', {
+        'sourcePath': sourcePath,
+        'fileName': fileName,
+      });
+      return ok ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> _openExternalUrl(String url) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final ok = await _fileChannel.invokeMethod<bool>('openExternalUrl', {
+        'url': url,
+      });
+      return ok ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _scanAndOpenQr({bool silentWhenAbsent = false}) async {
+    if (_checkingQr) return;
+    final engine = _engines[CasioCalcKind.cg50];
+    if (engine is! CasioCg50Engine) return;
+    _checkingQr = true;
+    try {
+      final url = await engine.decodeLcdQr();
+      if (!mounted) return;
+      if (url == null || url.isEmpty) {
+        if (!silentWhenAbsent) {
+          _showStatusSnack('No se detectó un código QR en la pantalla');
+        }
+        return;
+      }
+      final action = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: widget.tokens.surface,
+          title: Text(
+            'Código QR detectado',
+            style: TextStyle(
+                color: widget.tokens.textPrimary,
+                fontSize: 17,
+                fontWeight: FontWeight.w600),
+          ),
+          content: SelectableText(
+            url,
+            style: TextStyle(color: widget.tokens.accent, fontSize: 13.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop('copy'),
+              child: const Text('Copiar'),
+            ),
+            if (url.startsWith('http://') || url.startsWith('https://'))
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: widget.tokens.accent,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(ctx).pop('open'),
+                child: const Text('Abrir'),
+              )
+            else
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: const Text('Cerrar'),
+              ),
+          ],
+        ),
+      );
+      if (action == 'copy') {
+        await Clipboard.setData(ClipboardData(text: url));
+        _showStatusSnack('Enlace QR copiado');
+      } else if (action == 'open') {
+        final ok = await _openExternalUrl(url);
+        if (!ok) _showStatusSnack('No se pudo abrir el navegador');
+      }
+    } finally {
+      _checkingQr = false;
+    }
+  }
+
+  void _openConnectivitySheet() {
+    final engine = _engines[CasioCalcKind.cg50];
+    final srv = _bridgeServer;
+    final cli = _linkClient;
+    if (engine is! CasioCg50Engine || srv == null || cli == null) {
+      _showStatusSnack('Calculadora fx-CG50 aún iniciando');
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Cg50ConnectivitySheet(
+        engine: engine,
+        bridgeServer: srv,
+        linkClient: cli,
+        tokens: widget.tokens,
+        onPickFileWithMeta: _pickFileWithMeta,
+        onSaveFile: _saveViaSystemDialog,
+        onExportFullMemory: _exportCg50Memory,
+        onImportFullMemory: _importCg50Memory,
+        onNotify: _showStatusSnack,
+      ),
+    );
+  }
+
+  void _openKeyLogSheet() {
+    final engine = _engines[CasioCalcKind.cg50];
+    if (engine is! CasioCg50Engine) {
+      _showStatusSnack('Calculadora fx-CG50 aún iniciando');
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Cg50KeyLogSheet(
+        engine: engine,
+        controller: _keyLog,
+        tokens: widget.tokens,
+        onPickFileWithMeta: _pickFileWithMeta,
+        onSaveFile: _saveViaSystemDialog,
+        onNotify: _showStatusSnack,
+      ),
+    );
+  }
+
+  void _openCaptureSheet() {
     final engine = _engines[_activeKind];
-    final img = engine?.lcdImage;
-    if (img == null) {
+    if (engine == null || engine.lastRgbaBytes == null) {
       _showStatusSnack('Pantalla aún no disponible');
       return;
     }
-    final data = await img.toByteData(format: ui.ImageByteFormat.png);
-    if (data == null) {
-      _showStatusSnack('No se pudo generar la imagen');
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Cg50CaptureSheet(
+        engine: engine,
+        tokens: widget.tokens,
+        onSaveFile: _saveViaSystemDialog,
+        onCopyImageToClipboard: _copyImageToClipboard,
+        onNotify: _showStatusSnack,
+      ),
+    );
+  }
+
+  void _openEnlargedLcdSheet() {
+    final engine = _engines[_activeKind];
+    if (engine == null) {
+      _showStatusSnack('Pantalla aún no disponible');
       return;
     }
-    final tmpDir = await getTemporaryDirectory();
-    final name = '${_activeKind.name}_lcd_${_timestampTag()}.png';
-    final tmpFile = File('${tmpDir.path}/$name');
-    await tmpFile.writeAsBytes(
-      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-      flush: true,
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Cg50EnlargedLcdSheet(
+        engine: engine,
+        tokens: widget.tokens,
+        onOpenCapture: _openCaptureSheet,
+        onScanQr: _activeKind == CasioCalcKind.cg50
+            ? () => _scanAndOpenQr(silentWhenAbsent: false)
+            : null,
+      ),
     );
-    try {
-      final saved = await _saveViaSystemDialog(
-        suggestedName: name,
-        mimeType: 'image/png',
-        sourcePath: tmpFile.path,
-      );
-      if (saved) {
-        _showStatusSnack('Captura guardada');
-      }
-    } finally {
-      if (await tmpFile.exists()) {
-        await tmpFile.delete();
-      }
-    }
   }
 
   Future<void> _exportCg50Memory() async {
@@ -467,30 +644,6 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
       } else {
         _showStatusSnack('Archivo de memoria no válido');
       }
-    } finally {
-      final f = File(picked);
-      if (await f.exists()) {
-        await f.delete();
-      }
-    }
-  }
-
-  Future<void> _loadCg50Addin() async {
-    final engine = _engines[CasioCalcKind.cg50];
-    if (engine is! CasioCg50Engine) {
-      _showStatusSnack('Calculadora no iniciada');
-      return;
-    }
-    final picked = await _pickViaSystemDialog(
-      mimeType: '*/*',
-      prefix: 'cg50_g3a',
-    );
-    if (picked == null || picked.isEmpty) return;
-    try {
-      final ok = await engine.loadAddinFromFile(picked);
-      _showStatusSnack(
-        ok ? 'Complemento .g3a preparado' : 'Archivo .g3a no válido',
-      );
     } finally {
       final f = File(picked);
       if (await f.exists()) {
@@ -553,6 +706,24 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
         ),
       );
     }
+    if (kind == CasioCalcKind.cg50) {
+      return AnimatedBuilder(
+        animation: _keyLog,
+        builder: (context, _) {
+          return NativeCalculatorFaceplate(
+            key: ValueKey(kind),
+            skin: skin,
+            engine: engine,
+            tokens: widget.tokens,
+            onKeyLogged: _onKeyLogged,
+            enableHardwareKeyboard: primary,
+            highlightedCurrentKeyCode: _keyLog.highlightedCurrentKeyCode,
+            highlightedNextKeyCode: _keyLog.highlightedNextKeyCode,
+            onLcdTap: () => unawaited(_scanAndOpenQr(silentWhenAbsent: true)),
+          );
+        },
+      );
+    }
     return NativeCalculatorFaceplate(
       key: ValueKey(kind),
       skin: skin,
@@ -563,9 +734,90 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     );
   }
 
+  Widget _buildKeyLogBanner(TokensInterfaz t) {
+    final cg = _engines[CasioCalcKind.cg50];
+    if (cg is! CasioCg50Engine ||
+        _activeKind != CasioCalcKind.cg50 ||
+        (!_keyLog.isRecording && !_keyLog.isPlaying)) {
+      return const SizedBox.shrink();
+    }
+    final rec = _keyLog.activeRecord;
+    final statusText = _keyLog.isRecording
+        ? 'Grabando Key-Log · ${rec.steps.length} pasos'
+        : 'Key-Log · paso ${_keyLog.playCursor + 1}/${rec.steps.length}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: t.surface,
+        border: Border(bottom: BorderSide(color: t.border, width: t.borderWidth)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _keyLog.isRecording
+                ? CupertinoIcons.circle_fill
+                : CupertinoIcons.play_fill,
+            size: 12,
+            color: _keyLog.isRecording ? t.destructive : t.accent,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              statusText,
+              style: TextStyle(
+                color: t.textPrimary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (_keyLog.isPlaying) ...[
+            TextButton(
+              onPressed: () {
+                if (_keyLog.mode == KeyLogMode.playingAuto) {
+                  _keyLog.pausePlayback();
+                } else {
+                  unawaited(_keyLog.startAutoPlay(cg));
+                }
+              },
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: Text(
+                _keyLog.mode == KeyLogMode.playingAuto ? 'Pausa' : 'Reanudar',
+                style: const TextStyle(fontSize: 12.5),
+              ),
+            ),
+            TextButton(
+              onPressed: () => unawaited(_keyLog.stepNext(cg)),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: const Text('Paso', style: TextStyle(fontSize: 12.5)),
+            ),
+          ],
+          TextButton(
+            onPressed: _keyLog.stop,
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              foregroundColor: t.destructive,
+            ),
+            child: const Text('Detener', style: TextStyle(fontSize: 12.5)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _bridgeServer?.dispose();
+    _linkClient?.dispose();
+    _keyLog.dispose();
     for (final e in _engines.values) {
       e.dispose();
     }
@@ -624,6 +876,33 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
                             color: showSplit ? t.accent : t.textSecondary,
                           ),
                         ),
+                      if (_activeKind == CasioCalcKind.cg50)
+                        AnimatedBuilder(
+                          animation: Listenable.merge([
+                            ?_bridgeServer,
+                            ?_linkClient,
+                          ]),
+                          builder: (context, _) {
+                            final activeConn =
+                                (_bridgeServer?.isRunning ?? false) ||
+                                    (_linkClient?.isConnected ?? false);
+                            return IconButton(
+                              tooltip: 'Conectar y archivos',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: _openConnectivitySheet,
+                              icon: Badge(
+                                isLabelVisible: activeConn,
+                                smallSize: 7,
+                                backgroundColor: const Color(0xFF34C759),
+                                child: Icon(
+                                  CupertinoIcons.folder,
+                                  size: 20,
+                                  color: activeConn ? t.accent : t.textPrimary,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       IconButton(
                         tooltip: 'Historial',
                         visualDensity: VisualDensity.compact,
@@ -665,20 +944,23 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
                               widget.onReduceTransparencyChanged(
                                   !widget.reduceTransparency);
                               break;
-                            case 'save':
-                              unawaited(_saveActiveState());
+                            case 'connect_files':
+                              _openConnectivitySheet();
+                              break;
+                            case 'keylog':
+                              _openKeyLogSheet();
+                              break;
+                            case 'enlarged_lcd':
+                              _openEnlargedLcdSheet();
                               break;
                             case 'capture_lcd':
-                              unawaited(_captureActiveLcdPng());
+                              _openCaptureSheet();
                               break;
-                            case 'export_user_rom':
-                              unawaited(_exportCg50Memory());
+                            case 'scan_qr':
+                              unawaited(_scanAndOpenQr(silentWhenAbsent: false));
                               break;
-                            case 'import_user_rom':
-                              unawaited(_importCg50Memory());
-                              break;
-                            case 'load_addin':
-                              unawaited(_loadCg50Addin());
+                            case 'save':
+                              unawaited(_saveActiveState());
                               break;
                             case 'warm_reset':
                               _resetActive(cold: false);
@@ -713,24 +995,28 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
                             child: const Text('Reducir transparencia'),
                           ),
                           const PopupMenuDivider(),
-                          const PopupMenuItem<String>(
-                            value: 'capture_lcd',
-                            child: Text('Capturar pantalla (PNG)'),
-                          ),
                           if (_activeKind == CasioCalcKind.cg50) ...[
                             const PopupMenuItem<String>(
-                              value: 'export_user_rom',
-                              child: Text('Exportar memoria'),
+                              value: 'connect_files',
+                              child: Text('Conectar y archivos…'),
                             ),
                             const PopupMenuItem<String>(
-                              value: 'import_user_rom',
-                              child: Text('Restaurar memoria'),
+                              value: 'keylog',
+                              child: Text('Key-Log…'),
                             ),
                             const PopupMenuItem<String>(
-                              value: 'load_addin',
-                              child: Text('Cargar complemento (.g3a)'),
+                              value: 'scan_qr',
+                              child: Text('Leer QR en pantalla'),
                             ),
                           ],
+                          const PopupMenuItem<String>(
+                            value: 'enlarged_lcd',
+                            child: Text('Pantalla ampliada…'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'capture_lcd',
+                            child: Text('Capturar pantalla…'),
+                          ),
                           const PopupMenuDivider(),
                           const PopupMenuItem<String>(
                             value: 'save',
@@ -748,6 +1034,10 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
                       ),
                     ],
                   ),
+                ),
+                AnimatedBuilder(
+                  animation: _keyLog,
+                  builder: (context, _) => _buildKeyLogBanner(t),
                 ),
                 Expanded(
                   child: _staging

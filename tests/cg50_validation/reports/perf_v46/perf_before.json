@@ -1,0 +1,27 @@
+{
+  "schema": "cg50_perf_benchmark_v46",
+  "label": "before",
+  "hardware_concurrency": 16,
+  "cold_boot_ms": 8722.47,
+  "cold_boot_instructions": 149031753,
+  "warm_restore_ms": 3.815,
+  "state_export_ms": 9.844,
+  "state_export_bytes": 52965599,
+  "keyboard_response_latency_ms": 13.774,
+  "graph_effective_fps": 3.32,
+  "peak_rss_mb": 1153.88,
+  "workloads": [
+    {"name":"run_matrix_trig","instructions":110925772,"bcd_ops":16378,"fpu_ops":0,"elapsed_ms":6887.18,"mips":16.11,"speedup_vs_58mhz":0.278},
+    {"name":"calculus_integral_x3","instructions":36343874,"bcd_ops":5030,"fpu_ops":0,"elapsed_ms":2184.17,"mips":16.64,"speedup_vs_58mhz":0.287},
+    {"name":"micropython_compute","instructions":954091,"bcd_ops":0,"fpu_ops":0,"elapsed_ms":58.94,"mips":16.19,"speedup_vs_58mhz":0.279},
+    {"name":"graph_polar_rose","instructions":112163234,"bcd_ops":658063,"fpu_ops":0,"elapsed_ms":7236.54,"mips":15.50,"speedup_vs_58mhz":0.267}
+  ],
+  "thread_scaling": [
+    {"threads":1,"total_instructions":36343874,"wall_ms":2390.02,"aggregate_mips":15.21,"per_thread_mips":15.21,"speedup_vs_1t":1.000,"rss_mb":149.16},
+    {"threads":2,"total_instructions":72687748,"wall_ms":2230.70,"aggregate_mips":32.59,"per_thread_mips":16.29,"speedup_vs_1t":2.143,"rss_mb":206.50},
+    {"threads":4,"total_instructions":145375496,"wall_ms":2792.50,"aggregate_mips":52.06,"per_thread_mips":13.01,"speedup_vs_1t":3.423,"rss_mb":319.05},
+    {"threads":8,"total_instructions":290750992,"wall_ms":3074.89,"aggregate_mips":94.56,"per_thread_mips":11.82,"speedup_vs_1t":6.218,"rss_mb":543.84},
+    {"threads":12,"total_instructions":436126488,"wall_ms":4239.76,"aggregate_mips":102.87,"per_thread_mips":8.57,"speedup_vs_1t":6.765,"rss_mb":767.97},
+    {"threads":16,"total_instructions":581501984,"wall_ms":5385.01,"aggregate_mips":107.99,"per_thread_mips":6.75,"speedup_vs_1t":7.101,"rss_mb":993.17}
+  ]
+}

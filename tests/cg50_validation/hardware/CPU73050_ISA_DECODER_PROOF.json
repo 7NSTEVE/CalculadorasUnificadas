@@ -1,0 +1,2193 @@
+{
+  "schema": "cg50_cpu73050_isa_decoder_proof_v2_forensic",
+  "generated_utc": "2026-11-24T07:55:16.440382+00:00",
+  "repo_git_head": "ab66ee1923afd3ff413ab5f33df917e9d9a9aa59",
+  "scope_disclaimer": "Static decoder classification (65,536/65,536 16-bit opcodes + 256/256 DSP 2nd-word classes + 64/64 EXPEVT slots) proves decoder table architecture and dispatch targets in Casio CPU73050.dll. Runtime semantic certification is proven separately by CTest, ASan/UBSan, 12-metric coverage, mutation testing, and 50+ live Manager PLUS differential runs.",
+  "reference_binaries": {
+    "CPU73050.dll": {
+      "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\CPU73050.dll",
+      "size_bytes": 715568,
+      "sha256": "CC0C58E78E9BBB42242FFF7653EF46BF9DE1E332058C0CFFD611936355C2098B"
+    },
+    "LCDR61524A.dll": {
+      "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\LCDR61524A.dll",
+      "size_bytes": 95536,
+      "sha256": "36F4CA9F21AA46CC4D7D3FD6B5EE3E545F1B078249ACBDF2FF033CEF5D6BD570"
+    },
+    "ExtLY755A.dll": {
+      "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\ExtLY755A.dll",
+      "size_bytes": 66352,
+      "sha256": "77F7A73A2B2DE67CEE05B3DB6D57805A1916D4B3BDEAAE6EB4431FECC4B535A7"
+    },
+    "NOR29GLN2A.dll": {
+      "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\NOR29GLN2A.dll",
+      "size_bytes": 55600,
+      "sha256": "95FB812405BB60A28ABD161D0DB7863AA9F03471D55B2940F5A3E75FD2917B2F"
+    },
+    "SerLY755A.dll": {
+      "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\SerLY755A.dll",
+      "size_bytes": 50992,
+      "sha256": "0A1EF405490F213EED9793C06FB37D7DF72732265A01B107F997AE340CD7FC02"
+    },
+    "FileSDSimC.dll": {
+      "path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\FileSDSimC.dll",
+      "size_bytes": 54064,
+      "sha256": "85E93A6ED76FB81A90B5A9B8D395C5762723B18A924D5342DB10105982D8ACCA"
+    }
+  },
+  "architecture_verdict": {
+    "stage": "DECODER_CLASSIFIED_AND_CORE_PATCHED",
+    "cpu_core": "Renesas SH7305 / SH4AL-DSP (NO hardware IEEE-754 FPU)",
+    "total_16bit_opcodes_classified": 65536,
+    "active_16bit_opcodes": 59919,
+    "illegal_16bit_opcodes": 5617,
+    "unique_active_opcode_classes": 227,
+    "dsp_2nd_word_classes_total": 256,
+    "dsp_2nd_word_classes_active": 140,
+    "dsp_2nd_word_classes_illegal": 116,
+    "expevt_table_total_slots": 64,
+    "expevt_valid_slots": 56,
+    "expevt_invalid_0xffff_slots": 8,
+    "ieee754_fpu_opcodes_in_decoder": 0,
+    "fpu_expevt_codes_in_exception_table": {
+      "0x120_FPU_EXCEPTION": false,
+      "0x800_GENERAL_FPU_DISABLE": false,
+      "0x820_SLOT_FPU_DISABLE": false
+    }
+  },
+  "per_nibble_65536_audit": {
+    "0x0xxx": {
+      "top_table_word": "0x8000",
+      "active_opcodes": 2687,
+      "illegal_opcodes": 1409,
+      "unique_handlers": 56
+    },
+    "0x1xxx": {
+      "top_table_word": "0x0020",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0x2xxx": {
+      "top_table_word": "0x9000",
+      "active_opcodes": 3840,
+      "illegal_opcodes": 256,
+      "unique_handlers": 16
+    },
+    "0x3xxx": {
+      "top_table_word": "0x9010",
+      "active_opcodes": 3584,
+      "illegal_opcodes": 512,
+      "unique_handlers": 15
+    },
+    "0x4xxx": {
+      "top_table_word": "0xC060",
+      "active_opcodes": 2448,
+      "illegal_opcodes": 1648,
+      "unique_handlers": 88
+    },
+    "0x5xxx": {
+      "top_table_word": "0x0070",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0x6xxx": {
+      "top_table_word": "0x9020",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 16
+    },
+    "0x7xxx": {
+      "top_table_word": "0x0081",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0x8xxx": {
+      "top_table_word": "0xA030",
+      "active_opcodes": 3328,
+      "illegal_opcodes": 768,
+      "unique_handlers": 14
+    },
+    "0x9xxx": {
+      "top_table_word": "0x008B",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0xAxxx": {
+      "top_table_word": "0x008C",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0xBxxx": {
+      "top_table_word": "0x008D",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0xCxxx": {
+      "top_table_word": "0xA040",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 16
+    },
+    "0xDxxx": {
+      "top_table_word": "0x009E",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0xExxx": {
+      "top_table_word": "0x009F",
+      "active_opcodes": 4096,
+      "illegal_opcodes": 0,
+      "unique_handlers": 1
+    },
+    "0xFxxx": {
+      "top_table_word": "0xA050",
+      "active_opcodes": 3072,
+      "illegal_opcodes": 1024,
+      "unique_handlers": 4
+    }
+  },
+  "f_space_4096_proof": {
+    "0xF000..0xF3FF": {
+      "semantic_proof": "SH4AL-DSP 16-bit MOVX/MOVY (0x100123D0, 64-entry table 0x10092C01), gated on SR.DSP bit 12",
+      "handlers": [
+        {
+          "oid": "0xE1",
+          "handler_va": "0x1001A63C",
+          "count": 1024,
+          "disasm": [
+            "0x1001A63C: test     dword ptr [0x10675998], 0x1000",
+            "0x1001A646: je       0x10016125",
+            "0x1001A64C: movzx    eax, word ptr [edi]",
+            "0x1001A64F: call     0x100123d0",
+            "0x1001A654: jmp      dword ptr [0x10368c10]"
+          ]
+        }
+      ]
+    },
+    "0xF400..0xF7FF": {
+      "semantic_proof": "SH4AL-DSP 16-bit MOVS.W/L (0x10015761, 16-entry table 0x10092B7C), gated on SR.DSP bit 12",
+      "handlers": [
+        {
+          "oid": "0xE2",
+          "handler_va": "0x1001A65A",
+          "count": 1024,
+          "disasm": [
+            "0x1001A65A: test     dword ptr [0x10675998], 0x1000",
+            "0x1001A664: je       0x10016125",
+            "0x1001A66A: movzx    eax, word ptr [edi]",
+            "0x1001A66D: call     0x10015761",
+            "0x1001A672: jmp      dword ptr [0x10368c10]"
+          ]
+        }
+      ]
+    },
+    "0xF800..0xFBFF": {
+      "semantic_proof": "SH4AL-DSP 32-bit Parallel ALU+XY (0x10010251 + 256-entry table 0x10092470 + 0x100123D0), gated on SR.DSP bit 12 + delay-slot illegal",
+      "handlers": [
+        {
+          "oid": "0xE3",
+          "handler_va": "0x1001A678",
+          "count": 1024,
+          "disasm": [
+            "0x1001A678: test     dword ptr [0x10675998], 0x1000",
+            "0x1001A682: je       0x10016125",
+            "0x1001A688: test     dword ptr [0x10675ab8], 0x10",
+            "0x1001A692: jne      0x1001a76d",
+            "0x1001A698: movzx    eax, word ptr [edi]",
+            "0x1001A69B: mov      dword ptr [esp + 0x1c], eax",
+            "0x1001A69F: call     dword ptr [0x10368c18]",
+            "0x1001A6A5: sub      ebp, 2",
+            "0x1001A6A8: call     0x10010251",
+            "0x1001A6AD: mov      eax, dword ptr [esp + 0x1c]",
+            "0x1001A6B1: call     0x100123d0"
+          ]
+        }
+      ]
+    },
+    "0xFC00..0xFFFF": {
+      "semantic_proof": "Unconditional Illegal Instruction (0x10016125 -> EXPEVT 0x180 / Slot Illegal 0x1A0)",
+      "handlers": [
+        {
+          "oid": "0xFF",
+          "handler_va": "0x10016125",
+          "count": 1024,
+          "disasm": [
+            "0x10016125: test     dword ptr [0x10675ab8], 0x10",
+            "0x1001612F: jne      0x1001613f",
+            "0x10016131: mov      eax, 0x28",
+            "0x10016136: call     0x1001abdc",
+            "0x1001613B: add      esp, 0x20",
+            "0x1001613E: ret"
+          ]
+        }
+      ]
+    }
+  },
+  "dsp_subtables": {
+    "dsp_2nd_word_0x10092470_summary": {
+      "total": 256,
+      "active": 140,
+      "illegal": 116,
+      "illegal_handler_va": "0x10010270"
+    },
+    "dsp_2nd_word_0x10092470_entries": [
+      {
+        "op2_hi8": "0x00",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x01",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x02",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x03",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x04",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x05",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x06",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x07",
+        "handler_va": "0x10010293",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x08",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x09",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x0A",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x0B",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x0C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x0D",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x0E",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x0F",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x10",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x11",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x12",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x13",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x14",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x15",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x16",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x17",
+        "handler_va": "0x10010455",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x18",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x19",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x1A",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x1B",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x1C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x1D",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x1E",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x1F",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x20",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x21",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x22",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x23",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x24",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x25",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x26",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x27",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x28",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x29",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x2A",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x2B",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x2C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x2D",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x2E",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x2F",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x30",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x31",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x32",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x33",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x34",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x35",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x36",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x37",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x38",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x39",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x3A",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x3B",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x3C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x3D",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x3E",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x3F",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x40",
+        "handler_va": "0x1001068C",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x41",
+        "handler_va": "0x1001078C",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x42",
+        "handler_va": "0x1001079F",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x43",
+        "handler_va": "0x100107B2",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x44",
+        "handler_va": "0x100107C5",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x45",
+        "handler_va": "0x100107D8",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x46",
+        "handler_va": "0x100107EB",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x47",
+        "handler_va": "0x100107FE",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x48",
+        "handler_va": "0x10010811",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x49",
+        "handler_va": "0x10010824",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x4A",
+        "handler_va": "0x10010837",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x4B",
+        "handler_va": "0x1001084A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x4C",
+        "handler_va": "0x1001085D",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x4D",
+        "handler_va": "0x10010870",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x4E",
+        "handler_va": "0x10010883",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x4F",
+        "handler_va": "0x10010896",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x50",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x51",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x52",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x53",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x54",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x55",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x56",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x57",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x58",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x59",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x5A",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x5B",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x5C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x5D",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x5E",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x5F",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x60",
+        "handler_va": "0x100108A9",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x61",
+        "handler_va": "0x10010954",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x62",
+        "handler_va": "0x10010967",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x63",
+        "handler_va": "0x1001097A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x64",
+        "handler_va": "0x1001098D",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x65",
+        "handler_va": "0x100109A0",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x66",
+        "handler_va": "0x100109B3",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x67",
+        "handler_va": "0x100109C6",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x68",
+        "handler_va": "0x100109D9",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x69",
+        "handler_va": "0x100109EC",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x6A",
+        "handler_va": "0x100109FF",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x6B",
+        "handler_va": "0x10010A12",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x6C",
+        "handler_va": "0x10010A25",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x6D",
+        "handler_va": "0x10010A38",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x6E",
+        "handler_va": "0x10010A4B",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x6F",
+        "handler_va": "0x10010A5E",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x70",
+        "handler_va": "0x10010A71",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x71",
+        "handler_va": "0x10010B1C",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x72",
+        "handler_va": "0x10010B2F",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x73",
+        "handler_va": "0x10010B42",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x74",
+        "handler_va": "0x10010B55",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x75",
+        "handler_va": "0x10010B68",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x76",
+        "handler_va": "0x10010B7B",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x77",
+        "handler_va": "0x10010B8E",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x78",
+        "handler_va": "0x10010BA1",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x79",
+        "handler_va": "0x10010BB4",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x7A",
+        "handler_va": "0x10010BC7",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x7B",
+        "handler_va": "0x10010BDA",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x7C",
+        "handler_va": "0x10010BED",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x7D",
+        "handler_va": "0x10010C00",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x7E",
+        "handler_va": "0x10010C13",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x7F",
+        "handler_va": "0x10010C26",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x80",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x81",
+        "handler_va": "0x10010327",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x82",
+        "handler_va": "0x10010378",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x83",
+        "handler_va": "0x10010440",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x84",
+        "handler_va": "0x10010C39",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x85",
+        "handler_va": "0x10010C79",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x86",
+        "handler_va": "0x10010CCE",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x87",
+        "handler_va": "0x10010D33",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x88",
+        "handler_va": "0x10010F85",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x89",
+        "handler_va": "0x1001102D",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x8A",
+        "handler_va": "0x100110D5",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x8B",
+        "handler_va": "0x1001117A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x8C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x8D",
+        "handler_va": "0x10011230",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x8E",
+        "handler_va": "0x10011272",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x8F",
+        "handler_va": "0x100112C3",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x90",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x91",
+        "handler_va": "0x10010517",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x92",
+        "handler_va": "0x10010585",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x93",
+        "handler_va": "0x10010677",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x94",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x95",
+        "handler_va": "0x100112D5",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x96",
+        "handler_va": "0x10011329",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x97",
+        "handler_va": "0x1001139A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x98",
+        "handler_va": "0x1001155A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x99",
+        "handler_va": "0x100115FF",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x9A",
+        "handler_va": "0x100116A7",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x9B",
+        "handler_va": "0x10011746",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x9C",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0x9D",
+        "handler_va": "0x10011AEB",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x9E",
+        "handler_va": "0x10011BA9",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0x9F",
+        "handler_va": "0x10011C75",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA0",
+        "handler_va": "0x10010D45",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA1",
+        "handler_va": "0x10010D9F",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA2",
+        "handler_va": "0x10010DF1",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA3",
+        "handler_va": "0x10010E53",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA4",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xA5",
+        "handler_va": "0x100113AC",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA6",
+        "handler_va": "0x10011400",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA7",
+        "handler_va": "0x10011471",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA8",
+        "handler_va": "0x10010FE3",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xA9",
+        "handler_va": "0x1001108B",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xAA",
+        "handler_va": "0x1001118F",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xAB",
+        "handler_va": "0x1001121B",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xAC",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xAD",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xAE",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xAF",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xB0",
+        "handler_va": "0x10010E65",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB1",
+        "handler_va": "0x10010EBF",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB2",
+        "handler_va": "0x10010F11",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB3",
+        "handler_va": "0x10010F73",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB4",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xB5",
+        "handler_va": "0x10011483",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB6",
+        "handler_va": "0x100114D7",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB7",
+        "handler_va": "0x10011548",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB8",
+        "handler_va": "0x100115B5",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xB9",
+        "handler_va": "0x1001165D",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xBA",
+        "handler_va": "0x1001175B",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xBB",
+        "handler_va": "0x100117E7",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xBC",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xBD",
+        "handler_va": "0x10011C8A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xBE",
+        "handler_va": "0x10011CFD",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xBF",
+        "handler_va": "0x10011D80",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xC0",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC1",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC2",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC3",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC4",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC5",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC6",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC7",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC8",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xC9",
+        "handler_va": "0x10011968",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xCA",
+        "handler_va": "0x10011A06",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xCB",
+        "handler_va": "0x10011A6A",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xCC",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xCD",
+        "handler_va": "0x10011DA5",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xCE",
+        "handler_va": "0x10011D95",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xCF",
+        "handler_va": "0x10011DED",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xD0",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD1",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD2",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD3",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD4",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD5",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD6",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD7",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD8",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xD9",
+        "handler_va": "0x100117FC",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xDA",
+        "handler_va": "0x1001188C",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xDB",
+        "handler_va": "0x100118E7",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xDC",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xDD",
+        "handler_va": "0x10011E0F",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xDE",
+        "handler_va": "0x10011DFF",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xDF",
+        "handler_va": "0x10011E57",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xE0",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE1",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE2",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE3",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE4",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE5",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE6",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE7",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE8",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xE9",
+        "handler_va": "0x100119BC",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xEA",
+        "handler_va": "0x10011A7C",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xEB",
+        "handler_va": "0x10011AD9",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xEC",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xED",
+        "handler_va": "0x10011E79",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xEE",
+        "handler_va": "0x10011E69",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xEF",
+        "handler_va": "0x10011EC8",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xF0",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF1",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF2",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF3",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF4",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF5",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF6",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF7",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF8",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xF9",
+        "handler_va": "0x10011842",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xFA",
+        "handler_va": "0x100118F9",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xFB",
+        "handler_va": "0x10011956",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xFC",
+        "handler_va": "0x10010270",
+        "status": "ILLEGAL_0x180_0x1A0"
+      },
+      {
+        "op2_hi8": "0xFD",
+        "handler_va": "0x10011EE2",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xFE",
+        "handler_va": "0x10011ED6",
+        "status": "ACTIVE_DSP_ALU"
+      },
+      {
+        "op2_hi8": "0xFF",
+        "handler_va": "0x10011F31",
+        "status": "ACTIVE_DSP_ALU"
+      }
+    ],
+    "dsp_movxy_0x10092C01_64_handlers": [
+      "0x100123DF",
+      "0x100123E9",
+      "0x1001243D",
+      "0x100124EA",
+      "0x10012A63",
+      "0x1001312D",
+      "0x100131BD",
+      "0x100132AA",
+      "0x10012AB7",
+      "0x100133AF",
+      "0x100134A7",
+      "0x100135FC",
+      "0x10012B6F",
+      "0x10013769",
+      "0x10013879",
+      "0x100139ED",
+      "0x100123DF",
+      "0x1001276C",
+      "0x100127A6",
+      "0x10012839",
+      "0x10012C3F",
+      "0x10013B80",
+      "0x10013BFA",
+      "0x10013CD1",
+      "0x10012C90",
+      "0x10013DC0",
+      "0x10013EA2",
+      "0x10013FE1",
+      "0x10012D45",
+      "0x10014138",
+      "0x10014232",
+      "0x10014390",
+      "0x100123DF",
+      "0x100125AF",
+      "0x10012600",
+      "0x100126AA",
+      "0x10012E12",
+      "0x1001450D",
+      "0x10014587",
+      "0x1001465E",
+      "0x10012E4C",
+      "0x1001474D",
+      "0x1001482F",
+      "0x1001496E",
+      "0x10012EEB",
+      "0x10014AC5",
+      "0x10014BBF",
+      "0x10014D1D",
+      "0x100123DF",
+      "0x100128E4",
+      "0x10012927",
+      "0x100129B9",
+      "0x10012FA1",
+      "0x10014E9A",
+      "0x10014EFE",
+      "0x10014FBF",
+      "0x10012FDA",
+      "0x10015098",
+      "0x10015164",
+      "0x1001528D",
+      "0x10013078",
+      "0x100153CE",
+      "0x100154B2",
+      "0x100155FA"
+    ],
+    "dsp_movs_0x10092B7C_16_handlers": [
+      "0x10015793",
+      "0x10015997",
+      "0x10015B0C",
+      "0x10015D14",
+      "0x10015890",
+      "0x100159F6",
+      "0x10015C07",
+      "0x10015D72",
+      "0x100158D1",
+      "0x10015A3C",
+      "0x10015C4E",
+      "0x10015DB7",
+      "0x10015928",
+      "0x10015A98",
+      "0x10015CA5",
+      "0x10015E12"
+    ]
+  },
+  "expevt_table_0x10093990_all_64_slots": [
+    {
+      "internal_id": "0x00",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x01",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x02",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x03",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x04",
+      "raw_word": "0x0020",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x020",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x05",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x06",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x07",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x08",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x09",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x0A",
+      "raw_word": "0xFFFF",
+      "status": "INVALID_SLOT_0xFFFF",
+      "expevt": null,
+      "vbr_offset": null
+    },
+    {
+      "internal_id": "0x0B",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x0C",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x0D",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x0E",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x0F",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x10",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x11",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x12",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x13",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x14",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x15",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x16",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x17",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x18",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x19",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x1A",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x1B",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x1C",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x1D",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x1E",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x1F",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x20",
+      "raw_word": "0x4040",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x040",
+      "vbr_offset": "0x400"
+    },
+    {
+      "internal_id": "0x21",
+      "raw_word": "0x4060",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x060",
+      "vbr_offset": "0x400"
+    },
+    {
+      "internal_id": "0x22",
+      "raw_word": "0x1080",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x080",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x23",
+      "raw_word": "0x10A0",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x0A0",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x24",
+      "raw_word": "0x10C0",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x0C0",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x25",
+      "raw_word": "0x10E0",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x0E0",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x26",
+      "raw_word": "0x1100",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x100",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x27",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x28",
+      "raw_word": "0x1180",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x180",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x29",
+      "raw_word": "0x11A0",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x1A0",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x2A",
+      "raw_word": "0x11E0",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x1E0",
+      "vbr_offset": "0x100"
+    },
+    {
+      "internal_id": "0x2B",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x2C",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x2D",
+      "raw_word": "0x0140",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x140",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x2E",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x2F",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x30",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x31",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x32",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x33",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x34",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x35",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x36",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x37",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x38",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x39",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x3A",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x3B",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x3C",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x3D",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x3E",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    },
+    {
+      "internal_id": "0x3F",
+      "raw_word": "0x0000",
+      "status": "VALID_EXPEVT",
+      "expevt": "0x000",
+      "vbr_offset": "0x000"
+    }
+  ],
+  "lcdr61524a_semantic_disasm": {
+    "driver_info_0x10001710": [
+      "0x10001710: lea      eax, [0x1000f4a0]",
+      "0x10001716: ret",
+      "0x10001717: lea      eax, [0x1000f4cc]",
+      "0x1000171D: ret",
+      "0x1000171E: lea      eax, [0x1000f248]",
+      "0x10001724: ret",
+      "0x10001725: mov      ecx, dword ptr [esp + 4]",
+      "0x10001729: mov      eax, 0",
+      "0x1000172E: cmp      ecx, dword ptr [0x1000f4b0]",
+      "0x10001734: jae      0x1000173d",
+      "0x10001736: mov      eax, dword ptr [ecx*4 + 0x1000f1f8]",
+      "0x1000173D: ret      4",
+      "0x10001740: mov      ecx, dword ptr [esp + 4]",
+      "0x10001744: mov      eax, 0",
+      "0x10001749: cmp      ecx, dword ptr [0x1000f4b0]"
+    ],
+    "reg_select_gram_0x0202_dispatch_0x10001B00": [
+      "0x10001B03: movsx    eax, word ptr [edx*2 + 0x10012278]",
+      "0x10001B0B: cmp      edx, 0x202",
+      "0x10001B11: jne      0x10001b18",
+      "0x10001B13: call     0x10001f56",
+      "0x10001B18: mov      byte ptr [0x10012272], al",
+      "0x10001B1D: sar      eax, 8",
+      "0x10001B20: mov      byte ptr [0x10012271], 1",
+      "0x10001B27: ret",
+      "0x10001B28: mov      eax, 0",
+      "0x10001B2D: mov      edx, dword ptr [0x10012268]",
+      "0x10001B33: cmp      edx, 0x700",
+      "0x10001B39: jae      0x10001b50",
+      "0x10001B3B: movsx    eax, word ptr [edx*2 + 0x10012278]",
+      "0x10001B43: cmp      edx, 0x202",
+      "0x10001B49: jne      0x10001b50"
+    ],
+    "gram_write_handler_0x10001F56": [
+      "0x10001F56: push     eax",
+      "0x10001F57: push     ecx",
+      "0x10001F58: push     edx",
+      "0x10001F59: mov      edx, dword ptr [0x100130a4]",
+      "0x10001F5F: movzx    eax, byte ptr [edx + 2]",
+      "0x10001F63: and      eax, 0xf8",
+      "0x10001F68: shl      eax, 8",
+      "0x10001F6B: movzx    ecx, byte ptr [edx + 1]",
+      "0x10001F6F: and      ecx, 0xfc",
+      "0x10001F75: shl      ecx, 3",
+      "0x10001F78: or       eax, ecx",
+      "0x10001F7A: movzx    ecx, byte ptr [edx]",
+      "0x10001F7D: shr      ecx, 3",
+      "0x10001F80: or       eax, ecx",
+      "0x10001F82: mov      word ptr [0x1001267c], ax",
+      "0x10001F88: pop      edx",
+      "0x10001F89: pop      ecx",
+      "0x10001F8A: pop      eax",
+      "0x10001F8B: ret",
+      "0x10001F8C: cmp      byte ptr [0x100121b0], 0",
+      "0x10001F93: je       0x10001fba",
+      "0x10001F95: cmp      byte ptr [0x100121b2], 0",
+      "0x10001F9C: je       0x10001fba",
+      "0x10001F9E: cmp      byte ptr [0x1001226c], 1"
+    ],
+    "window_update_0x10004086": [
+      "0x10004086: jne      0x1000408d",
+      "0x10004088: call     0x10004542",
+      "0x1000408D: mov      dword ptr [0x100d8c44], 2",
+      "0x10004097: ret",
+      "0x10004098: mov      edx, dword ptr [0x100121a4]",
+      "0x1000409E: mov      dword ptr [eax], edx",
+      "0x100040A0: ret",
+      "0x100040A1: mov      edx, dword ptr [eax]",
+      "0x100040A3: mov      dword ptr [0x100121a4], edx",
+      "0x100040A9: test     dword ptr [0x100d8bd4], 0x100",
+      "0x100040B3: jne      0x100040ba",
+      "0x100040B5: call     0x10004542",
+      "0x100040BA: mov      dword ptr [0x100d8c44], 2",
+      "0x100040C4: ret",
+      "0x100040C5: movzx    edx, byte ptr [0x100121ac]",
+      "0x100040CC: mov      dword ptr [eax], edx",
+      "0x100040CE: ret",
+      "0x100040CF: mov      edx, dword ptr [eax]"
+    ],
+    "window_apply_0x10004542": [
+      "0x10004542: push     esi",
+      "0x10004543: push     edi",
+      "0x10004544: push     ebx",
+      "0x10004545: sub      esp, 0x10",
+      "0x10004548: test     dword ptr [0x100d8bd4], 1",
+      "0x10004552: je       0x10004756",
+      "0x10004558: movzx    eax, byte ptr [0x100121ac]",
+      "0x1000455F: mov      ecx, 1",
+      "0x10004564: test     word ptr [0x10012a78], 0x8000",
+      "0x1000456D: setne    bl",
+      "0x10004570: xor      cl, bl",
+      "0x10004572: shl      ecx, 3",
+      "0x10004575: or       eax, ecx",
+      "0x10004577: mov      dword ptr [0x1001222c], 0",
+      "0x10004581: mov      dword ptr [0x10012230], 0",
+      "0x1000458B: mov      ebx, dword ptr [0x10013090]",
+      "0x10004591: test     eax, 1",
+      "0x10004596: jne      0x100045ad",
+      "0x10004598: mov      ecx, dword ptr [0x100d8be4]"
+    ]
+  },
+  "automated_core_cpp_crosscheck": [
+    {
+      "check_id": "AUTO-CHK-01",
+      "requirement": "0xF000..0xF3FF routed to 16-bit SH4AL-DSP MOVX/MOVY when SR.DSP=1",
+      "status": "CONFIRMED"
+    },
+    {
+      "check_id": "AUTO-CHK-02",
+      "requirement": "0xF800..0xFBFF raises EXPEVT 0x1A0 inside delay slot (executingDelaySlot_)",
+      "status": "CONFIRMED"
+    },
+    {
+      "check_id": "AUTO-CHK-03",
+      "requirement": "RAMCR (0xFF000074) masks writes with 0x000003E0u per CPU73050.dll 0x1003F34D",
+      "status": "CONFIRMED"
+    },
+    {
+      "check_id": "AUTO-CHK-04",
+      "requirement": "0x4n5A / 0x0n5A (FPUL) raises Illegal Instruction under strictSh7305NoFpu_",
+      "status": "CONFIRMED"
+    },
+    {
+      "check_id": "AUTO-CHK-05",
+      "requirement": "0x4n6A..0x4nBA & 0x0n6A..0x0nBA map to DSR/A0/X0/X1/Y0/Y1 gated on SR.DSP",
+      "status": "CONFIRMED"
+    },
+    {
+      "check_id": "AUTO-CHK-06",
+      "requirement": "BSC RTCSR/RTCNT/RTCOR enforce 0xA55A0000 write-protection key + CMF W0C + active refresh counter",
+      "status": "CONFIRMED"
+    }
+  ],
+  "full_65536_inventory_file": "CPU73050_OPCODES_65536.json"
+}

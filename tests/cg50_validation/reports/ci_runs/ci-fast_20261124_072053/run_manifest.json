@@ -1,0 +1,98 @@
+{
+  "profile": "ci-fast",
+  "started_utc": "2026-11-24T07:20:53.680345+00:00",
+  "git_head": "ab66ee1923afd3ff413ab5f33df917e9d9a9aa59",
+  "rng_seed": 20261124,
+  "soak_hours": 0.0,
+  "artifacts_sha256": {
+    "SystemROM.raw": "8CF1E1F2AD3FB742B557D00535F8AEA7874C7F8D138B56B4C3938E26C0F82E23",
+    "UserROM.raw": "8D5AEA8D5BEEA758617DB7EBCED31DD1900B48D3AC4D2D67FDAEA77E25830087",
+    "C2ROM.raw": "A946208A374E264EE647503C2B7E60B42F29C1D5ED40D2A70BA0F848272F47B8",
+    "cg50_warm_state.bin": "6CD8764267A2892161AFA6D1364A90F390E7B40180F3635F3AE5B581D35CCCF7",
+    "cg50_warm_state.bin.gz": "5901BA75F056C1B58109654665FE2A9C74896D24978F18014CF2DF6550D15A8D"
+  },
+  "steps": [
+    {
+      "step": "cmake_configure_host",
+      "command": [
+        "D:\\DevTools\\CMake\\bin\\cmake.exe",
+        "-S",
+        "D:\\Proyectos\\CalculadorasUnificadas\\core",
+        "-B",
+        "D:\\Proyectos\\CalculadorasUnificadas\\build-core-host",
+        "-DBUILD_CORE_TESTS=ON",
+        "-DBUILD_CG50_BATTERY=ON"
+      ],
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "duration_s": 0.68,
+      "stdout_tail": "-- Selecting Windows SDK version 10.0.22621.0 to target Windows 10.0.26300.\n-- Configuring done (0.0s)\n-- Generating done (0.6s)\n-- Build files have been written to: D:/Proyectos/CalculadorasUnificadas/build-core-host\n",
+      "stderr_tail": ""
+    },
+    {
+      "step": "cmake_build_host_release",
+      "command": [
+        "D:\\DevTools\\CMake\\bin\\cmake.exe",
+        "--build",
+        "D:\\Proyectos\\CalculadorasUnificadas\\build-core-host",
+        "--config",
+        "Release",
+        "--parallel"
+      ],
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "duration_s": 9.802,
+      "stdout_tail": "battery.exe\n  cg50_flash_cfi_test.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_flash_cfi_test.exe\n  casio_cw2.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\casio_cw2.lib\n  casio_nx.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\casio_nx.lib\n  cg50_sh7305_hw_test.cpp\n  casio_native.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\casio_native.dll\n  cg50_sh4a_isa_test.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_sh4a_isa_test.exe\n  cw2_headless_test.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cw2_headless_test.exe\n  D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_sh4a_isa_test.exe: message: deploying dependencies\n  cg50_android_smoke.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_android_smoke.exe\n  nx_regression_test.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\nx_regression_test.exe\n  cg50_usb_smem_qr_test.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_usb_smem_qr_test.exe\n  gen_cg50_warm_state.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\gen_cg50_warm_state.exe\n  cg50_sh7305_hw_test.vcxproj -> D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_sh7305_hw_test.exe\n  D:\\Proyectos\\CalculadorasUnificadas\\build-core-host\\Release\\cg50_sh7305_hw_test.exe: message: deploying dependencies\n",
+      "stderr_tail": ""
+    },
+    {
+      "step": "ctest_host_release",
+      "command": [
+        "D:\\DevTools\\CMake\\bin\\ctest.exe",
+        "--test-dir",
+        "D:\\Proyectos\\CalculadorasUnificadas\\build-core-host",
+        "-C",
+        "Release",
+        "--output-on-failure"
+      ],
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "duration_s": 25.745,
+      "stdout_tail": "Test project D:/Proyectos/CalculadorasUnificadas/build-core-host\n      Start  1: cg50_android_smoke\n 1/10 Test  #1: cg50_android_smoke ...............   Passed    2.44 sec\n      Start  2: cw2_headless_test\n 2/10 Test  #2: cw2_headless_test ................   Passed    2.01 sec\n      Start  3: nx_regression_test\n 3/10 Test  #3: nx_regression_test ...............   Passed    0.16 sec\n      Start  4: cg50_c_api_contract_test\n 4/10 Test  #4: cg50_c_api_contract_test .........   Passed    0.19 sec\n      Start  5: cg50_flash_cfi_test\n 5/10 Test  #5: cg50_flash_cfi_test ..............   Passed    0.03 sec\n      Start  6: cg50_sh4a_isa_test\n 6/10 Test  #6: cg50_sh4a_isa_test ...............   Passed    0.40 sec\n      Start  7: cg50_sh7305_hw_test\n 7/10 Test  #7: cg50_sh7305_hw_test ..............   Passed    0.62 sec\n      Start  8: cg50_usb_smem_qr_test\n 8/10 Test  #8: cg50_usb_smem_qr_test ............   Passed    5.33 sec\n      Start  9: cg50_thread_isolation_test\n 9/10 Test  #9: cg50_thread_isolation_test .......   Passed   12.18 sec\n      Start 10: cg50_hw_torture_ci_smoke\n10/10 Test #10: cg50_hw_torture_ci_smoke .........   Passed    2.25 sec\n\n100% tests passed, 0 tests failed out of 10\n\nTotal Test time (real) =  25.64 sec\n",
+      "stderr_tail": ""
+    },
+    {
+      "step": "flutter_analyze",
+      "command": [
+        "D:\\DevTools\\flutter\\bin\\flutter.bat",
+        "analyze",
+        "--no-pub"
+      ],
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "duration_s": 67.049,
+      "stdout_tail": "Analyzing android...                                            \nNo issues found! (ran in 46.4s)\n",
+      "stderr_tail": ""
+    },
+    {
+      "step": "flutter_test",
+      "command": [
+        "D:\\DevTools\\flutter\\bin\\flutter.bat",
+        "test",
+        "--no-pub"
+      ],
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "duration_s": 11.815,
+      "stdout_tail": "00:00 +0: loading D:/Proyectos/CalculadorasUnificadas/apps/android/test/cg50_connectivity_and_keylog_test.dart\n00:00 +0: D:/Proyectos/CalculadorasUnificadas/apps/android/test/widget_test.dart: All 4 skins define exact key counts (50 CG50, 48 CW2, 50 LAX, 50 VN) with accurate hitTest\n00:00 +1: D:/Proyectos/CalculadorasUnificadas/apps/android/test/cg50_connectivity_and_keylog_test.dart: Cg50LocalBridgeServer direct no-PIN HTTP CRUD, screen PNG, QR and WS Link\n00:00 +2: D:/Proyectos/CalculadorasUnificadas/apps/android/test/widget_test.dart: CW2 20-indicator strip renders S, Math, D, f(x), i, arrows accurately\n00:00 +3: D:/Proyectos/CalculadorasUnificadas/apps/android/test/widget_test.dart: CW2 20-indicator strip renders S, Math, D, f(x), i, arrows accurately\n00:00 +4: D:/Proyectos/CalculadorasUnificadas/apps/android/test/widget_test.dart: CW2 20-indicator strip renders S, Math, D, f(x), i, arrows accurately\n00:00 +5: D:/Proyectos/CalculadorasUnificadas/apps/android/test/widget_test.dart: guías de interfaz Porcelain Light default, 4-model switcher, themes & history work cleanly\n00:01 +6: D:/Proyectos/CalculadorasUnificadas/apps/android/test/widget_test.dart: End-to-end FFI verification for all 4 calculators on host\n00:02 +7: All tests passed!\n",
+      "stderr_tail": ""
+    }
+  ],
+  "finished_utc": "2026-11-24T07:22:49.105331+00:00",
+  "summary": {
+    "total_steps": 5,
+    "confirmed": 5,
+    "failed": 0,
+    "overall": "CONFIRMED"
+  }
+}

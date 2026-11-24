@@ -42,3 +42,14 @@ calc_debug.log
 # Official CASIO manuals (PDF) and extracted page text: kept local only
 assets/manuals/
 
+
+# Python bytecode & heavy binary test captures
+__pycache__/
+*.pyc
+*.bmp
+tests/cg50_validation/reports/coverage_v46/raw_runs/
+tests/cg50_validation/reports/math_v46_3k/
+tests/cg50_validation/reports/math_v46_30k/
+tests/cg50_validation/reports/math_v46_100k/
+tests/cg50_validation/differential/manager_plus_shots/*.png
+tests/cg50_validation/reports/diff_v46/manager_plus_shots/

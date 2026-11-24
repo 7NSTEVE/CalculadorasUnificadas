@@ -271,6 +271,13 @@ bool Cg50NativeCore::RaiseMaskableInterrupt(const std::uint32_t eventCode,
     ++stats_.interruptsAccepted;
     stats_.lastInterruptEvent = eventCode;
     stats_.lastInterruptPriority = priority;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    if (cov_) {
+        ++cov_->intevtHits[eventCode];
+        cov_->RecordCpuState(static_cast<std::uint8_t>(state_));
+        if (entry.wakesCpu) cov_->RecordBoundary("irq_wake_from_sleep");
+    }
+#endif
 
     std::wstringstream ss;
     ss << L"CG50 ROM-native: interrupción SH aceptada INTEVT=0x"

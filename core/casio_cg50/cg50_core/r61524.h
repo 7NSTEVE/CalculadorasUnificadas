@@ -51,6 +51,26 @@ public:
     std::size_t FramebufferPixelCount() const noexcept { return gram_.size(); }
     std::uint16_t BacklightDuty() const noexcept { return regs_[0x05A1u]; }
     std::uint16_t VerticalScroll() const noexcept { return regs_[0x0404u]; }
+    bool VerticalScrollEnabled() const noexcept { return (regs_[0x0401u] & 0x0001u) != 0u; }
+    bool HorizontalMirrorEnabled() const noexcept { return (driverOutputControl_ & 0x0100u) != 0u; }
+    bool DisplayBlanked() const noexcept
+    {
+        return (displayControl_ != 0u && (displayControl_ & 0x0003u) == 0u) ||
+               ((regs_[0x0100u] & 0x0004u) != 0u); // STB standby bit
+    }
+    bool FrameMarkActive() const noexcept { return frameMarkPulse_; }
+    void TickFrameMark(const std::uint64_t cycles) noexcept
+    {
+        if (cycles == 0u) return;
+        // ~60 Hz TE/FMARK cadence at ~33 MHz (~550,000 cycles/frame, 10% pulse width)
+        constexpr std::uint64_t kFrameCycles = 550000ull;
+        vsyncCycleAccum_ += cycles;
+        if (vsyncCycleAccum_ >= kFrameCycles) {
+            vsyncCycleAccum_ %= kFrameCycles;
+        }
+        frameMarkPulse_ = (vsyncCycleAccum_ < (kFrameCycles / 10ull));
+    }
+    void RenderDisplayRgb565(std::uint16_t* outPixels, std::size_t count) const noexcept;
     std::uint16_t IndexRegister() const noexcept { return indexRegister_; }
     std::uint16_t EntryMode() const noexcept { return entryMode_; }
     std::uint16_t CurX() const noexcept { return curX_; }
@@ -87,6 +107,8 @@ private:
     std::uint16_t driverOutputControl_ = 0;
     bool hasValidFrame_ = false;
     mutable bool gramReadDummyPending_ = false;
+    std::uint64_t vsyncCycleAccum_ = 0;
+    bool frameMarkPulse_ = false;
 };
 
 } // namespace cg50

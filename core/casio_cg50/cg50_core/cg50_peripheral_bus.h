@@ -20,6 +20,7 @@ public:
     const PfcRawState& Pfc() const noexcept { return pfc_; }
     const KeyboardMatrix& Keyboard() const noexcept { return keyboard_; }
     const R61524& Lcd() const noexcept { return lcd_; }
+    R61524& LcdMut() noexcept { return lcd_; }
     bool V28Sys() const noexcept { return v28sys_; }
 
     Result Write16(std::uint32_t address, std::uint16_t value);

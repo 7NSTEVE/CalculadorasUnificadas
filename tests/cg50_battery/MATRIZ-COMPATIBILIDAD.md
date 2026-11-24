@@ -318,4 +318,66 @@ Actualizado 2026-11-06 post-v22 (97 APROBADAS, `c52dc62`):
   - Verificación en vivo en `Pixel_Phone_Android16_PlayStore` (`emulator-5554`, `1080×2400`, paquete `com.calculadorasunificadas.app`): **`10/10` pantallas interactivas confirmadas visualmente** (`MAIN MENU`, `eActivity 7×8=56`, `MicroPython 2**10=1024`, `3DGraph esfera azul`, `Graph Y1=x² + G-Solv MIN=(0,0)`, `sin⁻¹(0.5) → 1/6 π`, `S↔D → 0.5235987756`, `System Version OS 03.80.0212`, menú `⋯` Porcelana Claro y relanzamiento limpio tras `am force-stop`), con **`LOGCAT_BAD_LINES=0`**.
 - **Límites físicos externos honestos:** la electrónica interna de `SCIF0` y `USB2` está mapeada a nivel de registros/FIFOs/IRQs sin cuelgues del firmware, pero en Android no existe un cable físico 3-pin `S-LINK` ni conexión USB Mass Storage hacia un PC anfitrión; el intercambio de datos se realiza mediante respaldo/restauración de `UserROM`, carga directa de `.g3a` y captura PNG desde el menú `⋯`.
 
+---
+
+## Certificación v44 — Validación Extrema, Autenticidad Cero-HLE y Certificación Integral SH7305 (`core/casio_cg50`, 2026-11-24)
+
+- **Libro Maestro de Evidencia:** `tests/cg50_validation/CG50_VALIDATION_MASTER.json` (`git HEAD ab66ee1923afd3ff413ab5f33df917e9d9a9aa59`).
+- **Auditoría de Autenticidad (`tests/cg50_validation/reports/AUDIT_AUTHENTICITY.md`):** **`CONFIRMED`**
+  - `host_math_fallback_allowed: false`; todo código HLE legado quedó compilado fuera de todos los binarios (`#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE`, OFF) con `AuditForbiddenEnvOverrides()` verificando 12 variables de entorno prohibidas.
+  - Arquitectura verificada contra `CPU73050.dll` (`0` símbolos FPU, `40+` símbolos SH4AL-DSP): **SH7305 (`SH4AL-DSP`) sin FPU hardware**, con `SetStrictSh7305NoFpu(true)` activo en las corridas de certificación.
+  - Telemetría acumulada de ejecución real del firmware Casio OS 3.80 en `v44`: **`13,049,349`** operaciones reales de la unidad **BCD ALU hardware (`0x04CB0010`)** y **`0`** opcodes FPU ejecutados (`live_fpu_opcodes_executed = 0`).
+- **Eje 1 — Inventario y Cierre de Hardware (`tests/cg50_validation/CG50_HARDWARE_MASTER.json`):** **`CONFIRMED`**
+  - `39` componentes inventariados (`28` presentes en placa fx-CG50 según `CGM.dlm`, `11` no cableados en fx-CG50).
+  - `702` registros SH7305 extraídos de `CPU73050.dll` (`413` aplicables a fx-CG50, `289` `NOT_PRESENT_ON_CG50`): **`222` `FULL_SILICON`** (vs. `97` en `v43`), **`78` `FUNCTIONAL_PARTIAL`**, **`113` `PASSIVE_BACKING`**, **`0` `UNMAPPED`**.
+  - Nuevos bloques de silicio integrados en `v44`: **SH4AL-DSP** (`sh_dsp.h`), corrección `RM=01` IEEE-754 (`sh_fpu.h`), **caché IC/OC 4-vías + OCRAM 16 KB** (`sh_cache.h`), **ITLB real de 4 entradas**, `INTC2/NMI/USERIMASK`, `CMT` IRQ, `WDT` watchdog-reset, `ADC` en `0x04610080..8E`, `DD Bus 0x044C0000`, `SDHI 0x04CF001C..22`, `SCIF0` peer-to-peer + IRQs, **USB 2.0 completo** (57 registros, VBUS/SETUP/Pipes/FIFOs/IRQ, `cg50_usb2.h`), **UBC** hardware breakpoints (`cg50_ubc.h`), `R61524` scroll/mirror/CABC/blanking/FMARK, `Flash CFI` DQ6/DQ7 y save-state chunks `96..105`.
+  - Arranque frío `v44`: **`8.82 s`**, `164,466,762` instrucciones, `PC=0xA00206FC`, **`UNKNOWN_LCD_CMDS=0`**, empaquetado a `assets/roms/cg50_warm_state.bin.gz` (`12,383,383 B`, SHA-256 `5901BA75F056C1B58109654665FE2A9C74896D24978F18014CF2DF6550D15A8D`, sello `cg50_warm_v44.stamp`).
+- **Eje 2 — Inventario de Capacidades del Manual (`tests/cg50_validation/CG50_FEATURES_MASTER.json`):** **`CONFIRMED`**
+  - `677` páginas del manual oficial (`fx-CG50_Soft_v370_EN.pdf` + `678` págs ES + guías Hardware/Manager PLUS) indexadas: **`922` capacidades únicas en `42` áreas** (`682` confirmadas en símbolos de ROM, `12,779` metas de prueba catalogadas) y metodología documentada en `tests/cg50_validation/reports/CASIO_2900_DECOMPOSITION.md`.
+- **Eje 3 — Validación Funcional y Matemática Extrema (`v44`):** **`CONFIRMED`**
+  - **CTest (`build-core-host`, Release):** **`8/8` PASS** (`6.14 s`, incluye `cg50_sh7305_hw_test` con `100+` aserciones y `cg50_hw_torture_ci_smoke` con `1,242,200` ops / `0` fallos).
+  - **Batería legada (`CG50_CERT_STRICT_NO_HLE=1`, 10 shards):** **`133/133` PASO**, `0` divergencias, `2/2` determinista.
+  - **Matriz 24 apps + add-ins (`cert2900 v44`, `CG50_MMIO_AUDIT=1`):** **`24/24` PASS**, `2,103,862,284` instrucciones, `3,804,147` ops BCD ALU, `unsup=0`, `mflt=0`, **`UNKNOWN_LCD_CMDS=0`**, **`0` periféricos MMIO sin mapear**.
+  - **Suite Extrema y Paramétrica (`cg50_validation_runner.exe --strict-no-hle --strict-no-fpu --threads 16`):** **`3,031 / 3,031` PASS (`0` FAIL)** en **`99,647,637,546`** instrucciones SH7305 (`8,965,454` ops BCD ALU, `0` FPU opcodes): `3,000/3,000` cálculos paramétricos + `31/31` casos extremos (cancelación catastrófica `CANCEL-001..006`, integrales oscilatorias/picos `INT-EXTREME-001..003`, sumatorias `SUM-001..003`, ingeniería eléctrica RLC/dB/RC/RMS `EE-*`, recuperación de errores `Ma/Syn ERROR` sin reinicio `ERR-*`, `4` gráficas 2D extremas `Polar Rose / Lissajous / Oscilatoria amortiguada / Espiral`, polinomio grado 6 `(x-1)^6=0 -> X1=1 x6`, Casio BASIC y MicroPython REPL `2**10 -> 1024`).
+- **Eje 4 — Certificación Diferencial Triple (`tests/cg50_validation/differential/diff_certification_report.json`):** **`CONFIRMED` (oráculos digitales) / `PENDING` (unidad física)**
+  - **Oráculo `mpmath` 50 dígitos + `SymPy`:** **`CONFIRMED`** (`33` referencias en `extreme_math/oracle_extreme_math_50dps.json`, verificación cruzada interna `< 1e-30`).
+  - **Oráculo oficial DLLs Casio (`CPU73050.dll` + `LCDR61524A.dll` + `DLSim32E.dll`):** **`CONFIRMED`** (**`10/10` PASS**, `official_emulator_verified: true`, `differential/manager_plus_oracle_results.json` — coincidencia exacta de dígitos en los 9 casos matemáticos/BCD/integral/Ma ERROR más verificación gráfica LCD).
+  - **Comparador diferencial sobre `3,031` recibos:** **`MATCH_BOTH = 3,025`**, **`MATCH_CASIO_FIDELITY = 6`** (truncación genuina BCD de 15 dígitos de Casio), **`EMULATOR_BUG = 0`**.
+  - **Calculadora física fx-CG50:** **`PENDING`** (`physical_reference_verified: false` — no se dispone de unidad física en esta sesión).
+- **Eje 5 — Tortura de Hardware y Fuzzing (`v44`):** **`CONFIRMED` (tortura + fuzzing) / `PENDING` (soak continuo 24–72 h)**
+  - **Tortura de silicio (`cg50_hw_torture_runner.exe --profile full-cert --threads 16`):** **`12,420,000` operaciones, `0` fallos** (`56.22 s`, delta RSS `5.54 MB`): `10,000,000` CPU+SH4AL-DSP, `1,000,000` BCD ALU vs. oráculo decimal exacto, `1,000,000` KIU teclado, `100,000` DMAC0 6-ch con coherencia OC, `100,000` IRQs INTC2/NMI+RTE, `100,000` LCD R61524, `100,000` traducciones reales ITLB/UTLB, `10,000` ciclos save/restore bit-a-bit (chunks `1..105`) y `10,000` ciclos NOR Flash CFI (`DQ6/DQ7`).
+  - **Fuzzer (`cg50_fuzzer.exe`):** **`1,000,000`** expresiones gramaticales generadas (`11,289,586` tokens) + **`500 / 500`** expresiones adversarias en vivo sobre Casio OS 3.80 sin reinicios (`21,283,343,194` instrucciones, `279,748` ops BCD ALU, `0` cuelgues/crashes, `0` FPU opcodes).
+  - **Soak continuo de pared 24 h–72 h:** **`PENDING`** (CLI `--hours 24|72` implementado y listo; no se esperaron 24–72 horas reales dentro de la sesión interactiva).
+- **Eje 6 — APK Release Android 16 KB `v44` y Verificación en Vivo:** **`CONFIRMED`**
+  - `flutter analyze --no-pub`: **`0 issues`**; `flutter test --no-pub`: **`4/4` PASS**.
+  - Archivo: `apps/android/build/app/outputs/flutter-apk/app-release.apk` (`80,725,557 B` / `77.0 MB`, SHA-256 `7D1DAB3AABB4672079A2D9B7132893FCB60E708DBC8C595EF544594DAC684CAD`).
+  - `zipalign -c -P 16 -v 4`: **`EXIT=0`**; `apksigner verify`: **`EXIT=0`** (Scheme v2); `llvm-readelf -l`: todos los segmentos `LOAD` en `arm64-v8a` (`1,343,008 B`) y `x86_64` (`1,354,144 B`) alineados a **`0x4000` (16 KB)**.
+  - Verificación táctil en vivo en `Pixel_Phone_Android16_PlayStore` (`emulator-5554`, Android 16 / SDK 36, `1080×2400`): **`7/7` capturas verificadas visualmente** (`MAIN MENU v44`, `(10^12+1)-10^12=1` + `sin⁻¹(0.5)=(1/6)π`, `S↔D -> 0.5235987756`, `Graph` ejes/rejilla, `MicroPython v1.9.4 >>> 2**10=1024`, `System Version OS 03.80.0212` y relanzamiento limpio tras `am force-stop`), **`LOGCAT_BAD_LINES=0`** (`reports/android_v44_evidence.json`).
+
+---
+
+## Certificación v45 — USB Virtual, Intercambio Directo `SMEM` (`Fugue FTL + FAT16/LFN`), Puente PC sin PIN, `Link` y Paridad `fx-CG Manager PLUS` (2026-11-24)
+
+- **Cableado Hardware USB/Serial (`cg50_usb2.h`, `cg50_sh7305_periph.h`, `cg50_native_core.h/.cpp`):** **`CONFIRMED`**
+  - `PTL1` (`PLDR 0x04050134` bit 1) y `PTU1` (`PUDR 0x04050162` bit 1) conectados a `Usb2Unit::VbusAttached()` (`USB_DET`); `PTL2` (`PLDR` bit 2) conectado a `Scif0Unit::HasRxData()` (`RXD_INT`); rutas 32-bit `Read32/Write32` en `Usb2Unit`; flujo externo bidireccional `SCIF0` (`SetExternalLinkEnabled`, `LinkPushRx`, `LinkPopTx`) sin alterar `sizeof(Scif0Unit)` (100 % compatible con save-state chunk 93).
+- **Host USB 2.0 Virtual + Protocolo 7.00 + Decodificador QR Nativo (`cg50_usb_host.h/.cpp`, `cg50_lcd_qr.h/.cpp`):** **`CONFIRMED`**
+  - `Cg50UsbVirtualHost` (enumeración `VID=0x07CF`, `PID=0x6102/0x6101/0x6103`, BOT/SCSI `CBW`/`CSW`, `ScsiTestUnitReady`, `ScsiInquiry`, `ScsiReadCapacity`, `ScsiRead10`, `ScsiWrite10`) y `Protocol7Codec` (con pruebas positivas y negativas de checksum corrupto y paquetes truncados).
+  - Decodificador ISO-18004 puro en C++17 (`DecodeLcdQrRgba`, V1–V10, BCH, máscaras 0–7, Reed-Solomon GF(256) Berlekamp-Massey + Chien + Forney): decodificó en vivo el QR versión 7 generado por Casio OS 3.80 (`Catalog -> Abs -> F2(QR)`): `http://wes.casio.com/math/index.php?q=I-81003800212+U-00000000+M-X006B46+K-0097101`.
+- **Almacenamiento Exacto `Fugue FTL` + `FAT16/VFAT LFN` (`cg50_fugue_ftl.h/.cpp`, `cg50_smem_fs.h/.cpp`):** **`CONFIRMED`**
+  - `99/99` bloques de `UserROM.raw` + `C2ROM.raw` verificados bit a bit (cabecera TMR `(~seq, seq) x3`, CRC-16-CCITT `0x1021`, 8×3B ECC SmartMedia 24-bit, marcador `5A 5A 5A` y ECC de cabecera 24-bit); `5/5` `.g3a` oficiales (`3DGraph.g3a`, `Geometry.g3a`, `Physium.g3a`, `PictPlot.g3a`, `ProbSim.g3a`) verificados con firma `~USBPower` y `FAT1 == FAT2`.
+  - Escritura transaccional con rollback, recolección de basura por bloques de 128 KB y nombres largos UTF-16LE (`VFAT LFN`), validados con recarga real de Casio OS 3.80.
+- **Puente Directo PC ↔ Android (Sin PIN ni Contraseñas) + `tools/cg50_pc_bridge.py` + `Link` Calc ↔ Calc:** **`CONFIRMED`**
+  - Servidor local `Cg50LocalBridgeServer` (`dart:io`, puerto `8750`, apagado por defecto, cero PIN y cero contraseñas): UI Web guías de interfaz Porcelana Claro, API REST (`/api/info`, `/api/files`, `/api/file`, `/api/mkdir`, `/api/remount`, `/api/screen.png`, `/api/usb`, `/api/qr`) y túnel binario `WS /ws/link` hacia `SCIF0` + cliente `Cg50LinkPeerClient`.
+  - CLI Python multiplataforma (`tools/cg50_pc_bridge.py`) con `--adb` (`adb forward tcp:8750 tcp:8750`), `ls`, `put`, `get`, `rm`, `mkdir`, `screen`, `qr`, `sync [--watch]` y `web`.
+- **Paridad Completa `fx-CG Manager PLUS` en Android (`guías de interfaz`):** **`CONFIRMED`**
+  - Hoja `Conectar y archivos` (`Archivos` SMEM + SAF con nombre original `OpenableColumns.DISPLAY_NAME`, `USB / PC`, `Enlace`), estudio `Key-Log` (`cg50_keylog.dart`, múltiples registros `Datos1..N`, grabación, reproducción automática y paso a paso, pausas, notas, resaltado de tecla actual/siguiente, `L/E mem. princ.` con respaldo/restauración gzip, `.cg50log.json`), captura avanzada (`×1/×2/×3`, `PNG/BMP`, cuadro exterior, copia directa al portapapeles vía `FileProvider`), pantalla ampliada (`×1/×2/×3`) y toque directo en códigos QR del LCD.
+- **Pruebas y Evidencia Ejecutada (`v45`):** **`CONFIRMED`**
+  - **CTest (`build-core-host`, Release):** **`9/9` PASS (`0` FAIL, `14.03 s`)**, incluyendo el nuevo `cg50_usb_smem_qr_test`.
+  - **Batería legada (`CG50_CERT_STRICT_NO_HLE=1`):** **`133/133` PASO (`0` divergencias, `2/2` determinista)**.
+  - **Flutter:** `flutter analyze --no-pub` → **`0 issues`**; `flutter test --no-pub` → **`7/7` PASS** (incluye `cg50_connectivity_and_keylog_test.dart`).
+  - **APK Release 16 KB `v45`:** `apps/android/build/app/outputs/flutter-apk/app-release.apk` (`82.9 MB`, SHA-256 `8C083013E19188C781592E04466491F4D8B0E865653FBFE1841E5AF4D0455318`), `zipalign -c -P 16 -v 4` OK, `apksigner verify` OK (Scheme v2), `llvm-readelf -l` `Align 0x4000` en todos los segmentos `LOAD` (`arm64-v8a` y `x86_64`).
+  - **Verificación en vivo sobre Android 16 (`Pixel_Phone_Android16_PlayStore`, SDK 36):** `tools/cg50_pc_bridge.py --adb` subió `demo_pc.py` y sincronizó `tabla_prueba.csv` con verificación SHA-256 bit-a-bit (`6c3d6505623f86c7e383feb88c3bc239eae17f8982b9ffe89b5a5d7455d6c08c`), **Casio OS 3.80 MicroPython v1.9.4** listó y ejecutó `demo_pc.py` produciendo **`PC->CG50: 42`** en pantalla, `ScreenRecv` capturó el LCD vivo en Windows, tocar el QR en pantalla abrió el diálogo nativo con la URL oficial `wes.casio.com`, y el cierre dejó **`FINAL_LOGCAT_BAD_LINES=0`**.
+
+
+
 

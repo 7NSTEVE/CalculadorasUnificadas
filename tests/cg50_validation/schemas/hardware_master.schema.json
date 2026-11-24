@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CG50 Hardware Master Inventory",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "repo_commit", "architecture_verdict", "components", "registers", "cgm_dlm_windows"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "repo_commit": { "type": "string" },
+    "architecture_verdict": {
+      "type": "object",
+      "required": ["cpu_family", "has_hardware_fpu", "has_sh4al_dsp", "has_bcd_alu", "evidence_sources"]
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "name", "category", "base_address", "size_bytes",
+          "present_on_cg50", "present_in_cpu73050_dll",
+          "mapping_status", "implementation_status", "fidelity_status",
+          "register_count_total", "register_count_active", "register_count_passive",
+          "source_files", "notes"
+        ]
+      }
+    },
+    "registers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "component_id", "name", "virtual_addr", "physical_addr",
+          "width_bits", "access", "reset_value", "writable_mask",
+          "side_effects", "accessed_by_rom_live", "implementation_level", "test_ids"
+        ]
+      }
+    },
+    "cgm_dlm_windows": { "type": "array", "items": { "type": "object" } }
+  }
+}

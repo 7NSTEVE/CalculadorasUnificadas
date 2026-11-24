@@ -1,4 +1,5 @@
 #include "Flash.hpp"
+#include <cstring>
 
 #include "../Logger.hpp"
 #include "../Emulator.hpp"

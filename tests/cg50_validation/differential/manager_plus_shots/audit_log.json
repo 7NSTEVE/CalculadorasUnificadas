@@ -1,0 +1,257 @@
+[
+  {
+    "step": 1,
+    "name": "run_matrix_ready",
+    "full_image": "01_run_matrix_ready_full.png",
+    "lcd_image": "01_run_matrix_ready_lcd.png",
+    "sha256": "90B02E542911189D7418D07883E1210A706EBB008A0CAFF5C467A2935B6E9D8A",
+    "ocr_text": "1000 log 1000 2 1000 3",
+    "ocr_result_col": "2 1000 3",
+    "ocr_lines": [
+      "1000",
+      "log 1000",
+      "2",
+      "1000",
+      "3"
+    ],
+    "expected_tokens": {},
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 15.27,
+      "light_percent": 84.19
+    },
+    "passed": true
+  },
+  {
+    "step": 2,
+    "name": "CANCEL-001",
+    "full_image": "02_CANCEL-001_full.png",
+    "lcd_image": "02_CANCEL-001_lcd.png",
+    "sha256": "74522B4AC6845FF7BC25EBCF59A60E41B88DBA949105096F0852F75A45CB2321",
+    "ocr_text": "1000 log 1000 1000 3 (1x1012+1)-1x1012 1",
+    "ocr_result_col": "1000 3 x1012 1",
+    "ocr_lines": [
+      "1000",
+      "log 1000",
+      "1000",
+      "3",
+      "(1x1012+1)-1x1012",
+      "1"
+    ],
+    "expected_tokens": {
+      "1": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 16.27,
+      "light_percent": 83.19
+    },
+    "passed": true
+  },
+  {
+    "step": 3,
+    "name": "CANCEL-002",
+    "full_image": "03_CANCEL-002_full.png",
+    "lcd_image": "03_CANCEL-002_lcd.png",
+    "sha256": "CF2E3509ACD46B484A748C00D849E84B538CF8C98FC9775DEEAC21D75D3BA549",
+    "ocr_text": "log 1000 3 1",
+    "ocr_result_col": "1 geDown",
+    "ocr_lines": [
+      "log 1000",
+      "3",
+      "1"
+    ],
+    "expected_tokens": {
+      "0": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 16.85,
+      "light_percent": 82.6
+    },
+    "passed": true
+  },
+  {
+    "step": 4,
+    "name": "CANCEL-003",
+    "full_image": "04_CANCEL-003_full.png",
+    "lcd_image": "04_CANCEL-003_lcd.png",
+    "sha256": "608C4E0975E5ECEF37849C180E36F9CF864F2E67039F1ED5B60600C63D5C26FF",
+    "ocr_text": "1 0.1+0.2-0.3",
+    "ocr_result_col": "20 YeDown",
+    "ocr_lines": [
+      "1",
+      "0.1+0.2-0.3"
+    ],
+    "expected_tokens": {
+      "0": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 16.89,
+      "light_percent": 82.57
+    },
+    "passed": true
+  },
+  {
+    "step": 5,
+    "name": "CANCEL-004",
+    "full_image": "05_CANCEL-004_full.png",
+    "lcd_image": "05_CANCEL-004_lcd.png",
+    "sha256": "1E3C50257E922E777BEFB9CDF6C0437B28D83A78F8A64C8FE5A0E114B3C1D3CD",
+    "ocr_text": "0.1+0.2-0.3 sin",
+    "ocr_result_col": "geDown",
+    "ocr_lines": [
+      "0.1+0.2-0.3",
+      "sin"
+    ],
+    "expected_tokens": {
+      "0": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 16.11,
+      "light_percent": 83.35
+    },
+    "passed": true
+  },
+  {
+    "step": 6,
+    "name": "CANCEL-005",
+    "full_image": "06_CANCEL-005_full.png",
+    "lcd_image": "06_CANCEL-005_lcd.png",
+    "sha256": "CE5D3BA9EDD5A576A2688368E1B801547AD8B34A90EB8A16BF5B5CDEE9BA61AA",
+    "ocr_text": "U. 1+U.Z—U.3 sin",
+    "ocr_result_col": "(108",
+    "ocr_lines": [
+      "U. 1+U.Z—U.3",
+      "sin"
+    ],
+    "expected_tokens": {
+      "0": true
+    },
+    "palette": {
+      "distinct_colors": 115,
+      "dark_percent": 24.92,
+      "light_percent": 74.25
+    },
+    "passed": true
+  },
+  {
+    "step": 7,
+    "name": "EE-FILTER-DB",
+    "full_image": "07_EE-FILTER-DB_full.png",
+    "lcd_image": "07_EE-FILTER-DB_lcd.png",
+    "sha256": "F7826A83935BD9C8CC6C12D047BC06A8ACE32D491C4063A8A2D1A4AE5A41493D",
+    "ocr_text": "-10x10g 5 -6. 989700043",
+    "ocr_result_col": "108 989700043",
+    "ocr_lines": [
+      "-10x10g 5",
+      "-6. 989700043"
+    ],
+    "expected_tokens": {
+      "6.989700043": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 17.28,
+      "light_percent": 82.18
+    },
+    "passed": true
+  },
+  {
+    "step": 8,
+    "name": "EE-RC-TAU",
+    "full_image": "08_EE-RC-TAU_full.png",
+    "lcd_image": "08_EE-RC-TAU_lcd.png",
+    "sha256": "930088DAEBA7279A85BAAE48A8A9A0DC375F324FE207EA0F36BCF3D1D69C7CEC",
+    "ocr_text": "10x10g 5 6. 989700043 1-e-l ) 3. 160602794",
+    "ocr_result_col": "989700043 160602794",
+    "ocr_lines": [
+      "10x10g 5",
+      "6. 989700043",
+      "1-e-l )",
+      "3. 160602794"
+    ],
+    "expected_tokens": {
+      "3.160602794": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 18.06,
+      "light_percent": 81.4
+    },
+    "passed": true
+  },
+  {
+    "step": 9,
+    "name": "INT-BASE-001",
+    "full_image": "09_INT-BASE-001_full.png",
+    "lcd_image": "09_INT-BASE-001_lcd.png",
+    "sha256": "A3F7327FC1D6938EE9CE6AAD82A8A332E201FCA97730A4085FC0B8316B122891",
+    "ocr_text": "3. 160602794 x3 dx 81 Solve d/dx d2/dx2 fdx",
+    "ocr_result_col": "160602794 81 4",
+    "ocr_lines": [
+      "3. 160602794",
+      "x3 dx",
+      "81",
+      "Solve d/dx d2/dx2 fdx"
+    ],
+    "expected_tokens": {
+      "81": true,
+      "4": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 18.47,
+      "light_percent": 80.99
+    },
+    "passed": true
+  },
+  {
+    "step": 10,
+    "name": "ERR-DIV0",
+    "full_image": "10_ERR-DIV0_full.png",
+    "lcd_image": "10_ERR-DIV0_lcd.png",
+    "sha256": "022ED7E9EAD45B3A6EB4968DC760A8A88ECC3A36B212D40F19049F5792F6EEE3",
+    "ocr_text": "Ma ERROR 4 1 1+0 List Press: Lst*Hat Dim [EXIT] Fill( Se",
+    "ocr_result_col": "[EXIT] 4 1",
+    "ocr_lines": [
+      "Ma ERROR",
+      "4",
+      "1",
+      "1+0",
+      "List",
+      "Press:",
+      "Lst*Hat Dim",
+      "[EXIT]",
+      "Fill( Se"
+    ],
+    "expected_tokens": {
+      "ERROR": true
+    },
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 22.02,
+      "light_percent": 73.9
+    },
+    "passed": true
+  },
+  {
+    "step": 11,
+    "name": "GRAPH-POLAR-ROSE",
+    "full_image": "11_GRAPH-POLAR-ROSE_full.png",
+    "lcd_image": "11_GRAPH-POLAR-ROSE_lcd.png",
+    "sha256": "1308D3F9F0D8E2E57423039267A011228BE50F87565AB9A79800BE11134B5164",
+    "ocr_text": "",
+    "ocr_result_col": "",
+    "ocr_lines": [],
+    "expected_tokens": {},
+    "palette": {
+      "distinct_colors": 5,
+      "dark_percent": 10.35,
+      "light_percent": 76.65
+    },
+    "passed": true
+  }
+]

@@ -27,6 +27,40 @@ void R61524::Reset()
     winEndY_ = static_cast<std::uint16_t>(kVisibleHeight - 1);
     hasValidFrame_ = false;
     gramReadDummyPending_ = false;
+    vsyncCycleAccum_ = 0;
+    frameMarkPulse_ = false;
+}
+
+// TickFrameMark is inlined in r61524.h for hot-path performance (zero 64-bit modulo per instruction).
+
+void R61524::RenderDisplayRgb565(std::uint16_t* outPixels, const std::size_t count) const noexcept
+{
+    if (outPixels == nullptr || count < kVisibleWidth * kVisibleHeight) return;
+    if (gram_.size() < kVisibleWidth * kVisibleHeight || DisplayBlanked()) {
+        std::memset(outPixels, 0, kVisibleWidth * kVisibleHeight * sizeof(std::uint16_t));
+        return;
+    }
+    const bool mirrorX = HorizontalMirrorEnabled();
+    const std::size_t scrollY = VerticalScrollEnabled()
+        ? (static_cast<std::size_t>(regs_[0x0404u]) % kVisibleHeight)
+        : 0u;
+    const std::uint16_t cabcDuty = regs_[0x05A1u] & 0x00FFu;
+    const bool dimBacklight = (regs_[0x05A2u] != 0u) && (cabcDuty < 0xD2u);
+
+    for (std::size_t y = 0; y < kVisibleHeight; ++y) {
+        const std::size_t srcY = (y + scrollY) % kVisibleHeight;
+        for (std::size_t x = 0; x < kVisibleWidth; ++x) {
+            const std::size_t srcX = mirrorX ? (kVisibleWidth - 1u - x) : x;
+            std::uint16_t px = gram_[srcY * kVisibleWidth + srcX];
+            if (dimBacklight) {
+                const std::uint32_t r = ((px >> 11) & 0x1Fu) * cabcDuty / 0xD2u;
+                const std::uint32_t g = ((px >> 5) & 0x3Fu) * cabcDuty / 0xD2u;
+                const std::uint32_t b = (px & 0x1Fu) * cabcDuty / 0xD2u;
+                px = static_cast<std::uint16_t>((r << 11) | (g << 5) | b);
+            }
+            outPixels[y * kVisibleWidth + x] = px;
+        }
+    }
 }
 
 void R61524::AdvanceCursorAfterData() const noexcept
@@ -193,6 +227,16 @@ bool R61524::ReadBus16(std::uint16_t& value) const noexcept
             value = 0x0000u;
         }
         AdvanceCursorAfterData();
+        return true;
+    }
+    // Preserve validated OS boot contract on 0x0003 (PC=0x8004E0A4 expects 0);
+    // return authentic register values for scroll (0x0400..0x0404), CABC
+    // backlight (0x05A0..0x05A3), gamma (0x0300..0x0329) and NVM (0x0606).
+    if ((indexRegister_ >= 0x0300u && indexRegister_ <= 0x0329u) ||
+        (indexRegister_ >= 0x0400u && indexRegister_ <= 0x0404u) ||
+        (indexRegister_ >= 0x05A0u && indexRegister_ <= 0x05A3u) ||
+        indexRegister_ == 0x0606u) {
+        value = regs_[indexRegister_];
         return true;
     }
     value = 0;

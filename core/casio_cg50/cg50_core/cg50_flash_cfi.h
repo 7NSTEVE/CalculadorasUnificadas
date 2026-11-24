@@ -68,18 +68,44 @@ public:
         bufferRemaining_ = 0;
         bufferCount_ = 0;
         eraseSuspended_ = false;
+        busyCyclesRemaining_ = 0;
+        dq6Toggle_ = false;
+        lastProgrammedWord_ = 0xFFFFu;
     }
 
+    void SetBusyWindowCycles(const std::uint32_t eraseCycles, const std::uint32_t programCycles) noexcept
+    {
+        eraseBusyCycles_ = eraseCycles;
+        programBusyCycles_ = programCycles;
+    }
+
+    void TickBusy(const std::uint64_t cycles) noexcept
+    {
+        if (busyCyclesRemaining_ == 0u || cycles == 0u) return;
+        if (cycles >= busyCyclesRemaining_) busyCyclesRemaining_ = 0u;
+        else busyCyclesRemaining_ -= static_cast<std::uint32_t>(cycles);
+    }
+
+    bool IsBusy() const noexcept { return busyCyclesRemaining_ > 0u; }
     bool IsReadArray() const noexcept { return state_ == State::ReadArray || state_ == State::UnlockBypass; }
     bool IsEraseSuspended() const noexcept { return eraseSuspended_; }
     State CurrentState() const noexcept { return state_; }
     const Stats& GetStats() const noexcept { return stats_; }
 
-    // Handles 16-bit read when in Autoselect or CFI Query mode.
+    // Handles 16-bit read when busy (DQ6 toggle + DQ7 complement), Autoselect, or CFI Query.
     // Returns true if this state machine answered the read; false means normal
     // Flash array read (ReadArray).
     bool TryRead16(const std::uint32_t physical, std::uint16_t& outValue) const noexcept
     {
+        if (busyCyclesRemaining_ > 0u && !eraseSuspended_) {
+            // Spansion S29GL256P Data Polling: DQ7 = ~bit7 of programmed data (0 during erase),
+            // DQ6 toggles 0<->1 on every consecutive status read while busy.
+            dq6Toggle_ = !dq6Toggle_;
+            const std::uint16_t dq7 = static_cast<std::uint16_t>((~lastProgrammedWord_) & 0x0080u);
+            const std::uint16_t dq6 = dq6Toggle_ ? 0x0040u : 0x0000u;
+            outValue = static_cast<std::uint16_t>(dq7 | dq6);
+            return true;
+        }
         if (state_ == State::ReadArray) return false;
         const std::uint32_t wordOffset = (physical >> 1) & 0xFFu;
         if (state_ == State::Autoselect) {
@@ -202,6 +228,8 @@ public:
 
         case State::UnlockBypassProgram:
             programWord(physical, value);
+            lastProgrammedWord_ = value;
+            busyCyclesRemaining_ = programBusyCycles_;
             ++stats_.wordPrograms;
             ++stats_.unlockBypassPrograms;
             state_ = State::UnlockBypass;
@@ -283,6 +311,8 @@ public:
 
         case State::ProgramWord:
             programWord(physical, value);
+            lastProgrammedWord_ = value;
+            busyCyclesRemaining_ = programBusyCycles_;
             ++stats_.wordPrograms;
             state_ = State::ReadArray;
             return true;
@@ -306,6 +336,8 @@ public:
         case State::EraseUnlock2:
             if (cmd == 0x30u) {
                 eraseSector(physical & kSectorMask);
+                lastProgrammedWord_ = 0xFFFFu;
+                busyCyclesRemaining_ = eraseBusyCycles_;
                 ++stats_.sectorErases;
             }
             state_ = State::ReadArray;
@@ -339,7 +371,9 @@ public:
             if (cmd == 0x29u) {
                 for (std::size_t i = 0; i < bufferCount_; ++i) {
                     programWord(buffer_[i].physical, buffer_[i].value);
+                    lastProgrammedWord_ = buffer_[i].value;
                 }
+                busyCyclesRemaining_ = programBusyCycles_;
                 ++stats_.bufferPrograms;
             }
             Reset();
@@ -355,6 +389,11 @@ private:
     std::size_t bufferRemaining_ = 0;
     std::size_t bufferCount_ = 0;
     bool eraseSuspended_ = false;
+    std::uint32_t eraseBusyCycles_ = 0;
+    std::uint32_t programBusyCycles_ = 0;
+    std::uint32_t busyCyclesRemaining_ = 0;
+    mutable bool dq6Toggle_ = false;
+    std::uint16_t lastProgrammedWord_ = 0xFFFFu;
     std::array<BufferedWord, kMaxBufferWords> buffer_{};
     Stats stats_{};
 };

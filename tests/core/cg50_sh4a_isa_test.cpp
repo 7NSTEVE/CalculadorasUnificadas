@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <vector>
 
 namespace {
@@ -120,7 +121,8 @@ void TestFpuEncodingAndFmov32()
     Put32(rom, 0x4Cu, FloatBits(3.5f));
     Put32(rom, 0x50u, 16384u);
 
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load FPU test ROM");
     for (int i = 0; i < 27; ++i) {
         CHECK(core.StepInstruction(), "step FPU instruction");
@@ -179,7 +181,8 @@ void TestFtrvColumnMajorAndFipr()
     for (int i = 0; i < 16; ++i) Put32(rom, 0x100u + i * 4u, FloatBits(xmtrx[i]));
     for (int i = 0; i < 4; ++i)  Put32(rom, 0x140u + i * 4u, FloatBits(vec[i]));
 
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load FTRV/FIPR ROM");
     for (int i = 0; i < 23; ++i) CHECK(core.StepInstruction(), "step FTRV");
     const auto& rAfterFtrv = core.GetRegisters();
@@ -237,7 +240,8 @@ void TestSh4aIntegerAndControlOpcodes()
     // Sub 2 at 0x90: RTS/N
     PutOp(rom, 0x90u, 0x006Bu);
 
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load int SH4A ROM");
     for (int i = 0; i < 23; ++i) CHECK(core.StepInstruction(), "step int SH4A");
 
@@ -304,7 +308,8 @@ void TestClrmacVsLdtlbAndUtlbMultiHit()
     // Handler at VBR + 0x100 = 0xA0001100: NOP
     PutOp(rom, 0x1100u, 0x0009u);
 
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load MMU test ROM");
     for (int i = 0; i < 16; ++i) CHECK(core.StepInstruction(), "step up to CLRMAC");
     CHECK(core.GetRegisters().mach == 0u && core.GetRegisters().macl == 0u,
@@ -323,7 +328,8 @@ void TestClrmacVsLdtlbAndUtlbMultiHit()
 void TestRtcRealTimeEpoch()
 {
     std::vector<std::uint8_t> rom(Cg50NativeCore::kRomSize, 0x00u);
-    Cg50NativeCore core;
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    Cg50NativeCore& core = *corePtr;
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load RTC test ROM");
 
     // 2026-11-23 14:35:42 UTC = 1795444542
@@ -344,6 +350,37 @@ void TestRtcRealTimeEpoch()
     CHECK(core.Read16(0xA413FECEu, yr) && yr  == 0x0026u, "RTC RYRCNT == 0x0026");
 }
 
+void TestDtShll2AndDelaySlotJmp()
+{
+    std::vector<std::uint8_t> rom(Cg50NativeCore::kRomSize, 0x00u);
+    std::size_t p = 0;
+    PutOp(rom, p, 0xD006u); p += 2; // PC=0x00 -> lit 0x1C: 0xA0001000 (VBR)
+    PutOp(rom, p, 0x402Eu); p += 2; // PC=0x02: LDC R0, VBR
+    PutOp(rom, p, 0xD006u); p += 2; // PC=0x04 -> lit 0x20: 0x40000000 (MD=1, BL=0)
+    PutOp(rom, p, 0x400Eu); p += 2; // PC=0x06: LDC R0, SR
+    PutOp(rom, p, 0xE801u); p += 2; // PC=0x08: MOV #1, R8 (unbanked)
+    PutOp(rom, p, 0x4810u); p += 2; // PC=0x0A: DT R8 -> R8=0, T=1
+    PutOp(rom, p, 0x0A29u); p += 2; // PC=0x0C: MOVT R10 -> R10=1
+    PutOp(rom, p, 0xE903u); p += 2; // PC=0x0E: MOV #3, R9
+    PutOp(rom, p, 0x4908u); p += 2; // PC=0x10: SHLL2 R9 -> R9=12
+    PutOp(rom, p, 0xA000u); p += 2; // PC=0x12: BRA +0 (delay slot at 0x14!)
+    PutOp(rom, p, 0x432Bu); p += 2; // PC=0x14: JMP @R3 inside delay slot -> EXPEVT 0x1A0!
+    PutOp(rom, p, 0x0009u); p += 2; // PC=0x16: NOP
+    PutOp(rom, p, 0x0009u); p += 2; // PC=0x18: NOP
+    PutOp(rom, p, 0x0009u); p += 2; // PC=0x1A: NOP
+    Put32(rom, 0x1Cu, 0xA0001000u);
+    Put32(rom, 0x20u, 0x40000000u);
+
+    auto corePtr = std::make_unique<Cg50NativeCore>();
+    auto& core = *corePtr;
+    CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load DT/SHLL2/delay-slot ROM");
+    for (int i = 0; i < 11; ++i) CHECK(core.StepInstruction(), "step DT/SHLL2/delay-slot");
+    const auto& r = core.GetRegisters();
+    CHECK(r.r[8] == 0u && r.r[10] == 1u, "DT Rn decrements to 0 and sets T=1");
+    CHECK(r.r[9] == 12u, "SHLL2 shifts left by exactly 2 bits (3 << 2 == 12)");
+    CHECK(r.expevt == 0x1A0u && r.pc == 0xA0001100u, "JMP inside delay slot raises EXPEVT 0x1A0");
+}
+
 } // namespace
 
 int main()
@@ -353,6 +390,7 @@ int main()
     TestSh4aIntegerAndControlOpcodes();
     TestClrmacVsLdtlbAndUtlbMultiHit();
     TestRtcRealTimeEpoch();
+    TestDtShll2AndDelaySlotJmp();
 
     std::printf("[SH4A-TEST] finished failures=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;

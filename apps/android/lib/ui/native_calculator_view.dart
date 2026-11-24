@@ -165,6 +165,9 @@ class NativeCalculatorFaceplate extends StatefulWidget {
   final TokensInterfaz tokens;
   final void Function(CasioKeyDef key, CasioEngineController engine) onKeyLogged;
   final bool enableHardwareKeyboard;
+  final int? highlightedCurrentKeyCode;
+  final int? highlightedNextKeyCode;
+  final VoidCallback? onLcdTap;
 
   const NativeCalculatorFaceplate({
     super.key,
@@ -173,6 +176,9 @@ class NativeCalculatorFaceplate extends StatefulWidget {
     required this.tokens,
     required this.onKeyLogged,
     this.enableHardwareKeyboard = true,
+    this.highlightedCurrentKeyCode,
+    this.highlightedNextKeyCode,
+    this.onLcdTap,
   });
 
   @override
@@ -324,7 +330,19 @@ class _NativeCalculatorFaceplateState extends State<NativeCalculatorFaceplate> {
     if (box == null) return;
     final key =
         widget.skin.hitTest(ev.localPosition.dx, ev.localPosition.dy, box.size);
-    if (key == null) return;
+    if (key == null) {
+      if (widget.onLcdTap != null &&
+          box.size.width > 0 &&
+          box.size.height > 0) {
+        final sx = ev.localPosition.dx * widget.skin.skinWidth / box.size.width;
+        final sy =
+            ev.localPosition.dy * widget.skin.skinHeight / box.size.height;
+        if (widget.skin.lcdRect.contains(Offset(sx, sy))) {
+          widget.onLcdTap!();
+        }
+      }
+      return;
+    }
     unawaited(HapticFeedback.lightImpact());
     setState(() {
       _activePointers[ev.pointer] = key;
@@ -446,6 +464,48 @@ class _NativeCalculatorFaceplateState extends State<NativeCalculatorFaceplate> {
                             ),
                           ),
                         ),
+                        for (final k in widget.skin.keys)
+                          if (k.matrixCode == widget.highlightedNextKeyCode &&
+                              k.matrixCode != widget.highlightedCurrentKeyCode)
+                            Positioned(
+                              left: (k.cx - k.w * 0.52) * scaleX,
+                              top: (k.cy - k.h * 0.52) * scaleY,
+                              width: k.w * 1.04 * scaleX,
+                              height: k.h * 1.04 * scaleY,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x28FF9F0A),
+                                    borderRadius: BorderRadius.circular(7),
+                                    border: Border.all(
+                                      color: const Color(0xFFFF9F0A),
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        for (final k in widget.skin.keys)
+                          if (k.matrixCode == widget.highlightedCurrentKeyCode)
+                            Positioned(
+                              left: (k.cx - k.w * 0.54) * scaleX,
+                              top: (k.cy - k.h * 0.54) * scaleY,
+                              width: k.w * 1.08 * scaleX,
+                              height: k.h * 1.08 * scaleY,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: widget.tokens.accent
+                                        .withValues(alpha: 0.24),
+                                    borderRadius: BorderRadius.circular(7),
+                                    border: Border.all(
+                                      color: widget.tokens.accent,
+                                      width: 2.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                         for (final pressed in _activePointers.values)
                           Positioned(
                             left: (pressed.cx - pressed.w * 0.5) * scaleX,

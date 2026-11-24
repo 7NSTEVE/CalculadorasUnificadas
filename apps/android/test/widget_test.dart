@@ -113,13 +113,14 @@ void main() {
     expect(find.textContaining('SH7305'), findsNothing);
     expect(find.textContaining('UserROM'), findsNothing);
 
-    // CG50 contextual menu exposes capture + memory backup/restore + .g3a loader cleanly
+    // CG50 contextual menu exposes connectivity, Key-Log, QR, enlarged LCD & capture cleanly
     await tester.tap(find.byIcon(CupertinoIcons.ellipsis_circle));
     await tester.pumpAndSettle();
-    expect(find.text('Capturar pantalla (PNG)'), findsOneWidget);
-    expect(find.text('Exportar memoria'), findsOneWidget);
-    expect(find.text('Restaurar memoria'), findsOneWidget);
-    expect(find.text('Cargar complemento (.g3a)'), findsOneWidget);
+    expect(find.text('Conectar y archivos…'), findsOneWidget);
+    expect(find.text('Key-Log…'), findsOneWidget);
+    expect(find.text('Leer QR en pantalla'), findsOneWidget);
+    expect(find.text('Pantalla ampliada…'), findsOneWidget);
+    expect(find.text('Capturar pantalla…'), findsOneWidget);
     // Dismiss menu
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
@@ -135,8 +136,9 @@ void main() {
     expect(find.text('Oscuro Calibrado'), findsOneWidget);
     expect(find.text('Alto Contraste'), findsOneWidget);
     expect(find.text('Reducir transparencia'), findsOneWidget);
-    expect(find.text('Capturar pantalla (PNG)'), findsOneWidget);
-    expect(find.text('Exportar memoria'), findsNothing);
+    expect(find.text('Pantalla ampliada…'), findsOneWidget);
+    expect(find.text('Capturar pantalla…'), findsOneWidget);
+    expect(find.text('Conectar y archivos…'), findsNothing);
 
     await tester.tap(
       find

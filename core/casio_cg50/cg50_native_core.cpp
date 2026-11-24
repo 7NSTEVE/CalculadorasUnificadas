@@ -164,11 +164,30 @@ Cg50NativeCore::Cg50NativeCore()
       dsp0Space_(kDsp0SpaceSize, 0),
       dsp1Space_(kDsp1SpaceSize, 0)
 {
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    cov_ = std::make_unique<cg50::CoverageCollector>();
+#endif
     InitArea1PeripheralPages();
     flashCfi_.Reset();
     cpuLockFlag_ = false;
     peripheralBus_.Reset();
 }
+
+Cg50NativeCore::~Cg50NativeCore()
+{
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    if (cov_) {
+        cg50::GlobalCoverageSink::MergeAndScheduleFlush(*cov_);
+    }
+#endif
+}
+
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+bool Cg50NativeCore::DumpCoverageJson(const std::string& path) const
+{
+    return cov_ ? cov_->WriteJson(path) : false;
+}
+#endif
 
 namespace {
 
@@ -434,10 +453,38 @@ void Cg50NativeCore::Reset()
     etmu_.Reset();
     adc_.Reset();
     tpu_.Reset();
+    sdhi_.Reset();
+    hudi_.Reset();
+    prlck_.Reset();
+    rtcExt_.Reset();
+    dmacExt_.Reset();
+    extLy755a_.Reset();
+    bscRefreshPrescaler_ = 0u;
+    bscRefreshCount_ = 0u;
     scif0_.Reset();
     usb2_.Reset();
+    dsp_.Reset();
+    cache_.Reset();
+    ubc_.Reset();
     pendingEtmuIrq_ = 0u;
     pendingDmacIrq_ = 0u;
+    pendingCmtIrq_ = false;
+    ramcr_ = 0u;
+    pascr_ = 0u;
+    irmcr_ = 0u;
+    xyDspCtrl_.fill(0u);
+    itlbNextVictim_ = 0u;
+    authStats_ = AuthenticityStats{};
+    {
+        std::vector<std::string> forbidden;
+        const std::size_t nBad = AuditForbiddenEnvOverrides(forbidden);
+        if (nBad > 0u) {
+            const char* strictEnv = std::getenv("CG50_CERT_STRICT_NO_HLE");
+            if (strictEnv != nullptr && std::strcmp(strictEnv, "0") != 0) {
+                authStats_.strictNoHleViolations += nBad;
+            }
+        }
+    }
     lastLcdDmaSar_ = 0x08000000u;
     std::fill(dsp1Space_.begin(), dsp1Space_.end(), std::uint8_t{0});
     std::fill(ilcPage_.begin(), ilcPage_.end(), std::uint8_t{0});
@@ -461,6 +508,7 @@ void Cg50NativeCore::Reset()
     rtcAnchorInstruction_ = 0;
     rtc64HzLastTick_ = 0;
     rtcCarryFlag_ = false;
+    rtcCarryNextInst_ = kRtcInstructionsPerSecond;
     watchdogPrescaler_ = 0;
     pendingTimerIrq_ = 0;
     standbyMode_ = false;
@@ -730,6 +778,57 @@ void Cg50NativeCore::SetRtcEpochSeconds(const std::int64_t localUnixSeconds) noe
     rtcAnchorInstruction_ = stats_.instructions;
 }
 
+void Cg50NativeCore::SetUsbCableConnected(const bool connected) noexcept
+{
+    usb2_.SetVbusAttached(connected);
+    const std::size_t offL = kPortLDataRegisterPhysical - kPfcBasePhysical;
+    const std::size_t offU = kPortUDataRegisterPhysical - kPfcBasePhysical;
+    if (connected) {
+        pfcStorage_[offL] |= 0x02u; // PTL1 = USB_DET
+        pfcStorage_[offU] |= 0x02u; // PTU1 = USB_DET
+    } else {
+        pfcStorage_[offL] &= static_cast<std::uint8_t>(~0x02u);
+        pfcStorage_[offU] &= static_cast<std::uint8_t>(~0x02u);
+    }
+}
+
+void Cg50NativeCore::SetExternalLinkEnabled(const bool enabled) noexcept
+{
+    externalLinkEnabled_ = enabled;
+    externalLinkSink_.Reset();
+    scif0_.ConnectPeer(enabled ? &externalLinkSink_ : nullptr);
+}
+
+std::size_t Cg50NativeCore::LinkPushRx(const std::uint8_t* data, const std::size_t len) noexcept
+{
+    if (!data || len == 0u) return 0u;
+    std::size_t pushed = 0u;
+    for (std::size_t i = 0; i < len; ++i) {
+        if (scif0_.RxCount() >= cg50::Scif0Unit::kFifoCap) break;
+        scif0_.PushRx(data[i]);
+        ++pushed;
+    }
+    return pushed;
+}
+
+std::size_t Cg50NativeCore::LinkPopTx(std::uint8_t* out, const std::size_t maxLen) noexcept
+{
+    if (!out || maxLen == 0u || !externalLinkEnabled_) return 0u;
+    std::size_t popped = 0u;
+    std::uint8_t b = 0u;
+    while (popped < maxLen && externalLinkSink_.PopRxByte(b)) {
+        out[popped++] = b;
+    }
+    return popped;
+}
+
+void Cg50NativeCore::NotifyFlashStorageMutated() noexcept
+{
+    flashCfi_.Reset();
+    cache_.InvalidateIcAll();
+    cache_.InvalidateOcAll();
+}
+
 const std::uint8_t* Cg50NativeCore::ReadPointer(
     const std::uint32_t address, const std::size_t bytes) const
 {
@@ -814,6 +913,10 @@ const std::uint8_t* Cg50NativeCore::ReadPointer(
         if (sqOff + bytes <= storeQueues_.size()) {
             return storeQueues_.data() + sqOff;
         }
+    }
+
+    if (auto* ocramPtr = cache_.OcramPointer(address, bytes)) {
+        return ocramPtr;
     }
 
     const std::uint64_t dsp0End = static_cast<std::uint64_t>(kDsp0SpaceBase) + dsp0Space_.size();
@@ -952,6 +1055,10 @@ std::uint8_t* Cg50NativeCore::WritePointer(
         if (sqOff + bytes <= storeQueues_.size()) {
             return storeQueues_.data() + sqOff;
         }
+    }
+
+    if (auto* ocramPtr = cache_.OcramPointer(address, bytes)) {
+        return ocramPtr;
     }
 
     const std::uint64_t dsp0End = static_cast<std::uint64_t>(kDsp0SpaceBase) + dsp0Space_.size();
@@ -1581,10 +1688,60 @@ static bool PbdrDiagEnabled()
     static const bool enabled = std::getenv("CG50_PBDR_DIAG") != nullptr;
     return enabled;
 }
+
+// Process-lifetime cached diagnostic flags at namespace scope (zero per-call MSVC TLS guard overhead).
+const bool kPeriphDiagCached = PeriphDiagEnabled();
+const bool kForceRb0Cached = std::getenv("CG50_FORCE_RB0") != nullptr;
+const bool kDispatchR13Cached = std::getenv("CG50_APP_R13_DISPATCH") != nullptr;
+const bool kWakeReasonOverrideCached = std::getenv("CG50_WAKE_REASON") != nullptr;
+const bool kAnyReadDiagCached =
+    kReadWinEnabled || kStrLocLogEnabled || kAppIfLogEnabled ||
+    kBufWrLogEnabled || kPeriphDiagCached;
+const bool kAnyReadDiag32Cached = kAnyReadDiagCached || kWakeReasonOverrideCached;
+const bool kAnyWriteDiagCached =
+    kWrWinEnabled || kAppIfLogEnabled || kBufWrLogEnabled ||
+    kResultWatchEnabled || kPeriphDiagCached || kIlramLogEnabled;
+const bool kAnyFetchDiagCached =
+    kAnyReadDiagCached || kExamStrLogEnabled;
 } // namespace
+
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+template <typename T>
+struct CovReadGuard {
+    cg50::CoverageCollector* col;
+    std::uint32_t addr;
+    std::uint32_t phys;
+    const T& val;
+    std::uint8_t width;
+    ~CovReadGuard() noexcept
+    {
+        if (col) col->RecordRead(addr, phys, static_cast<std::uint32_t>(val), width);
+    }
+};
+#endif
 
 bool Cg50NativeCore::Read8(const std::uint32_t address, std::uint8_t& value) const
 {
+#ifndef CG50_ENABLE_COVERAGE_COUNTERS
+    if (!kAnyReadDiagCached && !addinStagingActive_) {
+        const std::uint32_t phys = (address >= 0x80000000u && address < 0xC0000000u)
+            ? (address & 0x1FFFFFFFu) : address;
+        if (phys >= kRamBase && (phys - kRamBase) < ram_.size()) {
+            value = ram_[phys - kRamBase];
+            return true;
+        }
+        if (phys < rom_.size() && flashCfi_.IsReadArray()) {
+            value = rom_[phys];
+            return true;
+        }
+        if (address >= kIlramBase && (address - kIlramBase) < ilram_.size()) {
+            value = ilram_[address - kIlramBase];
+            return true;
+        }
+    }
+#else
+    CovReadGuard<std::uint8_t> covGuard{cov_.get(), address, DirectMappedPhysicalAddress(address), value, 1u};
+#endif
     if (kReadWinEnabled && stats_.instructions >= kReadWinLo &&
         stats_.instructions <= kReadWinHi && ReadWinPcMatches(regs_.pc) &&
         address != regs_.pc && address != regs_.pc + 2u) {
@@ -1673,8 +1830,51 @@ bool Cg50NativeCore::Read8(const std::uint32_t address, std::uint8_t& value) con
         value = RtcDerivedComponent8(physical - kRtcRegisterPhysicalBase);
         return true;
     }
+    // SH7305 RTC extended registers (RSECAR..RMONAR, RCR1, RCR2, RCR3, RADJ)
+    if (physical >= kRtcRegisterPhysicalBase + 0x10u &&
+        physical <= kRtcRegisterPhysicalBase + 0x26u &&
+        (physical & 1u) == 0u) {
+        switch (physical - kRtcRegisterPhysicalBase) {
+        case 0x10u: value = rtcExt_.rsecar; return true;
+        case 0x12u: value = rtcExt_.rminar; return true;
+        case 0x14u: value = rtcExt_.rhrar;  return true;
+        case 0x16u: value = rtcExt_.rwkar;  return true;
+        case 0x18u: value = rtcExt_.rdayar; return true;
+        case 0x1Au: value = rtcExt_.rmonar; return true;
+        case 0x1Cu: value = rtcExt_.rcr1;   return true;
+        case 0x1Eu: value = rtcExt_.rcr2;   return true;
+        case 0x20u: value = static_cast<std::uint8_t>(rtcExt_.ryrar >> 8); return true;
+        case 0x21u: value = static_cast<std::uint8_t>(rtcExt_.ryrar & 0xFFu); return true;
+        case 0x24u: value = rtcExt_.rcr3;   return true;
+        case 0x26u: value = rtcExt_.radj;   return true;
+        default: break;
+        }
+    }
+    if (cg50::HudiUnit::MatchesAddress(address)) return hudi_.Read8(address, value);
     if (physical >= kPfcBasePhysical && physical <= kPfcEndPhysical) {
         value = pfcStorage_[physical - kPfcBasePhysical];
+        if (physical == kPortLDataRegisterPhysical) {
+            // CGM.dlm: PTL1 = USB.USB_DET, PTL2 = RS232.RXD_INT
+            value = static_cast<std::uint8_t>((value & ~0x06u) |
+                (usb2_.VbusAttached() ? 0x02u : 0x00u) |
+                (scif0_.HasRxData() ? 0x04u : 0x00u));
+        } else if (physical == kPortUDataRegisterPhysical) {
+            // CGM.dlm: PTU1 = USB.USB_DET (ExtLY755A USBPW)
+            value = static_cast<std::uint8_t>((value & ~0x02u) |
+                (usb2_.VbusAttached() ? 0x02u : 0x00u));
+        } else if (physical == kPortHDataRegisterPhysical) {
+            // CGM.dlm: PTH5 = ExtLY755A DDPOWER
+            value = static_cast<std::uint8_t>((value & ~0x20u) |
+                (extLy755a_.ddPower ? 0x20u : 0x00u));
+        } else if (physical == kPortJDataRegisterPhysical) {
+            // CGM.dlm: PTJ6 = ExtLY755A POWERON
+            value = static_cast<std::uint8_t>((value & ~0x40u) |
+                (extLy755a_.powerOn ? 0x40u : 0x00u));
+        } else if (physical == kPortRDataRegisterPhysical) {
+            // CGM.dlm: PTR3 = _AppIF
+            value = static_cast<std::uint8_t>((value & ~0x08u) |
+                (extLy755a_.appIfPin ? 0x08u : 0x00u));
+        }
         if (PbdrHostBitEnabled() && physical == kPfcBasePhysical + 0x3Au) {
             // PBDR: el bit 2 NO es un latch del guest sino la senal viva del
             // host; se toma del estado del buzon, no del almacen.
@@ -1717,7 +1917,8 @@ bool Cg50NativeCore::Read8(const std::uint32_t address, std::uint8_t& value) con
     if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Read8(physical, value);
     if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Read8(physical, value);
     if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Read8(physical, value);
-    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Read8(physical, value);
+    if (cg50::DdBusUnit::MatchesPhysical(physical)) return tpu_.Read8(physical, value);
+    if (cg50::SdhiUnit::MatchesPhysical(physical)) return sdhi_.Read8(physical, value);
     if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Read8(physical, value);
     if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Read8(physical, value);
     // (El status CFI 0x88 se aplica SOLO en Read16: los sondeos del driver
@@ -1738,6 +1939,30 @@ bool Cg50NativeCore::Read8(const std::uint32_t address, std::uint8_t& value) con
 
 bool Cg50NativeCore::Read16(const std::uint32_t address, std::uint16_t& value) const
 {
+#ifndef CG50_ENABLE_COVERAGE_COUNTERS
+    if (!kAnyReadDiagCached && !addinStagingActive_) {
+        const std::uint32_t phys = (address >= 0x80000000u && address < 0xC0000000u)
+            ? (address & 0x1FFFFFFFu) : address;
+        if (phys >= kRamBase && (phys - kRamBase) + 2u <= ram_.size() &&
+            phys != 0x08092D2Cu && phys != 0x08092D30u) {
+            const std::uint8_t* p = ram_.data() + (phys - kRamBase);
+            value = static_cast<std::uint16_t>((static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
+            return true;
+        }
+        if (phys + 2u <= rom_.size() && flashCfi_.IsReadArray()) {
+            const std::uint8_t* p = rom_.data() + phys;
+            value = static_cast<std::uint16_t>((static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
+            return true;
+        }
+        if (address >= kIlramBase && (address - kIlramBase) + 2u <= ilram_.size()) {
+            const std::uint8_t* p = ilram_.data() + (address - kIlramBase);
+            value = static_cast<std::uint16_t>((static_cast<std::uint16_t>(p[0]) << 8) | p[1]);
+            return true;
+        }
+    }
+#else
+    CovReadGuard<std::uint16_t> covGuard{cov_.get(), address, DirectMappedPhysicalAddress(address), value, 2u};
+#endif
     if (kReadWinEnabled && stats_.instructions >= kReadWinLo &&
         stats_.instructions <= kReadWinHi && ReadWinPcMatches(regs_.pc) &&
         address != regs_.pc && address != regs_.pc + 2u) {
@@ -1995,9 +2220,19 @@ bool Cg50NativeCore::Read16(const std::uint32_t address, std::uint16_t& value) c
     }
     if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Read16(physical, value);
     if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Read16(physical, value);
-    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Read16(physical, value);
+    if (cg50::DdBusUnit::MatchesPhysical(physical)) return tpu_.Read16(physical, value);
+    if (cg50::SdhiUnit::MatchesPhysical(physical)) return sdhi_.Read16(physical, value);
     if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Read16(physical, value);
     if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Read16(physical, value);
+    if (cg50::HudiUnit::MatchesAddress(address)) return hudi_.Read16(address, value);
+    if (physical == 0x0413FEE0u) { value = rtcExt_.ryrar; return true; }
+    if (physical == 0x0413FEDCu) { value = static_cast<std::uint16_t>(rtcExt_.rcr1) << 8; return true; }
+    if (physical == 0x0413FEDE) { value = static_cast<std::uint16_t>(rtcExt_.rcr2) << 8; return true; }
+    if (physical == 0xFE008060u) { value = dmacExt_.dmaor; return true; }
+    if (physical == 0x04090000u || physical == 0x04090004u || physical == 0x04090008u) {
+        value = dmacExt_.dmars[(physical - 0x04090000u) / 4u];
+        return true;
+    }
     const auto* p = ReadPointer(address, 2);
     if (p) {
         value = static_cast<std::uint16_t>(
@@ -2010,6 +2245,39 @@ bool Cg50NativeCore::Read16(const std::uint32_t address, std::uint16_t& value) c
 
 bool Cg50NativeCore::Read32(const std::uint32_t address, std::uint32_t& value) const
 {
+#ifndef CG50_ENABLE_COVERAGE_COUNTERS
+    if (!kAnyReadDiag32Cached && !addinStagingActive_) {
+        const std::uint32_t phys = (address >= 0x80000000u && address < 0xC0000000u)
+            ? (address & 0x1FFFFFFFu) : address;
+        if (phys >= kRamBase && (phys - kRamBase) + 4u <= ram_.size() &&
+            phys != 0x08092D2Cu && phys != 0x08092D30u) {
+            const std::uint8_t* p = ram_.data() + (phys - kRamBase);
+            value = (static_cast<std::uint32_t>(p[0]) << 24) |
+                    (static_cast<std::uint32_t>(p[1]) << 16) |
+                    (static_cast<std::uint32_t>(p[2]) << 8) |
+                    static_cast<std::uint32_t>(p[3]);
+            return true;
+        }
+        if (phys + 4u <= rom_.size() && flashCfi_.IsReadArray()) {
+            const std::uint8_t* p = rom_.data() + phys;
+            value = (static_cast<std::uint32_t>(p[0]) << 24) |
+                    (static_cast<std::uint32_t>(p[1]) << 16) |
+                    (static_cast<std::uint32_t>(p[2]) << 8) |
+                    static_cast<std::uint32_t>(p[3]);
+            return true;
+        }
+        if (address >= kIlramBase && (address - kIlramBase) + 4u <= ilram_.size()) {
+            const std::uint8_t* p = ilram_.data() + (address - kIlramBase);
+            value = (static_cast<std::uint32_t>(p[0]) << 24) |
+                    (static_cast<std::uint32_t>(p[1]) << 16) |
+                    (static_cast<std::uint32_t>(p[2]) << 8) |
+                    static_cast<std::uint32_t>(p[3]);
+            return true;
+        }
+    }
+#else
+    CovReadGuard<std::uint32_t> covGuard{cov_.get(), address, DirectMappedPhysicalAddress(address), value, 4u};
+#endif
     if (kReadWinEnabled && stats_.instructions >= kReadWinLo &&
         stats_.instructions <= kReadWinHi && ReadWinPcMatches(regs_.pc) &&
         address != regs_.pc && address != regs_.pc + 2u) {
@@ -2265,8 +2533,29 @@ bool Cg50NativeCore::Read32(const std::uint32_t address, std::uint32_t& value) c
         value = qacr1_;
         return true;
     }
+    if (address >= 0xFF000050u && address <= 0xFF00006Cu && ((address & 3u) == 0u)) {
+        value = xyDspCtrl_[(address - 0xFF000050u) / 4u];
+        return true;
+    }
+    if (address == 0xFF000070u) { value = pascr_; return true; }
+    if (address == 0xFF000074u) { value = ramcr_; return true; }
+    if (address == 0xFF000078u) { value = irmcr_; return true; }
+    if (cg50::ShCacheUnit::MatchesMmioArray(address)) {
+        value = cache_.MmioRead32(address);
+        return true;
+    }
+    if (cg50::UbcUnit::MatchesAddress(address)) {
+        return ubc_.Read32(address, value);
+    }
     if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Read32(physical, value);
     if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Read32(physical, value);
+    if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Read32(physical, value);
+    if (cg50::HudiUnit::MatchesAddress(address)) return hudi_.Read32(address, value);
+    if (cg50::PrlckUnit::MatchesAddress(address)) return prlck_.Read32(address, value);
+    if (physical == 0x04090000u || physical == 0x04090004u || physical == 0x04090008u) {
+        value = dmacExt_.dmars[(physical - 0x04090000u) / 4u];
+        return true;
+    }
     std::size_t maskIndex = 0;
     if (InterruptMaskRegisterIndex(physical, maskIndex)) {
         value = interruptMask_[maskIndex];
@@ -2324,6 +2613,22 @@ bool Cg50NativeCore::Read32(const std::uint32_t address, std::uint32_t& value) c
 
 bool Cg50NativeCore::Write8(const std::uint32_t address, const std::uint8_t value)
 {
+#ifndef CG50_ENABLE_COVERAGE_COUNTERS
+    if (!kAnyWriteDiagCached && !addinStagingActive_) {
+        const std::uint32_t phys = (address >= 0x80000000u && address < 0xC0000000u)
+            ? (address & 0x1FFFFFFFu) : address;
+        if (phys >= kRamBase && (phys - kRamBase) < ram_.size()) {
+            ram_[phys - kRamBase] = value;
+            return true;
+        }
+        if (address >= kIlramBase && (address - kIlramBase) < ilram_.size()) {
+            ilram_[address - kIlramBase] = value;
+            return true;
+        }
+    }
+#else
+    if (cov_) cov_->RecordWrite(address, DirectMappedPhysicalAddress(address), value, 1u);
+#endif
     if (kWrWinEnabled && stats_.instructions >= kWrWinLo &&
         stats_.instructions <= kWrWinHi) {
         const std::uint32_t phys = DirectMappedPhysicalAddress(address);
@@ -2399,6 +2704,40 @@ bool Cg50NativeCore::Write8(const std::uint32_t address, const std::uint8_t valu
                                  static_cast<std::uint8_t>(value));
         return true;
     }
+    if (physical >= kRtcRegisterPhysicalBase + 0x10u &&
+        physical <= kRtcRegisterPhysicalBase + 0x26u &&
+        (physical & 1u) == 0u) {
+        if (auto* page = WritePointer(physical, 1)) *page = value;
+        switch (physical - kRtcRegisterPhysicalBase) {
+        case 0x10u: rtcExt_.rsecar = static_cast<std::uint8_t>(value & 0xFFu); return true;
+        case 0x12u: rtcExt_.rminar = static_cast<std::uint8_t>(value & 0xFFu); return true;
+        case 0x14u: rtcExt_.rhrar  = static_cast<std::uint8_t>(value & 0xBFu); return true;
+        case 0x16u: rtcExt_.rwkar  = static_cast<std::uint8_t>(value & 0x87u); return true;
+        case 0x18u: rtcExt_.rdayar = static_cast<std::uint8_t>(value & 0xBFu); return true;
+        case 0x1Au: rtcExt_.rmonar = static_cast<std::uint8_t>(value & 0x9Fu); return true;
+        case 0x1Cu: { // RCR1: CF (bit 7) and AF (bit 0) are write-0-to-clear
+            const std::uint8_t cf = static_cast<std::uint8_t>(rtcExt_.rcr1 & value & 0x80u);
+            const std::uint8_t af = static_cast<std::uint8_t>(rtcExt_.rcr1 & value & 0x01u);
+            rtcExt_.rcr1 = static_cast<std::uint8_t>((value & 0x18u) | cf | af);
+            if (af == 0u) rtcExt_.pendingIrqMask &= static_cast<std::uint8_t>(~0x01u);
+            if (cf == 0u) rtcExt_.pendingIrqMask &= static_cast<std::uint8_t>(~0x04u);
+            return true;
+        }
+        case 0x1Eu: { // RCR2: PEF (bit 7) W0C, RESET (bit 1) self-clearing
+            const std::uint8_t pef = static_cast<std::uint8_t>(rtcExt_.rcr2 & value & 0x80u);
+            if ((value & 0x02u) != 0u) {
+                rtcExt_.periodicAccum = 0u;
+            }
+            rtcExt_.rcr2 = static_cast<std::uint8_t>((value & 0x7Du) | pef);
+            if (pef == 0u) rtcExt_.pendingIrqMask &= static_cast<std::uint8_t>(~0x02u);
+            return true;
+        }
+        case 0x24u: rtcExt_.rcr3 = static_cast<std::uint8_t>(value & 0x80u); return true;
+        case 0x26u: rtcExt_.radj = static_cast<std::uint8_t>(value & 0xFFu); return true;
+        default: break;
+        }
+    }
+    if (cg50::HudiUnit::MatchesAddress(address)) return hudi_.Write8(address, value);
     if (physical >= kPfcBasePhysical && physical <= kPfcEndPhysical) {
         const std::size_t off = physical - kPfcBasePhysical;
         pfcStorage_[off] = value;
@@ -2431,7 +2770,8 @@ bool Cg50NativeCore::Write8(const std::uint32_t address, const std::uint8_t valu
     if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Write8(physical, value);
     if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Write8(physical, value);
     if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Write8(physical, value);
-    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Write8(physical, value);
+    if (cg50::DdBusUnit::MatchesPhysical(physical)) return tpu_.Write8(physical, value);
+    if (cg50::SdhiUnit::MatchesPhysical(physical)) return sdhi_.Write8(physical, value);
     if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Write8(physical, value);
     if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Write8(physical, value);
     auto* p = WritePointer(address, 1);
@@ -2484,6 +2824,24 @@ bool Cg50NativeCore::Write8(const std::uint32_t address, const std::uint8_t valu
 bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t value)
 {
     const auto physical = DirectMappedPhysicalAddress(address);
+#ifndef CG50_ENABLE_COVERAGE_COUNTERS
+    if (!kAnyWriteDiagCached && !addinStagingActive_) {
+        if (physical >= kRamBase && (physical - kRamBase) + 2u <= ram_.size()) {
+            std::uint8_t* p = ram_.data() + (physical - kRamBase);
+            p[0] = static_cast<std::uint8_t>(value >> 8);
+            p[1] = static_cast<std::uint8_t>(value & 0xFFu);
+            return true;
+        }
+        if (address >= kIlramBase && (address - kIlramBase) + 2u <= ilram_.size()) {
+            std::uint8_t* p = ilram_.data() + (address - kIlramBase);
+            p[0] = static_cast<std::uint8_t>(value >> 8);
+            p[1] = static_cast<std::uint8_t>(value & 0xFFu);
+            return true;
+        }
+    }
+#else
+    if (cov_) cov_->RecordWrite(address, physical, value, 2u);
+#endif
     if (kWrWinEnabled && stats_.instructions >= kWrWinLo &&
         stats_.instructions <= kWrWinHi && WrWinAddrMatches(physical))
         TraceWrWinValues(stats_.instructions, regs_.pc, regs_.pr, physical, 2, value);
@@ -2508,9 +2866,35 @@ bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t va
     }
     if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Write16(physical, value);
     if (cg50::AdcUnit::MatchesPhysical(physical)) return adc_.Write16(physical, value);
-    if (cg50::TpuUnit::MatchesPhysical(physical)) return tpu_.Write16(physical, value);
+    if (cg50::DdBusUnit::MatchesPhysical(physical)) return tpu_.Write16(physical, value);
+    if (cg50::SdhiUnit::MatchesPhysical(physical)) return sdhi_.Write16(physical, value);
     if (cg50::Scif0Unit::MatchesPhysical(physical)) return scif0_.Write16(physical, value);
     if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Write16(physical, value);
+    if (cg50::HudiUnit::MatchesAddress(address)) return hudi_.Write16(address, value);
+    if (physical == 0x0413FEE0u) {
+        rtcExt_.ryrar = value;
+        if (auto* page = WritePointer(physical, 2)) {
+            page[0] = static_cast<std::uint8_t>(value >> 8);
+            page[1] = static_cast<std::uint8_t>(value & 0xFFu);
+        }
+        return true;
+    }
+    if (physical == 0x0413FEDCu || physical == 0x0413FEDEu) {
+        return Write8(physical, static_cast<std::uint8_t>(value >> 8));
+    }
+    if (physical == 0xFE008060u) { // DMAC0 DMAOR (NMIF=bit1 W0C, AE=bit2 W0C)
+        const std::uint16_t keepErr = static_cast<std::uint16_t>(dmacExt_.dmaor & value & 0x0006u);
+        dmacExt_.dmaor = static_cast<std::uint16_t>((value & 0x0301u) | keepErr);
+        if (auto* page = WritePointer(physical, 2)) {
+            page[0] = static_cast<std::uint8_t>(dmacExt_.dmaor >> 8);
+            page[1] = static_cast<std::uint8_t>(dmacExt_.dmaor & 0xFFu);
+        }
+        return true;
+    }
+    if (physical == 0x04090000u || physical == 0x04090004u || physical == 0x04090008u) {
+        dmacExt_.dmars[(physical - 0x04090000u) / 4u] = value;
+        return true;
+    }
     if (PeriphDiagEnabled()) {
         if (physical >= 0x044A0000u && physical < 0x044A0100u) {
             std::printf("[LCDA16] W addr=0x%08X val=0x%04X pc=0x%08X inst=%llu\n",
@@ -2581,6 +2965,10 @@ bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t va
     // siguiente (FUN_80072f80 procesa LSW-first con cmd1/cmd3).
     if (physical >= 0x04CB0000u && physical < 0x04CB0100u) {
         if (physical == 0x04CB0010u) {
+            ++authStats_.bcdAluOpsExecuted;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+            if (cov_) cov_->RecordBoundary("bcd_alu_op");
+#endif
             std::uint32_t a = 0, b = 0;
             Read32(0xA4CB0014u, a);
             Read32(0xA4CB0018u, b);
@@ -2816,6 +3204,9 @@ bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t va
         return true;
     }
     if (IsFlashPhysicalAddress(physical)) {
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        const auto prevFlashSt = static_cast<std::uint8_t>(flashCfi_.CurrentState());
+#endif
         const bool handledByCfi = flashCfi_.HandleWrite16(
             physical, value,
             [this](const std::uint32_t phys, const std::uint16_t word) noexcept {
@@ -2824,6 +3215,9 @@ bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t va
             [this](const std::uint32_t sectorBase) noexcept {
                 EraseFlashSector(sectorBase);
             });
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        if (cov_) cov_->RecordFlashTransition(prevFlashSt, static_cast<std::uint8_t>(flashCfi_.CurrentState()));
+#endif
         if (handledByCfi) {
             return true;
         }
@@ -2863,6 +3257,30 @@ bool Cg50NativeCore::Write16(const std::uint32_t address, const std::uint16_t va
 
 bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t value)
 {
+#ifndef CG50_ENABLE_COVERAGE_COUNTERS
+    if (!kAnyWriteDiagCached && !addinStagingActive_) {
+        const std::uint32_t phys = (address >= 0x80000000u && address < 0xC0000000u)
+            ? (address & 0x1FFFFFFFu) : address;
+        if (phys >= kRamBase && (phys - kRamBase) + 4u <= ram_.size()) {
+            std::uint8_t* p = ram_.data() + (phys - kRamBase);
+            p[0] = static_cast<std::uint8_t>(value >> 24);
+            p[1] = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
+            p[2] = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
+            p[3] = static_cast<std::uint8_t>(value & 0xFFu);
+            return true;
+        }
+        if (address >= kIlramBase && (address - kIlramBase) + 4u <= ilram_.size()) {
+            std::uint8_t* p = ilram_.data() + (address - kIlramBase);
+            p[0] = static_cast<std::uint8_t>(value >> 24);
+            p[1] = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
+            p[2] = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
+            p[3] = static_cast<std::uint8_t>(value & 0xFFu);
+            return true;
+        }
+    }
+#else
+    if (cov_) cov_->RecordWrite(address, DirectMappedPhysicalAddress(address), value, 4u);
+#endif
     if (kWrWinEnabled && stats_.instructions >= kWrWinLo &&
         stats_.instructions <= kWrWinHi) {
         const std::uint32_t phys = DirectMappedPhysicalAddress(address);
@@ -2946,10 +3364,8 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
                 regs_.pc, regs_.pr, value, (unsigned long long)stats_.instructions);
         }
     }
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
     if (address == 0xFD801D40u) {
-        // Hack historico (baseline): convertia el 0 del OS en 00 00 00 01.
-        // El oficial termina con 0 en 0xFD801D40 (GUEST_DUMP ILRAM idle,
-        // 2026-10-18); el hack queda disponible solo con CG50_1D40_LEGACY=1.
         static const bool legacy1d40 = std::getenv("CG50_1D40_LEGACY") != nullptr;
         if (legacy1d40 && value == 0 && HasUserRom()) {
             onChipRam_[0x1D40] = 0x00;
@@ -2959,6 +3375,7 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
             return true;
         }
     }
+#endif
     const auto physical = DirectMappedPhysicalAddress(address);
     if (address == kPtehRegister) { pteh_ = value & 0x1FFFFCFFu; return true; }
     // TMU unit 0: TCOR at base + 0x08 + ch*0x0C, TCNT at + 0x0C + ch*0x0C.
@@ -2999,6 +3416,20 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
     }
     if (address == kQacr0Register) { qacr0_ = value & 0x0000001Cu; return true; }
     if (address == kQacr1Register) { qacr1_ = value & 0x0000001Cu; return true; }
+    if (address >= 0xFF000050u && address <= 0xFF00006Cu && ((address & 3u) == 0u)) {
+        xyDspCtrl_[(address - 0xFF000050u) / 4u] = value;
+        return true;
+    }
+    if (address == 0xFF000070u) { pascr_ = value; return true; }
+    if (address == 0xFF000074u) { ramcr_ = value & 0x000003E0u; return true; }
+    if (address == 0xFF000078u) { irmcr_ = value; return true; }
+    if (cg50::ShCacheUnit::MatchesMmioArray(address)) {
+        cache_.MmioWrite32(address, value);
+        return true;
+    }
+    if (cg50::UbcUnit::MatchesAddress(address)) {
+        return ubc_.Write32(address, value);
+    }
     if (cg50::Intc2Unit::MatchesPhysical(physical)) return intc2_.Write32(physical, value);
     if (cg50::EtmuUnit::MatchesPhysical(physical)) return etmu_.Write32(physical, value);
     if (address == kTtbRegister) { ttb_ = value; return true; }
@@ -3007,6 +3438,7 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
     if (address >= kBscRegisterBase && address <= kBscRegisterEnd &&
         ((address - kBscRegisterBase) % 4) == 0) {
         const std::size_t index = (address - kBscRegisterBase) / 4;
+        // Exact CPU73050.dll callbacks (0xC1D6, 0xC254, 0xC3CC + 0x1006DAA0, 0xC5A4, 0xC0AA/C14C/C194)
         if (index == 0) {
             bscRegisters_[0] =
                 (value & kBusCommonControlWritableMask) |
@@ -3014,10 +3446,24 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
             busCommonControl_ = bscRegisters_[0];
         } else if (index >= 1 && index <= 8) {
             bscRegisters_[index] = value & kBscBusControlWritableMask;
+        } else if (index >= 9 && index <= 16) {
+            static constexpr std::array<std::uint32_t, 8> kCsWcrMasks = {
+                0x00171FC3u, 0x00031FC3u, 0x00000000u, 0x00171FC3u,
+                0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u
+            };
+            const std::uint32_t memType = (bscRegisters_[index - 8u] >> 12) & 0x7u;
+            bscRegisters_[index] = value & kCsWcrMasks[memType];
         } else if (index == 17) {
             bscRegisters_[17] = value & kBscSdramControlWritableMask;
-        } else {
-            bscRegisters_[index] = value;
+        } else if (index == 18) { // RTCSR (0xFEC10048): requires 0xA55A0000 key, CMF bit 7 is W0C
+            if ((value & 0xA55A0000u) == 0xA55A0000u) {
+                const std::uint32_t keepCmf = bscRegisters_[18] & value & 0x80u;
+                bscRegisters_[18] = (value & 0x7Fu) | keepCmf;
+            }
+        } else if (index == 19 || index == 20) { // RTCNT (0x4C) / RTCOR (0x50): requires 0xA55A0000 key
+            if ((value & 0xA55A0000u) == 0xA55A0000u) {
+                bscRegisters_[index] = value & 0xFFu;
+            }
         }
         return true;
     }
@@ -3106,10 +3552,10 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
         return true;
     }
     if (address == kCacheControlRegister) {
-        // Cache tags/timing are not exposed to the functional core yet.  The
-        // architectural CCR value is retained so the SH startup sequence can
-        // enable caches and observe its write-back exactly.
-        cacheControl_ = value & kCacheControlWritableMask;
+        const std::uint32_t cmdMask = kCacheControlWritableMask |
+            cg50::ShCacheUnit::kCcrOci | cg50::ShCacheUnit::kCcrIci;
+        cache_.ApplyCcrWrite(value & cmdMask);
+        cacheControl_ = cache_.Ccr();
         return true;
     }
     if (address == kMmuControlRegister) {
@@ -3156,6 +3602,24 @@ bool Cg50NativeCore::Write32(const std::uint32_t address, const std::uint32_t va
     if (InterruptMaskClearRegisterIndex(physical, maskIndex)) {
         interruptMask_[maskIndex] &= static_cast<std::uint8_t>(~(value & 0xFFu));
         if (maskIndex == 5) interruptMask5_ = interruptMask_[5];
+        return true;
+    }
+    if (cg50::Usb2Unit::MatchesPhysical(physical)) return usb2_.Write32(physical, value);
+    if (cg50::HudiUnit::MatchesAddress(address)) return hudi_.Write32(address, value);
+    if (cg50::PrlckUnit::MatchesAddress(address)) return prlck_.Write32(address, value);
+    if (physical == 0x04090000u || physical == 0x04090004u || physical == 0x04090008u) {
+        dmacExt_.dmars[(physical - 0x04090000u) / 4u] = static_cast<std::uint16_t>(value & 0xFFFFu);
+        return true;
+    }
+    // DMAC0 TCR0..5 mask 0x00FFFFFF (CPU73050.dll W_CB 0xFB09)
+    if (physical == 0xFE008028u || physical == 0xFE008038u || physical == 0xFE008048u ||
+        physical == 0xFE008058u || physical == 0xFE008078u || physical == 0xFE008088u) {
+        const std::size_t off = static_cast<std::size_t>(physical - 0xFE008000u);
+        const std::uint32_t masked = value & 0x00FFFFFFu;
+        dmarsPage_[off + 0] = static_cast<std::uint8_t>((masked >> 24) & 0xFFu);
+        dmarsPage_[off + 1] = static_cast<std::uint8_t>((masked >> 16) & 0xFFu);
+        dmarsPage_[off + 2] = static_cast<std::uint8_t>((masked >> 8) & 0xFFu);
+        dmarsPage_[off + 3] = static_cast<std::uint8_t>(masked & 0xFFu);
         return true;
     }
     // SH7305 DMAC0: 6 channels
@@ -3258,12 +3722,14 @@ void Cg50NativeCore::UpdatePfcDataRegister(const std::uint32_t physical, const s
         break;
     case kPortHDataRegisterPhysical:
         DrivePortData(cg50::PfcPort::H, value, 0xFFu);
+        extLy755a_.ddPower = (value & 0x20u) != 0;
         if ((value & 0x20u) != 0) {
             peripheralBus_.SetV28Sys(true);
         }
         break;
     case kPortJDataRegisterPhysical:
         DrivePortData(cg50::PfcPort::J, value, 0xFFu);
+        extLy755a_.powerOn = (value & 0x40u) != 0;
         if ((value & 0x40u) != 0) {
             peripheralBus_.SetV28Sys(true);
         }
@@ -3278,9 +3744,11 @@ void Cg50NativeCore::UpdatePfcDataRegister(const std::uint32_t physical, const s
         break;
     case kPortRDataRegisterPhysical:
         DrivePortData(cg50::PfcPort::R, value, 0xFFu);
+        extLy755a_.appIfPin = (value & 0x08u) != 0;
         break;
     case kPortUDataRegisterPhysical:
         DrivePortData(cg50::PfcPort::U, value, 0xFFu);
+        extLy755a_.usbPower = usb2_.VbusAttached();
         break;
     case kPortPDataRegisterPhysical:
         DrivePortData(cg50::PfcPort::P, value, 0xFFu);
@@ -3325,6 +3793,9 @@ void Cg50NativeCore::TickCompareMatchTimer(const std::uint64_t cycles) noexcept
         if (next == compare) {
             compareMatchTimerControl_ = static_cast<std::uint16_t>(
                 compareMatchTimerControl_ | kCompareMatchTimerCompareFlag);
+            if ((compareMatchTimerControl_ & 0x0040u) != 0u) {
+                pendingCmtIrq_ = true;
+            }
             compareMatchTimerCounter_ = 0;
             // Bit 8 selects repeat mode in CPU73050's compare callback.  In
             // one-shot mode the concrete callback clears CMSTR bit 5.
@@ -3342,31 +3813,35 @@ void Cg50NativeCore::TickTimerUnit(const std::uint64_t cycles) noexcept
 {
     if (cycles == 0) return;
 
-    // ---- Unit 0 (dedicated register file; see kTmu0PhysicalBase note) ----
+    // ---- Unit 0 (dedicated register file; gated by CPG MSTPCR0 bit 13) ----
     const std::uint32_t delta = static_cast<std::uint32_t>(cycles * 4u);
-    for (std::size_t ch = 0; ch < tmu0_.size(); ++ch) {
-        auto& channel = tmu0_[ch];
-        if (!channel.running) continue;
-        if (channel.tcnt >= delta) {
-            channel.tcnt -= delta;
-        } else {
-            // Underflow: set UNF, reload from TCOR and keep the excess
-            // counted against the new period.
-            if (channel.tcor != 0u) {
-                channel.tcnt = channel.tcor -
-                               ((delta - channel.tcnt - 1u) % (channel.tcor + 1u));
-            } else {
-                channel.tcnt = 0u - (delta - channel.tcnt);  // free-run
-            }
-            channel.tcr |= static_cast<std::uint16_t>(kTmuTcrUnderflowFlag);
-            if ((channel.tcr & kTmuTcrUnderflowInterruptEnable) != 0) {
-                pendingTimerIrq_ |= static_cast<std::uint32_t>(1u << ch);
+    if ((moduleStopControl0_ & 0x00002000u) == 0u) {
+        if (tmu0_[0].running || tmu0_[1].running || tmu0_[2].running) {
+            for (std::size_t ch = 0; ch < tmu0_.size(); ++ch) {
+                auto& channel = tmu0_[ch];
+                if (!channel.running) continue;
+                if (channel.tcnt >= delta) {
+                    channel.tcnt -= delta;
+                } else {
+                    // Underflow: set UNF, reload from TCOR and keep the excess
+                    // counted against the new period.
+                    if (channel.tcor != 0u) {
+                        channel.tcnt = channel.tcor -
+                                       ((delta - channel.tcnt - 1u) % (channel.tcor + 1u));
+                    } else {
+                        channel.tcnt = 0u - (delta - channel.tcnt);  // free-run
+                    }
+                    channel.tcr |= static_cast<std::uint16_t>(kTmuTcrUnderflowFlag);
+                    if ((channel.tcr & kTmuTcrUnderflowInterruptEnable) != 0) {
+                        pendingTimerIrq_ |= static_cast<std::uint32_t>(1u << ch);
+                    }
+                }
             }
         }
     }
 
-    // ---- Unit 1 (page-backed at 0xA4490000, tick only; no IRQ events:
-    //      the ch3-5 INTEVT codes are not evidenced locally) ----
+    // ---- Unit 1 (page-backed at 0xA4490000, gated by CPG MSTPCR0 bit 13 = TMU stop) ----
+    if ((moduleStopControl0_ & 0x00002000u) == 0u)
     if (std::uint8_t* tmu1 =
             area1PageTable_[(0x04490000u - kArea1BasePhysical) >> 12]) {
         std::uint8_t* tstr = tmu1 + 0x04u;
@@ -3424,7 +3899,134 @@ void Cg50NativeCore::TickTimerUnit(const std::uint64_t cycles) noexcept
         }
     }
     pendingEtmuIrq_ |= etmu_.Tick(cycles);
-    tpu_.Tick(cycles);
+    if (tpu_.Ddclkr0() != 0u) {
+        tpu_.Tick(cycles);
+    }
+    if ((moduleStopControl0_ & 0x00000080u) == 0u) {
+        scif0_.Tick(cycles);
+    }
+    if ((bscRegisters_[18] & 0x38u) != 0u) {
+        TickBscRefresh(cycles);
+    }
+    if (((rtcExt_.rcr2 & 0x70u) != 0u && (rtcExt_.rcr2 & 0x01u) != 0u) || rtcVirtualClock_) {
+        TickRtcAlarmsAndPeriodic(cycles);
+    }
+    if (flashCfi_.IsBusy()) {
+        flashCfi_.TickBusy(cycles);
+    }
+    peripheralBus_.LcdMut().TickFrameMark(cycles);
+}
+
+std::uint32_t Cg50NativeCore::EffectiveCpuClockHz() const noexcept
+{
+    // SH7305 CPG: FLL (~32.768 kHz * FLF) -> PLL multiplier -> FRQCR IFC divider.
+    // Default fx-CG50 operating frequency is ~58.98 MHz (32768 * 900 * 2).
+    const std::uint32_t flf = (fllFrequency_ & 0x7FFu);
+    const std::uint64_t fllHz = (flf > 0u) ? (32768ull * flf) : 29491200ull;
+    const bool pllOn = (pllControl_ & 0x4000u) != 0u;
+    const std::uint32_t pllMul = pllOn ? 2u : 1u;
+    const std::uint32_t ifcCode = (frequencyControl_ >> 20) & 0xFu;
+    static constexpr std::array<std::uint32_t, 16> kDivs = {
+        1u, 2u, 3u, 4u, 6u, 8u, 12u, 16u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u
+    };
+    const std::uint64_t hz = (fllHz * pllMul) / kDivs[ifcCode];
+    return static_cast<std::uint32_t>(hz > 0u ? hz : 58982400u);
+}
+
+bool Cg50NativeCore::IsCpgModuleStopped(const std::uint32_t mstpcrIndex,
+                                        const std::uint32_t bitMask) const noexcept
+{
+    if (mstpcrIndex == 0u) return (moduleStopControl0_ & bitMask) != 0u;
+    if (mstpcrIndex == 2u) return (moduleStopControl2_ & bitMask) != 0u;
+    return false;
+}
+
+void Cg50NativeCore::TickBscRefresh(const std::uint64_t cycles) noexcept
+{
+    const std::uint32_t rtcsr = bscRegisters_[18];
+    const std::uint32_t cks = (rtcsr >> 3) & 0x7u;
+    if (cks == 0u || cycles == 0u) return;
+    static constexpr std::array<std::uint64_t, 8> kRefreshDivs = {
+        0u, 4u, 16u, 64u, 256u, 1024u, 2048u, 4096u
+    };
+    const std::uint64_t div = kRefreshDivs[cks];
+    bscRefreshPrescaler_ += cycles;
+    const std::uint64_t inc = bscRefreshPrescaler_ / div;
+    if (inc == 0u) return;
+    bscRefreshPrescaler_ %= div;
+    std::uint32_t rtcnt = bscRegisters_[19] & 0xFFu;
+    const std::uint32_t rtcor = bscRegisters_[20] & 0xFFu;
+    const std::uint32_t period = (rtcor > 0u) ? rtcor : 256u;
+    const std::uint64_t total = rtcnt + inc;
+    if (total >= period) {
+        bscRegisters_[18] |= 0x80u; // RTCSR.CMF
+        bscRefreshCount_ += static_cast<std::uint32_t>(total / period);
+        rtcnt = static_cast<std::uint32_t>(total % period);
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        if (cov_) cov_->RecordBoundary("bsc_refresh_tick");
+#endif
+    } else {
+        rtcnt = static_cast<std::uint32_t>(total);
+    }
+    bscRegisters_[19] = rtcnt & 0xFFu;
+}
+
+void Cg50NativeCore::TickRtcAlarmsAndPeriodic(const std::uint64_t cycles) noexcept
+{
+    if (cycles == 0u) return;
+    // Periodic interrupt (RCR2.PES bits 6..4: 1=1/256s, 2=1/64s, 3=1/16s, 4=1/4s, 5=1/2s, 6=1s, 7=2s)
+    const std::uint8_t pes = static_cast<std::uint8_t>((rtcExt_.rcr2 >> 4) & 0x7u);
+    if (pes != 0u && (rtcExt_.rcr2 & 0x01u) != 0u) {
+        static constexpr std::array<std::uint64_t, 8> kPesCycles = {
+            0u, 128u, 512u, 2048u, 8192u, 16384u, 32768u, 65536u
+        };
+        rtcExt_.periodicAccum += cycles;
+        if (rtcExt_.periodicAccum >= kPesCycles[pes]) {
+            rtcExt_.periodicAccum %= kPesCycles[pes];
+            rtcExt_.rcr2 |= 0x80u; // PEF
+            rtcExt_.pendingIrqMask |= 0x02u;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+            if (cov_) cov_->RecordBoundary("rtc_periodic_fire");
+#endif
+        }
+    }
+    if (!rtcVirtualClock_ || (rtcExt_.rcr2 & 0x01u) == 0u) return;
+    const std::int64_t curSec = static_cast<std::int64_t>(RtcVirtualSeconds());
+    if (curSec == rtcExt_.lastAlarmSecond) return;
+    rtcExt_.lastAlarmSecond = curSec;
+    // Carry flag on second rollover
+    rtcExt_.rcr1 |= 0x80u; // CF
+    if ((rtcExt_.rcr1 & 0x10u) != 0u) {
+        rtcExt_.pendingIrqMask |= 0x04u;
+    }
+    // Check enabled alarm comparators (RSECAR..RMONAR bit 7 = ENB, RCR3.YAENB = bit 7)
+    bool anyEnb = false;
+    bool allMatch = true;
+    auto checkField = [&](const std::uint8_t ar, const std::uint32_t offset, const std::uint8_t mask) {
+        if ((ar & 0x80u) != 0u) {
+            anyEnb = true;
+            if ((ar & mask) != (RtcDerivedComponent8(offset) & mask)) allMatch = false;
+        }
+    };
+    checkField(rtcExt_.rsecar, 0x02u, 0x7Fu);
+    checkField(rtcExt_.rminar, 0x04u, 0x7Fu);
+    checkField(rtcExt_.rhrar,  0x06u, 0x3Fu);
+    checkField(rtcExt_.rwkar,  0x08u, 0x07u);
+    checkField(rtcExt_.rdayar, 0x0Au, 0x3Fu);
+    checkField(rtcExt_.rmonar, 0x0Cu, 0x1Fu);
+    if ((rtcExt_.rcr3 & 0x80u) != 0u) {
+        anyEnb = true;
+        if (rtcExt_.ryrar != RtcDerivedYearBcd()) allMatch = false;
+    }
+    if (anyEnb && allMatch) {
+        rtcExt_.rcr1 |= 0x01u; // AF
+        if ((rtcExt_.rcr1 & 0x08u) != 0u) {
+            rtcExt_.pendingIrqMask |= 0x01u;
+        }
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        if (cov_) cov_->RecordBoundary("rtc_alarm_fire");
+#endif
+    }
 }
 
 void Cg50NativeCore::FlushStoreQueue(const std::uint32_t sqAddress)
@@ -3459,12 +4061,28 @@ void Cg50NativeCore::ExecuteDmacChannel(const std::size_t channelIndex,
                                         const std::size_t channelBase,
                                         const std::uint32_t value)
 {
-    dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((value >> 24) & 0xFFu);
-    dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
-    dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
-    dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(value & 0xFFu);
+    // Exact CPU73050.dll CHCR writable masks + W0C on TE (bit 1) & HE (bit 19 on ch0..3)
+    const std::uint32_t oldChcr =
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 0xC]) << 24) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 0xD]) << 16) |
+        (static_cast<std::uint32_t>(dmarsPage_[channelBase + 0xE]) << 8) |
+        static_cast<std::uint32_t>(dmarsPage_[channelBase + 0xF]);
+    const std::uint32_t w0cMask = (channelIndex < 4u) ? 0x00080002u : 0x00000002u;
+    const std::uint32_t rwMask  = (channelIndex < 4u) ? 0x4FB7FFFDu : 0x4030FF3Du;
+    const std::uint32_t maskedChcr = (value & rwMask) | (oldChcr & value & w0cMask);
 
-    if ((value & 1u) == 0u) return; // DE = 0
+    dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((maskedChcr >> 24) & 0xFFu);
+    dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((maskedChcr >> 16) & 0xFFu);
+    dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((maskedChcr >> 8) & 0xFFu);
+    dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(maskedChcr & 0xFFu);
+
+    if ((maskedChcr & 1u) == 0u) return; // DE = 0
+    // CPG MSTPCR0 bit 21 stops DMAC0; DMAOR.DME=0 or AE/NMIF blocks transfers
+    if ((moduleStopControl0_ & 0x00200000u) != 0u ||
+        (dmacExt_.dmaor & 0x0001u) == 0u ||
+        (dmacExt_.dmaor & 0x0006u) != 0u) {
+        return;
+    }
 
     std::uint32_t sar =
         (static_cast<std::uint32_t>(dmarsPage_[channelBase]) << 24) |
@@ -3487,14 +4105,41 @@ void Cg50NativeCore::ExecuteDmacChannel(const std::size_t channelIndex,
         1u, 2u, 4u, 16u, 32u, 1u, 1u, 1u
     };
     const std::size_t tsCode =
-        static_cast<std::size_t>((((value >> 20) & 1u) << 2) | ((value >> 3) & 3u));
+        static_cast<std::size_t>((((maskedChcr >> 20) & 1u) << 2) | ((maskedChcr >> 3) & 3u));
     const std::size_t unitBytes = kUnitSizes[tsCode];
-    const std::uint32_t smMode = (value >> 12) & 0x3u; // 0=fixed, 1=inc, 2=dec
-    const std::uint32_t dmMode = (value >> 14) & 0x3u;
+    const std::uint32_t smMode = (maskedChcr >> 12) & 0x3u; // 0=fixed, 1=inc, 2=dec
+    const std::uint32_t dmMode = (maskedChcr >> 14) & 0x3u;
     const std::size_t totalBytes = static_cast<std::size_t>(tcr) * unitBytes;
 
     const std::uint32_t sarPhys = DirectMappedPhysicalAddress(sar);
     const std::uint32_t darPhys = DirectMappedPhysicalAddress(dar);
+
+    // SH7305 DMAC0 Address Error (DMAOR.AE bit 2): misaligned SAR/DAR for unitBytes
+    // (16-bit LCD bus fixed port is 2-byte aligned even when 16B/32B burst writes 16-bit pairs)
+    const std::uint32_t sarAlignMask = (unitBytes > 1u && !IsLcdBusPhysical(sarPhys))
+        ? static_cast<std::uint32_t>(unitBytes - 1u) : (IsLcdBusPhysical(sarPhys) ? 1u : 0u);
+    const std::uint32_t darAlignMask = (unitBytes > 1u && !IsLcdBusPhysical(darPhys))
+        ? static_cast<std::uint32_t>(unitBytes - 1u) : (IsLcdBusPhysical(darPhys) ? 1u : 0u);
+    if (totalBytes > 0u && (((sar & sarAlignMask) != 0u) || ((dar & darAlignMask) != 0u))) {
+        dmacExt_.dmaor |= 0x0004u; // Set AE
+        ++dmacExt_.addressErrorCount;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        if (cov_) cov_->RecordBoundary("dmac_addr_error");
+#endif
+        const std::uint32_t errChcr = maskedChcr & ~0x00000001u; // Clear DE
+        dmarsPage_[channelBase + 0xC] = static_cast<std::uint8_t>((errChcr >> 24) & 0xFFu);
+        dmarsPage_[channelBase + 0xD] = static_cast<std::uint8_t>((errChcr >> 16) & 0xFFu);
+        dmarsPage_[channelBase + 0xE] = static_cast<std::uint8_t>((errChcr >> 8) & 0xFFu);
+        dmarsPage_[channelBase + 0xF] = static_cast<std::uint8_t>(errChcr & 0xFFu);
+        return;
+    }
+
+    // Track DMAOR round-robin / fixed arbitration state
+    dmacExt_.lastServedChannel = static_cast<std::uint8_t>(channelIndex);
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    if (cov_ && channelIndex < 6u) ++cov_->dmacChannelsHit[channelIndex];
+#endif
+    ++dmacExt_.arbitrationCount;
 
     if (PeriphDiagEnabled()) {
         std::printf("[DMA-CH%zu] SAR=0x%08X DAR=0x%08X TCR=%u CHCR=0x%08X sm=%u dm=%u total=%zu inst=%llu\n",
@@ -3524,6 +4169,7 @@ void Cg50NativeCore::ExecuteDmacChannel(const std::size_t channelIndex,
             auto* dst = WritePointer(dar, totalBytes);
             if (src && dst) {
                 std::memcpy(dst, src, totalBytes);
+                cache_.InvalidateRangeForDma(darPhys, totalBytes);
                 sar += static_cast<std::uint32_t>(totalBytes);
                 dar += static_cast<std::uint32_t>(totalBytes);
             }
@@ -3706,6 +4352,13 @@ bool Cg50NativeCore::EnterGeneralException(
     ++stats_.exceptionsTaken;
     stats_.lastExceptionEvent = entry.expevt;
     stats_.cycles += 5;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    if (cov_) {
+        ++cov_->expevtHits[entry.expevt];
+        cov_->RecordCpuState(static_cast<std::uint8_t>(state_));
+        if (executingDelaySlot_) cov_->RecordBoundary("delay_slot_exception");
+    }
+#endif
 
     std::wstringstream ss;
     ss << L"CG50 ROM-native: excepciÃƒÆ’Ã‚Â³n SH EXPEVT=0x"
@@ -3717,6 +4370,9 @@ bool Cg50NativeCore::EnterGeneralException(
 
 bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t op)
 {
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    if (cov_) ++cov_->opcode16Hits[op];
+#endif
     // CG50_PCWIN (exam 2026-10-30): tracer de entrada de PC, ver
     // TracePcWindow. kPcWinLogEnabled lo evalua la funcion; aqui solo el
     // if por instructions (barato y default-off).
@@ -3760,7 +4416,9 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
     const auto GuestTranslate = [&](const std::uint32_t address,
                                     const bool write,
                                     std::uint32_t& translated) -> bool {
-        if ((mmuControl_ & kMmuControlAtBit) == 0) {
+        if ((mmuControl_ & kMmuControlAtBit) == 0u ||
+            (address >= 0x80000000u && address < 0xC0000000u) ||
+            address >= 0xE0000000u) {
             translated = address;
             return true;
         }
@@ -3771,7 +4429,7 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
             // 2026-10-29 M4/M5: el vector lo reporta TranslateAddress (0x400
             // miss/proteccion; 0x100 initial-page-write). TEA/PTEH ya los
             // rellena la propia TranslateAddress (RaiseFault).
-            if (PeriphDiagEnabled()) {
+            if (kPeriphDiagCached) {
                 std::printf("[TLB-FAULT] pc=0x%08X addr=0x%08X write=%d code=0x%03X sr=0x%08X inst=%llu\n",
                     pc, address, write ? 1 : 0, exceptionCode, regs_.sr,
                     (unsigned long long)stats_.instructions);
@@ -3849,8 +4507,36 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
     // Primary O(1) top-nibble dispatch. Nibbles 0x1..0xF resolve here and return
     // directly; only nibble 0x0 breaks out into the system/cache fallthrough.
     switch (op >> 12) {
-    case 0xFu:
+    case 0xFu: {
+        const std::uint16_t fSub = op & 0xFC00u;
+        if ((regs_.sr & kSrDsp) != 0u &&
+            (fSub == 0xF000u || fSub == 0xF400u || fSub == 0xF800u)) {
+            std::uint16_t op2 = 0u;
+            if (fSub == 0xF800u) {
+                if (executingDelaySlot_) {
+                    return EnterGeneralException(pc, cg50::kExpevtSlotIllegalInstruction, false, 0);
+                }
+                if (!Read16(regs_.pc, op2)) return FailMemory(pc, op, regs_.pc, false);
+                regs_.pc += 2u;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+                if (cov_) ++cov_->dsp32Op2Hi8Hits[op2 >> 8];
+#endif
+            }
+            ++authStats_.dspOpcodesExecuted;
+            dsp_.ExecuteParallel32(op, op2, regs_.r, Read16, Write16, Read32, Write32);
+            stats_.cycles += 1;
+            return true;
+        }
+        if (strictSh7305NoFpu_) {
+            // Proven by x86 disassembly of Casio CPU73050.dll (0x1001605C / 0x1001A63C..78 / 0x10016125):
+            // SH7305 has NO hardware IEEE-754 FPU; 0xF000..0xFBFF requires SR.DSP=1, 0xFC00..0xFFFF is always illegal.
+            return EnterGeneralException(
+                pc,
+                executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction,
+                false, 0);
+        }
         return ExecuteFpuOpcode(pc, op);
+    }
     case 0xEu:
         regs_.r[n] = static_cast<std::uint32_t>(SignExtend8(op));
         stats_.cycles += 1;
@@ -3931,6 +4617,13 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
             HaltUnsupported(pc, op);
             return false;
         }
+        case 0x2u: { // SETRC #imm8 (SH4AL-DSP: SR.RC = imm8)
+            const std::uint32_t imm = op & 0x00FFu;
+            regs_.sr = (regs_.sr & ~kSrRcMask) | ((imm & 0x0FFFu) << 16);
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
         case 0x3u: { // JSR/N @@(disp, TBR) - Fast system call without delay slot
             if (executingDelaySlot_)
                 return EnterGeneralException(pc, cg50::kExpevtSlotIllegalInstruction, false, 0);
@@ -3965,6 +4658,20 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
             }
             stats_.cycles += 1;
             return true;
+        case 0xCu: { // LDRS @(disp, PC) (SH4AL-DSP: RS = PC + 4 + disp*2)
+            const std::uint32_t disp = op & 0x00FFu;
+            dsp_.rs = pc + 4u + (disp << 1);
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0xEu: { // LDRE @(disp, PC) (SH4AL-DSP: RE = PC + 4 + disp*2)
+            const std::uint32_t disp = op & 0x00FFu;
+            dsp_.re = pc + 4u + (disp << 1);
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
         case 0xDu:
             if (executingDelaySlot_)
                 return EnterGeneralException(pc, cg50::kExpevtSlotIllegalInstruction, false, 0);
@@ -4047,18 +4754,39 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
         case 0x1Au: regs_.macl = regs_.r[n]; stats_.cycles += 1; return true;
         case 0x2Au: regs_.pr = regs_.r[n]; stats_.cycles += 1; return true;
         case 0x5Au:
-        case 0x6Au:
+            if (strictSh7305NoFpu_) {
+                // Proven in CPU73050.dll: 0x4n5A (LDS Rn, FPUL) is ILLEGAL on SH7305 (0x10016125).
+                return EnterGeneralException(
+                    pc,
+                    executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction,
+                    false, 0);
+            }
             if ((regs_.sr & kSrFd) != 0) {
-                std::printf("[FPU-FD-STS] pc=0x%08X op=0x%04X sr=0x%08X inst=%llu\n",
-                    pc, op, regs_.sr, (unsigned long long)stats_.instructions);
                 (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
                 return true;
             }
-            if ((op & 0xFFu) == 0x5Au) {
-                regs_.fpul = regs_.r[n];
-            } else {
-                regs_.fpscr = regs_.r[n] & kFpscrWritableMask;
+            regs_.fpul = regs_.r[n];
+            stats_.cycles += 1;
+            return true;
+        case 0x6Au:
+            if (strictSh7305NoFpu_ || (regs_.sr & kSrDsp) != 0u) {
+                // Proven in CPU73050.dll (0x10018B27): 0x4n6A = LDS Rm, DSR (gated on SR.DSP bit 12).
+                if ((regs_.sr & kSrDsp) == 0u) {
+                    return EnterGeneralException(
+                        pc,
+                        executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction,
+                        false, 0);
+                }
+                dsp_.dsr = regs_.r[n];
+                ++authStats_.dspOpcodesExecuted;
+                stats_.cycles += 1;
+                return true;
             }
+            if ((regs_.sr & kSrFd) != 0) {
+                (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
+                return true;
+            }
+            regs_.fpscr = regs_.r[n] & kFpscrWritableMask;
             stats_.cycles += 1;
             return true;
         case 0x11u: SetT(static_cast<std::int32_t>(regs_.r[n]) >= 0); stats_.cycles += 1; return true;
@@ -4086,6 +4814,119 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
             regs_.pc = regs_.r[n];
             stats_.cycles += 2;
             return true;
+        case 0x14u: // SETRC Rm (SH4AL-DSP)
+            regs_.sr = (regs_.sr & ~kSrRcMask) | ((regs_.r[n] & 0x0FFFu) << 16);
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x5Eu: // LDC Rm, MOD
+            dsp_.mod = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x6Eu: // LDC Rm, RS
+            dsp_.rs = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x7Eu: // LDC Rm, RE
+            dsp_.re = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x7Au: // LDS Rm, A0 (CPU73050.dll 0x10018B68, gated on SR.DSP)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            dsp_.SetA0Low(regs_.r[n]);
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x8Au: // LDS Rm, X0 (CPU73050.dll 0x10018BA9, gated on SR.DSP)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            dsp_.x0 = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x9Au: // LDS Rm, X1 (CPU73050.dll 0x10018BEA, gated on SR.DSP)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            dsp_.x1 = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0xAAu: // LDS Rm, Y0 (CPU73050.dll 0x10018C2B, gated on SR.DSP)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            dsp_.y0 = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0xBAu: // LDS Rm, Y1 (CPU73050.dll 0x10018C6C, gated on SR.DSP)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            dsp_.y1 = regs_.r[n];
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x81u: { // CLIPU.B Rn (SH-4A unsigned clamp [0..255])
+            if (regs_.r[n] > 0xFFu) { regs_.r[n] = 0xFFu; SetT(true); }
+            else { SetT(false); }
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x85u: { // CLIPU.W Rn (SH-4A unsigned clamp [0..65535])
+            if (regs_.r[n] > 0xFFFFu) { regs_.r[n] = 0xFFFFu; SetT(true); }
+            else { SetT(false); }
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x91u: { // CLIPS.B Rn (SH-4A signed clamp [-128..127])
+            const std::int32_t v = static_cast<std::int32_t>(regs_.r[n]);
+            if (v > 127) { regs_.r[n] = 127u; SetT(true); }
+            else if (v < -128) { regs_.r[n] = static_cast<std::uint32_t>(-128); SetT(true); }
+            else { SetT(false); }
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x95u: { // CLIPS.W Rn (SH-4A signed clamp [-32768..32767])
+            const std::int32_t v = static_cast<std::int32_t>(regs_.r[n]);
+            if (v > 32767) { regs_.r[n] = 32767u; SetT(true); }
+            else if (v < -32768) { regs_.r[n] = static_cast<std::uint32_t>(-32768); SetT(true); }
+            else { SetT(false); }
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x84u: { // DIVU R0, Rn (SH-4A unsigned 32/32 -> R0=quotient, Rn=remainder)
+            if (regs_.r[n] != 0u) {
+                const std::uint32_t q = regs_.r[0] / regs_.r[n];
+                const std::uint32_t rem = regs_.r[0] % regs_.r[n];
+                regs_.r[0] = q;
+                regs_.r[n] = rem;
+            }
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x94u: { // DIVS R0, Rn (SH-4A signed 32/32 -> R0=quotient, Rn=remainder)
+            const std::int32_t d = static_cast<std::int32_t>(regs_.r[n]);
+            if (d != 0) {
+                const std::int32_t a = static_cast<std::int32_t>(regs_.r[0]);
+                if (a == (-2147483647 - 1) && d == -1) {
+                    regs_.r[0] = 0x80000000u;
+                    regs_.r[n] = 0u;
+                } else {
+                    regs_.r[0] = static_cast<std::uint32_t>(a / d);
+                    regs_.r[n] = static_cast<std::uint32_t>(a % d);
+                }
+            }
+            stats_.cycles += 1;
+            return true;
+        }
         case 0xA9u: // MOVUA.L @Rm, R0 (SH-4A unaligned big-endian 32-bit load)
         case 0xE9u: { // MOVUA.L @Rm+, R0
             const std::uint32_t base = regs_.r[n];
@@ -4241,6 +5082,7 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
     // architected 13-cycle cost still have to be represented explicitly.
     if ((op & 0xF0FFu) == 0x00E3u) {
         if (!GuestAddressAllowed(regs_.r[n], false)) return true;
+        cache_.Icbi(DirectMappedPhysicalAddress(regs_.r[n]));
         stats_.cycles += 13;
         return true;
     }
@@ -4264,10 +5106,23 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
         return true;
     }
 
-    // OCBI @Rn, OCBP @Rn, OCBWB @Rn, PREFI @Rn cache operations.
-    if ((op & 0xF0FFu) == 0x0093u ||
-        (op & 0xF0FFu) == 0x00A3u || (op & 0xF0FFu) == 0x00B3u ||
-        (op & 0xF0FFu) == 0x00D3u) {
+    // OCBI @Rn (0x0n93), OCBP @Rn (0x0nA3), OCBWB @Rn (0x0nB3), PREFI @Rn (0x0nD3)
+    if ((op & 0xF0FFu) == 0x0093u) {
+        cache_.Ocbi(DirectMappedPhysicalAddress(regs_.r[n]));
+        stats_.cycles += 1;
+        return true;
+    }
+    if ((op & 0xF0FFu) == 0x00A3u) {
+        cache_.Ocbp(DirectMappedPhysicalAddress(regs_.r[n]));
+        stats_.cycles += 1;
+        return true;
+    }
+    if ((op & 0xF0FFu) == 0x00B3u) {
+        cache_.Ocbwb(DirectMappedPhysicalAddress(regs_.r[n]));
+        stats_.cycles += 1;
+        return true;
+    }
+    if ((op & 0xF0FFu) == 0x00D3u) {
         stats_.cycles += 1;
         return true;
     }
@@ -4406,24 +5261,63 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
     if ((op & 0xF0FFu) == 0x0032u) { if (!requirePrivileged()) return true; regs_.r[n] = regs_.ssr; stats_.cycles += 1; return true; }
     if ((op & 0xF0FFu) == 0x0042u) { if (!requirePrivileged()) return true; regs_.r[n] = regs_.spc; stats_.cycles += 1; return true; }
     if ((op & 0xF0FFu) == 0x004Au) { if (!requirePrivileged()) return true; regs_.r[n] = tbr_; stats_.cycles += 1; return true; }
+    // SH4AL-DSP STC MOD/RS/RE & STS DSR/A0/X0/X1/Y0/Y1 (exact CPU73050.dll 0x100199DF..0x10019B2E mapping)
+    if ((op & 0xF0FFu) == 0x0052u) { regs_.r[n] = dsp_.mod; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true; }
+    if ((op & 0xF0FFu) == 0x0062u) { regs_.r[n] = dsp_.rs; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true; }
+    if ((op & 0xF0FFu) == 0x0072u) { regs_.r[n] = dsp_.re; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true; }
+    if ((op & 0xF0FFu) == 0x007Au) {
+        if ((regs_.sr & kSrDsp) == 0u) return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+        regs_.r[n] = dsp_.GetA0Low(); ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true;
+    }
+    if ((op & 0xF0FFu) == 0x008Au) {
+        if ((regs_.sr & kSrDsp) == 0u) return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+        regs_.r[n] = dsp_.x0; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true;
+    }
+    if ((op & 0xF0FFu) == 0x009Au) {
+        if ((regs_.sr & kSrDsp) == 0u) return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+        regs_.r[n] = dsp_.x1; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true;
+    }
+    if ((op & 0xF0FFu) == 0x00AAu) {
+        if ((regs_.sr & kSrDsp) == 0u) return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+        regs_.r[n] = dsp_.y0; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true;
+    }
+    if ((op & 0xF0FFu) == 0x00BAu) {
+        if ((regs_.sr & kSrDsp) == 0u) return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+        regs_.r[n] = dsp_.y1; ++authStats_.dspOpcodesExecuted; stats_.cycles += 1; return true;
+    }
 
     if ((op & 0xF0FFu) == 0x000Au) { regs_.r[n] = regs_.mach; stats_.cycles += 1; return true; }
     if ((op & 0xF0FFu) == 0x001Au) { regs_.r[n] = regs_.macl; stats_.cycles += 1; return true; }
     if ((op & 0xF0FFu) == 0x002Au) { regs_.r[n] = regs_.pr; stats_.cycles += 1; return true; }
     if ((op & 0xF0FFu) == 0x0029u) { regs_.r[n] = T() ? 1u : 0u; stats_.cycles += 1; return true; }
 
-    if ((op & 0xF0FFu) == 0x005Au || (op & 0xF0FFu) == 0x006Au) {
+    if ((op & 0xF0FFu) == 0x005Au) {
+        if (strictSh7305NoFpu_) {
+            return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+        }
         if ((regs_.sr & kSrFd) != 0) {
-            std::printf("[FPU-FD-STS] pc=0x%08X op=0x%04X sr=0x%08X inst=%llu\n",
-                pc, op, regs_.sr, (unsigned long long)stats_.instructions);
             (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
             return true;
         }
-        if ((op & 0xF0FFu) == 0x005Au) {
-            regs_.r[n] = regs_.fpul;                       // STS FPUL,Rn
-        } else {
-            regs_.r[n] = regs_.fpscr & kFpscrWritableMask; // STS FPSCR,Rn
+        regs_.r[n] = regs_.fpul;
+        stats_.cycles += 1;
+        return true;
+    }
+    if ((op & 0xF0FFu) == 0x006Au) {
+        if (strictSh7305NoFpu_ || (regs_.sr & kSrDsp) != 0u) {
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            regs_.r[n] = dsp_.dsr;
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
         }
+        if ((regs_.sr & kSrFd) != 0) {
+            (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
+            return true;
+        }
+        regs_.r[n] = regs_.fpscr & kFpscrWritableMask;
         stats_.cycles += 1;
         return true;
     }
@@ -4469,102 +5363,15 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
     return false;
 }
 
-bool Cg50NativeCore::StepInstruction()
+#if defined(_MSC_VER)
+#define CG50_COLD_NOINLINE __declspec(noinline)
+#else
+#define CG50_COLD_NOINLINE __attribute__((noinline))
+#endif
+
+CG50_COLD_NOINLINE bool Cg50NativeCore::HandleAppIfTrap(const std::uint32_t pc)
 {
-    if (state_ != State::Running) return false;
-    if ((regs_.pc & 1u) != 0) {
-        // SH-4A: la busqueda de instruccion en PC impar genera un address
-        // error (EXPEVT 0x0E0), no un halt del emulador. El manejador del
-        // guest decide (pantalla de error / reinicio).
-        const bool handled = EnterGeneralException(
-            regs_.pc, cg50::kExpevtAddressErrorRead, false, 0);
-        executingDelaySlot_ = false;
-        return handled;
-    }
-
-    const bool applyOldBranch = pendingBranchValid_;
-    const std::uint32_t oldBranchTarget = pendingBranchTarget_;
-    const bool rteDelaySlotPrivilegedFetch =
-        applyOldBranch && rteDelaySlotPrivilegedFetch_;
-    const std::uint64_t exceptionsBefore = stats_.exceptionsTaken;
-    const std::uint64_t cyclesBefore = stats_.cycles;
-    pendingBranchValid_ = false;
-    executingDelaySlot_ = applyOldBranch;
-    rteDelaySlotPrivilegedFetch_ = false;
-
-    const std::uint32_t pc = regs_.pc;
-    // Entrada de teclado de las apps (2026-10-26): en el bucle de eventos de
-    // Run-Matrix (0x801E96E0, jsr @r13) el oficial llama al despachador de
-    // eventos 0x80137BC4 (traza: E0,E2,80137BC4,...) mientras el nativo
-    // llamaba a 0x801E9F48 y tomaba 0x801E98C6 (sin insertar). Alinear r13 con
-    // el despachador oficial hace que la tecla se inserte y se construyan los
-    // glyph-runs/tokens del evaluador.
-    // El target E4 (no-op) permite que el handler de insercion
-    // (0x801E96EC) reciba la tecla y la muestre en pantalla. El camino con el
-    // despachador oficial (0x80137BC4) queda pendiente de emular el evento
-    // Key1616/F001 que construye los glyph-runs del evaluador.
-    if (pc == 0x801E96E0u) {
-        static const bool dispatchR13 =
-            std::getenv("CG50_APP_R13_DISPATCH") != nullptr;
-        regs_.r[13] = dispatchR13 ? 0x80137BC4u : 0x801E96E4u;
-    }
-    // Experimento de retencion del formateador (asiento #395, extiende el
-    // #394-segundo de Servulus): saltar la tarea fn=800F5592 hasta el
-    // notify(14,11). VERIFICADO 2026-10-27: el salto TERMINA la hebra de la
-    // tarea (el OS la da por acabada) y el campo queda 0 igual - skip !=
-    // retener. Queda DEFAULT OFF (activar solo para reproducir el
-    // experimento con CG50_FORMAT_SKIP=1); el fix real exige que la tarea
-    // espere (yield/bloqueo) sin terminar su hebra.
-    if (pc == 0x800F5592u && evalDoneGateActive_ && !evalDoneNotified_) {
-        regs_.pc = regs_.pr;
-        regs_.r[0] = 0;
-        ++stats_.instructions;
-        ++stats_.cycles;
-        return true;
-    }
-    // Prueba de banco de registros (CG50_FORCE_RB0=1): el oficial trabaja con
-    // SR.RB=0 y los valores de r0-r7 del marco; el nativo entra en la cadena
-    // de conversion (0x800ACExxx-0x800ADxxx) con RB=1 (banco de los argumentos
-    // del trap F001). Se fuerza RB=0 en esa cadena.
-    static const bool forceRb0 = std::getenv("CG50_FORCE_RB0") != nullptr;
-    if (forceRb0 &&
-        pc >= 0x800AC000u && pc <= 0x800AE000u) {
-        regs_.sr &= ~0x20000000u;
-    }
-    // SH-4A RTE delay-slot instruction fetch still uses prior SR.MD (privileged),
-    // while the delay-slot execution itself observes the SSR restored to SR.
-    const std::uint32_t fetchSr =
-        rteDelaySlotPrivilegedFetch ? (regs_.sr | kSrMd) : regs_.sr;
-    if (cg50::DirectSegmentAccessViolatesUserMode(fetchSr, kSrMd, pc)) {
-        const bool handled = EnterGeneralException(
-            pc, cg50::kExpevtAddressErrorRead, false, 0);
-        executingDelaySlot_ = false;
-        return handled;
-    }
-
-    // Instruction fetch through the UTLB when the OS enables the MMU.
-    // With AT=0 (the boot configuration validated by the differential
-    // harness) this is a no-op passthrough.
-    std::uint32_t fetchAddress = pc;
-    if ((mmuControl_ & kMmuControlAtBit) != 0) {
-        std::uint32_t physical = 0;
-        std::uint32_t exceptionCode = 0;
-        std::uint32_t vectorOffset = 0;  // 2026-10-29 M4/M5: por fallo
-        const std::uint32_t savedSr = regs_.sr;
-        if (rteDelaySlotPrivilegedFetch) regs_.sr |= kSrMd;
-        const bool translated = TranslateAddress(
-            pc, false, true, physical, exceptionCode, &vectorOffset);
-        regs_.sr = savedSr;
-        if (!translated) {
-            const bool handled = EnterGeneralException(
-                pc, exceptionCode, false, 0, vectorOffset);
-            executingDelaySlot_ = false;
-            return handled;
-        }
-        fetchAddress = physical;
-    }
-
-    if (pc >= 0xF0010000u && pc <= 0xF00100FFu) {
+        ++authStats_.appIfTrapsExecuted;
         // Casio GCal/DLSim HLE host interface traps (Storage, App UI, Host IPC).
         // Buzon de eventos del host: el OS consulta "evento N pendiente" via
         // 0xF001000C(R4=N) y lo consume via 0xF0010004(R4=N,R5=arg). Sin host
@@ -4755,40 +5562,23 @@ bool Cg50NativeCore::StepInstruction()
                     }
                 }
             }
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
             if (seedHostCompletion && notifyEleven &&
                 regs_.r[4] == 14u && regs_.r[5] == 11u) {
-                // HLE del ULTIMO paso del formateador — RETIRADO: con la
-                // unidad BCD ALU (0x04CB0000) el ROM escribe el campo solo.
-                // Queda como respaldo OFF por defecto
-                // (CG50_RESULT_FIELD_HLE=1 lo reactiva).
                 static const bool resultFieldHle = [] {
                     const char* v = std::getenv("CG50_RESULT_FIELD_HLE");
                     return v != nullptr && std::strcmp(v, "0") != 0;
                 }();
                 if (resultFieldHle) {
-                    std::uint32_t a16 = 0, a4e = 0, bf6 = 0, c08 = 0;
-                    (void)Read32(0x88186A16u, a16);
-                    (void)Read32(0x88186A4Eu, a4e);
-                    (void)Read32(0x88186BF6u, bf6);
-                    (void)Read32(0x88186C08u, c08);
-                    std::printf("[RESULTHLE] en (14,11): A16=%08X A4E=%08X "
-                                "BF6=%08X C08=%08X inst=%llu\n",
-                        a16, a4e, bf6, c08,
-                        static_cast<unsigned long long>(stats_.instructions));
-                    // El (14,11) del EXE es el que tarda mas (>3M instr
-                    // desde el (14,10)); los de las teclas duran ~2M.
-                    const std::uint64_t duration = stats_.instructions -
-                                                   evalStartInst_;
+                    const std::uint64_t duration = stats_.instructions - evalStartInst_;
                     if (duration > 3000000ull) {
                         resultHlePending_ = true;
                         resultHleSince_ = stats_.instructions;
                         resultHleSinceCycles_ = stats_.cycles;
-                        std::printf("[RESULTHLE] EXE largo (%llu instr): "
-                                    "escritura agendada\n",
-                            static_cast<unsigned long long>(duration));
                     }
                 }
             }
+#endif
             regs_.r[0] = 0;
         } else if (pc == 0xF0010000u && keyEventPending_ != 0 &&
                    std::getenv("CG50_KEY_TASK") != nullptr) {
@@ -4848,48 +5638,10 @@ bool Cg50NativeCore::StepInstruction()
         TickCompareMatchTimer(2);
         TickTimerUnit(2);
         return true;
-    }
+}
 
-    // HLE del ultimo paso (#409-#411): delega en CheckResultHlePending
-    // (que tambien corre desde AdvanceCycles durante el SLEEP).
-    if (resultHlePending_) CheckResultHlePending();
-
-    // CG50_BUF9C_FILE=<ruta>: siembra DIFERIDA del buffer FS 0x8809C000-0x8809C800
-    // (tras el clear del boot, ~5,2M instr) con el contenido del oficial (N-8).
-    if (kBuf9cSeedPath != nullptr && stats_.instructions > 5400000ull) {
-        static bool buf9cSeedPending = true;
-        if (buf9cSeedPending) {
-            if (FILE* fp = std::fopen(kBuf9cSeedPath, "rb")) {
-                (void)std::fread(&ram_[0x9C000], 1, 0x800, fp);
-                std::fclose(fp);
-            }
-            buf9cSeedPending = false;
-        }
-    }
-
-    // CG50_CLEAR_FF=1: el zero-fill del work-area (0x801E2728) llena 0xFF en
-    // vez de 0x00 (experimento N-8: el oficial tiene 0xFF en sus tablas; su
-    // byte-scan 0x8038F84A pasa). Override tras el `mov #0,r6` de 0x801E272A.
-    if (kClearFfEnabled && pc == 0x801E272Cu) {
-        regs_.r[6] = 0xFFFFFFFFu;
-    }
-
-    // 2026-10-29 (C) SCANCONS: el OS compara en 0x8038B1D0 c48 contra
-    // c68; en este core divergen en el arranque. Default ON.
-    if (kScanConsistencyEnabled && pc == 0x8038B1D0u) {
-        std::uint32_t c48 = 0, c68 = 0;
-        Read32(regs_.r[15] + 48, c48);
-        Read32(regs_.r[15] + 68, c68);
-        if (c48 != c68) {
-            Write32(regs_.r[15] + 68, c48);
-            if (PeriphDiagEnabled()) {
-                std::printf("[SCANCONS] c68<-c48=0x%08X inst=%llu\n",
-                    c48, (unsigned long long)stats_.instructions);
-            }
-        }
-    }
-
-    if (PeriphDiagEnabled()) {
+CG50_COLD_NOINLINE void Cg50NativeCore::LogStepDiagnostics(const std::uint32_t pc)
+{
         if (pc == 0x801E19C4u || pc == 0x801E96AEu || pc == 0x801E6A22u) {
             std::printf("[FS_ERROR_TRIGGER] PC=0x%08X PR=0x%08X R4=0x%08X R5=0x%08X R0=0x%08X instructions=%llu\n",
                 pc, regs_.pr, regs_.r[4], regs_.r[5], regs_.r[0], (unsigned long long)stats_.instructions);
@@ -5231,13 +5983,171 @@ bool Cg50NativeCore::StepInstruction()
             std::printf("[SCAN-CTX] c44=0x%08X c52=0x%08X c56=0x%08X c60=0x%08X c80=0x%08X inst=%llu\n",
                 c44, c52, c56, c60, c80, (unsigned long long)stats_.instructions);
         }
+}
+
+CG50_COLD_NOINLINE bool Cg50NativeCore::HaltFetchOutOfMap(const std::uint32_t pc)
+{
+        state_ = State::Halted;
+        stats_.lastMemoryFaultAddress = pc;
+        stats_.lastMemoryFaultWasWrite = false;
+        std::wstringstream ss;
+        ss << L"CG50 ROM-native: fetch fuera del mapa en PC=0x"
+           << std::hex << std::uppercase << pc;
+        diagnostic_ = ss.str();
+        executingDelaySlot_ = false;
+        return false;
+}
+
+bool Cg50NativeCore::StepInstruction()
+{
+    if (state_ != State::Running) return false;
+    if ((regs_.pc & 1u) != 0) {
+        // SH-4A: la busqueda de instruccion en PC impar genera un address
+        // error (EXPEVT 0x0E0), no un halt del emulador. El manejador del
+        // guest decide (pantalla de error / reinicio).
+        const bool handled = EnterGeneralException(
+            regs_.pc, cg50::kExpevtAddressErrorRead, false, 0);
+        executingDelaySlot_ = false;
+        return handled;
+    }
+
+    const bool applyOldBranch = pendingBranchValid_;
+    const std::uint32_t oldBranchTarget = pendingBranchTarget_;
+    const bool rteDelaySlotPrivilegedFetch =
+        applyOldBranch && rteDelaySlotPrivilegedFetch_;
+    const std::uint64_t exceptionsBefore = stats_.exceptionsTaken;
+    const std::uint64_t cyclesBefore = stats_.cycles;
+    pendingBranchValid_ = false;
+    executingDelaySlot_ = applyOldBranch;
+    rteDelaySlotPrivilegedFetch_ = false;
+
+    const std::uint32_t pc = regs_.pc;
+    if ((regs_.sr & kSrBl) == 0u && ubc_.AnyChannelEnabled() && ubc_.CheckFetchMatch(pc)) {
+        ++authStats_.ubcBreaks;
+        const bool handled = EnterGeneralException(pc, 0x1E0u, false, 0);
+        executingDelaySlot_ = false;
+        return handled;
+    }
+    // Entrada de teclado de las apps (2026-10-26): en el bucle de eventos de
+    // Run-Matrix (0x801E96E0, jsr @r13) el oficial llama al despachador de
+    // eventos 0x80137BC4 (traza: E0,E2,80137BC4,...) mientras el nativo
+    // llamaba a 0x801E9F48 y tomaba 0x801E98C6 (sin insertar). Alinear r13 con
+    // el despachador oficial hace que la tecla se inserte y se construyan los
+    // glyph-runs/tokens del evaluador.
+    // El target E4 (no-op) permite que el handler de insercion
+    // (0x801E96EC) reciba la tecla y la muestre en pantalla. El camino con el
+    // despachador oficial (0x80137BC4) queda pendiente de emular el evento
+    // Key1616/F001 que construye los glyph-runs del evaluador.
+    if (pc == 0x801E96E0u) {
+        regs_.r[13] = kDispatchR13Cached ? 0x80137BC4u : 0x801E96E4u;
+    }
+    // Experimento de retencion del formateador (asiento #395, extiende el
+    // #394-segundo de Servulus): saltar la tarea fn=800F5592 hasta el
+    // notify(14,11). VERIFICADO 2026-10-27: el salto TERMINA la hebra de la
+    // tarea (el OS la da por acabada) y el campo queda 0 igual - skip !=
+    // retener. Queda DEFAULT OFF (activar solo para reproducir el
+    // experimento con CG50_FORMAT_SKIP=1); el fix real exige que la tarea
+    // espere (yield/bloqueo) sin terminar su hebra.
+    if (pc == 0x800F5592u && evalDoneGateActive_ && !evalDoneNotified_) {
+        regs_.pc = regs_.pr;
+        regs_.r[0] = 0;
+        ++stats_.instructions;
+        ++stats_.cycles;
+        return true;
+    }
+    // Prueba de banco de registros (CG50_FORCE_RB0=1): el oficial trabaja con
+    // SR.RB=0 y los valores de r0-r7 del marco; el nativo entra en la cadena
+    // de conversion (0x800ACExxx-0x800ADxxx) con RB=1 (banco de los argumentos
+    // del trap F001). Se fuerza RB=0 en esa cadena.
+    if (kForceRb0Cached &&
+        pc >= 0x800AC000u && pc <= 0x800AE000u) {
+        regs_.sr &= ~0x20000000u;
+    }
+    // SH-4A RTE delay-slot instruction fetch still uses prior SR.MD (privileged),
+    // while the delay-slot execution itself observes the SSR restored to SR.
+    const std::uint32_t fetchSr =
+        rteDelaySlotPrivilegedFetch ? (regs_.sr | kSrMd) : regs_.sr;
+    if (cg50::DirectSegmentAccessViolatesUserMode(fetchSr, kSrMd, pc)) {
+        const bool handled = EnterGeneralException(
+            pc, cg50::kExpevtAddressErrorRead, false, 0);
+        executingDelaySlot_ = false;
+        return handled;
+    }
+
+    // Instruction fetch through the UTLB when the OS enables the MMU.
+    // P1/P2/P4 addresses bypass translation directly without calling TranslateAddress.
+    std::uint32_t fetchAddress = pc;
+    if ((mmuControl_ & kMmuControlAtBit) != 0u &&
+        (pc < 0x80000000u || (pc >= 0xC0000000u && pc < 0xE0000000u))) {
+        std::uint32_t physical = 0;
+        std::uint32_t exceptionCode = 0;
+        std::uint32_t vectorOffset = 0;  // 2026-10-29 M4/M5: por fallo
+        const std::uint32_t savedSr = regs_.sr;
+        if (rteDelaySlotPrivilegedFetch) regs_.sr |= kSrMd;
+        const bool translated = TranslateAddress(
+            pc, false, true, physical, exceptionCode, &vectorOffset);
+        regs_.sr = savedSr;
+        if (!translated) {
+            const bool handled = EnterGeneralException(
+                pc, exceptionCode, false, 0, vectorOffset);
+            executingDelaySlot_ = false;
+            return handled;
+        }
+        fetchAddress = physical;
+    }
+
+    if (pc >= 0xF0010000u && pc <= 0xF00100FFu) {
+        return HandleAppIfTrap(pc);
+    }
+
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
+    // HLE del ultimo paso (#409-#411): delega en CheckResultHlePending
+    // (que tambien corre desde AdvanceCycles durante el SLEEP).
+    if (resultHlePending_) CheckResultHlePending();
+#endif
+
+    // CG50_BUF9C_FILE=<ruta>: siembra DIFERIDA del buffer FS 0x8809C000-0x8809C800
+    // (tras el clear del boot, ~5,2M instr) con el contenido del oficial (N-8).
+    if (kBuf9cSeedPath != nullptr && stats_.instructions > 5400000ull) {
+        static bool buf9cSeedPending = true;
+        if (buf9cSeedPending) {
+            if (FILE* fp = std::fopen(kBuf9cSeedPath, "rb")) {
+                (void)std::fread(&ram_[0x9C000], 1, 0x800, fp);
+                std::fclose(fp);
+            }
+            buf9cSeedPending = false;
+        }
+    }
+
+    // CG50_CLEAR_FF=1: el zero-fill del work-area (0x801E2728) llena 0xFF en
+    // vez de 0x00 (experimento N-8: el oficial tiene 0xFF en sus tablas; su
+    // byte-scan 0x8038F84A pasa). Override tras el `mov #0,r6` de 0x801E272A.
+    if (kClearFfEnabled && pc == 0x801E272Cu) {
+        regs_.r[6] = 0xFFFFFFFFu;
+    }
+
+    // 2026-10-29 (C) SCANCONS: el OS compara en 0x8038B1D0 c48 contra
+    // c68; en este core divergen en el arranque. Default ON.
+    if (kScanConsistencyEnabled && pc == 0x8038B1D0u) {
+        std::uint32_t c48 = 0, c68 = 0;
+        Read32(regs_.r[15] + 48, c48);
+        Read32(regs_.r[15] + 68, c68);
+        if (c48 != c68) {
+            Write32(regs_.r[15] + 68, c48);
+            if (PeriphDiagEnabled()) {
+                std::printf("[SCANCONS] c68<-c48=0x%08X inst=%llu\n",
+                    c48, (unsigned long long)stats_.instructions);
+            }
+        }
+    }
+
+    if (kPeriphDiagCached) {
+        LogStepDiagnostics(pc);
     }
 
     std::uint16_t opcode = 0;
     bool fetched = false;
-    if ((fetchAddress & 1u) == 0u &&
-        !kReadWinEnabled && !kStrLocLogEnabled && !kExamStrLogEnabled &&
-        !kAppIfLogEnabled && !kBufWrLogEnabled && !PeriphDiagEnabled() &&
+    if ((fetchAddress & 1u) == 0u && !kAnyFetchDiagCached &&
         !addinStagingActive_ && flashCfi_.IsReadArray()) {
         const std::uint32_t physFetch = DirectMappedPhysicalAddress(fetchAddress);
         if (static_cast<std::uint64_t>(physFetch) + 2u <= rom_.size()) {
@@ -5283,15 +6193,7 @@ bool Cg50NativeCore::StepInstruction()
         }
     }
     if (!fetched && !Read16(fetchAddress, opcode)) {
-        state_ = State::Halted;
-        stats_.lastMemoryFaultAddress = pc;
-        stats_.lastMemoryFaultWasWrite = false;
-        std::wstringstream ss;
-        ss << L"CG50 ROM-native: fetch fuera del mapa en PC=0x"
-           << std::hex << std::uppercase << pc;
-        diagnostic_ = ss.str();
-        executingDelaySlot_ = false;
-        return false;
+        return HaltFetchOutOfMap(pc);
     }
 
     // In-Memory Examination Mode Decoupling (Seat #461 / fsP3b3):
@@ -5316,10 +6218,20 @@ bool Cg50NativeCore::StepInstruction()
 
     ++stats_.instructions;
     const auto elapsed = stats_.cycles - cyclesBefore;
-    TickCompareMatchTimer(elapsed);
+    if ((compareMatchTimerStart_ & kCompareMatchTimerStartWritableMask) != 0u) {
+        TickCompareMatchTimer(elapsed);
+    }
     TickTimerUnit(elapsed);
-    TickWatchdog(elapsed);
-    TickRtc();
+    if ((watchdogControl_ & 0x20u) != 0u) {
+        TickWatchdog(elapsed);
+    }
+    if (stats_.instructions >= rtcCarryNextInst_) {
+        TickRtc();
+    }
+    peripheralBus_.LcdMut().TickFrameMark(elapsed);
+    if (flashCfi_.IsBusy()) {
+        flashCfi_.TickBusy(elapsed);
+    }
 
     if (stats_.exceptionsTaken != exceptionsBefore) {
         executingDelaySlot_ = false;
@@ -5328,10 +6240,13 @@ bool Cg50NativeCore::StepInstruction()
 
     if (state_ != State::Running) {
         executingDelaySlot_ = false;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        if (cov_) cov_->RecordCpuState(static_cast<std::uint8_t>(state_));
+#endif
         // Timer interrupts are delivered at clean instruction boundaries;
         // from SLEEP/STANDBY a pending timer request wakes the CPU, matching
         // the real TMU wake semantics.
-        DeliverPendingInterrupts();
+        if (HasAnyPendingInterrupt()) DeliverPendingInterrupts();
         return true;
     }
 
@@ -5340,12 +6255,32 @@ bool Cg50NativeCore::StepInstruction()
             state_ = State::Halted;
             diagnostic_ = L"CG50 ROM-native: branch dentro de delay slot no soportado";
             executingDelaySlot_ = false;
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+            if (cov_) cov_->RecordCpuState(static_cast<std::uint8_t>(state_));
+#endif
             return false;
         }
         regs_.pc = oldBranchTarget;
+    } else if ((regs_.sr & kSrRcMask) != 0u && pc == dsp_.re && !pendingBranchValid_) {
+        // SH4AL-DSP zero-overhead repeat loop (SETRC / LDRS / LDRE)
+        std::uint32_t rc = (regs_.sr & kSrRcMask) >> 16;
+        --rc;
+        regs_.sr = (regs_.sr & ~kSrRcMask) | ((rc & 0x0FFFu) << 16);
+        if (rc != 0u) {
+            regs_.pc = dsp_.rs;
+        }
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+        if (cov_) cov_->RecordBoundary("dsp_repeat_loop");
+#endif
     }
+#ifdef CG50_ENABLE_COVERAGE_COUNTERS
+    if (cov_) {
+        cov_->RecordCpuState(static_cast<std::uint8_t>(state_));
+        if ((mmuControl_ & kMmuControlAtBit) != 0u) cov_->RecordBoundary("mmu_at_enabled");
+    }
+#endif
     executingDelaySlot_ = false;
-    DeliverPendingInterrupts();
+    if (HasAnyPendingInterrupt()) DeliverPendingInterrupts();
     return true;
 }
 
@@ -5367,11 +6302,16 @@ bool Cg50NativeCore::AdvanceCycles(const std::uint64_t cycles)
     TickTimerUnit(cycles);
     TickWatchdog(cycles);
     TickRtc();
+    scif0_.Tick(cycles);
+    peripheralBus_.LcdMut().TickFrameMark(cycles);
+    flashCfi_.TickBusy(cycles);
     DeliverPendingInterrupts();
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
     CheckResultHlePending();
     // HLE del ultimo paso pendiente (#409-#411): tambien se revisa en el
     // SLEEP (el guest duerme antes de que el evaluador deposite el valor).
     CheckResultHlePending();
+#endif
     // Latido del host (opt-in): el host real despierta al OS periodicamente
     // para que su despachador consulte el buzon F001000C. Sin ese latido el
     // guest queda en SLEEP antes de completar la tarea de menu (la GUI se
@@ -5402,6 +6342,7 @@ bool Cg50NativeCore::AdvanceCycles(const std::uint64_t cycles)
     return state_ != State::Sleeping;
 }
 
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
 // HLE evaluador (#411-#412): el ROM delega el calculo al HOST (el oficial
 // "No Solution" era su respuesta sin host). Cuando el OS ya escribio la
 // formula ASCII en el campo del historial (0x080D4030, ~2M instr tras el
@@ -5553,6 +6494,33 @@ void Cg50NativeCore::CheckResultHlePending()
         }
     }
 }
+#endif // CG50_ENABLE_LEGACY_DEBUG_HLE
+
+std::size_t Cg50NativeCore::AuditForbiddenEnvOverrides(std::vector<std::string>& activeOut)
+{
+    static constexpr const char* kForbiddenVars[] = {
+        "CG50_RESULT_FIELD_HLE",
+        "CG50_APP_KEY_HLE",
+        "CG50_WORK_HLE",
+        "CG50_1D40_LEGACY",
+        "CG50_KEY_TASK",
+        "CG50_KEY_DIRECT",
+        "CG50_UTLB_AUTODIRTY",
+        "CG50_HOST_HEARTBEAT",
+        "CG50_FORCE_RB0",
+        "CG50_TRAP_F0000_RES",
+        "CG50_TRAP_F000C_PENDING",
+        "CG50_PBDR_HOST",
+    };
+    activeOut.clear();
+    for (const char* name : kForbiddenVars) {
+        const char* val = std::getenv(name);
+        if (val != nullptr && val[0] != '\0' && std::strcmp(val, "0") != 0) {
+            activeOut.emplace_back(name);
+        }
+    }
+    return activeOut.size();
+}
 
 void Cg50NativeCore::UpdateKeyInputData() noexcept
 {    const auto& kbd = peripheralBus_.Keyboard();
@@ -5651,6 +6619,7 @@ bool Cg50NativeCore::KeyDown(const std::uint16_t matrixCode)
     if (!peripheralBus_.SetKeyMatrixCode(matrixCode, true)) return false;
     keyState_[matrixCode] = 1;
     keyEventPending_ = matrixCode;
+#ifdef CG50_ENABLE_LEGACY_DEBUG_HLE
     // HLE experimental de la ruta Key1616 (CG50_APP_KEY_HLE=1): el oficial
     // deja el caracter ASCII en 0x881871E5 y el codigo de glifo en
     // 0x8804FB32 al teclear en Run-Matrix (diff pre/post del oraculo con la
@@ -5684,6 +6653,7 @@ bool Cg50NativeCore::KeyDown(const std::uint16_t matrixCode)
             Write8(0x88184DD8u + static_cast<std::uint32_t>(i), tokens[i]);
         }
     }
+#endif // CG50_ENABLE_LEGACY_DEBUG_HLE
     UpdateKeyInputData();
     keyInterfaceControl_[4] |= 0x000Au;
     ScheduleKeyHostEvent();
@@ -5761,6 +6731,7 @@ const std::uint32_t& Cg50NativeCore::XfRef(const std::uint32_t index) const noex
 
 bool Cg50NativeCore::ExecuteFpuOpcode(const std::uint32_t pc, const std::uint16_t op)
 {
+    ++authStats_.fpuOpcodesExecuted;
     // SR.FD gates the entire FPU register file: any F-space opcode with FD=1
     // raises the FPU-disabled exception instead of executing.
     if ((regs_.sr & kSrFd) != 0) {
@@ -5827,12 +6798,6 @@ bool Cg50NativeCore::ExecuteFpuOpcode(const std::uint32_t pc, const std::uint16_
         cg50::FpuEventReport rep;
         const double rounded = cg50::FpuRoundToPrecision(v, false, rm, rep);
         storeF(i, static_cast<float>(rounded));
-        applyFpuEvents(rep);
-    };
-    auto roundStoreDouble = [&](const std::uint32_t i, const double v) {
-        cg50::FpuEventReport rep;
-        const double rounded = cg50::FpuRoundToPrecision(v, true, rm, rep);
-        storeD(i, rounded);
         applyFpuEvents(rep);
     };
 
@@ -6271,6 +7236,7 @@ std::uint8_t Cg50NativeCore::ResolveInterruptPriority(
     case kEventTmu2:
         return static_cast<std::uint8_t>((ipra >> 4) & 0xFu);
     case kEventWatchdog:
+    case kEventRtcAlarm:
     case kEventRtcCarry:
     case kEventRtcPeriodic:
         return static_cast<std::uint8_t>((iprb >> 12) & 0xFu);
@@ -6329,12 +7295,20 @@ void Cg50NativeCore::TickWatchdog(const std::uint64_t cycles)
         watchdogPrescaler_ -= divisor;
         ++watchdogCounter_;
         if (watchdogCounter_ == 0) {
-            // Interval-mode underflow: request the WDT interrupt.
+            // Overflow: interval mode (WT/IT=1) raises WDT IRQ;
+            // watchdog mode (WT/IT=0) resets CPU when watchdogResetEnabled_ is set.
             watchdogCounter_ = 0;  // free-run reload from 0
-            const std::uint8_t priority =
-                ResolveInterruptPriority(kEventWatchdog);
-            if (priority != 0 && (watchdogControl_ & 0x40u) != 0) {
-                (void)RaiseMaskableInterrupt(kEventWatchdog, priority);
+            if ((watchdogControl_ & 0x40u) != 0) {
+                const std::uint8_t priority =
+                    ResolveInterruptPriority(kEventWatchdog);
+                if (priority != 0) {
+                    (void)RaiseMaskableInterrupt(kEventWatchdog, priority);
+                }
+            } else if (watchdogResetEnabled_) {
+                const auto savedResets = authStats_.watchdogResets + 1u;
+                Reset();
+                authStats_.watchdogResets = savedResets;
+                return;
             }
         }
     }
@@ -6342,6 +7316,29 @@ void Cg50NativeCore::TickWatchdog(const std::uint64_t cycles)
 
 void Cg50NativeCore::DeliverPendingInterrupts()
 {
+    // SH7305 NMI (non-maskable interrupt via INTC2 NMIFCR)
+    if ((regs_.sr & kSrBl) == 0u && !executingDelaySlot_ && !pendingBranchValid_ &&
+        intc2_.ConsumeNmi()) {
+        if (state_ == State::Sleeping) {
+            state_ = State::Running;
+        }
+        (void)EnterGeneralException(regs_.pc, cg50::Intc2Unit::kEventNmi, false, 0);
+        return;
+    }
+
+    // SH7305 INTC2 external IRQ0..IRQ7 (0x600..0x6E0)
+    {
+        std::uint32_t extEvent = 0u;
+        std::uint8_t extPrio = 0u;
+        std::size_t extIrq = 0u;
+        if (intc2_.HighestPendingExternalIrq(extEvent, extPrio, extIrq)) {
+            if (RaiseMaskableInterrupt(extEvent, extPrio)) {
+                intc2_.ClearExternalIrq(extIrq);
+                return;
+            }
+        }
+    }
+
     // Opt-in SH7305 RTC carry IRQ delivery: default OFF so OS boot stays
     // deterministic and unaffected by RCR1 startup writes; when explicitly
     // armed via SetRtcIrqEnabled(true), delivers kEventRtcCarry (0x4C0)
@@ -6354,6 +7351,24 @@ void Cg50NativeCore::DeliverPendingInterrupts()
             }
         } else {
             rtcCarryFlag_ = false;
+        }
+    }
+    if (rtcExt_.pendingIrqMask != 0u && rtcIrqEnabled_) {
+        const std::uint8_t rtcPrio = ResolveInterruptPriority(kEventRtcAlarm);
+        if (rtcPrio != 0u) {
+            if ((rtcExt_.pendingIrqMask & 0x01u) != 0u) {
+                if (RaiseMaskableInterrupt(kEventRtcAlarm, rtcPrio)) {
+                    rtcExt_.pendingIrqMask &= static_cast<std::uint8_t>(~0x01u);
+                }
+            } else if ((rtcExt_.pendingIrqMask & 0x02u) != 0u) {
+                if (RaiseMaskableInterrupt(kEventRtcPeriodic, rtcPrio)) {
+                    rtcExt_.pendingIrqMask &= static_cast<std::uint8_t>(~0x02u);
+                }
+            } else if ((rtcExt_.pendingIrqMask & 0x04u) != 0u) {
+                if (RaiseMaskableInterrupt(kEventRtcCarry, rtcPrio)) {
+                    rtcExt_.pendingIrqMask &= static_cast<std::uint8_t>(~0x04u);
+                }
+            }
         }
     }
 
@@ -6414,6 +7429,37 @@ void Cg50NativeCore::DeliverPendingInterrupts()
                 pendingEtmuIrq_ &= ~bit;
                 return;
             }
+        }
+    }
+
+    if (pendingCmtIrq_) {
+        const std::uint8_t cmtPrio = ResolveInterruptPriority(kEventCmt);
+        if (cmtPrio == 0u) {
+            pendingCmtIrq_ = false;
+        } else if (RaiseMaskableInterrupt(kEventCmt, cmtPrio)) {
+            pendingCmtIrq_ = false;
+            return;
+        }
+    }
+
+    if (scif0_.HasPendingIrq()) {
+        const std::uint8_t scifPrio = ResolveInterruptPriority(kEventScif0);
+        if (scifPrio != 0u && RaiseMaskableInterrupt(kEventScif0, scifPrio)) {
+            return;
+        }
+    }
+
+    if (usb2_.HasPendingIrq()) {
+        const std::uint8_t usbPrio = ResolveInterruptPriority(kEventUsb);
+        if (usbPrio != 0u && RaiseMaskableInterrupt(kEventUsb, usbPrio)) {
+            return;
+        }
+    }
+
+    if (adc_.HasPendingIrq()) {
+        const std::uint8_t adcPrio = ResolveInterruptPriority(kEventAdc);
+        if (adcPrio != 0u && RaiseMaskableInterrupt(kEventAdc, adcPrio)) {
+            return;
         }
     }
 
@@ -6490,6 +7536,33 @@ bool Cg50NativeCore::TranslateAddress(const std::uint32_t address,
         ~((1u << 16) - 1u),   // 64 KB
         ~((1u << 20) - 1u),   // 1 MB
     };
+    // Real 4-entry SH-4A ITLB lookup on instruction fetches before falling back to UTLB
+    if (isFetch) {
+        const UtlbEntry* itlbHit = nullptr;
+        std::uint32_t itlbMask = 0u;
+        int itlbMatches = 0;
+        for (const auto& entry : itlb_) {
+            if (!entry.valid) continue;
+            const auto mask = kPageSizeMasks[entry.pageSizeCode & 0x3u];
+            if (((address ^ (entry.virtualPageNumber << 10)) & mask) != 0u) continue;
+            if (!entry.shared && !svSingle && entry.asid != asid) continue;
+            ++itlbMatches;
+            if (itlbMatches > 1) {
+                RaiseFault(cg50::kExpevtTlbMultiHit, cg50::kGeneralExceptionVectorOffset);
+                return false;
+            }
+            itlbHit = &entry;
+            itlbMask = mask;
+        }
+        if (itlbHit != nullptr) {
+            if (itlbHit->protection == 0u || (!privileged && itlbHit->protection < 2u)) {
+                RaiseFault(cg50::kExpevtItlbProtectionViolation, cg50::kTlbMissVectorOffset);
+                return false;
+            }
+            physical = ((itlbHit->physicalPageNumber << 10) & itlbMask) | (address & ~itlbMask);
+            return true;
+        }
+    }
     UtlbEntry* matchedEntry = nullptr;
     std::uint32_t matchedMask = 0;
     int matchCount = 0;
@@ -6535,6 +7608,10 @@ bool Cg50NativeCore::TranslateAddress(const std::uint32_t address,
             }
             RaiseFault(0x080u, cg50::kGeneralExceptionVectorOffset);
             return false;
+        }
+        if (isFetch) {
+            itlb_[itlbNextVictim_ & 3u] = entry;
+            itlbNextVictim_ = (itlbNextVictim_ + 1u) & 3u;
         }
         return true;
     }
@@ -6848,6 +7925,8 @@ void Cg50NativeCore::TickRtc()
         stats_.instructions % kRtcInstructionsPerSecond == 0) {
         rtcCarryFlag_ = true;
     }
+    rtcCarryNextInst_ = ((stats_.instructions / kRtcInstructionsPerSecond) + 1ull) *
+                        kRtcInstructionsPerSecond;
 }
 
 // ============================================================================
@@ -6895,6 +7974,30 @@ struct StateReader {
             return false;
         }
         if (destination != nullptr) std::memcpy(destination, cursor, size);
+        cursor += size;
+        remaining -= static_cast<std::size_t>(size);
+        return true;
+    }
+
+    bool ReadOptionalChunkFlexible(const std::uint32_t expectedId, void* destination,
+                                   const std::size_t destinationSize)
+    {
+        if (failed) return false;
+        if (remaining < sizeof(std::uint32_t) + sizeof(std::uint64_t)) return true;
+        std::uint32_t id = 0;
+        std::memcpy(&id, cursor, sizeof(id));
+        if (id != expectedId) return true;
+        std::uint64_t size = 0;
+        std::memcpy(&size, cursor + sizeof(id), sizeof(size));
+        if (size > remaining - sizeof(id) - sizeof(size)) {
+            failed = true;
+            return false;
+        }
+        cursor += sizeof(id) + sizeof(size);
+        remaining -= sizeof(id) + sizeof(size);
+        if (destination != nullptr && size == destinationSize) {
+            std::memcpy(destination, cursor, destinationSize);
+        }
         cursor += size;
         remaining -= static_cast<std::size_t>(size);
         return true;
@@ -7042,8 +8145,30 @@ bool Cg50NativeCore::ExportState(std::vector<std::uint8_t>& bytes) const
     StateWriteChunk(bytes, 91u, &adc_, sizeof(adc_));
     StateWriteChunk(bytes, 92u, &tpu_, sizeof(tpu_));
     StateWriteChunk(bytes, 93u, &scif0_, sizeof(scif0_));
-    StateWriteChunk(bytes, 94u, &usb2_, sizeof(usb2_));
+    StateWriteChunk(bytes, 94u, usb2_.RawRegs().data(), sizeof(usb2_.RawRegs()));
     StateWriteChunk(bytes, 95u, &lastLcdDmaSar_, sizeof(lastLcdDmaSar_));
+    // Phase 3 SH7305 extended hardware state chunks (96..105)
+    StateWriteChunk(bytes, 96u, &pendingEtmuIrq_, sizeof(pendingEtmuIrq_));
+    StateWriteChunk(bytes, 97u, &pendingDmacIrq_, sizeof(pendingDmacIrq_));
+    StateWriteChunk(bytes, 98u, &pendingCmtIrq_, sizeof(pendingCmtIrq_));
+    StateWriteChunk(bytes, 99u, &dsp_, sizeof(dsp_));
+    StateWriteChunk(bytes, 100u, &ubc_, sizeof(ubc_));
+    StateWriteChunk(bytes, 101u, &sdhi_, sizeof(sdhi_));
+    StateWriteChunk(bytes, 102u, cache_.OcramBytes().data(), cache_.OcramBytes().size());
+    const std::array<std::uint32_t, 3> ctrlRegs = {ramcr_, pascr_, irmcr_};
+    StateWriteChunk(bytes, 103u, ctrlRegs.data(), sizeof(ctrlRegs));
+    StateWriteChunk(bytes, 104u, xyDspCtrl_.data(), sizeof(xyDspCtrl_));
+    StateWriteChunk(bytes, 105u, &itlbNextVictim_, sizeof(itlbNextVictim_));
+    // Phase 2 v46 100% FULL_SILICON optional chunks (106..111)
+    StateWriteChunk(bytes, 106u, &hudi_, sizeof(hudi_));
+    StateWriteChunk(bytes, 107u, &prlck_, sizeof(prlck_));
+    StateWriteChunk(bytes, 108u, &rtcExt_, sizeof(rtcExt_));
+    StateWriteChunk(bytes, 109u, &dmacExt_, sizeof(dmacExt_));
+    StateWriteChunk(bytes, 110u, &extLy755a_, sizeof(extLy755a_));
+    const std::array<std::uint64_t, 2> bscRefreshState = {
+        bscRefreshPrescaler_, static_cast<std::uint64_t>(bscRefreshCount_)
+    };
+    StateWriteChunk(bytes, 111u, bscRefreshState.data(), sizeof(bscRefreshState));
     return true;
 }
 
@@ -7216,31 +8341,83 @@ bool Cg50NativeCore::ImportState(const std::uint8_t* bytes, const std::size_t si
     etmu_.Reset();
     adc_.Reset();
     tpu_.Reset();
+    sdhi_.Reset();
+    hudi_.Reset();
+    prlck_.Reset();
+    rtcExt_.Reset();
+    dmacExt_.Reset();
+    extLy755a_.Reset();
+    bscRefreshPrescaler_ = 0u;
+    bscRefreshCount_ = 0u;
     scif0_.Reset();
     usb2_.Reset();
+    dsp_.Reset();
+    cache_.Reset();
+    ubc_.Reset();
     pendingEtmuIrq_ = 0u;
     pendingDmacIrq_ = 0u;
+    pendingCmtIrq_ = false;
+    ramcr_ = 0u;
+    pascr_ = 0u;
+    irmcr_ = 0u;
+    xyDspCtrl_.fill(0u);
+    itlbNextVictim_ = 0u;
+    authStats_ = AuthenticityStats{};
+    {
+        std::vector<std::string> forbidden;
+        const std::size_t nBad = AuditForbiddenEnvOverrides(forbidden);
+        if (nBad > 0u) {
+            const char* strictEnv = std::getenv("CG50_CERT_STRICT_NO_HLE");
+            if (strictEnv != nullptr && std::strcmp(strictEnv, "0") != 0) {
+                authStats_.strictNoHleViolations += nBad;
+            }
+        }
+    }
+    auto* savedScifPeer = scif0_.Peer();
     lastLcdDmaSar_ = 0x08000000u;
-    auto readOptChunk = [&](const std::uint32_t id, void* dst, const std::size_t sz) {
-        if (reader.remaining < sizeof(std::uint32_t) + sizeof(std::uint64_t)) return true;
-        return reader.ReadChunk(id, dst, sz);
-    };
-    if (!readOptChunk(82u, ilram_.data(), ilram_.size()) ||
-        !readOptChunk(83u, xram_.data(), xram_.size()) ||
-        !readOptChunk(84u, yram_.data(), yram_.size()) ||
-        !readOptChunk(85u, storeQueues_.data(), storeQueues_.size()) ||
-        !readOptChunk(86u, &qacr0_, sizeof(qacr0_)) ||
-        !readOptChunk(87u, &qacr1_, sizeof(qacr1_)) ||
-        !readOptChunk(88u, itlb_.data(), sizeof(itlb_)) ||
-        !readOptChunk(89u, &intc2_, sizeof(intc2_)) ||
-        !readOptChunk(90u, &etmu_, sizeof(etmu_)) ||
-        !readOptChunk(91u, &adc_, sizeof(adc_)) ||
-        !readOptChunk(92u, &tpu_, sizeof(tpu_)) ||
-        !readOptChunk(93u, &scif0_, sizeof(scif0_)) ||
-        !readOptChunk(94u, &usb2_, sizeof(usb2_)) ||
-        !readOptChunk(95u, &lastLcdDmaSar_, sizeof(lastLcdDmaSar_))) {
+    std::array<std::uint32_t, 3> ctrlRegs = {0u, 0u, 0u};
+    if (!reader.ReadOptionalChunkFlexible(82u, ilram_.data(), ilram_.size()) ||
+        !reader.ReadOptionalChunkFlexible(83u, xram_.data(), xram_.size()) ||
+        !reader.ReadOptionalChunkFlexible(84u, yram_.data(), yram_.size()) ||
+        !reader.ReadOptionalChunkFlexible(85u, storeQueues_.data(), storeQueues_.size()) ||
+        !reader.ReadOptionalChunkFlexible(86u, &qacr0_, sizeof(qacr0_)) ||
+        !reader.ReadOptionalChunkFlexible(87u, &qacr1_, sizeof(qacr1_)) ||
+        !reader.ReadOptionalChunkFlexible(88u, itlb_.data(), sizeof(itlb_)) ||
+        !reader.ReadOptionalChunkFlexible(89u, &intc2_, sizeof(intc2_)) ||
+        !reader.ReadOptionalChunkFlexible(90u, &etmu_, sizeof(etmu_)) ||
+        !reader.ReadOptionalChunkFlexible(91u, &adc_, sizeof(adc_)) ||
+        !reader.ReadOptionalChunkFlexible(92u, &tpu_, sizeof(tpu_)) ||
+        !reader.ReadOptionalChunkFlexible(93u, &scif0_, sizeof(scif0_)) ||
+        !reader.ReadOptionalChunkFlexible(94u, usb2_.RawRegs().data(), sizeof(usb2_.RawRegs())) ||
+        !reader.ReadOptionalChunkFlexible(95u, &lastLcdDmaSar_, sizeof(lastLcdDmaSar_)) ||
+        !reader.ReadOptionalChunkFlexible(96u, &pendingEtmuIrq_, sizeof(pendingEtmuIrq_)) ||
+        !reader.ReadOptionalChunkFlexible(97u, &pendingDmacIrq_, sizeof(pendingDmacIrq_)) ||
+        !reader.ReadOptionalChunkFlexible(98u, &pendingCmtIrq_, sizeof(pendingCmtIrq_)) ||
+        !reader.ReadOptionalChunkFlexible(99u, &dsp_, sizeof(dsp_)) ||
+        !reader.ReadOptionalChunkFlexible(100u, &ubc_, sizeof(ubc_)) ||
+        !reader.ReadOptionalChunkFlexible(101u, &sdhi_, sizeof(sdhi_)) ||
+        !reader.ReadOptionalChunkFlexible(102u, cache_.OcramBytes().data(), cache_.OcramBytes().size()) ||
+        !reader.ReadOptionalChunkFlexible(103u, ctrlRegs.data(), sizeof(ctrlRegs)) ||
+        !reader.ReadOptionalChunkFlexible(104u, xyDspCtrl_.data(), sizeof(xyDspCtrl_)) ||
+        !reader.ReadOptionalChunkFlexible(105u, &itlbNextVictim_, sizeof(itlbNextVictim_))) {
         return fail();
     }
+    std::array<std::uint64_t, 2> bscRefreshState = {0u, 0u};
+    if (!reader.ReadOptionalChunkFlexible(106u, &hudi_, sizeof(hudi_)) ||
+        !reader.ReadOptionalChunkFlexible(107u, &prlck_, sizeof(prlck_)) ||
+        !reader.ReadOptionalChunkFlexible(108u, &rtcExt_, sizeof(rtcExt_)) ||
+        !reader.ReadOptionalChunkFlexible(109u, &dmacExt_, sizeof(dmacExt_)) ||
+        !reader.ReadOptionalChunkFlexible(110u, &extLy755a_, sizeof(extLy755a_)) ||
+        !reader.ReadOptionalChunkFlexible(111u, bscRefreshState.data(), sizeof(bscRefreshState))) {
+        return fail();
+    }
+    bscRefreshPrescaler_ = bscRefreshState[0];
+    bscRefreshCount_ = static_cast<std::uint32_t>(bscRefreshState[1]);
+    scif0_.ConnectPeer(savedScifPeer);
+    ramcr_ = ctrlRegs[0];
+    pascr_ = ctrlRegs[1];
+    irmcr_ = ctrlRegs[2];
+    cache_.ApplyCcrWrite(cacheControl_);
 
     // Rebuild the keyboard matrix contacts from the serialized key state
     // (the peripheral-bus snapshot deliberately omits it) and refresh the
@@ -7252,6 +8429,8 @@ bool Cg50NativeCore::ImportState(const std::uint8_t* bytes, const std::size_t si
         }
     }
     UpdateKeyInputData();
+    rtcCarryNextInst_ = ((stats_.instructions / kRtcInstructionsPerSecond) + 1ull) *
+                        kRtcInstructionsPerSecond;
 
     diagnostic_ = L"CG50 ROM-native: save-state restaurado; ejecuciÃƒÆ’Ã‚Â³n continÃƒÆ’Ã‚Âºa";
     return true;
