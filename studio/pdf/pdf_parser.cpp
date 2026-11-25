@@ -21,7 +21,7 @@
 #include <windows.h>
 #include <bcrypt.h>
 #else
-#if !defined(__ANDROID__) && !defined(__APPLE__) && defined(__has_include)
+#if !defined(__ANDROID__) && !defined(__APPLE__) && !defined(DOCSTUDIO_PORTABLE_NO_OPENSSL) && defined(__has_include)
 #if __has_include(<openssl/evp.h>)
 #define DOCSTUDIO_HAS_OPENSSL 1
 #include <openssl/evp.h>

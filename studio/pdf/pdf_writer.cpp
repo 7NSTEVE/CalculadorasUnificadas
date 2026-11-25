@@ -27,7 +27,7 @@
 #include <wincodec.h>
 #include <wrl/client.h>
 #else
-#if !defined(__ANDROID__) && !defined(__APPLE__) && defined(__has_include)
+#if !defined(__ANDROID__) && !defined(__APPLE__) && !defined(DOCSTUDIO_PORTABLE_NO_CAIRO) && defined(__has_include)
 #if __has_include(<cairo.h>) && __has_include(<gdk-pixbuf/gdk-pixbuf.h>) && __has_include(<pango/pangocairo.h>)
 #define DOCSTUDIO_HAS_CAIRO_PANGO 1
 #include <cairo.h>
