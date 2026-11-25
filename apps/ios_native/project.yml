@@ -167,6 +167,17 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.calculadorasunificadas.tinta.tests
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1,2"
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/nativo_ipad/Fuente/Puente
+          - $(SRCROOT)/../../studio
+          - $(SRCROOT)/../../studio/c_api
+          - $(SRCROOT)/../../studio/third_party
+          - $(SRCROOT)/../../studio/tinta_core
+          - $(SRCROOT)/../../academic/horarios_tec/include
+          - $(SRCROOT)/../../core/casio_ffi
+          - $(SRCROOT)/../../core/casio_nx/include
+          - $(SRCROOT)/../../core/casio_cw2/include
+          - $(SRCROOT)/../../core/casio_cg50
 
 schemes:
   CuadernU:

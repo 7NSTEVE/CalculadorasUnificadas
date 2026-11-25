@@ -14,11 +14,11 @@
 #if defined(__APPLE__)
 #include <zlib.h>
 #endif
-#include "calcemu.h"
-#include "casio_ffi.h"
-#include "api.h"
-#include "duplicacion.h"
-#include "transaccion_historial_api.h"
-#include "buscador_api.h"
-#include "PPTXZipBridge.h"
-#include "cuadernu_studio_ffi.h"
+#include "../../../../core/casio_nx/include/calcemu.h"
+#include "../../../../core/casio_ffi/casio_ffi.h"
+#include "../../../../studio/tinta_core/api.h"
+#include "../../../../studio/tinta_core/duplicacion.h"
+#include "../../../../studio/tinta_core/transaccion_historial_api.h"
+#include "../../../../studio/tinta_core/buscador_api.h"
+#include "../../nativo_ipad/Fuente/Puente/PPTXZipBridge.h"
+#include "../../../../studio/c_api/cuadernu_studio_ffi.h"
