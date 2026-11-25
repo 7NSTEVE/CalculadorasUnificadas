@@ -281,7 +281,15 @@ def crear_router(
         b = await cuerpo_json(request)
         texto = str(b.get("texto") or "")[:2400]
         cortes = [int(x) for x in (b.get("cortes") or []) if isinstance(x, (int, float))][:40]
-        return await voz.pedir(texto, cortes, str(b.get("voz") or ""), bool(b.get("urgente", True)))
+        return await voz.pedir(
+            texto,
+            cortes,
+            str(b.get("voz") or ""),
+            bool(b.get("urgente", True)),
+            motor=str(b.get("motor") or "")[:20],
+            estilo=str(b.get("estilo") or "")[:20],
+            servidor_local=str(b.get("servidor_local") or "")[:160],
+        )
 
     @r.get("/voz/audio/{clave}")
     async def api_audio(clave: str, request: Request) -> Response:

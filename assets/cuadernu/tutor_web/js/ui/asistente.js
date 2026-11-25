@@ -63,7 +63,9 @@ export class Asistente {
           ...(r.tex ? [{ a: 'mate', tex: r.tex, id: `lm${t}_${k}` }] : []),
         ],
       }));
-      this.rep.contar(this.miniPaso(tramos), 'Más despacio');
+      const mini = this.miniPaso(tramos);
+      mini.estilo = 'despacio';
+      this.rep.contar(mini, 'Más despacio');
       return;
     }
     // Sin renglones extra: se repite el paso a ritmo lento

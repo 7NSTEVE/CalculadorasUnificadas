@@ -537,6 +537,97 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
         self.assertEqual(r2.status_code, 200)
         self.assertTrue(r2.json().get("cache"))
 
+    def test_normalizador_voz_y_motores_locales_intercambiables(self) -> None:
+        import asyncio
+        import http.server
+        import io
+        import math
+        import struct
+        import threading
+        import wave
+        from tools.tutor_runtime.normalizador_voz import detectar_estilo_pedagogico, normalizar_para_voz
+        from tools.tutor_runtime.voz import ServicioVoz, validar_url_loopback
+
+        # 1. Normalizador matemático y de unidades del SI independiente del motor
+        n1 = normalizar_para_voz(r"$Q = n C_V (T_f - T_i)$ da 15,40 kW a 121,6 °C y 3,6×10^6 Pa con 28,97 J/(mol·K).")
+        self.assertIn("kilovatios", n1)
+        self.assertIn("grados Celsius", n1)
+        self.assertIn("por diez a la 6", n1)
+        self.assertIn("pascales", n1)
+        self.assertIn("joules por mol kelvin", n1)
+        self.assertNotIn("$", n1)
+        self.assertNotIn("\\", n1)
+
+        # Preserva prosa natural sin dañarla
+        prosa = "Separamos variables e integramos desde cero hasta la longitud total."
+        self.assertEqual(normalizar_para_voz(prosa), prosa)
+
+        # 2. Detección automática de prosodia pedagógica
+        self.assertEqual(detectar_estilo_pedagogico("Ojo: aquí hay una trampa común con los grados."), "alerta")
+        self.assertEqual(detectar_estilo_pedagogico("Hagamos el cambio de variable paso a paso."), "despacio")
+        self.assertEqual(detectar_estilo_pedagogico("Calculamos el volumen del cilindro."), "normal")
+        self.assertEqual(detectar_estilo_pedagogico("Texto cualquiera.", "enfasis"), "enfasis")
+
+        # 3. Guardia SSRF: rechaza URLs externas no-loopback
+        self.assertEqual(validar_url_loopback("http://127.0.0.1:8880/v1/audio/speech"), "http://127.0.0.1:8880/v1/audio/speech")
+        with self.assertRaises(ValueError):
+            validar_url_loopback("https://evil.example.com/v1/audio/speech")
+
+        # 4. Servidor local OpenAI-compatible simulado (ej. ZONOS3-Mini / VoxCPM2 / Qwen3-TTS Vulkan)
+        buf = io.BytesIO()
+        sr = 24000
+        with wave.open(buf, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sr)
+            frames = bytearray()
+            for i in range(int(sr * 1.1)):
+                env = 12000 if (i // 4000) % 2 == 0 else 400
+                s = int(env * math.sin(2 * math.pi * 220 * i / sr))
+                frames.extend(struct.pack("<h", s))
+            wf.writeframes(bytes(frames))
+        wav_bytes = buf.getvalue()
+        recibidos = []
+
+        class _FakeLocalTts(http.server.BaseHTTPRequestHandler):
+            def do_POST(self) -> None:
+                n = int(self.headers.get("Content-Length") or "0")
+                recibidos.append(json.loads(self.rfile.read(n).decode("utf-8")))
+                self.send_response(200)
+                self.send_header("Content-Type", "audio/wav")
+                self.send_header("Content-Length", str(len(wav_bytes)))
+                self.end_headers()
+                self.wfile.write(wav_bytes)
+
+            def log_message(self, fmt: str, *args: object) -> None:
+                return
+
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FakeLocalTts)
+        port = srv.server_address[1]
+        th = threading.Thread(target=srv.serve_forever, daemon=True)
+        th.start()
+        try:
+            url = f"http://127.0.0.1:{port}/v1/audio/speech"
+            sv = ServicioVoz(api_key="", carpeta=None, local_tts_url=url)
+            res = asyncio.run(sv.pedir("Ojo: $Q = 15,40$ kW a 121,6 °C.", [0, 12], voz="profesor_cr", motor="local_http"))
+            self.assertTrue(str(res.get("motor") or "").startswith("local_http:"), res)
+            self.assertEqual(res.get("mime"), "audio/wav")
+            self.assertEqual(res.get("estilo"), "alerta")
+            self.assertTrue(res.get("clave"))
+            self.assertGreaterEqual(len(res.get("mapa") or []), 2)
+            # Verifica que el texto llegó ya normalizado al modelo local
+            self.assertEqual(len(recibidos), 1)
+            self.assertIn("kilovatios", recibidos[0]["input"])
+            self.assertIn("grados Celsius", recibidos[0]["input"])
+            self.assertAlmostEqual(recibidos[0]["speed"], 0.94, places=2)
+            # Segunda llamada -> golpe de caché en memoria sin repetir POST
+            res2 = asyncio.run(sv.pedir("Ojo: $Q = 15,40$ kW a 121,6 °C.", [0, 12], voz="profesor_cr", motor="local_http"))
+            self.assertTrue(res2.get("cache"))
+            self.assertEqual(len(recibidos), 1)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
 
 if __name__ == "__main__":
     unittest.main()

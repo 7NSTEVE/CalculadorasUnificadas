@@ -1,23 +1,34 @@
-"""Voz de las lecciones: motor neural gratuito (Microsoft Edge Neural TTS) con marcas por palabra,
-caché en disco, respaldo opcional en Gemini TTS y respaldo sin conexión en Windows.
+"""Voz de las lecciones: arquitectura modular multi-motor con caché en disco y sincronización exacta.
 
-  * Primario: `edge-tts` (voces neuronales en español de estudio, gratis, sin clave ni cuotas 429,
-    con marcas exactas `WordBoundary` al milisegundo para sincronizar trazo y subtítulos).
-  * Caché en `private_local/voz_cache` (MP3 compacto ~40 KB/paso; la segunda vez responde en ~3 ms).
-  * Respaldo 1: Gemini TTS si hay clave y cuota disponible.
-  * Respaldo 2: `motor=local` (voz del sistema) únicamente sin conexión a internet.
+Motores intercambiables (todos compatibles con el normalizador matemático `normalizador_voz.py`
+y estilos prosódicos pedagógicos `normal`, `despacio`, `alerta`, `enfasis`):
+
+  1. `edge` (por defecto, gratis, sin clave ni cuota): Microsoft Edge Neural TTS (`edge-tts`) con
+     10 voces neuronales en español/multilingüe y marcas exactas `WordBoundary` al milisegundo.
+  2. `local_http` (100% local en GPU AMD/Vulkan o CPU, OpenAI-compatible `/v1/audio/speech`):
+     conecta directamente con servidores locales en loopback como `ZONOS3-Mini` (`zonos3-server`
+     C++/ggml Vulkan), `VoxCPM2`, `Qwen3-TTS 1.7B` o `Kokoro-FastAPI`, con alineación RMS exacta.
+  3. `kokoro` (100% local sin internet en ONNX CPU): se activa automáticamente si `kokoro_onnx` y
+     los pesos (`kokoro-v1.0.onnx` + `voices-v1.0.bin`) están en `D:\\DevTools\\TTSModels\\kokoro`
+     o en `TUTOR_KOKORO_DIR` (`ef_dora`, `em_alex`, `em_santa`).
+  4. `gemini`: respaldo en nube si hay API key y cuota.
+  5. `local`: último respaldo sin conexión usando la voz del sistema operativo.
 """
 
 from __future__ import annotations
 
 import asyncio
 import hashlib
+import io
 import json
+import os
 import pathlib
 import re
 import threading
 import time
 import unicodedata
+import urllib.parse
+import urllib.request
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .gemini_engines import (
@@ -29,17 +40,24 @@ from .gemini_engines import (
     estimate_cues_fallback,
     normalize_gemini_voice,
 )
+from .normalizador_voz import detectar_estilo_pedagogico, normalizar_para_voz
 from .secrets_dpapi import sanitize_text
 
 try:
     import edge_tts as _edge_tts
-except Exception:  # pragma: no cover - si falta edge-tts cae al respaldo
+except Exception:  # pragma: no cover
     _edge_tts = None  # type: ignore[assignment]
 
-VERSION_CACHE = "v3"
+try:
+    import kokoro_onnx as _kokoro_onnx  # type: ignore[import-not-found]
+except Exception:
+    _kokoro_onnx = None
+
+VERSION_CACHE = "v4"
 TOPE_CACHE_MB = 600
 ESPERA_URGENTE_S = 12.0
 VOZ_DEFECTO = "es-MX-DaliaNeural"
+DEFAULT_LOCAL_TTS_URL = "http://127.0.0.1:8880/v1/audio/speech"
 
 VOCES_NEURALES: List[Dict[str, str]] = [
     {"id": "es-MX-DaliaNeural", "etiqueta": "Dalia (México · clara y natural)", "genero": "F"},
@@ -54,7 +72,22 @@ VOCES_NEURALES: List[Dict[str, str]] = [
     {"id": "es-ES-AlvaroNeural", "etiqueta": "Álvaro (España · claro)", "genero": "M"},
 ]
 
+VOCES_KOKORO: List[Dict[str, str]] = [
+    {"id": "ef_dora", "etiqueta": "Dora (Kokoro-82M local · femenina)", "genero": "F"},
+    {"id": "em_alex", "etiqueta": "Alex (Kokoro-82M local · masculina)", "genero": "M"},
+    {"id": "em_santa", "etiqueta": "Santa (Kokoro-82M local · masculina)", "genero": "M"},
+]
+
+CATALOGO_LOCAL: List[Dict[str, str]] = [
+    {"id": "zonos3-mini", "nombre": "ZONOS3-Mini", "licencia": "Apache 2.0 / MIT", "backend": "C++/ggml Vulkan (OpenAI /v1/audio/speech)"},
+    {"id": "voxcpm2", "nombre": "VoxCPM2", "licencia": "Apache 2.0", "backend": "llama.cpp-omni Vulkan (48 kHz)"},
+    {"id": "qwen3-tts", "nombre": "Qwen3-TTS 1.7B", "licencia": "Apache 2.0", "backend": "GGUF / Vulkan"},
+    {"id": "chatterbox-latam", "nombre": "Chatterbox V3 LATAM", "licencia": "MIT", "backend": "PyTorch / servidor local"},
+    {"id": "kokoro-82m", "nombre": "Kokoro-82M", "licencia": "Apache 2.0", "backend": "ONNX CPU local (ef_dora, em_alex, em_santa)"},
+]
+
 _IDS_NEURALES = {v["id"] for v in VOCES_NEURALES}
+_IDS_KOKORO = {v["id"] for v in VOCES_KOKORO}
 
 # Mapeo suave de nombres legados de Gemini -> voces neuronales equivalentes
 MAPA_VOCES_LEGADO: Dict[str, str] = {
@@ -65,6 +98,30 @@ MAPA_VOCES_LEGADO: Dict[str, str] = {
     "Fenrir": "es-CO-GonzaloNeural",
 }
 
+# Ajustes prosódicos por estilo pedagógico
+ESTILOS_PROSODIA: Dict[str, Dict[str, Any]] = {
+    "normal": {"edge_rate": "+0%", "edge_pitch": "+0Hz", "speed": 1.0},
+    "despacio": {"edge_rate": "-10%", "edge_pitch": "-1Hz", "speed": 0.90},
+    "alerta": {"edge_rate": "-6%", "edge_pitch": "-2Hz", "speed": 0.94},
+    "enfasis": {"edge_rate": "-3%", "edge_pitch": "+1Hz", "speed": 0.97},
+}
+
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def validar_url_loopback(url: str) -> str:
+    """Valida que una URL de servidor TTS local apunte estrictamente a loopback (evita SSRF)."""
+    u = (url or "").strip()
+    if not u:
+        return ""
+    parsed = urllib.parse.urlparse(u)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("La URL del servidor local de voz debe usar http:// o https://")
+    host = (parsed.hostname or "").lower()
+    if host not in _LOOPBACK_HOSTS:
+        raise ValueError("Por seguridad, el servidor local de voz solo puede apuntar a 127.0.0.1 o localhost")
+    return u
+
 
 def normalizar_voz(voz: str, por_defecto: str = VOZ_DEFECTO) -> str:
     """Devuelve un identificador de voz neuronal válido (o mapea nombres legados)."""
@@ -73,7 +130,6 @@ def normalizar_voz(voz: str, por_defecto: str = VOZ_DEFECTO) -> str:
         return raw
     if raw in MAPA_VOCES_LEGADO:
         return MAPA_VOCES_LEGADO[raw]
-    # Acepta cualquier voz oficial es-*Neural o *MultilingualNeural de Edge
     if re.fullmatch(r"[a-z]{2}-[A-Z]{2}-[A-Za-z0-9]+Neural", raw):
         return raw
     if por_defecto in _IDS_NEURALES:
@@ -81,8 +137,8 @@ def normalizar_voz(voz: str, por_defecto: str = VOZ_DEFECTO) -> str:
     return MAPA_VOCES_LEGADO.get(por_defecto, VOZ_DEFECTO)
 
 
-def _clave(texto: str, voz: str) -> str:
-    return hashlib.sha1(f"{VERSION_CACHE}|{voz}|{texto}".encode("utf-8")).hexdigest()[:24]
+def _clave(texto: str, motor: str, voz: str, estilo: str) -> str:
+    return hashlib.sha1(f"{VERSION_CACHE}|{motor}|{voz}|{estilo}|{texto}".encode("utf-8")).hexdigest()[:24]
 
 
 def _sin_tildes(s: str) -> str:
@@ -140,7 +196,6 @@ def _mapa_desde_palabras(
             if wf:
                 idx = texto_fold.find(wf, cursor)
         if idx < 0:
-            # Siguiente palabra no vacía desde el cursor
             m = re.search(r"\S+", texto[cursor:])
             idx = (cursor + m.start()) if m else cursor
         char_pos = max(cursor, min(n, idx))
@@ -160,6 +215,23 @@ def _mapa_desde_palabras(
     return {"dur_ms": dur, "mapa": puntos, "cortes_ms": cortes_ms}
 
 
+def _buscar_pesos_kokoro(dir_explicito: str = "") -> Optional[Tuple[pathlib.Path, pathlib.Path]]:
+    candidatos = [
+        pathlib.Path(dir_explicito) if dir_explicito else None,
+        pathlib.Path(os.environ.get("TUTOR_KOKORO_DIR", "")) if os.environ.get("TUTOR_KOKORO_DIR") else None,
+        pathlib.Path(r"D:\DevTools\TTSModels\kokoro"),
+        pathlib.Path.home() / ".cache" / "kokoro-onnx",
+    ]
+    for base in candidatos:
+        if base is None or not base.is_dir():
+            continue
+        m = base / "kokoro-v1.0.onnx"
+        v = base / "voices-v1.0.bin"
+        if m.is_file() and v.is_file():
+            return m, v
+    return None
+
+
 class ServicioVoz:
     def __init__(
         self,
@@ -167,6 +239,8 @@ class ServicioVoz:
         carpeta: Optional[pathlib.Path],
         voz: str = VOZ_DEFECTO,
         modelos: Sequence[str] = tuple(TTS_MODEL_CHAIN),
+        local_tts_url: str = "",
+        kokoro_dir: str = "",
     ) -> None:
         self.voz = normalizar_voz(voz, VOZ_DEFECTO)
         self.carpeta = carpeta
@@ -175,6 +249,11 @@ class ServicioVoz:
         self._cliente = None
         self._api_key = (api_key or "").strip()
         self._modelos = list(modelos)
+        env_url = (local_tts_url or os.environ.get("TUTOR_LOCAL_TTS_URL") or "").strip()
+        self._local_tts_url = validar_url_loopback(env_url) if env_url else ""
+        self._local_tts_model = (os.environ.get("TUTOR_LOCAL_TTS_MODEL") or "zonos3-mini").strip()
+        self._kokoro_dir = kokoro_dir
+        self._kokoro_inst = None
         self._apartado: Dict[str, float] = {}
         self._ultimo_error = ""
         self._en_curso: Dict[str, asyncio.Task] = {}
@@ -189,8 +268,12 @@ class ServicioVoz:
         return _edge_tts is not None and self._apartado.get("edge-tts", 0) <= time.time()
 
     @property
+    def kokoro_disponible(self) -> bool:
+        return _kokoro_onnx is not None and _buscar_pesos_kokoro(self._kokoro_dir) is not None
+
+    @property
     def configurada(self) -> bool:
-        return self.edge_disponible or bool(self._api_key)
+        return self.edge_disponible or bool(self._local_tts_url) or self.kokoro_disponible or bool(self._api_key)
 
     def _cli(self):
         if self._cliente is None and self._api_key:
@@ -202,18 +285,32 @@ class ServicioVoz:
     def modelos_disponibles(self) -> List[str]:
         ahora = time.time()
         mods: List[str] = []
+        if self._local_tts_url:
+            mods.append("local-http")
         if self.edge_disponible:
             mods.append("edge-tts")
+        if self.kokoro_disponible:
+            mods.append("kokoro-onnx")
         if self._api_key:
             mods.extend(m for m in self._modelos if self._apartado.get(m, 0) <= ahora)
         return mods
 
     def estado(self) -> Dict[str, Any]:
+        primario = (
+            "local-http"
+            if self._local_tts_url
+            else ("edge-tts" if self.edge_disponible else ("kokoro-onnx" if self.kokoro_disponible else ("gemini" if self._api_key else "local")))
+        )
         return {
             "configurada": self.configurada,
             "voz": self.voz,
-            "motor_primario": "edge-tts" if self.edge_disponible else ("gemini" if self._api_key else "local"),
+            "motor_primario": primario,
             "voces": VOCES_NEURALES,
+            "voces_kokoro": VOCES_KOKORO,
+            "kokoro_listo": self.kokoro_disponible,
+            "servidor_local_url": self._local_tts_url or DEFAULT_LOCAL_TTS_URL,
+            "servidor_local_activo": bool(self._local_tts_url),
+            "catalogo_local": CATALOGO_LOCAL,
             "modelos": self.modelos_disponibles(),
             "apartados": {m: int(t - time.time()) for m, t in self._apartado.items() if t > time.time()},
             "ultimo_error": self._ultimo_error,
@@ -294,13 +391,20 @@ class ServicioVoz:
 
     # ------------------------------------------------------------ síntesis
 
-    async def _sintetiza_edge(self, texto: str, voz: str) -> Tuple[bytes, List[Tuple[int, int, str]]]:
+    async def _sintetiza_edge(self, texto: str, voz: str, estilo: str) -> Tuple[bytes, List[Tuple[int, int, str]]]:
         if _edge_tts is None:
             raise RuntimeError("edge-tts no instalado")
+        pros = ESTILOS_PROSODIA.get(estilo, ESTILOS_PROSODIA["normal"])
         ultimo: Optional[Exception] = None
         for intento in range(2):
             try:
-                comm = _edge_tts.Communicate(texto, voice=voz, boundary="WordBoundary")
+                comm = _edge_tts.Communicate(
+                    texto,
+                    voice=voz,
+                    rate=str(pros["edge_rate"]),
+                    pitch=str(pros["edge_pitch"]),
+                    boundary="WordBoundary",
+                )
                 audio = bytearray()
                 palabras: List[Tuple[int, int, str]] = []
                 async for chunk in comm.stream():
@@ -325,6 +429,57 @@ class ServicioVoz:
         if "403" in msg or "401" in msg:
             self._apartado["edge-tts"] = time.time() + 180.0
         raise RuntimeError(self._ultimo_error)
+
+    def _sintetiza_local_http_bloqueante(
+        self,
+        texto: str,
+        voz: str,
+        estilo: str,
+        url: str,
+    ) -> Tuple[bytes, str]:
+        """Llama a un servidor TTS local OpenAI-compatible (`/v1/audio/speech`), p. ej. ZONOS3-Mini Vulkan."""
+        url_ok = validar_url_loopback(url)
+        pros = ESTILOS_PROSODIA.get(estilo, ESTILOS_PROSODIA["normal"])
+        payload = json.dumps({
+            "model": self._local_tts_model,
+            "input": texto,
+            "voice": voz or "es-default",
+            "language": "es",
+            "response_format": "wav",
+            "speed": float(pros["speed"]),
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            url_ok,
+            data=payload,
+            headers={"Content-Type": "application/json", "Accept": "audio/wav, audio/mpeg, */*"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=18.0) as resp:
+            datos = resp.read()
+            ctype = str(resp.headers.get("Content-Type") or "audio/wav").split(";")[0].strip().lower()
+        if len(datos) < 100:
+            raise RuntimeError("servidor local de voz devolvió audio vacío")
+        if ctype in ("audio/mpeg", "audio/mp3"):
+            return datos, "audio/mpeg"
+        wav, _ = ensure_wav_and_duration_ms(datos, ctype or "audio/wav")
+        return wav, "audio/wav"
+
+    def _sintetiza_kokoro_bloqueante(self, texto: str, voz: str, estilo: str) -> bytes:
+        if _kokoro_onnx is None:
+            raise RuntimeError("kokoro-onnx no instalado")
+        pesos = _buscar_pesos_kokoro(self._kokoro_dir)
+        if pesos is None:
+            raise RuntimeError("faltan kokoro-v1.0.onnx y voices-v1.0.bin en D:\\DevTools\\TTSModels\\kokoro")
+        if self._kokoro_inst is None:
+            self._kokoro_inst = _kokoro_onnx.Kokoro(str(pesos[0]), str(pesos[1]))
+        import soundfile as sf
+
+        pros = ESTILOS_PROSODIA.get(estilo, ESTILOS_PROSODIA["normal"])
+        v_k = voz if voz in _IDS_KOKORO else "ef_dora"
+        samples, sr = self._kokoro_inst.create(texto, voice=v_k, speed=float(pros["speed"]), lang="es")
+        buf = io.BytesIO()
+        sf.write(buf, samples, int(sr), format="WAV", subtype="PCM_16")
+        return buf.getvalue()
 
     def _sintetiza_gemini_bloqueante(self, texto: str, voz_gemini: str) -> Tuple[bytes, str]:
         from google.genai import types
@@ -371,7 +526,7 @@ class ServicioVoz:
         raise RuntimeError(self._ultimo_error)
 
     @staticmethod
-    def _alinear(wav: bytes, texto: str, cortes: Sequence[int]) -> Dict[str, Any]:
+    def _alinear_wav(wav: bytes, texto: str, cortes: Sequence[int]) -> Dict[str, Any]:
         cues = [(f"s{i}", int(c)) for i, c in enumerate(cortes)]
         est = estimate_cues_fallback(texto, cues, 1.0)
         al = align_cues_with_wav_rms(wav, texto, cues, est)
@@ -386,7 +541,24 @@ class ServicioVoz:
                 limpio.append([t, c])
         return {"dur_ms": dur, "mapa": limpio, "cortes_ms": [int(al["cues_ms"].get(f"s{i}", 0)) for i in range(len(cortes))]}
 
-    async def _fabricar(self, clave: str, texto: str, cortes: Sequence[int], voz: str) -> Dict[str, Any]:
+    def _alinear_y_recortar_wav(self, wav: bytes, texto: str, cortes: Sequence[int]) -> Tuple[bytes, Dict[str, Any]]:
+        pcm, sr = _extract_wav_pcm16_mono(wav)
+        if pcm:
+            rec, _ = _trim_pcm16_edge_silence(pcm, sr, max_lead_ms=30, max_tail_ms=160)
+            wav, _ = ensure_wav_and_duration_ms(rec, f"audio/L16;codec=pcm;rate={sr}")
+        return wav, self._alinear_wav(wav, texto, cortes)
+
+    async def _fabricar(
+        self,
+        clave: str,
+        texto_hablado: str,
+        texto_original: str,
+        cortes: Sequence[int],
+        voz: str,
+        motor_pref: str,
+        estilo: str,
+        url_local: str,
+    ) -> Dict[str, Any]:
         if self._sem is None:
             self._sem = asyncio.Semaphore(4)
         async with self._sem:
@@ -394,55 +566,152 @@ class ServicioVoz:
             if ya:
                 return ya[1]
 
-            # 1) Primario: Edge Neural TTS (gratis, sin cuota, natural, WordBoundary exacto)
-            if self.edge_disponible:
+            orden: List[str] = []
+            if motor_pref == "local_http":
+                orden = ["local_http", "edge", "gemini"]
+            elif motor_pref == "kokoro":
+                orden = ["kokoro", "edge", "gemini"]
+            elif motor_pref == "gemini":
+                orden = ["gemini", "edge"]
+            elif motor_pref == "edge":
+                orden = ["edge", "gemini"]
+            else:
+                if url_local:
+                    orden.append("local_http")
+                if self.edge_disponible:
+                    orden.append("edge")
+                if self.kokoro_disponible:
+                    orden.append("kokoro")
+                if self._api_key:
+                    orden.append("gemini")
+
+            errores: List[str] = []
+            for m in orden:
                 try:
-                    mp3, palabras = await self._sintetiza_edge(texto, voz)
-                    meta = _mapa_desde_palabras(texto, palabras, cortes, bytes_mp3=len(mp3))
-                    meta.update({
-                        "motor": f"edge:{voz}",
-                        "voz": voz,
-                        "clave": clave,
-                        "mime": "audio/mpeg",
-                    })
-                    await asyncio.to_thread(self._guardar, clave, mp3, meta, "mp3")
-                    return meta
-                except Exception:  # noqa: BLE001 - pasa al respaldo Gemini si existe
-                    if not self._api_key:
-                        raise
+                    if m == "local_http":
+                        if not url_local:
+                            continue
+                        datos, mime = await asyncio.to_thread(
+                            self._sintetiza_local_http_bloqueante, texto_hablado, voz, estilo, url_local
+                        )
+                        if mime == "audio/wav":
+                            datos, meta = await asyncio.to_thread(
+                                self._alinear_y_recortar_wav, datos, texto_original, cortes
+                            )
+                            ext = "wav"
+                        else:
+                            meta = _mapa_desde_palabras(texto_original, [], cortes, bytes_mp3=len(datos))
+                            ext = "mp3"
+                        meta.update({
+                            "motor": f"local_http:{self._local_tts_model}",
+                            "voz": voz,
+                            "estilo": estilo,
+                            "clave": clave,
+                            "mime": mime,
+                        })
+                        await asyncio.to_thread(self._guardar, clave, datos, meta, ext)
+                        return meta
 
-            # 2) Respaldo: Gemini TTS si hay clave y cuota
-            voz_g = normalize_gemini_voice("Kore", "Kore")
-            wav, modelo = await asyncio.to_thread(self._sintetiza_gemini_bloqueante, texto, voz_g)
-            pcm, sr = _extract_wav_pcm16_mono(wav)
-            if pcm:
-                rec, _ = _trim_pcm16_edge_silence(pcm, sr, max_lead_ms=30, max_tail_ms=160)
-                wav, _ = ensure_wav_and_duration_ms(rec, f"audio/L16;codec=pcm;rate={sr}")
-            meta = self._alinear(wav, texto, cortes)
-            meta.update({
-                "motor": f"gemini:{modelo}",
-                "voz": voz_g,
-                "clave": clave,
-                "mime": "audio/wav",
-            })
-            await asyncio.to_thread(self._guardar, clave, wav, meta, "wav")
-            return meta
+                    if m == "edge" and self.edge_disponible:
+                        v_edge = normalizar_voz(voz, self.voz)
+                        mp3, palabras = await self._sintetiza_edge(texto_hablado, v_edge, estilo)
+                        meta = _mapa_desde_palabras(texto_original, palabras, cortes, bytes_mp3=len(mp3))
+                        meta.update({
+                            "motor": f"edge:{v_edge}",
+                            "voz": v_edge,
+                            "estilo": estilo,
+                            "clave": clave,
+                            "mime": "audio/mpeg",
+                        })
+                        await asyncio.to_thread(self._guardar, clave, mp3, meta, "mp3")
+                        return meta
 
-    async def pedir(self, texto: str, cortes: Sequence[int] = (), voz: str = "", urgente: bool = True) -> Dict[str, Any]:
-        """Devuelve metadatos con `clave` si hay audio neural, o `motor=local` solo sin conexión."""
-        texto = " ".join((texto or "").split())
-        if not texto:
+                    if m == "kokoro" and self.kokoro_disponible:
+                        v_k = voz if voz in _IDS_KOKORO else "ef_dora"
+                        wav = await asyncio.to_thread(self._sintetiza_kokoro_bloqueante, texto_hablado, v_k, estilo)
+                        wav, meta = await asyncio.to_thread(
+                            self._alinear_y_recortar_wav, wav, texto_original, cortes
+                        )
+                        meta.update({
+                            "motor": f"kokoro:{v_k}",
+                            "voz": v_k,
+                            "estilo": estilo,
+                            "clave": clave,
+                            "mime": "audio/wav",
+                        })
+                        await asyncio.to_thread(self._guardar, clave, wav, meta, "wav")
+                        return meta
+
+                    if m == "gemini" and self._api_key:
+                        voz_g = normalize_gemini_voice("Kore", "Kore")
+                        wav, modelo = await asyncio.to_thread(self._sintetiza_gemini_bloqueante, texto_hablado, voz_g)
+                        wav, meta = await asyncio.to_thread(
+                            self._alinear_y_recortar_wav, wav, texto_original, cortes
+                        )
+                        meta.update({
+                            "motor": f"gemini:{modelo}",
+                            "voz": voz_g,
+                            "estilo": estilo,
+                            "clave": clave,
+                            "mime": "audio/wav",
+                        })
+                        await asyncio.to_thread(self._guardar, clave, wav, meta, "wav")
+                        return meta
+                except Exception as exc:  # noqa: BLE001
+                    errores.append(f"{m}: {sanitize_text(str(exc))[:140]}")
+
+            self._ultimo_error = " | ".join(errores)[:400] or "sin motores de voz disponibles"
+            raise RuntimeError(self._ultimo_error)
+
+    async def pedir(
+        self,
+        texto: str,
+        cortes: Sequence[int] = (),
+        voz: str = "",
+        urgente: bool = True,
+        motor: str = "",
+        estilo: str = "",
+        servidor_local: str = "",
+    ) -> Dict[str, Any]:
+        """Devuelve metadatos con `clave` si hay audio neural/local, o `motor=local` solo sin conexión."""
+        texto_orig = " ".join((texto or "").split())
+        if not texto_orig:
             return {"motor": "silencio", "dur_ms": 0, "mapa": [[0, 0]], "clave": ""}
-        v = normalizar_voz(voz, self.voz)
-        clave = _clave(texto, v)
+
+        motor_pref = (motor or "").strip().lower()
+        if motor_pref not in ("", "auto", "edge", "local_http", "kokoro", "gemini"):
+            motor_pref = "auto"
+
+        url_local = self._local_tts_url
+        if servidor_local and motor_pref in ("local_http", "auto"):
+            try:
+                url_local = validar_url_loopback(servidor_local)
+            except ValueError as exc:
+                return {"motor": "local", "motivo": str(exc), "clave": ""}
+
+        estilo_eff = detectar_estilo_pedagogico(texto_orig, estilo)
+        texto_hablado = normalizar_para_voz(texto_orig) or texto_orig
+
+        if motor_pref == "local_http":
+            v_eff = (voz or "es-default").strip()[:60] or "es-default"
+        elif motor_pref == "kokoro":
+            v_eff = voz if voz in _IDS_KOKORO else "ef_dora"
+        else:
+            v_eff = normalizar_voz(voz, self.voz)
+
+        clave = _clave(texto_hablado, motor_pref or "auto", v_eff, estilo_eff)
         ya = self.leer(clave)
         if ya:
             return {**ya[1], "cache": True}
-        if not self.modelos_disponibles():
+
+        if not self.modelos_disponibles() and not url_local:
             return {"motor": "local", "motivo": "sin motores de voz disponibles", "clave": ""}
+
         tarea = self._en_curso.get(clave)
         if tarea is None or tarea.done():
-            tarea = asyncio.create_task(self._fabricar(clave, texto, list(cortes) or [0], v))
+            tarea = asyncio.create_task(
+                self._fabricar(clave, texto_hablado, texto_orig, list(cortes) or [0], v_eff, motor_pref, estilo_eff, url_local)
+            )
             self._en_curso[clave] = tarea
             tarea.add_done_callback(lambda t, k=clave: self._en_curso.pop(k, None))
         try:

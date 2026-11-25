@@ -285,20 +285,38 @@ class VozMuda {
 
 const metas = new Map();
 
-function claveMeta(texto) {
-  return `${ajustes.voz}|${texto}`;
+function vozActivaParaMotor() {
+  if (ajustes.motorVoz === 'local_http') return ajustes.vozLocalHttp || 'es-default';
+  if (ajustes.motorVoz === 'kokoro') return ajustes.vozKokoro || 'ef_dora';
+  return ajustes.voz;
+}
+
+function claveMeta(texto, estilo = '') {
+  return `${ajustes.motorVoz}|${vozActivaParaMotor()}|${estilo}|${texto}`;
 }
 
 /** Pide (o reutiliza) el audio de un paso. `urgente=false` sirve para precargar el siguiente. */
 export function prepararVoz(paso, urgente = true) {
   const texto = paso.habla || '';
   if (!texto || !ajustes.narracion || ajustes.motorVoz === 'local') return Promise.resolve(null);
-  const k = claveMeta(texto);
+  const estilo = paso.estilo || '';
+  const k = claveMeta(texto, estilo);
   const guardada = metas.get(k);
   if (guardada) return guardada;
+  const cuerpo = {
+    texto,
+    cortes: paso.tramos.map((t) => t.c0),
+    voz: vozActivaParaMotor(),
+    motor: ajustes.motorVoz,
+    estilo,
+    urgente,
+  };
+  if (ajustes.motorVoz === 'local_http' && ajustes.servidorVozLocal) {
+    cuerpo.servidor_local = ajustes.servidorVozLocal;
+  }
   const pr = pedir('/api/voz', {
     metodo: 'POST', tiempo: urgente ? 12000 : 70000,
-    cuerpo: { texto, cortes: paso.tramos.map((t) => t.c0), voz: ajustes.voz, urgente },
+    cuerpo,
   }).catch(() => ({ motor: 'local', motivo: 'sin conexión' }));
   metas.set(k, pr);
   pr.then((m) => { if (!m || !m.clave) metas.delete(k); else if (metas.size > 80) metas.delete(metas.keys().next().value); });
@@ -318,19 +336,32 @@ export const VOCES_NEURALES = [
   ['es-ES-AlvaroNeural', 'Álvaro (España · claro)'],
 ];
 
+export const VOCES_KOKORO = [
+  ['ef_dora', 'Dora (Kokoro-82M · femenina)'],
+  ['em_alex', 'Alex (Kokoro-82M · masculina)'],
+  ['em_santa', 'Santa (Kokoro-82M · masculina)'],
+];
+
 let audioPrueba = null;
 
-/** Reproduce una frase corta de muestra con la voz elegida para compararla al instante. */
+/** Reproduce una frase corta de muestra con la voz y motor elegidos para compararla al instante. */
 export async function probarVoz(vozId) {
   if (audioPrueba) {
     try { audioPrueba.pause(); audioPrueba.removeAttribute('src'); audioPrueba.load(); } catch { /* nada */ }
     audioPrueba = null;
   }
   const muestra = 'Hola, así suena mi voz mientras resolvemos física paso a paso en la pizarra.';
-  const meta = await pedir('/api/voz', {
-    metodo: 'POST', tiempo: 12000,
-    cuerpo: { texto: muestra, cortes: [0], voz: vozId || ajustes.voz, urgente: true },
-  });
+  const cuerpo = {
+    texto: muestra,
+    cortes: [0],
+    voz: vozId || vozActivaParaMotor(),
+    motor: ajustes.motorVoz,
+    urgente: true,
+  };
+  if (ajustes.motorVoz === 'local_http' && ajustes.servidorVozLocal) {
+    cuerpo.servidor_local = ajustes.servidorVozLocal;
+  }
+  const meta = await pedir('/api/voz', { metodo: 'POST', tiempo: 14000, cuerpo });
   if (!meta || !meta.clave) return false;
   const a = new Audio(urlApi(`/api/voz/audio/${meta.clave}`));
   a.preservesPitch = true;
