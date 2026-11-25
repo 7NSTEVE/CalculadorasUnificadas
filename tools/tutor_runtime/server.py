@@ -195,7 +195,7 @@ class TutorRuntimeContext:
         self.telemetry = LocalTelemetryRecorder(base_dir=telem_dir, enabled=telem_enabled)
         privada = self.repo_root / "private_local"
         hay_privada = privada.exists()
-        self.voz = ServicioVoz(audio_key, (privada / "voz_cache") if hay_privada else None, voz=str(bootstrap.get("tts_voice") or "Kore"))
+        self.voz = ServicioVoz(audio_key, (privada / "voz_cache") if hay_privada else None, voz=str(bootstrap.get("tts_voice") or "es-MX-DaliaNeural"))
         self.progreso = Progreso((privada / "tutor_progreso.json") if hay_privada else None)
         self.documentos = Documentos(self.repo_root, cache=(privada / "tutor_recortes") if hay_privada else None)
         self.sessions: Dict[str, Dict[str, Any]] = {}

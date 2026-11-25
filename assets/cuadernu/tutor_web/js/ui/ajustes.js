@@ -3,7 +3,7 @@
 import { ajustes, bus, guardarAjuste } from '../nucleo/api.js';
 import { ESTILOS_LETRA, usarLetra } from '../nucleo/letra.js';
 import { aplicarTema } from '../nucleo/paleta.js';
-import { vocesLocales } from '../leccion/voz_leccion.js';
+import { VOCES_NEURALES, probarVoz, vocesLocales } from '../leccion/voz_leccion.js';
 
 function fila(txt, control) {
   const d = document.createElement('label');
@@ -70,7 +70,7 @@ export function armarAjustes(el, acciones) {
     velCaja.append(vel, velTxt);
 
     const motor = document.createElement('select');
-    for (const [v, t] of [['auto', 'La mejor disponible'], ['local', 'Voz de Windows'], ['mudo', 'Sin voz']]) {
+    for (const [v, t] of [['auto', 'Voz natural (recomendada)'], ['local', 'Voz del sistema (sin internet)'], ['mudo', 'Sin voz']]) {
       const o = document.createElement('option');
       o.value = v; o.textContent = t; o.selected = (v === 'mudo' ? !ajustes.narracion : ajustes.narracion && ajustes.motorVoz === v);
       motor.appendChild(o);
@@ -82,12 +82,28 @@ export function armarAjustes(el, acciones) {
     });
 
     const voz = document.createElement('select');
-    for (const [v, t] of [['Kore', 'Kore (clara)'], ['Charon', 'Charon (grave)'], ['Puck', 'Puck (animada)'], ['Aoede', 'Aoede (suave)'], ['Fenrir', 'Fenrir (firme)']]) {
+    for (const [v, t] of VOCES_NEURALES) {
       const o = document.createElement('option');
       o.value = v; o.textContent = t; o.selected = ajustes.voz === v;
       voz.appendChild(o);
     }
     voz.addEventListener('change', () => { guardarAjuste('voz', voz.value); acciones.cambioVoz(); });
+
+    const btnProbar = document.createElement('button');
+    btnProbar.type = 'button';
+    btnProbar.className = 'btn';
+    btnProbar.textContent = 'Probar';
+    btnProbar.addEventListener('click', async () => {
+      btnProbar.disabled = true;
+      btnProbar.textContent = 'Cargando…';
+      try { await probarVoz(voz.value); } catch { /* sin conexión */ }
+      btnProbar.disabled = false;
+      btnProbar.textContent = 'Probar';
+    });
+    const vozCaja = document.createElement('span');
+    vozCaja.style.display = 'flex'; vozCaja.style.gap = '0.45em'; vozCaja.style.alignItems = 'center';
+    vozCaja.style.justifyContent = 'flex-end'; vozCaja.style.flex = '0 1 auto';
+    vozCaja.append(voz, btnProbar);
 
     const vloc = document.createElement('select');
     const auto = document.createElement('option');
@@ -117,9 +133,9 @@ export function armarAjustes(el, acciones) {
     const nodos = [
       titulo('Voz'),
       bloque('Velocidad', velCaja),
-      fila('Quién habla', motor),
-      fila('Voz en la nube', voz),
-      fila('Voz de Windows', vloc),
+      fila('Motor de voz', motor),
+      bloque('Voz del profesor', vozCaja),
+      fila('Respaldo sin internet', vloc),
       titulo('Lectura'),
       bloque('Letra', seg(Object.entries(ESTILOS_LETRA).map(([k, v]) => [k, v.nombre]), ajustes.letra, async (v) => {
         ajustes.letra = v;

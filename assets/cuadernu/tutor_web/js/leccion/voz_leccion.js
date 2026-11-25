@@ -305,11 +305,46 @@ export function prepararVoz(paso, urgente = true) {
   return pr;
 }
 
+export const VOCES_NEURALES = [
+  ['es-MX-DaliaNeural', 'Dalia (México · clara y natural)'],
+  ['es-CR-MariaNeural', 'María (Costa Rica · natural)'],
+  ['es-CR-JuanNeural', 'Juan (Costa Rica · natural)'],
+  ['es-CO-SalomeNeural', 'Salomé (Colombia · cálida)'],
+  ['es-CO-GonzaloNeural', 'Gonzalo (Colombia · cálido)'],
+  ['es-MX-JorgeNeural', 'Jorge (México · claro y firme)'],
+  ['en-US-AvaMultilingualNeural', 'Ava (Multilingüe · muy expresiva)'],
+  ['en-US-AndrewMultilingualNeural', 'Andrew (Multilingüe · conversacional)'],
+  ['es-ES-XimenaNeural', 'Ximena (España · expresiva)'],
+  ['es-ES-AlvaroNeural', 'Álvaro (España · claro)'],
+];
+
+let audioPrueba = null;
+
+/** Reproduce una frase corta de muestra con la voz elegida para compararla al instante. */
+export async function probarVoz(vozId) {
+  if (audioPrueba) {
+    try { audioPrueba.pause(); audioPrueba.removeAttribute('src'); audioPrueba.load(); } catch { /* nada */ }
+    audioPrueba = null;
+  }
+  const muestra = 'Hola, así suena mi voz mientras resolvemos física paso a paso en la pizarra.';
+  const meta = await pedir('/api/voz', {
+    metodo: 'POST', tiempo: 12000,
+    cuerpo: { texto: muestra, cortes: [0], voz: vozId || ajustes.voz, urgente: true },
+  });
+  if (!meta || !meta.clave) return false;
+  const a = new Audio(urlApi(`/api/voz/audio/${meta.clave}`));
+  a.preservesPitch = true;
+  a.playbackRate = ajustes.vel;
+  audioPrueba = a;
+  await a.play();
+  return true;
+}
+
 /**
- * Crea la voz de un paso. Si la nube no responde en `paciencia` ms se usa la voz local:
+ * Crea la voz de un paso. Si la voz neural no responde en `paciencia` ms se usa la voz del sistema:
  * nadie se queda viendo una pizarra vacía.
  */
-export async function crearVoz(paso, { paciencia = 4500, motor = 'auto' } = {}) {
+export async function crearVoz(paso, { paciencia = 9000, motor = 'auto' } = {}) {
   const texto = paso.habla || '';
   if (!texto || !ajustes.narracion) return new VozMuda(texto || ' '.repeat(40), 1.15);
   const localOk = hayVozLocal();
@@ -325,5 +360,9 @@ export async function crearVoz(paso, { paciencia = 4500, motor = 'auto' } = {}) 
 }
 
 export function callarTodo() {
+  if (audioPrueba) {
+    try { audioPrueba.pause(); audioPrueba.removeAttribute('src'); audioPrueba.load(); } catch { /* nada */ }
+    audioPrueba = null;
+  }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }

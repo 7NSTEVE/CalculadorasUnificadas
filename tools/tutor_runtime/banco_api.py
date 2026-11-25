@@ -289,7 +289,8 @@ def crear_router(
         d = await asyncio.to_thread(voz.leer, clave)
         if not d:
             raise HTTPException(status_code=404, detail="Audio no disponible")
-        return Response(content=d[0], media_type="audio/wav", headers={"Cache-Control": "private, max-age=86400"})
+        mime = str((d[1] or {}).get("mime") or "audio/wav")
+        return Response(content=d[0], media_type=mime, headers={"Cache-Control": "private, max-age=86400"})
 
     @r.get("/voz/estado")
     async def api_voz_estado(request: Request) -> Dict[str, Any]:

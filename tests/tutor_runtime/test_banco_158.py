@@ -479,6 +479,64 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             self.assertIsNotNone(r_fol)
             self.assertTrue(docs.png("26-F", r_fol["clave"]).startswith(b"\x89PNG"))
 
+    def test_voz_edge_neural_mapa_y_audio_mp3(self) -> None:
+        from tools.tutor_runtime.voz import VOCES_NEURALES, _mapa_desde_palabras, normalizar_voz
+
+        self.assertEqual(normalizar_voz("Kore"), "es-MX-DaliaNeural")
+        self.assertEqual(normalizar_voz("Puck"), "es-CR-JuanNeural")
+        self.assertEqual(normalizar_voz("es-CR-MariaNeural"), "es-CR-MariaNeural")
+        self.assertGreaterEqual(len(VOCES_NEURALES), 8)
+
+        # Mapa tiempo->carácter estrictamente monótono a partir de WordBoundary
+        txt = "Separamos variables e integramos desde cero hasta la longitud total."
+        palabras = [
+            (100, 350, "Separamos"),
+            (480, 420, "variables"),
+            (920, 80, "e"),
+            (1020, 480, "integramos"),
+            (1520, 260, "desde"),
+            (1800, 240, "cero"),
+            (2060, 260, "hasta"),
+            (2340, 120, "la"),
+            (2480, 410, "longitud"),
+            (2910, 360, "total"),
+        ]
+        al = _mapa_desde_palabras(txt, palabras, [0, 22, 46], bytes_mp3=22000)
+        mapa = al["mapa"]
+        self.assertGreaterEqual(len(mapa), 10)
+        for i in range(1, len(mapa)):
+            self.assertGreater(mapa[i][0], mapa[i - 1][0])
+            self.assertGreaterEqual(mapa[i][1], mapa[i - 1][1])
+        self.assertEqual(mapa[-1][1], len(txt))
+        self.assertEqual(len(al["cortes_ms"]), 3)
+        self.assertLess(al["cortes_ms"][0], al["cortes_ms"][1])
+        self.assertLess(al["cortes_ms"][1], al["cortes_ms"][2])
+
+        # Endpoint /api/voz + /api/voz/audio/{clave} con Edge Neural TTS real y caché en disco
+        app = create_app({"session_token": ""})
+        client = TestClient(app)
+        st = client.get("/api/voz/estado")
+        self.assertEqual(st.status_code, 200)
+        self.assertEqual(st.json().get("motor_primario"), "edge-tts")
+
+        r1 = client.post("/api/voz", json={"texto": "Prueba de voz natural en física.", "cortes": [0, 15], "voz": "es-MX-DaliaNeural", "urgente": True})
+        self.assertEqual(r1.status_code, 200)
+        b1 = r1.json()
+        self.assertTrue(str(b1.get("motor") or "").startswith("edge:"), b1)
+        self.assertEqual(b1.get("mime"), "audio/mpeg")
+        self.assertTrue(b1.get("clave"))
+        self.assertGreaterEqual(len(b1.get("mapa") or []), 4)
+
+        ra = client.get(f"/api/voz/audio/{b1['clave']}")
+        self.assertEqual(ra.status_code, 200)
+        self.assertEqual(ra.headers.get("content-type"), "audio/mpeg")
+        self.assertGreater(len(ra.content), 2000)
+
+        # Segunda llamada idéntica: golpe de caché inmediato
+        r2 = client.post("/api/voz", json={"texto": "Prueba de voz natural en física.", "cortes": [0, 15], "voz": "es-MX-DaliaNeural", "urgente": True})
+        self.assertEqual(r2.status_code, 200)
+        self.assertTrue(r2.json().get("cache"))
+
 
 if __name__ == "__main__":
     unittest.main()

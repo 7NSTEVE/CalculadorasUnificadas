@@ -281,7 +281,7 @@ export class Reproductor {
 
   /** Una sola voz por lección: si empezó con una, no cambia de persona a media explicación. */
   _vozDeLeccion() {
-    return { motor: this.motorLec === 'local' ? 'local' : 'auto', paciencia: this.motorLec === 'nube' ? 9000 : 4800 };
+    return { motor: this.motorLec === 'local' ? 'local' : 'auto', paciencia: this.motorLec === 'nube' ? 11000 : 9500 };
   }
 
   _recordarMotor(voz) {

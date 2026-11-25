@@ -129,8 +129,15 @@ export function desconectar() {
 /* ---------------- ajustes por persona ---------------- */
 
 const CLAVE_AJUSTES = 'tutor.ajustes.v2';
+const VOCES_LEGADO = {
+  Kore: 'es-MX-DaliaNeural',
+  Aoede: 'es-CO-SalomeNeural',
+  Charon: 'es-MX-JorgeNeural',
+  Puck: 'es-CR-JuanNeural',
+  Fenrir: 'es-CO-GonzaloNeural',
+};
 const POR_DEFECTO = {
-  tema: 'light', letra: 'manuscrita', vel: 1, voz: 'Kore', motorVoz: 'auto', vozLocal: '', narracion: true,
+  tema: 'light', letra: 'manuscrita', vel: 1, voz: 'es-MX-DaliaNeural', motorVoz: 'auto', vozLocal: '', narracion: true,
   foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-2.5-flash', zoom: 1, autoSeguir: false, sinSaltos: false,
 };
 
@@ -139,6 +146,7 @@ export const ajustes = (() => {
   try { g = JSON.parse(localStorage.getItem(CLAVE_AJUSTES) || '{}') || {}; } catch { g = {}; }
   const s = { ...POR_DEFECTO };
   for (const k of Object.keys(POR_DEFECTO)) if (typeof g[k] === typeof POR_DEFECTO[k]) s[k] = g[k];
+  if (VOCES_LEGADO[s.voz]) s.voz = VOCES_LEGADO[s.voz];
   return s;
 })();
 
