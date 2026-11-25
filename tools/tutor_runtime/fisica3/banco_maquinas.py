@@ -190,8 +190,8 @@ def q122() -> Leccion:
         .di("En el tramo isocórico la presión es proporcional a la temperatura; luego aplicamos la relación adiabática de B a C.", DATO("75 % de su volumen"),
             M(rf"p_C = \frac{{T_C}}{{T_A}}\,p_A = 0{{,}}668\,p_A = {tex(pc, 3, u='Pa', sci='si')}"),
             M(rf"(0{{,}}75)^\gamma = 0{{,}}668 \;\Rightarrow\; \gamma = \frac{{\ln(0{{,}}668)}}{{\ln(0{{,}}75)}} = {tex(gamma, 3)}"))\
-        .di(f"Despejamos ce pe con gama igual a uno coma cuatro: da {nu(cp, 'J/(mol·K)', 3)}.",
-            F(r"C_p = \frac{\gamma R}{\gamma - 1}"),
+        .di(f"Despejamos ce pe desde las dos ecuaciones del formulario ce pe igual a ce uve más erre y gama igual a ce pe entre ce uve: da {nu(cp, 'J/(mol·K)', 3)}.",
+            F(r"C_P = C_V + R,\quad \gamma = \frac{C_P}{C_V} \;\Rightarrow\; C_P\left(1 - \frac{1}{\gamma}\right) = R \;\Rightarrow\; C_p = \frac{\gamma R}{\gamma - 1}"),
             R(rf"\gamma = {tex(gamma, 3)}\qquad C_p = {tex(cp, 3, u='J/(mol·K)')}", "rab"))
     L.paso("C) Coeficiente de rendimiento del ciclo")\
         .di("El calor que entra ocurre en el tramo isocórico y el que sale en el isobárico.",

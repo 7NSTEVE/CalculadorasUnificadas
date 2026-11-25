@@ -278,11 +278,12 @@ def q098() -> Leccion:
         .di("Los trabajos adiabáticos de B a C y de D a A se cancelan exactamente; solo quedan los dos isotérmicos.", V(foco="ciclo"),
             tabla_quw(res),
             R(rf"W_{{\text{{neto}}}} = W_{{AB}} + W_{{CD}} = {tex(wnet, 4, u='J')}", "rb"))\
-        .di(f"La eficiencia de Carnot entre seiscientos y cuatrocientos kelvin es {n(ef * 100, 3)} por ciento.",
-            F(r"e = 1 - \frac{T_C}{T_H} = 1 - \frac{400}{600}"),
+        .di(f"Partiendo de la eficiencia del formulario y usando las relaciones isotérmicas y adiabáticas, los logaritmos se cancelan y da {n(ef * 100, 3)} por ciento.",
+            F(r"e = \frac{W}{Q_H} = 1 - \left|\frac{Q_c}{Q_H}\right| = 1 - \frac{nRT_C\ln(V_C/V_D)}{nRT_H\ln(V_B/V_A)}"),
+            M(r"\frac{V_B}{V_A} = \frac{V_C}{V_D} \;\Rightarrow\; e = 1 - \frac{T_C}{T_H} = 1 - \frac{400}{600}"),
             R(rf"e = {tex(ef, 3)} = 33{{,}}3\,\%", "rc"))
     L.responde("Wnet", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J").responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("III Parcial ordinario I-2025", 3024.0, 0.333, tol=0.015).usa(r"TV^{\gamma-1}=\text{cte}", r"e=1-\frac{T_C}{T_H}")
+    return L.oficial("III Parcial ordinario I-2025", 3024.0, 0.333, tol=0.015).usa(r"TV^{\gamma-1}=\text{cte}", r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
 
 
 # ============================================================================ Q099

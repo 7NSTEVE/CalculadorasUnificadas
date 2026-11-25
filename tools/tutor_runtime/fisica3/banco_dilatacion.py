@@ -326,9 +326,11 @@ def q010() -> Leccion:
         .di("Igual que el radio: cero coma veinte por ciento.", R(r"\frac{\Delta L}{L_0}=0{,}20\,\%", "rb"))\
         .por_que("En un material isotrópico todas las longitudes crecen en el mismo porcentaje.")
     L.paso("c) Porcentaje del volumen")\
-        .di("El volumen tiene tres direcciones: se triplica el porcentaje.", F(r"\Delta V=\beta V_0\,\Delta T\qquad \beta=3\alpha"))\
+        .di("Partimos de la dilatación lineal del formulario en las tres dimensiones del cilindro: dos veces el radio y una vez el largo.",
+            F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; V = \pi R^2 L = \pi R_0^2 L_0(1+\alpha\Delta T)^3 \approx V_0(1+3\alpha\Delta T)"),
+            F(r"\Delta V = \beta V_0\,\Delta T \quad\text{con}\quad \beta = 3\alpha"))\
         .di("Dividimos entre el volumen inicial.", M(r"\frac{\Delta V}{V_0}=3\alpha\,\Delta T=3(0{,}0020)"), R(r"\frac{\Delta V}{V_0}=0{,}0060=0{,}60\,\%", "rc"))\
-        .sale_de(("$3\\alpha$", "el radio aparece al cuadrado (dos veces) y el largo una vez: $2+1=3$"))
+        .sale_de(("$3\\alpha$", "al expandir $(1+\\alpha\\Delta T)^3 \\approx 1+3\\alpha\\Delta T$ desde $\\Delta L=\\alpha L_0\\Delta T$"))
     L.paso("d) Volumen a 100 °C")\
         .di("Primero el volumen inicial.", M(r"V_0=\pi R_0^2L_0=\pi(2{,}000)^2(20{,}000)"), M(rf"V_0={tex(V0, 5)}\ \text{{cm}}^3", "v0"))\
         .di("Le sumamos el cero coma sesenta por ciento.", M(rf"V=V_0(1+0{{,}}0060)={tex(V0, 5)}(1{{,}}0060)"))\
@@ -431,12 +433,17 @@ def q014() -> Leccion:
         .di("Nos dan el cambio de largo en porcentaje.", DATO("0.092"), LISTA(["$\\Delta T=100-60=40\\ ^\\circ\\text{C}$", "$\\frac{\\Delta L}{L_0}=0{,}092\\,\\%=0{,}00092$"]))\
         .di("No piden alfa: con alfa por delta T basta.".replace("alfa por delta T", dice("αΔT", "alfa por delta te")), M(r"\alpha\,\Delta T=\frac{\Delta L}{L_0}=0{,}00092", "adt", "azul"))
     L.paso("a) Cambio de área")\
-        .di("El área tiene dos direcciones, por eso va un dos.", F(r"\Delta A=2\alpha A_0\,\Delta T"), V(foco="calentar"))\
-        .di("Dividimos entre el área inicial.", M(r"\frac{\Delta A}{A_0}=2\,\alpha\,\Delta T=2(0{,}00092)"), R(r"\frac{\Delta A}{A_0}=0{,}00184=0{,}184\,\%", "ra"))
+        .di("Partimos de la dilatación lineal del formulario: el radio crece como uno más alfa por delta te, así que el área transversal queda al cuadrado.",
+            F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; A = \pi R_0^2(1+\alpha\Delta T)^2 \approx A_0(1+2\alpha\Delta T)"),
+            M(r"\Delta A = 2\alpha A_0\,\Delta T"), V(foco="calentar"))\
+        .di("Dividimos entre el área inicial.", M(r"\frac{\Delta A}{A_0}=2\,\alpha\,\Delta T=2(0{,}00092)"), R(r"\frac{\Delta A}{A_0}=0{,}00184=0{,}184\,\%", "ra"))\
+        .sale_de(("$2\\alpha$", "despreciando $(\\alpha\\Delta T)^2 \\ll \\alpha\\Delta T$ en $(1+\\alpha\\Delta T)^2$ desde $\\Delta L=\\alpha L_0\\Delta T$"))
     L.paso("b) Densidad: qué cambia y qué no")\
         .di("La densidad es masa entre volumen. La masa no cambia al calentar.", M(r"\rho=\frac{m}{V}"))\
-        .di("El volumen final es el inicial por uno más tres alfa delta te.".replace("alfa delta te", dice("αΔT", "alfa delta te")), M(r"V=V_0(1+3\alpha\,\Delta T)"), M(r"V=V_0(1+3\times0{,}00092)=V_0(1{,}00276)", "v"))\
-        .por_que("El metal no gana ni pierde átomos, solo se separan más.")
+        .di("Para el volumen multiplicamos área por largo desde la dilatación lineal: queda al cubo y aparece tres alfa delta te.".replace("alfa delta te", dice("αΔT", "alfa delta te")),
+            M(r"V = \pi R_0^2 L_0(1+\alpha\Delta T)^3 \approx V_0(1+3\alpha\,\Delta T)"),
+            M(r"V=V_0(1+3\times0{,}00092)=V_0(1{,}00276)", "v"))\
+        .por_que("El metal no gana ni pierde átomos, solo se separan más; el factor $3\\alpha$ sale de expandir $(1+\\alpha\\Delta T)^3$.")
     L.paso("b) Cambio de densidad")\
         .di("La densidad nueva.", M(r"\rho=\frac{m}{V_0(1{,}00276)}=\frac{\rho_0}{1{,}00276}"))\
         .di("Uno entre uno coma cero cero dos setenta y seis.", M(rf"\frac{{\rho}}{{\rho_0}}={tex(1 / 1.00276, 6)}"))\

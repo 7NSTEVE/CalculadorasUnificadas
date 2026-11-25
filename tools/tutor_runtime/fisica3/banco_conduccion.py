@@ -101,13 +101,14 @@ def q038() -> Leccion:
              visual={"tipo": "conduccion", "geo": "serie", "T": [100, 48.7, 0], "uT": "°C",
                      "capas": [{"n": "Barra 1 (Cu)", "e": 1.0, "k": 385}, {"n": "Barra 2 (Ag)", "e": 1.0, "k": 406}]})
     L.paso("A) Serie frente a paralelo")\
-        .di("En la configuración uno las barras están en serie: el calor debe cruzar el doble de distancia.", DATO("CONFIGURACIÓN 1"),
-            M(r"H_{\text{serie}} = \frac{A\Delta T}{\frac{L}{k_1}+\frac{L}{k_2}} = \frac{k_1 k_2}{k_1+k_2}\frac{A\Delta T}{L}"))\
-        .di("En la configuración dos están en paralelo: el calor viaja por dos caminos a la vez.",
-            M(r"H_{\text{paralelo}} = H_1 + H_2 = (k_1+k_2)\frac{A\Delta T}{L}"))\
+        .di("Partimos de Fourier del formulario. En serie el mismo flujo cruza ambas barras; sumamos las dos caídas de temperatura para eliminar la temperatura intermedia.", DATO("CONFIGURACIÓN 1"),
+            F(r"H = kA\frac{T_H - T_C}{L} \;\Rightarrow\; T_h - T_{\text{int}} = H\frac{L}{k_1 A},\quad T_{\text{int}} - T_c = H\frac{L}{k_2 A}"),
+            M(r"T_h - T_c = H\left(\frac{L}{k_1 A}+\frac{L}{k_2 A}\right) \;\Rightarrow\; H_{\text{serie}} = \frac{k_1 k_2}{k_1+k_2}\frac{A\Delta T}{L}"))\
+        .di("En la configuración dos están en paralelo: cada barra conecta directo ambos depósitos y sumamos sus flujos.",
+            M(r"H_{\text{paralelo}} = H_1 + H_2 = k_1 A\frac{\Delta T}{L} + k_2 A\frac{\Delta T}{L} = (k_1+k_2)\frac{A\Delta T}{L}"))\
         .di("En serie el flujo es aproximadamente la cuarta parte que en paralelo: siempre es menor.",
             R(r"H_1 < H_2 \quad \text{(menor)}", "ra"))\
-        .por_que("En serie las resistencias térmicas se suman; en paralelo hay dos rutas directas entre $T_h$ y $T_c$.")
+        .por_que("En serie el flujo es el mismo y se suman las caídas de temperatura; en paralelo hay dos rutas directas entre $T_h$ y $T_c$.")
     L.paso("B) Caída de temperatura en serie")\
         .di("En serie pasa exactamente la misma corriente de calor por ambas barras.", V(foco="perfil"),
             M(r"H = \frac{k_1 A \Delta T_1}{L} = \frac{k_2 A \Delta T_2}{L}"))\
@@ -284,10 +285,12 @@ def q043() -> Leccion:
              visual={"tipo": "conduccion", "geo": "paralelo", "L": L_b, "T1": th, "T2": tc, "uT": "°C",
                      "barras": [{"n": "A: Cu cónica", "A": 2, "forma": "1 - 0.5 * u"}, {"n": "B: Acero", "A": 1}]})
     L.paso("A) Flujo por la barra cónica de cobre")\
-        .di("Como el radio varía linealmente de erre cero a erre uno, es un cono truncado.", V(foco=0), DATO("radio varía linealmente"),
-            M(r"R(x) = 0{,}0120 - 0{,}030\,x \qquad A(x) = \pi R(x)^2"))\
-        .di("Integrando Fourier en un cono truncado sale la misma expresión con el producto de radios.",
-            F(r"H_A = \frac{\pi k_A R_0 R_1\,(T_H-T_C)}{L}"))\
+        .di("Como el radio varía linealmente de erre cero a erre uno, partimos de la forma diferencial de Fourier del formulario.", V(foco=0), DATO("radio varía linealmente"),
+            F(r"H_A = -k_A A(x)\frac{dT}{dx}"),
+            M(r"R(x) = R_0 - \frac{R_0-R_1}{L}x \qquad A(x) = \pi R(x)^2"))\
+        .di("Separamos variables e integramos con el cambio de variable u igual al radio.",
+            M(r"H_A\int_0^L \frac{dx}{\pi R(x)^2} = -k_A\int_{T_H}^{T_C} dT \;\Rightarrow\; \frac{H_A L}{\pi(R_0-R_1)}\left(\frac{1}{R_1}-\frac{1}{R_0}\right) = k_A(T_H-T_C)"),
+            M(r"H_A = \frac{\pi k_A R_0 R_1\,(T_H-T_C)}{L}"))\
         .di(f"Sustituimos en metros y da {nu(ha, 'W', 3)}.",
             M(rf"H_A = \frac{{\pi(385)(0{{,}}0120)(0{{,}}0060)(80{{,}}0-20{{,}}0)}}{{0{{,}}20}}"),
             R(rf"H_A = {tex(ha, 3, u='W')}", "ra"))
@@ -320,9 +323,10 @@ def q044() -> Leccion:
              visual={"tipo": "conduccion", "geo": "esfera2", "r1": r1, "r2": r2, "r3": r3,
                      "T1": t1, "T2": round(t2, 1), "T3": t3, "k1": k1, "k2": k2, "n1": "acero", "n2": "cerámica", "uT": "°C"})
     L.paso("Fourier en cada cascarón esférico")\
-        .di("Para una capa esférica, integrar uno entre erre cuadrado da la resistencia esférica.", V(foco="dr"), DATO("cascarón esférico"),
-            F(r"H = \frac{4\pi k\,(T_{\text{int}}-T_{\text{ext}})}{\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}}", "f"))\
-        .di("Escribimos las resistencias del acero y de la cerámica.",
+        .di("Partimos de la ecuación diferencial de Fourier del formulario con el área esférica cuatro pi erre al cuadrado e integramos cada capa.", V(foco="dr"), DATO("cascarón esférico"),
+            F(r"H = -k(4\pi r^2)\frac{dT}{dr} \;\Rightarrow\; H\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{4\pi r^2} = -k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT", "f"),
+            M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}}{4\pi k}"))\
+        .di("Para abreviar el despeje llamamos R uno y R dos al factor geométrico de cada capa.",
             M(rf"R_1 = \frac{{\frac{{1}}{{0{{,}}05}}-\frac{{1}}{{0{{,}}08}}}}{{4\pi(50{{,}}0)}} = {tex(R1, 4, u='K/W')}"),
             M(rf"R_2 = \frac{{\frac{{1}}{{0{{,}}08}}-\frac{{1}}{{0{{,}}10}}}}{{4\pi(1{{,}}50)}} = {tex(R2, 4, u='K/W')}"))
     L.paso("A) Temperatura en la interfaz acero-cerámica")\
@@ -778,11 +782,12 @@ def q059() -> Leccion:
              claves=["cilindro compuesto", "acero y caucho", "aislante"],
              visual={"tipo": "conduccion", "geo": "cilindro2", "r1": r1, "r2": r2, "r3": r3, "exagera": True,
                      "T1": t1, "T2": round(t2, 2), "T3": t3, "k1": k1, "k2": k2, "n1": "acero", "n2": "caucho", "uT": "°C"})
-    L.paso("Resistencias cilíndricas en serie")\
+    L.paso("Integrar Fourier en las dos capas cilíndricas")\
         .di("Los radios son cinco, cinco coma cinco y ocho coma cinco centímetros.", DATO("5.00 cm"),
             LISTA(["$r_1=0{,}0500$ m, $r_2=0{,}0550$ m, $r_3=0{,}0850$ m", "$k_{\\text{acero}}=50{,}2$, $k_{\\text{caucho}}=0{,}160$ W/(m·K)"]))\
-        .di("Calculamos la resistencia de cada capa cilíndrica.", V(foco="dr"),
-            F(r"R_{\text{cil}} = \frac{\ln(r_{\text{ext}}/r_{\text{int}})}{2\pi k L}"),
+        .di("Partimos de Fourier diferencial con el área lateral cilíndrica dos pi erre ele, integramos y definimos el factor geométrico de cada capa.", V(foco="dr"),
+            F(r"H = -k(2\pi r L)\frac{dT}{dr} \;\Rightarrow\; H\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{2\pi r L} = -k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT"),
+            M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\ln(r_{\text{ext}}/r_{\text{int}})}{2\pi k L}"),
             M(rf"R_1 = \frac{{\ln(5{{,}}5/5{{,}}0)}}{{2\pi(50{{,}}2)(1{{,}}0)}} = {tex(R1, 4, u='K/W', sci='si')}"),
             M(rf"R_2 = \frac{{\ln(8{{,}}5/5{{,}}5)}}{{2\pi(0{{,}}160)(1{{,}}0)}} = {tex(R2, 4, u='K/W')}"))
     L.paso("(a) y (b) Flujo y temperatura en la interfaz")\

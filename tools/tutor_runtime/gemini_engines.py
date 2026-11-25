@@ -856,6 +856,8 @@ class GeminiVisualDirector:
             except Exception:
                 pass
 
+        from .fisica3.formulario_ii_2026 import FORMULARIO_PROMPT_TXT
+
         chain = [self.primary_model] + [m for m in VISUAL_MODEL_CHAIN if m != self.primary_model]
         last_err = ""
         for model_name in chain:
@@ -866,7 +868,7 @@ class GeminiVisualDirector:
                     model=model_name,
                     contents=contents,
                     config=types.GenerateContentConfig(
-                        system_instruction=_DIRECTOR_SYSTEM_PROMPT,
+                        system_instruction=_DIRECTOR_SYSTEM_PROMPT + "\n\n" + FORMULARIO_PROMPT_TXT,
                         response_mime_type="application/json",
                         temperature=0.25,
                     ),
@@ -1412,6 +1414,8 @@ class GeminiLiveVoiceBridge:
             "Si se queda pegado en álgebra intermedia, llama a `open_inline_visual_explanation` "
             "para abrir un espacio en blanco con desarrollo intermedio y gráfica visual."
         )
+        from .fisica3.formulario_ii_2026 import FORMULARIO_PROMPT_TXT
+        sys_instr += "\n\n" + FORMULARIO_PROMPT_TXT
         if board_context_summary:
             sys_instr += f"\n\nEstado actual de la pizarra:\n{board_context_summary[:8000]}"
 

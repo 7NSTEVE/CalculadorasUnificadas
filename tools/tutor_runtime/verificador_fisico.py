@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from .fisica3.formulario_ii_2026 import verificar_origen_formulario
 from .pdf_rag import fold_accents
 from .verificador_numerico import verificar_ecuacion_tex
 
@@ -214,12 +215,16 @@ def auditar_leccion(lec: Dict[str, Any]) -> Dict[str, Any]:
                 if not re.search(r"e\s*=\s*2[.,]71", m_norm):
                     alertas_ley.append(f"Eficiencia térmica fuera de (0, 1): {val}.")
 
+    # 6d. Cumplimiento del formulario oficial III Parcial FI2103 II-2026 (toda fórmula derivada debe partir de la hoja base)
+    for falta_form in verificar_origen_formulario(lec):
+        alertas_ley.append(f"Formulario II-2026: {falta_form}.")
+
     if alertas_ley:
         for al in alertas_ley:
             alertas.append(f"Nivel 6 (Aplicabilidad física): {al}")
-        niveles.append(_nivel(6, "Aplicabilidad de ecuaciones", "alerta", " ".join(alertas_ley)))
+        niveles.append(_nivel(6, "Aplicabilidad y formulario II-2026", "alerta", " ".join(alertas_ley)))
     else:
-        niveles.append(_nivel(6, "Aplicabilidad de ecuaciones", "comprobado", "Las leyes usadas corresponden al régimen físico del enunciado (proceso, geometría y modelo)."))
+        niveles.append(_nivel(6, "Aplicabilidad y formulario II-2026", "comprobado", "Leyes coherentes con el régimen físico y derivadas a partir del formulario oficial II-2026."))
 
     # ------------------------------------------------------------------
     # Nivel 7: Signos y convenciones físicas

@@ -418,6 +418,29 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
         aud_cond = auditar_leccion(falsa_cond)
         self.assertTrue(any("Nivel 6" in a for a in aud_cond["alertas"]), aud_cond["alertas"])
 
+        # 5. Regla estricta del formulario oficial II-2026: rechazar atajos no impresos sin derivación
+        falsa_rth = {
+            "titulo": "Barras en serie con atajo no derivado",
+            "tema": "conduccion",
+            "tipo": "desarrollo",
+            "enunciado": "Dos barras en serie entre 100 °C y 0 °C.",
+            "pasos": [{"titulo": "Paso 1", "habla": "Usamos resistencia térmica.", "tramos": [{"v": "R", "acc": [{"a": "mate", "tex": r"R_{\text{th}} = \frac{L}{kA}"}]}]}],
+            "respuestas": [],
+        }
+        aud_rth = auditar_leccion(falsa_rth)
+        self.assertTrue(any("Formulario II-2026" in a for a in aud_rth["alertas"]), aud_rth["alertas"])
+
+        falsa_cp = {
+            "titulo": "Cp con atajo sin derivar",
+            "tema": "maquinas",
+            "tipo": "desarrollo",
+            "enunciado": "Halle Cp a partir de gamma.",
+            "pasos": [{"titulo": "Paso 1", "habla": "Aplicamos la fórmula directa.", "tramos": [{"v": "Cp", "acc": [{"a": "mate", "tex": r"C_p = \frac{\gamma R}{\gamma - 1}"}]}]}],
+            "respuestas": [],
+        }
+        aud_cp = auditar_leccion(falsa_cp)
+        self.assertTrue(any("Formulario II-2026" in a for a in aud_cp["alertas"]), aud_cp["alertas"])
+
     def test_variantes_parametricas_los_8_arquetipos_y_api(self) -> None:
         exprs = []
         for arq in variantes.ARQUETIPOS:

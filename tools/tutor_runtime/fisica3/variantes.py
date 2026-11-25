@@ -398,23 +398,25 @@ def _v_conduccion_serie_paralelo(rng: random.Random) -> Leccion:
             f"Los extremos se mantienen a ${fmt(T1,0)}\\,^\\circ\\text{{C}}$ y ${fmt(T2,0)}\\,^\\circ\\text{{C}}$. Calcule el flujo $H$ y la temperatura de la unión."
         ),
         visual={"tipo": "conduccion", "caso": "serie", "T1": T1, "T2": T2, "L1": L1, "L2": L2, "k1": k1, "k2": k2},
-    ).usa(r"R_t = \frac{L}{kA}", r"H = \frac{T_1 - T_2}{R_1 + R_2}")
+    ).usa(r"H = kA\frac{T_H - T_C}{L}")
 
     (
-        lec.paso("Resistencias térmicas en serie y flujo H")
-        .por_que("En serie el flujo $H$ es igual en ambas barras y las resistencias térmicas se suman.")
+        lec.paso("Partir de Fourier en serie y despejar el flujo H")
+        .por_que("El formulario oficial solo trae $H = kA(T_H - T_C)/L$. En serie el mismo flujo $H$ cruza ambas barras; despejando cada caída de temperatura y sumándolas eliminamos $T_u$.")
         .di(
-            "Calculamos cada resistencia térmica y dividimos la diferencia de temperatura entre su suma.",
-            {"a": "mate", "tex": rf"R_1 = \frac{{{fmt(L1,2)}}}{{({fmt(k1,1)})({fmt(A,4)})}} = {fmt(R1,4)}\,\text{{K/W}},\quad R_2 = {fmt(R2,4)}\,\text{{K/W}}"},
+            "Partimos de la ley de Fourier del formulario en cada barra, despejamos ambas caídas de temperatura y las sumamos.",
+            {"a": "mate", "tex": r"H = k_1 A\frac{T_1 - T_u}{L_1} = k_2 A\frac{T_u - T_2}{L_2}", "color": "azul"},
+            {"a": "mate", "tex": r"T_1 - T_2 = H\left(\frac{L_1}{k_1 A} + \frac{L_2}{k_2 A}\right)"},
+            {"a": "mate", "tex": rf"\frac{{L_1}}{{k_1 A}} = \frac{{{fmt(L1,2)}}}{{({fmt(k1,1)})({fmt(A,4)})}} = {fmt(R1,4)}\,\text{{K/W}},\quad \frac{{L_2}}{{k_2 A}} = {fmt(R2,4)}\,\text{{K/W}}"},
             {"a": "mate", "tex": rf"H = \frac{{{fmt(T1,0)} - {fmt(T2,0)}}}{{{fmt(R1,4)} + {fmt(R2,4)}}} \approx {fmt(H,1)}\,\text{{W}}", "color": "verde", "rol": "resultado"},
         )
     )
     (
-        lec.paso("Temperatura de la unión")
-        .por_que("La caída de temperatura en la primera barra es simplemente $H\\cdot R_1$.")
+        lec.paso("Despejar la temperatura de la unión")
+        .por_que("Volvemos a la primera barra $H = k_1 A(T_1 - T_u)/L_1$ y despejamos $T_u$.")
         .di(
-            "Restamos a la temperatura caliente la caída en el cobre.",
-            {"a": "mate", "tex": rf"T_u = {fmt(T1,0)} - ({fmt(H,1)})({fmt(R1,4)}) \approx {fmt(Tu,1)}\,^\circ\text{{C}}", "color": "verde", "rol": "resultado"},
+            "Despejamos la temperatura de la unión desde la ecuación base de la primera barra.",
+            {"a": "mate", "tex": rf"T_u = T_1 - H\frac{{L_1}}{{k_1 A}} = {fmt(T1,0)} - ({fmt(H,1)})({fmt(R1,4)}) \approx {fmt(Tu,1)}\,^\circ\text{{C}}", "color": "verde", "rol": "resultado"},
         )
     )
     lec.responde("A)", rf"H = {fmt(H,1)}\,\text{{W}}", valor=round(H, 1))

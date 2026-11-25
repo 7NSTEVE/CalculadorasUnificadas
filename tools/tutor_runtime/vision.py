@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from PIL import Image
 
 from .fisica3 import registro
+from .fisica3.formulario_ii_2026 import FORMULARIO_PROMPT_TXT
 from .pdf_rag import fold_accents
 from .verificador_fisico import auditar_leccion
 from .verificador_numerico import limpiar_voz_latex, recalcular_leccion_ia
@@ -441,7 +442,7 @@ REGLAS ESTRICTAS (MODO SIN SALTOS):
 3. PROHIBIDO escribir LaTeX crudo (\\frac, ^, _, $) dentro de "habla". Todo "habla" se lee en voz alta tal cual.
 4. En "acc" usa solo: {"a":"mate","tex":"..."}, {"a":"texto","txt":"..."}, {"a":"lista","items":[...]}.
 5. Cada paso debe tener 1 o 2 tramos cortos (máximo 45 palabras en cada "habla"). Usa entre 4 y 7 pasos claros y completos.
-"""
+""" + "\n" + FORMULARIO_PROMPT_TXT + "\n"
 
 
 def _normalizar_leccion_ia(raw: Dict[str, Any], titulo_hint: str = "", enunciado_hint: str = "") -> Dict[str, Any]:
