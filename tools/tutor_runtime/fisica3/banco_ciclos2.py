@@ -219,7 +219,7 @@ def q111() -> Leccion:
     L.paso("Qué nos dan y qué piden")\
         .di("Cinco procesos seguidos que vuelven al inicio. Lo primero es conocer los cinco estados.", DATO("3.50 L"),
             LISTA(["$n=1{,}00$ mol, diatómico: $\\gamma=1{,}40$", "$1$: $1{,}50$ atm y $3{,}50$ L", "$2$: $3{,}00$ atm (mismo volumen)", "$3$: $2{,}00$ atm (misma temperatura que 2)", "$4$: $2{,}00$ atm y $256$ K", "$5$: en la isoterma de 256 K y en la adiabática que llega a 1"]))\
-        .di("Las presiones en pascales.", M(r"1{,}50\ \text{atm}=1{,}520\times10^5\ \text{Pa}\quad 3{,}00\ \text{atm}=3{,}040\times10^5\ \text{Pa}\quad 2{,}00\ \text{atm}=2{,}027\times10^5\ \text{Pa}"))
+        .di("Las presiones en pascales: una atmósfera son ciento un mil trescientos veinticinco pascales.", M(r"p_1=1{,}50\ \text{atm}=1{,}520\times10^5\ \text{Pa}"), M(r"p_2=3{,}00\ \text{atm}=3{,}040\times10^5\ \text{Pa}"), M(r"p_3=2{,}00\ \text{atm}=2{,}027\times10^5\ \text{Pa}"))
     L.paso("(a) Estados 1 y 2")\
         .di("Temperatura de 1 con el gas ideal.", F(r"pV=nRT"), M(rf"T_1=\frac{{p_1V_1}}{{nR}}=\frac{{(1{{,}}520\times10^5)(3{{,}}50\times10^{{-3}})}}{{(1)(8{{,}}314)}}={tex(T1, 3, u='K')}"))\
         .di("De 1 a 2 el volumen no cambia y la presión se duplica: la temperatura también se duplica.", M(r"V_2=V_1=3{,}50\ \text{L}"), M(rf"T_2=T_1\,\frac{{p_2}}{{p_1}}=2T_1={tex(T2, 3, u='K')}"))
