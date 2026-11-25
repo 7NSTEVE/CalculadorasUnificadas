@@ -368,3 +368,82 @@ body.enfoque .estado { display: none; }
 .doc-caja summary { cursor: pointer; display: flex; align-items: center; gap: 0.7em; list-style: none; }
 .doc-caja summary .cod { font-weight: 700; color: var(--azul); min-width: 5.5em; }
 .doc-problemas { margin-top: 0.65em; }
+
+/* ------------------------------------------------------------------ formulario oficial II-2026 */
+.form-c-azul { --fc: var(--azul); }
+.form-c-rojo { --fc: var(--rojo); }
+.form-c-verde { --fc: var(--verde); }
+.form-c-naranja { --fc: var(--naranja); }
+.form-c-morado { --fc: var(--morado); }
+.form-c-turquesa { --fc: var(--turquesa); }
+
+.form-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.6em; margin-bottom: 0.65em; }
+.form-cab-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.form-cab-info strong { font-size: 0.96em; font-weight: 600; color: var(--tinta); }
+.form-cab-info span { font-size: 0.82em; color: var(--tinta2); }
+.form-btn-zoom { min-height: 2.15em; padding: 0 0.75em; font-size: 0.84em; }
+
+.hoja-formulario { position: relative; width: 100%; border: 1px solid var(--borde); border-radius: 10px; background: #ffffff; overflow: hidden; }
+.hoja-formulario .form-c-azul { --fc: #1d4ed8; }
+.hoja-formulario .form-c-rojo { --fc: #d0261f; }
+.hoja-formulario .form-c-verde { --fc: #0a7a4b; }
+.hoja-formulario .form-c-naranja { --fc: #c25a08; }
+.hoja-formulario .form-c-morado { --fc: #6d28d9; }
+.hoja-formulario .form-c-turquesa { --fc: #0f766e; }
+.hoja-formulario-img { display: block; width: 100%; height: auto; user-select: none; }
+:root[data-theme="dark"] .hoja-formulario-img { filter: brightness(0.95) contrast(1.03); }
+.hoja-formulario-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.form-celda { cursor: pointer; outline: none; transition: opacity 220ms ease; }
+.form-celda.atenuada { opacity: 0.36; }
+.form-celda:hover, .form-celda:focus-visible, .form-celda.activa, .form-celda.enfocada { opacity: 1; }
+
+.form-fondo { fill: var(--fc); fill-opacity: 0.12; transition: fill-opacity 220ms ease; }
+.form-celda.activa .form-fondo, .form-celda.enfocada .form-fondo { fill-opacity: 0.19; }
+
+.form-circulo { fill: none; stroke: var(--fc); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke-width 200ms ease; }
+.form-celda.activa .form-circulo { stroke-width: 7.5; }
+.form-celda.enfocada .form-circulo { stroke-width: 8.5; animation: form-pulso 700ms ease-out 2; }
+@keyframes form-pulso {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.35; }
+}
+
+.form-badge-fondo { fill: var(--fc); stroke: #ffffff; stroke-width: 2.5; }
+.form-badge-num { fill: #ffffff; font-family: var(--ui); font-size: 18px; font-weight: 700; pointer-events: none; }
+
+.form-leyenda { display: flex; flex-direction: column; margin-top: 0.75em; border-top: 1px solid var(--borde); }
+.form-item { display: flex; align-items: flex-start; gap: 0.65em; width: 100%; padding: 0.55em 0.35em; border: 0; border-bottom: 1px solid var(--borde); background: transparent; text-align: left; transition: opacity 200ms ease, background 180ms ease; }
+.form-item.atenuada { opacity: 0.58; }
+.form-item.activa, .form-item.enfocada { opacity: 1; background: color-mix(in srgb, var(--fc) 9%, transparent); }
+@media (hover: hover) { .form-item:hover { opacity: 1; background: color-mix(in srgb, var(--fc) 11%, transparent); } }
+.form-item-num { width: 1.65em; height: 1.65em; border-radius: 50%; background: var(--fc); color: #ffffff; font-size: 0.8em; font-weight: 700; display: inline-grid; place-items: center; flex: 0 0 auto; margin-top: 0.1em; }
+:root[data-theme="dark"] .form-item-num, :root[data-theme="high-contrast"] .form-item-num { color: #0b1220; }
+.form-item-cuerpo { display: flex; flex-direction: column; gap: 0.12em; min-width: 0; flex: 1 1 auto; }
+.form-item-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.3em 0.6em; }
+.form-item-top strong { font-size: 0.86em; font-weight: 600; color: var(--tinta); }
+.form-item-ubic { font-size: 0.76em; color: var(--tinta2); font-variant-numeric: tabular-nums; }
+.form-item-eq { margin: 0.05em 0 0; }
+.form-item-deriv { font-size: 0.78em; color: var(--tinta2); line-height: 1.3; }
+
+.form-fuera { margin-top: 0.65em; padding: 0.5em 0.75em; border-left: 3px solid var(--naranja); background: color-mix(in srgb, var(--naranja) 8%, transparent); border-radius: 0 7px 7px 0; display: flex; flex-direction: column; gap: 0.15em; font-size: 0.82em; line-height: 1.35; }
+.form-fuera strong { color: var(--naranja); font-weight: 600; }
+.form-fuera span { color: var(--tinta2); }
+
+/* Etiquetas discretas en cada paso de la pizarra enlazadas a la celda circulada */
+.paso-fuentes { display: flex; flex-wrap: wrap; gap: 0.35em; margin: 0.12em 0 0.35em; }
+.form-chip { display: inline-flex; align-items: center; gap: 0.36em; padding: 0.18em 0.55em 0.18em 0.28em; border: 1px solid color-mix(in srgb, var(--fc) 42%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--fc) 9%, transparent); color: var(--tinta); font-family: var(--ui); font-size: 0.76em; line-height: 1.25; transition: background 150ms ease, border-color 150ms ease; }
+.form-chip-num { width: 1.45em; height: 1.45em; border-radius: 50%; background: var(--fc); color: #ffffff; font-size: 0.88em; font-weight: 700; display: inline-grid; place-items: center; flex: 0 0 auto; }
+:root[data-theme="dark"] .form-chip-num, :root[data-theme="high-contrast"] .form-chip-num { color: #0b1220; }
+.form-chip-id { font-weight: 700; color: var(--fc); font-variant-numeric: tabular-nums; }
+.form-chip-nom { color: var(--tinta2); }
+@media (hover: hover) {
+  .form-chip:hover { background: color-mix(in srgb, var(--fc) 18%, transparent); border-color: var(--fc); }
+  .form-chip:hover .form-chip-nom { color: var(--tinta); }
+}
+
+.visor-formulario { width: min(760px, 92vw); max-height: 92vh; display: flex; flex-direction: column; gap: 0.6em; }
+.visor-form-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.8em; }
+.visor-form-cab strong { font-size: 0.98em; font-weight: 600; color: var(--tinta); }
+.visor-form-cuerpo { overflow: auto; min-height: 0; }
+.visor-form-cuerpo .hoja-formulario { max-width: 680px; margin: 0 auto; }

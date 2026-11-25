@@ -227,11 +227,12 @@ def q041() -> Leccion:
             M(rf"H = \frac{{\pi(50{{,}}0)(0{{,}}100)(0{{,}}450)(100-0)}}{{2{{,}}00}}"),
             R(rf"H = {tex(H, 4, u='W')}", "ra"))
     L.paso("B) Calor en 5,00 minutos")\
-        .di("Cinco minutos son trescientos segundos; en estado estacionario solo multiplicamos.",
-            M(r"Q = H\,\Delta t = (353{,}4\ \text{W})(5{,}00 \times 60\ \text{s})"),
+        .di("Partimos de la definición de corriente de calor del formulario; con H constante en cinco minutos (trescientos segundos) despejamos Q.",
+            F(r"H = \frac{dQ}{dt} \;\Rightarrow\; Q = H\,\Delta t"),
+            M(r"Q = (353{,}4\ \text{W})(5{,}00 \times 60\ \text{s})"),
             R(rf"Q = {tex(Q, 3, u='J', sci='si')}", "rb"))
     L.responde("A", rf"H={tex(H, 4)}\ \text{{W}}", H, "W").responde("B", rf"Q={tex(Q, 3, sci='si')}\ \text{{J}}", Q, "J")
-    return L.oficial("III Parcial extraordinario II-2024", 353.4, 1.06e5).usa(r"H=-kA\frac{dT}{dx}")
+    return L.oficial("III Parcial extraordinario II-2024", 353.4, 1.06e5).usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}")
 
 
 # ============================================================================ Q042

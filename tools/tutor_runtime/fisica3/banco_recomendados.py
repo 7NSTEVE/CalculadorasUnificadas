@@ -84,11 +84,13 @@ def _lata(id: str, fuente: dict) -> Leccion:
         .di("Primero, el cambio de temperatura.", M(r"\Delta T = 65{,}0-5{,}0 = 60{,}0\ \text{K}"))\
         .por_que("Si dejamos menos espacio, el agua no cabe y revienta la lata. Si dejamos más, sobra. El punto justo es que se igualen a la temperatura máxima.")
     L.paso("Beta de la lata")\
-        .di(f"Nos dieron {s('α')} del aluminio, pero el volumen usa {s('β')}.", F(r"\Delta V=\beta V_0\,\Delta T"))\
-        .di("En un sólido, beta es tres veces alfa.", M(r"\beta_{Al}=3\alpha_{Al}=3\,(2{,}4\times10^{-5})"), M(rf"\beta_{{Al}}={tex(bal, 2)}\ \text{{K}}^{{-1}}", "bal"))\
+        .di(f"Nos dieron {s('α')} del aluminio, pero el volumen usa {s('β')}. Partimos de las dos ecuaciones de dilatación del formulario.",
+            F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; V = V_0(1+\alpha\Delta T)^3 \approx V_0(1+3\alpha\Delta T)"),
+            F(r"\Delta V=\beta V_0\,\Delta T"))\
+        .di("Comparando las dos expresiones, en un sólido isotrópico beta es tres veces alfa.", M(r"\beta_{Al}=3\alpha_{Al}=3\,(2{,}4\times10^{-5})"), M(rf"\beta_{{Al}}={tex(bal, 2)}\ \text{{K}}^{{-1}}", "bal"))\
         .di("La lata es un hueco, pero el hueco se dilata como si fuera macizo.", NOTA("El hueco crece igual que el material: mismo $\\beta$ del aluminio."))\
-        .por_que("Un volumen tiene largo, ancho y alto; cada uno crece con $\\alpha$. Al multiplicar los tres, el cambio total es $3\\alpha$.")\
-        .sale_de(("$3\\alpha$", "tres direcciones: largo, ancho y alto"))
+        .por_que("Un volumen tiene largo, ancho y alto; cada uno crece con $\\Delta L=\\alpha L_0\\Delta T$. Al expandir $(1+\\alpha\\Delta T)^3\\approx 1+3\\alpha\\Delta T$ sale $\\beta=3\\alpha$.")\
+        .sale_de(("$3\\alpha$", "al expandir $(1+\\alpha\\Delta T)^3 \\approx 1+3\\alpha\\Delta T$ desde $\\Delta L=\\alpha L_0\\Delta T$"))
     L.paso("Volumen de la lata caliente")\
         .di("Volumen final: el inicial más lo que creció.", M(r"V = V_0\,(1+\beta\,\Delta T)"))\
         .di("Para la lata.", M(r"V_{\text{lata}} = 400\,\left[1+(7{,}2\times10^{-5})(60)\right]"))\
@@ -104,7 +106,7 @@ def _lata(id: str, fuente: dict) -> Leccion:
         .di("Cuidado con el atajo: restar las dilataciones de cuatrocientos da un poquito más.",
             OJO(rf"Atajo aproximado: $400(\beta_{{agua}}-\beta_{{Al}})\Delta T = {tex(aprox, 3)}$ mL. Supone la lata llena de agua desde el inicio; el valor exacto es ${tex(vac, 3)}$ mL."))
     L.responde("", rf"V_{{\text{{vacío}}}}={tex(vac, 3)}\ \text{{mL}}", vac, "mL")
-    L.usa(r"\Delta V=\beta V_0\Delta T", r"\beta=3\alpha")
+    L.usa(r"\Delta L=\alpha L_0\Delta T", r"\Delta V=\beta V_0\Delta T")
     return L
 
 
@@ -636,6 +638,7 @@ def e14() -> Leccion:
         .di("Dividimos entre el total de moléculas.", M(r"\overline{v}=\frac{\frac{107}{12}N_0v_0^2}{\frac{23}{6}N_0v_0}=\frac{107}{46}\,v_0"))\
         .di(f"Da {n(vm, 3)} veces ve cero.".replace("ve cero", s("v_0")), R(rf"\overline{{v}}={tex(vm, 3)}\,v_0", "rc"), V(foco="media"))
     L.responde("a", r"N=\tfrac{23}{6}N_0v_0", N, "N0v0").responde("b", r"v_{mp}=3v_0", 3.0, "v0").responde("c", rf"\overline{{v}}={tex(vm, 3)}\,v_0", vm, "v0")
+    L.usa(r"v_{\text{rms}}=\sqrt{\frac{3k_B T}{m}}=\sqrt{\frac{3RT}{M}}", r"\frac{1}{2}m(v^2)_{\text{med}}=\frac{3k_B T}{2}")
     return L
 
 
@@ -908,9 +911,9 @@ def e19() -> Leccion:
         .di("En d: misma temperatura que ce y mismo volumen que a.".replace("que ce", "que " + dice("c", "ce")), M(rf"p_d=\frac{{nRT_d}}{{V_d}}=\frac{{(5)(0{{,}}08206)({tex(Tc, 5)})}}{{{tex(Va, 4)}}}={tex(pd, 4, u='atm')}", "pd"), V(foco="d"))\
         .di("Tabla de estados.", TABLA(["", "$p$ (atm)", "$V$ (L)", "$T$ (K)"], [["a", "$1{,}5$", f"${tex(Va, 4)}$", f"${tex(Ta, dec=1)}$"], ["b", "$30{,}0$", f"${tex(Vb, 4)}$", f"${tex(Tb, dec=1)}$"], ["c", "$30{,}0$", f"${tex(Vc, 4)}$", f"${tex(Tc, dec=1)}$"], ["d", f"${tex(pd, 4)}$", f"${tex(Va, 4)}$", f"${tex(Tc, dec=1)}$"]]), V(foco="estados"))
     L.paso("b) a → b, adiabático")\
-        .di("No hay calor.", M(r"Q_{ab}=0"), V(foco="ab"))\
-        .di("Delta U con las temperaturas.".replace("Delta U", s("ΔU")), M(rf"\Delta U_{{ab}}=nC_V(T_b-T_a)=(5)(12{{,}}471)({tex(Tb, dec=1)}-{tex(Ta, dec=1)})"), M(rf"\Delta U_{{ab}}={tex(rab['U'], 4, u='J')}", "uab", "verde"))\
-        .di("El trabajo es lo mismo con signo contrario: lo comprimen.", M(rf"W_{{ab}}=-\Delta U_{{ab}}={tex(rab['W'], 4, u='J')}", "wab", "verde"))
+        .di("No hay calor, así que partimos de la primera ley del formulario con Q igual a cero.", F(r"\Delta U = Q - W"), M(r"Q_{ab}=0"), V(foco="ab"))\
+        .di("Delta U con las temperaturas.".replace("Delta U", s("ΔU")), F(r"\Delta U = nC_V\Delta T"), M(rf"\Delta U_{{ab}}=nC_V(T_b-T_a)=(5)(12{{,}}471)({tex(Tb, dec=1)}-{tex(Ta, dec=1)})"), M(rf"\Delta U_{{ab}}={tex(rab['U'], 4, u='J')}", "uab", "verde"))\
+        .di("Despejando de la primera ley, el trabajo es lo mismo con signo contrario: lo comprimen.", M(rf"W_{{ab}}=0-\Delta U_{{ab}}=-\Delta U_{{ab}}={tex(rab['W'], 4, u='J')}", "wab", "verde"))
     L.paso("b) b → c, isobárico")\
         .di("El calor a presión constante lleva ce pe.".replace("ce pe", s("C_P")), F(r"Q_{bc}=nC_P(T_c-T_b)"), V(foco="bc"))\
         .di("Sustituimos.", M(rf"=(5)(20{{,}}785)({tex(Tc, dec=1)}-{tex(Tb, dec=1)})={tex(rbc['Q'], 4, u='J')}", "qbc", "verde"))\
@@ -931,7 +934,7 @@ def e19() -> Leccion:
         .di("Cuidado al mezclar unidades: litros y atmósferas solo en estados; energía en joules.", OJO("$R=0{,}08206$ para hallar $V$ y $T$; $R=8{,}314$ para energías."))
     L.responde("a", rf"V_a={tex(Va, 4)}\ \text{{L}}", Va, "L").responde("a", rf"V_b={tex(Vb, 4)}\ \text{{L}}", Vb, "L").responde("a", rf"T_b={tex(Tb, dec=1)}\ \text{{K}}", Tb, "K").responde("a", rf"T_c={tex(Tc, dec=1)}\ \text{{K}}", Tc, "K")
     L.responde("b", rf"W_{{neto}}={tex(W, 4)}\ \text{{J}}", W, "J").responde("c", rf"e={tex(e * 100, 3)}\,\%", e * 100, "%")
-    L.usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"W=nRT\ln(V_2/V_1)", r"\Delta U=nC_V\Delta T")
+    L.usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"W=nRT\ln(V_2/V_1)", r"\Delta U=Q-W", r"\Delta U=nC_V\Delta T", r"e=\frac{W}{Q_H}")
     return L
 
 

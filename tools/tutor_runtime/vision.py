@@ -536,6 +536,9 @@ def _normalizar_leccion_ia(raw: Dict[str, Any], titulo_hint: str = "", enunciado
     lec = recalcular_leccion_ia(lec)
     aud = auditar_leccion(lec)
     lec["auditoria_fisica"] = aud
+    from .fisica3.formulario_ii_2026 import mapear_formulario_leccion
+
+    lec["formulario_mapa"] = mapear_formulario_leccion(lec)
     if aud["alertas"] and not lec.get("aviso"):
         lec["aviso"] = "Auditoría física detectó alertas: " + " · ".join(aud["alertas"][:2])
     return lec

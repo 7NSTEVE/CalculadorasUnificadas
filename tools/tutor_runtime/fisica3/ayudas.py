@@ -162,13 +162,14 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
              M(rf"Q_{{{ab}}} = \Delta U_{{{ab}}} = {qtx(r['Q'], cifras=cifras)}", color="verde"))
     elif tipo == "adiabatico":
         p.di(f"De {a} a {b} es adiabático: no hay intercambio de calor.", V(foco=foco), M(rf"Q_{{{ab}}} = 0"))
-        p.di("La primera ley queda así.", F(rf"\Delta U_{{{ab}}} = 0 - W_{{{ab}}} \;\Rightarrow\; W_{{{ab}}} = -\Delta U_{{{ab}}}"))
+        p.di("Partimos de la primera ley del formulario con calor cero.", F(r"\Delta U = Q - W"), F(rf"\Delta U_{{{ab}}} = 0 - W_{{{ab}}} \;\Rightarrow\; W_{{{ab}}} = -\Delta U_{{{ab}}}"))
         p.di("Calculamos el cambio de energía interna.",
              M(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a}) = ({ntx})({cv_num})({tex(Tb, dec=dec_T)}-{tex(Ta, dec=dec_T)}) = {qtx(r['U'], cifras=cifras)}"))
         p.di(f"El trabajo es lo mismo con el signo cambiado: {'el gas se comprime' if r['W'] < 0 else 'el gas se expande a costa de su energía'}.",
              M(rf"W_{{{ab}}} = {qtx(r['W'], cifras=cifras)}", color="verde"))
     elif tipo == "recta":
-        p.di(f"De {a} a {b} la presión baja o sube en línea recta: el trabajo es el área del trapecio.", V(foco=foco),
+        p.di(f"De {a} a {b} la presión cambia en línea recta: partimos de la integral del trabajo del formulario, que es el área del trapecio.", V(foco=foco),
+             F(r"W = \int_{V_1}^{V_2} p\,dV"),
              F(rf"W_{{{ab}}} = \frac{{p_{a}+p_{b}}}{{2}}\,(V_{b}-V_{a})"))
         p.di("Sustituimos.", M(rf"= \frac{{{tex(g.p(a), cifras)}+{tex(g.p(b), cifras)}}}{{2}}\,({tex(g.v(b), cifras, recorta=True)}-{tex(g.v(a), cifras, recorta=True)}) = {qtx(r['W'], cifras=cifras)}"))
         p.di("La energía interna solo mira las temperaturas.", M(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a}) = {qtx(r['U'], cifras=cifras)}"))

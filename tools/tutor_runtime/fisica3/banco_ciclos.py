@@ -112,7 +112,7 @@ def q094() -> Leccion:
     L.responde("VA", rf"V_A={tex(g.v('A'), 4)}\ \text{{m}}^3", g.v("A"), "m³")\
      .responde("Wnet", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J")\
      .responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.usa(r"W=\frac{p_1+p_2}{2}\Delta V", r"W=nRT\ln\frac{V_2}{V_1}", r"e=\frac{W}{Q_H}")
+    return L.usa(r"pV=nRT", r"W=\int_{V_1}^{V_2} p\,dV", r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=\frac{W}{Q_H}")
 
 
 # ============================================================================ Q095

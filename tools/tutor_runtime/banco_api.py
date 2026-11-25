@@ -15,6 +15,7 @@ from fastapi.responses import Response
 
 from .fisica3 import registro, rutas, variantes
 from .fisica3.dsl import revisar
+from .fisica3.formulario_ii_2026 import catalogo_formulario, mapear_formulario_leccion
 from .documentos import MAX_PDF
 from .pdf_rag import fold_accents
 from .verificador_fisico import auditar_leccion
@@ -192,6 +193,7 @@ def crear_router(
             lec = variantes.generar_variante(id[:60], semilla=semilla)
             j = lec.a_json()
             j["auditoria_fisica"] = auditar_leccion(j)
+            j["formulario_mapa"] = mapear_formulario_leccion(j)
             j["esVariante"] = True
             j["origenVariante"] = id[:60]
             return j
@@ -207,11 +209,25 @@ def crear_router(
             raise HTTPException(status_code=404, detail="Ese ejercicio no está en el banco")
         j = lec.a_json()
         j["auditoria_fisica"] = await asyncio.to_thread(auditar_leccion, j)
+        j["formulario_mapa"] = await asyncio.to_thread(mapear_formulario_leccion, j)
         if documentos is not None:
             rec = await asyncio.to_thread(documentos.recorte_de_leccion, lec)
             if rec:
                 j["recorte"] = rec
         return j
+
+    @r.get("/formulario")
+    async def api_formulario(request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+        return catalogo_formulario()
+
+    @r.get("/formulario/hoja.png")
+    async def api_formulario_hoja(request: Request) -> Response:
+        revisa_token(request)
+        if documentos is None:
+            raise HTTPException(status_code=503, detail="Documentos no disponibles")
+        b = await asyncio.to_thread(documentos.hoja_formulario_png)
+        return Response(content=b, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
 
     # -------------------------------------------------------- documentos
 

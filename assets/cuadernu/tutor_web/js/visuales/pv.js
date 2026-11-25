@@ -206,24 +206,25 @@ export class VisualPV extends Visual {
       const [vm, pm] = this.punto(proc, 0.5);
       this.texto(NOMBRE[proc[2]] || '', e.X(vm) + (proc[2] === 'isocorico' ? 12 : 10), e.Y(pm) - 12, { tam: 17, color: COLOR[proc[2]], negrita: true, halo: true });
       if (val) this.barras(val);
-    } else {
+    } else if (total > 0) {
       let idx = 0; let tt = 0;
       const per = 2.1;
-      if (this.manual !== null) { idx = Math.min(total - 1, Math.floor(this.manual)); tt = this.manual - idx; }
+      if (this.manual !== null) { idx = Math.max(0, Math.min(total - 1, Math.floor(this.manual))); tt = Math.max(0, this.manual - idx); }
       else if (f === 'ciclo' || f === 'neto' || f === 'barras' || f === null) {
-        const s = this.animado() ? (this.t % (total * per)) / per : 0;
-        idx = Math.min(total - 1, Math.floor(s)); tt = suave(Math.min(1, (s - idx) * 1.25));
+        const s = this.animado() ? (((this.t % (total * per)) + (total * per)) % (total * per)) / per : 0;
+        idx = Math.max(0, Math.min(total - 1, Math.floor(s))); tt = suave(Math.min(1, Math.max(0, (s - idx) * 1.25)));
       }
-      const [v, p] = estado ? this.estados[estado] : this.punto(this.procesos[idx], tt);
+      const prActual = this.procesos[idx];
+      const [v, p] = estado ? this.estados[estado] : (prActual ? this.punto(prActual, tt) : [0, 0]);
       if (f !== 'estados') this.circulo(e.X(v), e.Y(p), estado ? 9 : 7, { relleno: 'amarillo', borde: 'tinta', grosor: 2 });
-      this.piston(v, p, estado ? '' : this.procesos[idx][0] + this.procesos[idx][1]);
+      this.piston(v, p, estado ? '' : (prActual ? prActual[0] + prActual[1] : ''));
       if (f === 'barras' || f === 'neto') this.tablaBarras();
       else if (!estado) this.texto('Arrastra el control para recorrer el ciclo', 280, 384, { tam: 15, alin: 'center', color: 'tinta3' });
     }
 
-    if (this.manual !== null) {
-      const i = Math.min(total - 1, Math.floor(this.manual));
-      const [v, p] = this.punto(this.procesos[i], this.manual - i);
+    if (this.manual !== null && total > 0) {
+      const i = Math.max(0, Math.min(total - 1, Math.floor(this.manual)));
+      const [v, p] = this.punto(this.procesos[i], Math.max(0, this.manual - i));
       this.circulo(e.X(v), e.Y(p), 8, { relleno: 'amarillo', borde: 'tinta' });
       this.texto(`V = ${num(v, 3)} ${this.spec.uV || ''}   p = ${num(p, 3)} ${this.spec.up || ''}`, 70, 344, { tam: 15, color: 'tinta2' });
     }

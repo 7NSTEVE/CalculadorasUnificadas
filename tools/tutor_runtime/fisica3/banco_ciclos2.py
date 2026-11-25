@@ -39,8 +39,9 @@ def q106() -> Leccion:
              visual=visual_pv(g, [("B", "C", "isocorico"), ("C", "D", "isobarico"), ("D", "A", "isocorico"), ("A", "B", "isobarico")],
                               uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
     L.paso("A) Trabajo neto como área del rectángulo")\
-        .di(f"El trabajo neto de un ciclo rectangular horario es simplemente base por altura: {nu(wnet, 'J', 4)}.", V(foco="ciclo"), DATO("ciclo mostrado"),
-            M(r"W_{\text{neto}} = (p_2-p_1)(V_2-V_1) = (2{,}03-1{,}22)\times 10^5(9{,}00-7{,}00)\times 10^{-2}"),
+        .di(f"Partimos del trabajo isobárico del formulario en los dos tramos horizontales; al restar la compresión a la expansión sale base por altura: {nu(wnet, 'J', 4)}.", V(foco="ciclo"), DATO("ciclo mostrado"),
+            F(r"W = p(V_2 - V_1)"),
+            M(r"W_{\text{neto}} = p_2(V_2-V_1) - p_1(V_2-V_1) = (p_2-p_1)(V_2-V_1) = (2{,}03-1{,}22)\times 10^5(9{,}00-7{,}00)\times 10^{-2}"),
             R(rf"W_{{\text{{neto}}}} = {tex(wnet, 4, u='J')}", "ra"))
     L.paso("B y C) Calores absorbido y cedido, y eficiencia")\
         .di("Como es diatómico, ce ve vale cinco medios de erre y ce pe siete medios de erre; entra calor al subir y expandir, sale al bajar y comprimir.",
@@ -52,7 +53,7 @@ def q106() -> Leccion:
      .responde("QH", rf"Q_H={tex(qh, 5, sci='no')}\ \text{{J}}", qh, "J")\
      .responde("QC", rf"|Q_C|={tex(abs(qc), 5, sci='no')}\ \text{{J}}", abs(qc), "J")\
      .responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("Reposición II-2023", 1620.0, 28381.0, 26762.0, 0.0571).usa(r"W_{\text{neto}}=\Delta p\,\Delta V", r"e=\frac{W}{Q_H}")
+    return L.oficial("Reposición II-2023", 1620.0, 28381.0, 26762.0, 0.0571).usa(r"W=p(V_2-V_1)", r"e=\frac{W}{Q_H}")
 
 
 # ============================================================================ Q107
@@ -107,7 +108,8 @@ def q108() -> Leccion:
              visual=visual_pv(g, [("A", "B", "isobarico"), ("B", "C", "recta"), ("C", "A", "recta")],
                               uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
     L.paso("A) Trabajo de los tres procesos")\
-        .di("De A a B es rectángulo; de B a C y de C a A son trapecios negativos porque el volumen baja.", V(foco="AB"), DATO("tres veces mayor"),
+        .di("Partimos de las fórmulas de trabajo del formulario: de A a B es presión constante (rectángulo); en las rectas B a C y C a A la integral da el área del trapecio.", V(foco="AB"), DATO("tres veces mayor"),
+            F(r"W = p(V_2 - V_1) \qquad W = \int_{V_1}^{V_2} p\,dV"),
             M(rf"W_{{AB}} = (2{{,}}0\times 10^5)(0{{,}}0060-0{{,}}0020) = +{tex(rab['W'], 3, u='J')}"),
             M(rf"W_{{BC}} = \frac{{(2{{,}}0+1{{,}}0)\times 10^5}}{{2}}(0{{,}}0045-0{{,}}0060) = {tex(rbc['W'], 3, u='J')}"),
             M(rf"W_{{CA}} = \frac{{(1{{,}}0+2{{,}}0)\times 10^5}}{{2}}(0{{,}}0020-0{{,}}0045) = {tex(rca['W'], 3, u='J')}"))
@@ -124,7 +126,7 @@ def q108() -> Leccion:
      .responde("QH", rf"{tex(qh, 4)}\ \text{{J}}", qh, "J")\
      .responde("e", rf"{tex(ef, 3)}", ef, "")\
      .responde("dS", rf"{tex(ds_ab, 3)}\ \text{{J/K}}", ds_ab, "J/K")
-    return L.oficial("Reposición II-2024", 800.0, -225.0, -375.0, 1999.5, 0.10, 22.8).usa(r"W=\frac{p_1+p_2}{2}\Delta V", r"e=\frac{W}{Q_H}")
+    return L.oficial("Reposición II-2024", 800.0, -225.0, -375.0, 1999.5, 0.10, 22.8).usa(r"W=\int_{V_1}^{V_2} p\,dV", r"W=p(V_2-V_1)", r"e=\frac{W}{Q_H}")
 
 
 # ============================================================================ Q109
@@ -260,7 +262,8 @@ def q112() -> Leccion:
              visual=visual_pv(g, [("a", "b", "isobarico"), ("b", "c", "isocorico"), ("c", "a", "recta")],
                               uv="m³", up="kPa", fp=1e-3, valores=valores_visual(res)))
     L.paso("(a) Estados y calores en cada etapa")\
-        .di("Hallamos las temperaturas y aplicamos las fórmulas de isobárico, isocórico y recta.", DATO("Cincuenta moles"),
+        .di("Hallamos las temperaturas con gas ideal y calculamos cada trabajo desde las ecuaciones del formulario (rectángulo isobárico e integral del área para la recta).", DATO("Cincuenta moles"),
+            F(r"W = p(V_2 - V_1) \qquad W = \int_{V_1}^{V_2} p\,dV \qquad \Delta U = Q - W"),
             tabla_estados(g, ["a", "b", "c"], up="kPa", uv="m³", fp=1e-3, cp=3, cv=3, dt=0),
             tabla_quw(res, u="kJ", f=1e-3))\
         .di("Absorbe calor en a hacia b y en c hacia a; cede calor en b hacia c.",
@@ -273,7 +276,7 @@ def q112() -> Leccion:
      .responde("Qbc", rf"Q_{{bc}}={tex(rbc['Q'] / 1e3, 3)}\ \text{{kJ}}", rbc["Q"], "J")\
      .responde("Qca", rf"Q_{{ca}}={tex(rca['Q'] / 1e3, 2)}\ \text{{kJ}}", rca["Q"], "J")\
      .responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("Folleto resuelto 4.1-2", 226e3, -240e3, 45e3, 0.111).usa(r"W=\frac{p_1+p_2}{2}\Delta V", r"e=1-\frac{|Q_C|}{Q_H}")
+    return L.oficial("Folleto resuelto 4.1-2", 226e3, -240e3, 45e3, 0.111).usa(r"W=\int_{V_1}^{V_2} p\,dV", r"W=p(V_2-V_1)", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
 
 
 # ============================================================================ Q113
@@ -418,8 +421,11 @@ def q116() -> Leccion:
             M(rf"T_d = \frac{{p_d V_c}}{{nR}} = \frac{{(549{{,}}87)({tex(vc, 3)})}}{{(3)(8{{,}}314)}} = {tex(g.t('d'), dec=1, u='K')}"),
             tabla_estados(g, ["a", "b", "c", "d", "e"], up="kPa", uv="m³", fp=1e-3, cp=3, cv=3, dt=1))
     L.paso("(c)–(g) Trabajos, energía interna, calores, eficiencia y Carnot")\
-        .di("Calculamos las cinco etapas en la tabla y sacamos la eficiencia real frente a la de Carnot.", V(foco="ciclo"),
+        .di("Calculamos las cinco etapas en la tabla y partimos de la eficiencia general del formulario. Para el límite reversible de Carnot se sustituye la razón de calores por la razón de temperaturas extremas.", V(foco="ciclo"),
             tabla_quw(res),
+            F(r"e = \frac{W}{Q_H} = 1 - \left|\frac{Q_c}{Q_H}\right|"),
+            M(r"\text{Carnot (reversible): } \left|\frac{Q_c}{Q_H}\right| = \frac{T_C}{T_H} \;\Rightarrow\; e_{\text{Carnot}} = 1 - \frac{T_C}{T_H}"),
+            NOTA("Aviso II-2026: la relación $e_{\\text{Carnot}}=1-T_C/T_H$ no viene impresa en el formulario oficial; se obtiene desde $e=1-|Q_c/Q_H|$."),
             R(rf"e = \frac{{{tex(wnet, 4)}}}{{{tex(qh, 5, sci='no')}}} = {tex(ef, 2)} = {tex(ef * 100, 3)}\,\%\qquad e_{{\text{{Carnot}}}} = 1 - \frac{{{tex(g.t('d'), dec=1)}}}{{700}} = {tex(ecar, 2)}", "rfg"))
     L.responde("Ta", rf"T_a={tex(ta, dec=0)}\ \text{{K}}", ta, "K")\
      .responde("Td", rf"T_d={tex(g.t('d'), dec=1)}\ \text{{K}}", g.t("d"), "K")\
@@ -427,4 +433,4 @@ def q116() -> Leccion:
      .responde("e", rf"e={tex(ef, 2)}", ef, "")\
      .responde("eCar", rf"e_{{\text{{Carnot}}}}={tex(ecar, 2)}", ecar, "")
     return L.oficial("Folleto propuesto 4.2-3", 467.0, 76.0, 4.13, 0.40, 0.89,
-                     nota="Ta=467 K y Vc=4,13 m³ coinciden exacto; con pd=549,87 Pa y n=3 mol resulta Td=91,1 K (en vez de 76 K impreso en el folleto), lo que ajusta e=0,39 y e_Carnot=0,87.").usa(r"pV=nRT", r"TV^{\gamma-1}=\text{cte}")
+                     nota="Ta=467 K y Vc=4,13 m³ coinciden exacto; con pd=549,87 Pa y n=3 mol resulta Td=91,1 K (en vez de 76 K impreso en el folleto), lo que ajusta e=0,39 y e_Carnot=0,87.").usa(r"pV=nRT", r"TV^{\gamma-1}=\text{cte}", r"e=\frac{W}{Q_H}=1-\left|\frac{Q_c}{Q_H}\right|")

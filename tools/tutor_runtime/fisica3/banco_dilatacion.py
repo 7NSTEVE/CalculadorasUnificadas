@@ -336,7 +336,7 @@ def q010() -> Leccion:
         .di("Le sumamos el cero coma sesenta por ciento.", M(rf"V=V_0(1+0{{,}}0060)={tex(V0, 5)}(1{{,}}0060)"))\
         .di("Queda.", R(rf"V={tex(Vf, 4)}\ \text{{cm}}^3={tex(Vf * 1e-6, 4)}\ \text{{m}}^3", "rd"), NOTA("El folleto escribe $2{,}515\\times10^{-4}\\ \\text{m}^3$ porque redondeó $V_0$ a $2{,}5\\times10^{-4}$ antes de sumar."))
     L.responde("a", rf"\alpha={tex(al, 3)}\ ^\circ\text{{C}}^{{-1}}", al, "1/°C").responde("b", r"0{,}20\,\%", 0.20, "%").responde("c", r"0{,}60\,\%", 0.60, "%").responde("d", rf"V={tex(Vf * 1e-6, 4)}\ \text{{m}}^3", Vf * 1e-6, "m3")
-    L.oficial("folleto, sección 3.1", 2.67e-5, 0.20, 0.60, 2.515e-4, tol=0.01, nota="El folleto redondeó el volumen inicial antes de sumar.").usa(r"\Delta L=\alpha L_0\Delta T", r"\Delta V=3\alpha V_0\Delta T")
+    L.oficial("folleto, sección 3.1", 2.67e-5, 0.20, 0.60, 2.515e-4, tol=0.01, nota="El folleto redondeó el volumen inicial antes de sumar.").usa(r"\Delta L=\alpha L_0\Delta T", r"\Delta V=\beta V_0\Delta T")
     return L
 
 
@@ -450,7 +450,7 @@ def q014() -> Leccion:
         .di("El cambio es lo que le falta para llegar a uno: disminuye.", M(rf"\frac{{\Delta\rho}}{{\rho_0}}={tex(1 / 1.00276, 6)}-1={tex(1 / 1.00276 - 1, 3, sci='no')}"), R(rf"\frac{{\Delta\rho}}{{\rho_0}}=-{tex(100 * (1 - 1 / 1.00276), 3)}\,\%", "rb"))\
         .di("Baja, porque el mismo metal ocupa más espacio.", OJO("El signo importa: la densidad **disminuye**."))
     L.responde("a", r"+0{,}184\,\%", 0.184, "%").responde("b", rf"-{tex(100 * (1 - 1 / 1.00276), 3)}\,\%", 100 * (1 - 1 / 1.00276), "%")
-    L.oficial("folleto, sección 3.4", 0.184, 0.275).usa(r"\Delta L=\alpha L_0\Delta T", r"\beta=3\alpha")
+    L.oficial("folleto, sección 3.4", 0.184, 0.275).usa(r"\Delta L=\alpha L_0\Delta T", r"\Delta V=\beta V_0\Delta T")
     L.te_toca("Una lámina crece 0,10 % de largo. ¿En qué porcentaje crece su área?", 0.20, "%", pista="El área tiene dos direcciones.", solucion="$2(0{,}10\\,\\%)=0{,}20\\,\\%$")
     return L
 

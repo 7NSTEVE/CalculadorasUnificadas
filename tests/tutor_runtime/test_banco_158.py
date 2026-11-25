@@ -651,6 +651,99 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             srv.shutdown()
             srv.server_close()
 
+    def test_formulario_ii_2026_mapa_166_lecciones_variantes_y_hoja_png(self) -> None:
+        from tools.tutor_runtime.fisica3 import variantes
+        from tools.tutor_runtime.fisica3.formulario_ii_2026 import (
+            CAJAS_CELDAS,
+            COLORES_FORMULARIO,
+            catalogo_formulario,
+            mapear_formulario_leccion,
+            verificar_origen_formulario,
+        )
+        from tools.tutor_runtime.verificador_fisico import auditar_leccion
+
+        # 1. Catálogo oficial exacto de 42 celdas (14×3) con geometría normalizada
+        cat = catalogo_formulario()
+        self.assertEqual(cat["total"], 42)
+        self.assertEqual(len(cat["celdas"]), 42)
+        for c in cat["celdas"]:
+            x0, y0, x1, y1 = c["caja"]
+            self.assertTrue(0.0 <= x0 < x1 <= 1.0 and 0.0 <= y0 < y1 <= 1.0, c)
+
+        # 2. Auditoría estricta de las 166 lecciones del banco (0 violaciones, 0 alertas físicas)
+        desarrollos = 0
+        for lid in registro.ids():
+            j = registro.obtener(lid).a_json()
+            self.assertEqual(verificar_origen_formulario(j), [], f"{lid} usa atajo sin derivar")
+            aud = auditar_leccion(j)
+            self.assertEqual(aud["alertas"], [], f"{lid} tiene alertas físicas: {aud['alertas']}")
+            mapa = mapear_formulario_leccion(j)
+            self.assertEqual(len(mapa["por_paso"]), len(j.get("pasos") or []), lid)
+            for c in mapa["celdas"]:
+                self.assertIn(c["id"], CAJAS_CELDAS)
+                self.assertIn(c["color"], COLORES_FORMULARIO)
+            if j.get("tipo") not in ("seleccion", "teoria"):
+                desarrollos += 1
+                self.assertGreaterEqual(len(mapa["celdas"]), 1, f"Desarrollo {lid} sin celdas mapeadas")
+        self.assertGreaterEqual(desarrollos, 90)
+
+        # 3. Las 8 variantes paramétricas × 3 semillas = 24 variantes limpias
+        for vid in ("Q006", "Q022", "Q049", "Q070", "Q076", "E15", "E21", "Q122"):
+            for sem in (101, 202, 303):
+                j = variantes.generar_variante(vid, semilla=sem).a_json()
+                self.assertEqual(verificar_origen_formulario(j), [], f"Variante {vid}/{sem}")
+                aud = auditar_leccion(j)
+                self.assertEqual(aud["alertas"], [], f"Variante {vid}/{sem}: {aud['alertas']}")
+                mapa = mapear_formulario_leccion(j)
+                self.assertGreaterEqual(len(mapa["celdas"]), 1, f"Variante {vid}/{sem} sin celdas")
+
+        # 4. Prueba negativa: rechaza atajos sin ecuación base
+        trampa = {
+            "id": "FAKE1",
+            "tipo": "desarrollo",
+            "pasos": [
+                {
+                    "titulo": "Atajo prohibido",
+                    "tramos": [
+                        {
+                            "v": "Usamos C_p directo.",
+                            "acc": [
+                                {"a": "mate", "tex": r"C_p = \frac{\gamma R}{\gamma - 1}"},
+                                {"a": "mate", "tex": r"R_{th} = \frac{L}{kA}"},
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        faltas_neg = verificar_origen_formulario(trampa)
+        self.assertGreaterEqual(len(faltas_neg), 2, faltas_neg)
+
+        # 5. Endpoints HTTP: /api/formulario, /api/formulario/hoja.png y formulario_mapa en /api/banco/{id}
+        app = create_app({"session_token": ""})
+        client = TestClient(app)
+
+        rf = client.get("/api/formulario")
+        self.assertEqual(rf.status_code, 200)
+        self.assertEqual(rf.json()["total"], 42)
+
+        rp = client.get("/api/formulario/hoja.png")
+        self.assertEqual(rp.status_code, 200)
+        self.assertEqual(rp.headers.get("content-type"), "image/png")
+        self.assertTrue(rp.content.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertGreater(len(rp.content), 10000)
+
+        for qid, esperadas in (
+            ("Q049", {"F2C2", "F2C1"}),
+            ("Q122", {"F4C1", "F7C3", "F8C3", "F9C2", "F10C2"}),
+            ("Q014", {"F1C1", "F1C2"}),
+        ):
+            r = client.get(f"/api/banco/{qid}")
+            self.assertEqual(r.status_code, 200)
+            fm = r.json().get("formulario_mapa") or {}
+            ids_hallados = {c["id"] for c in fm.get("celdas") or []}
+            self.assertTrue(esperadas.issubset(ids_hallados), f"{qid}: faltan {esperadas - ids_hallados} en {ids_hallados}")
+
 
 if __name__ == "__main__":
     unittest.main()

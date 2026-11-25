@@ -110,7 +110,7 @@ def _v_conduccion_area(rng: random.Random) -> Leccion:
         .di(
             "Usamos cambio de variable u igual a A subcero menos b por y para evaluar la integral geométrica.",
             {"a": "mate", "tex": rf"I = \frac{{1}}{{{fmt(b,4)}}}\ln\!\left(\frac{{{fmt(A0,3)}}}{{{fmt(A_top,4)}}}\right) = {fmt(I_tot,3)}\,\text{{m}}^{{-1}}"},
-            {"a": "mate", "tex": rf"H = \frac{{({fmt(k,1)})({fmt(T1,1)} - {fmt(T2,1)})}}{{{fmt(I_tot,3)}}} = {fmt(H/1000,2)}\,\text{{kW}}\;({fmt(H,0)}\,\text{{W}})", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"H = \frac{{({fmt(k,1)})({fmt(T1,1)} - {fmt(T2,1)})}}{{{fmt(I_tot,3)}}} = {fmt(H/1000,3)}\,\text{{kW}}\;({fmt(H,0)}\,\text{{W}})", "color": "verde", "rol": "resultado"},
         )
         .despacio(
             (r"u = A_0 - b y \implies du = -b\,dy \implies dy = -\frac{du}{b}", "Cambio de variable paso a paso sin saltos"),
@@ -131,7 +131,7 @@ def _v_conduccion_area(rng: random.Random) -> Leccion:
         )
     )
     lec.responde("A)", rf"s_{{\text{{base}}}} = {fmt(s_inf,3)}\,\text{{m}},\; s_{{\text{{tope}}}} = {fmt(s_sup,3)}\,\text{{m}}", valor=round(s_inf, 3))
-    lec.responde("B)", rf"H = {fmt(H/1000,2)}\,\text{{kW}}", valor=round(H / 1000, 2))
+    lec.responde("B)", rf"H = {fmt(H/1000,3)}\,\text{{kW}}", valor=round(H / 1000, 3))
     lec.responde("C)", rf"T({fmt(y_mid,2)}\,\text{{m}}) = {fmt(T_mid,1)}\,^\circ\text{{C}}", valor=round(T_mid, 1))
     lec.te_toca(
         f"Si en lugar de {mat} ($k={fmt(k,1)}$) la conductividad se duplicara, ¿cuánto valdría el flujo $H$ en kW?",

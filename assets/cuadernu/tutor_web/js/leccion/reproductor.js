@@ -212,6 +212,15 @@ export class Reproductor {
   _vistaDe(i) {
     const p = this.lec.pasos[i];
     const v = this.tablero.nuevoPaso({ n: i + 1, total: this.total, titulo: p.titulo });
+    const mapa = this.lec.formulario_mapa;
+    if (mapa && Array.isArray(mapa.por_paso) && Array.isArray(mapa.celdas)) {
+      const ids = mapa.por_paso[i] || [];
+      if (ids.length) {
+        const porId = new Map(mapa.celdas.map((c) => [c.id, c]));
+        const celdasPaso = ids.map((id) => porId.get(id)).filter(Boolean);
+        v.ponerFuentesFormulario(celdasPaso);
+      }
+    }
     this.vistas[i] = v;
     return v;
   }

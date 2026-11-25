@@ -493,6 +493,7 @@ class Documentos:
         self._tipo: Dict[str, str] = {k: v[2] for k, v in FUENTES.items()}
         self._titulo: Dict[str, str] = {k: v[1] for k, v in FUENTES.items()}
         self._cruce: Optional[Dict[Tuple[str, str], str]] = None
+        self._formulario_png: Optional[bytes] = None
 
     # ------------------------------------------------------------ archivos
 
@@ -613,6 +614,56 @@ class Documentos:
             except OSError:
                 pass
         return b
+
+    def hoja_formulario_png(self) -> bytes:
+        """Renderiza la hoja oficial del formulario II-2026 recortada exactamente a CAJAS_CELDAS."""
+        with self._c:
+            if self._formulario_png is not None:
+                return self._formulario_png
+            cache_f = self.cache / "formulario_ii_2026_hoja_v1.png" if self.cache is not None else None
+            if cache_f is not None and cache_f.is_file():
+                self._formulario_png = cache_f.read_bytes()
+                return self._formulario_png
+
+            from PIL import Image, ImageDraw
+            from .fisica3.formulario_ii_2026 import CAJAS_CELDAS, CROP_NORM, HOJA_ASPECTO, NOMBRES_CELDAS
+
+            b: bytes
+            try:
+                doc = self._abre("formulario")
+                page = doc[0]
+                r = page.rect
+                x0, y0, x1, y1 = CROP_NORM
+                clip = fitz.Rect(r.width * x0, r.height * y0, r.width * x1, r.height * y1)
+                px = page.get_pixmap(matrix=fitz.Matrix(200.0 / 72.0, 200.0 / 72.0), clip=clip, alpha=False)
+                im = Image.frombytes("RGB", (px.width, px.height), px.samples)
+                buf = io.BytesIO()
+                im.save(buf, "PNG", optimize=True)
+                b = buf.getvalue()
+            except (KeyError, OSError, RuntimeError):
+                # Respaldo limpio si el PDF no está en la carpeta de descargas
+                w, h = HOJA_ASPECTO
+                im = Image.new("RGB", (w, h), "white")
+                dr = ImageDraw.Draw(im)
+                dr.text((42, 24), "Ecuaciones y constantes importantes · FI2103 II-2026", fill=(22, 33, 63))
+                for cid, (cx0, cy0, cx1, cy1) in CAJAS_CELDAS.items():
+                    box = [int(cx0 * w), int(cy0 * h), int(cx1 * w), int(cy1 * h)]
+                    dr.rectangle(box, outline=(180, 190, 205), width=2)
+                    dr.text((box[0] + 10, box[1] + 14), f"{cid}: {NOMBRES_CELDAS.get(cid, '')}", fill=(35, 45, 70))
+                buf = io.BytesIO()
+                im.save(buf, "PNG", optimize=True)
+                b = buf.getvalue()
+
+            self._formulario_png = b
+            if cache_f is not None:
+                try:
+                    cache_f.parent.mkdir(parents=True, exist_ok=True)
+                    tmp = cache_f.with_suffix(".parcial")
+                    tmp.write_bytes(b)
+                    tmp.replace(cache_f)
+                except OSError:
+                    pass
+            return b
 
     def _pinta(self, id: str, p: Problema) -> bytes:
         from PIL import Image, ImageDraw

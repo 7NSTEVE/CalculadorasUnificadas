@@ -70,7 +70,19 @@
 
 ## 5. Archivos Principales Modificados o Creados
 
-- **Backend Python (`tools/tutor_runtime/`):** `fisica3/` (17 módulos: `dsl.py`, `formato.py`, `ayudas.py`, `registro.py`, `rutas.py`, `indice_superexamen.py`, `banco_recomendados.py`, `banco_dilatacion.py`, `banco_calorimetria.py`, `banco_conduccion.py`, `banco_radiacion.py`, `banco_gases.py`, `banco_primera_ley.py`, `banco_ciclos.py`, `banco_ciclos2.py`, `banco_maquinas.py`, `banco_entropia.py`, `teoria.py`, `variantes.py`), `banco_api.py`, `documentos.py`, `voz.py`, `vision.py`, `verificador_numerico.py`, `verificador_fisico.py`, `sympy_verifier.py`, `gemini_engines.py`, `demo_lessons.py`, `server.py`.
+- **Backend Python (`tools/tutor_runtime/`):** `fisica3/` (`dsl.py`, `formato.py`, `ayudas.py`, `formulario_ii_2026.py`, `registro.py`, `rutas.py`, `indice_superexamen.py`, `banco_recomendados.py`, `banco_dilatacion.py`, `banco_calorimetria.py`, `banco_conduccion.py`, `banco_radiacion.py`, `banco_gases.py`, `banco_primera_ley.py`, `banco_ciclos.py`, `banco_ciclos2.py`, `banco_maquinas.py`, `banco_entropia.py`, `teoria.py`, `variantes.py`), `banco_api.py`, `documentos.py`, `voz.py`, `normalizador_voz.py`, `vision.py`, `verificador_numerico.py`, `verificador_fisico.py`, `sympy_verifier.py`, `gemini_engines.py`, `demo_lessons.py`, `server.py`.
 - **Frontend modular (`assets/cuadernu/tutor_web/`):** `index.html`, `styles/tutor.css`, `fonts/` (WOFF2 locales OFL sin CDN), `js/mate/`, `js/leccion/`, `js/pizarra/`, `js/visuales/`, `js/ui/`, `js/nucleo/`, `js/app.js`.
 - **C++ (`studio/`):** `studio/app/studio_tutor_panel.cpp`, `studio/tutor/tutor_sidecar_bridge.hpp`, `studio/tutor/tutor_sidecar_bridge.cpp`.
 - **Pruebas (`tests/tutor_runtime/`):** `tests/tutor_runtime/test_banco_158.py` y `tests/tutor_runtime/test_tutor_runtime.py`.
+
+---
+
+## 6. Auditoría y Visor Circulado del Formulario Oficial II-2026
+
+- **Fuente oficial exacta:** `D:\Descargas\documentos-ii-2026_Ecuaciones_Tercer_Parcial_FG3.pdf` (14 filas × 3 columnas = **42 celdas**: `F1C1`..`F12C2` con las 35 ecuaciones base y `F12C3`..`F14C3` con las 7 constantes/conversiones).
+- **Regla estricta verificada (`0` violaciones):** Las 166 lecciones del banco y las 24 variantes paramétricas (8 arquetipos × 3 semillas) parten de las ecuaciones base del formulario II-2026; cualquier relación derivada ($\Delta A = 2\alpha A_0\Delta T$, $\beta = 3\alpha$, resistencia térmica, conducción cilíndrica/esférica/cónica, $C_p = \gamma R/(\gamma-1)$, área del trapecio desde $W=\int p\,dV$, $W_{\text{ad}} = -\Delta U$ desde $\Delta U=Q-W$, $Q=H\Delta t$ desde $H=dQ/dt$ o límite de Carnot desde $e=1-|Q_c/Q_H|$ / $K=|Q_c|/(|Q_H|-|Q_c|)$) se deduce explícitamente a partir de ellas.
+- **Trazabilidad visual por colores y círculos:**
+  - `GET /api/formulario` y `GET /api/formulario/hoja.png` sirven el catálogo de las 42 celdas con coordenadas medidas sobre el PDF real y la imagen recortada (`1218×1788`).
+  - `mapear_formulario_leccion()` asigna a cada paso las celdas exactas usadas con número y color (`azul`, `rojo`, `verde`, `naranja`, `morado`, `turquesa`), tanto para el banco, las variantes y las lecciones generadas por IA.
+  - En la UI (`lateral.js`, `tablero.js`, `reproductor.js`, `tutor.css`), cada paso muestra etiquetas clicables del mismo color que encierran la celda correspondiente con un círculo a mano sobre la hoja oficial en la pestaña **Fórmulas** (con vista ampliada modal y avisos explícitos para temas fuera de la hoja como $\Delta S$ y Carnot).
+- **Corrección adicional detectada en auditoría Chromium:** Se corrigió un desbordamiento de índice en `assets/cuadernu/tutor_web/js/visuales/pv.js` (`VisualPV.dibujar`), logrando `0` errores de consola y `0` errores de página en temas Claro y Oscuro.

@@ -373,7 +373,9 @@ def q029() -> Leccion:
         .di("Quedó agua líquida y salió vapor: solo pueden convivir a cien grados.", R(r"T_{eq}=100\ ^\circ\text{C}", "ra"), V(foco="flujo"))\
         .por_que("A 1 atm, agua líquida y vapor coexisten únicamente a 100 °C. Es el dato escondido del problema.")
     L.paso("b) Calor que recibió el agua")\
-        .di("El agua hizo dos cosas: calentarse y, una parte, evaporarse.", M(r"Q_A=m_Ac_A\,\Delta T+m_VL_V", "f", "azul"))\
+        .di("Partimos de las dos ecuaciones de calorimetría del formulario: cambio de temperatura y cambio de fase.",
+            F(r"Q=mc\Delta T"), F(r"Q=\pm mL"),
+            M(r"Q_A=m_Ac_A\,\Delta T+m_VL_V", "f", "azul"))\
         .di("Calentarse.", M(rf"(0{{,}}2230)(4190)(79{{,}}0)={_j(qa1)}", "qa1"), V(etapa=0))\
         .di("Evaporar cuatro coma siete gramos.", M(rf"(0{{,}}0047)(2{{,}}256\times10^6)={_j(qa2)}", "qa2"), V(etapa=1))\
         .di("Sumamos.", R(rf"Q_A={tex(qa, 3, u='J')}", "rb"))
@@ -389,7 +391,7 @@ def q029() -> Leccion:
         .di("Sumamos cien.", R(rf"T_0=100+{tex(dTc, 4)}={tex(Tc, 3)}\ {C}", "rd"))\
         .di("Más de ochocientos grados: por eso hace hervir el agua.", NOTA("El folleto escribe $-88{,}9$ J; es una errata, son $-88{,}9$ **kJ**."))
     L.responde("a", r"T_{eq}=100\ ^\circ\text{C}", 100.0, "°C").responde("b", rf"Q_A={tex(qa, 3)}\ \text{{J}}", qa, "J").responde("c", rf"Q_T={tex(qt, 3, sci='no')}\ \text{{J}}", qt, "J").responde("d", rf"T_0={tex(Tc, 3)}\ {C}", Tc, "°C")
-    return L.oficial("folleto, sección 3.2", 100.0, 84.4e3, 4.50e3, 826.1).usa(r"Q=mc\Delta T", r"Q=mL_v", r"\sum Q=0")
+    return L.oficial("folleto, sección 3.2", 100.0, 84.4e3, 4.50e3, 826.1).usa(r"Q=mc\Delta T", r"Q=\pm mL")
 
 
 # ============================================================================ Q030 / Q033

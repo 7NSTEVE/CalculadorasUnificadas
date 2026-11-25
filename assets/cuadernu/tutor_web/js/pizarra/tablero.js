@@ -61,6 +61,37 @@ export class PasoVista {
     this.el.classList.toggle('anterior', e === 'anterior');
     if (e === 'actual') this.desplegar();
   }
+
+  /** Etiquetas de color que enlazan este paso con las celdas circuladas del formulario II-2026. */
+  ponerFuentesFormulario(celdas) {
+    if (!Array.isArray(celdas) || !celdas.length) return;
+    if (this.fuentesEl) this.fuentesEl.remove();
+    const fila = document.createElement('div');
+    fila.className = 'paso-fuentes';
+    fila.setAttribute('role', 'group');
+    fila.setAttribute('aria-label', 'Ecuaciones del formulario oficial usadas en este paso');
+    for (const c of celdas) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `form-chip form-c-${c.color}`;
+      b.dataset.celda = c.id;
+      b.title = `Ver en formulario oficial (${c.etiqueta}): ${c.nombre}`;
+      const num = document.createElement('span');
+      num.className = 'form-chip-num';
+      num.textContent = String(c.num);
+      const cod = document.createElement('span');
+      cod.className = 'form-chip-id';
+      cod.textContent = c.id;
+      const nom = document.createElement('span');
+      nom.className = 'form-chip-nom';
+      nom.textContent = c.nombre;
+      b.append(num, cod, nom);
+      b.addEventListener('click', () => bus.emit('formulario:enfocar', { celdaId: c.id }));
+      fila.appendChild(b);
+    }
+    this.cuerpo.prepend(fila);
+    this.fuentesEl = fila;
+  }
 }
 
 export class Tablero {

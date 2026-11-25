@@ -187,7 +187,8 @@ def q122() -> Leccion:
              visual=visual_pv(g, [("A", "B", "isobarico"), ("B", "C", "adiabatico"), ("C", "A", "isocorico")],
                               uv="cm³", up="MPa", fv=1e6, fp=1e-6))
     L.paso("A y B) Hallar γ y C_p")\
-        .di("En el tramo isocórico la presión es proporcional a la temperatura; luego aplicamos la relación adiabática de B a C.", DATO("75 % de su volumen"),
+        .di("Partimos de la ley del gas ideal en el tramo isocórico (presión proporcional a temperatura) y de la ecuación adiabática del formulario entre B y C.", DATO("75 % de su volumen"),
+            F(r"pV = nRT \qquad pV^\gamma = \text{constante}"),
             M(rf"p_C = \frac{{T_C}}{{T_A}}\,p_A = 0{{,}}668\,p_A = {tex(pc, 3, u='Pa', sci='si')}"),
             M(rf"(0{{,}}75)^\gamma = 0{{,}}668 \;\Rightarrow\; \gamma = \frac{{\ln(0{{,}}668)}}{{\ln(0{{,}}75)}} = {tex(gamma, 3)}"))\
         .di(f"Despejamos ce pe desde las dos ecuaciones del formulario ce pe igual a ce uve más erre y gama igual a ce pe entre ce uve: da {nu(cp, 'J/(mol·K)', 3)}.",
@@ -201,8 +202,9 @@ def q122() -> Leccion:
             F(r"K = \frac{|Q_C|}{|Q_H|-|Q_C|}"),
             R(rf"K = \frac{{{tex(qc, 4)}}}{{{tex(abs(qh), 4)}-{tex(qc, 4)}}} = {tex(K, 4)}", "rc"))
     L.paso("D y E) Límite de Carnot y comparación")\
-        .di(f"Para un refrigerador de Carnot entre las temperaturas extremas, el máximo es {n(K_carnot, 3)}.",
-            F(r"K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}"),
+        .di(f"Partiendo del rendimiento K del formulario, en un refrigerador reversible de Carnot la razón de calores iguala la de temperaturas; el máximo es {n(K_carnot, 3)}.",
+            F(r"K = \frac{|Q_c|}{|Q_H| - |Q_c|} \;\xrightarrow{\;|Q_c/Q_H| = T_C/T_H\;}\; K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}"),
+            NOTA("Aviso II-2026: $K_{\\text{Carnot}}=T_C/(T_H-T_C)$ no viene impresa directamente; se obtiene desde $K=|Q_c|/(|Q_H|-|Q_c|)$."),
             R(rf"K_{{\text{{Carnot}}}} = {tex(K_carnot, 3)}", "rd"))\
         .di(f"Como {n(K, 4)} supera el límite de Carnot, este ciclo no puede operar entre dos focos fijos a esas temperaturas.",
             R(r"K > K_{\text{Carnot}} \;\Rightarrow\; \text{no es posible (viola la 2.ª ley)}"))
@@ -366,14 +368,16 @@ def q128() -> Leccion:
         .di(f"Sumamos trabajos y calores: trabajo neto {nu(wnet, 'J', 4)}, calor entrante {nu(qh, 'J', 5)} y calor cedido {nu(qc, 'J', 5)}.", V(foco="ciclo"),
             tabla_quw(res),
             R(rf"W_{{\text{{neto}}}} = {tex(wnet, 4, u='J')}\quad Q_H = {tex(qh, 5, u='J', sci='no')}\quad Q_C = {tex(qc, 5, u='J', sci='no')}", "rabc"))\
-        .di("La eficiencia de Carnot entre la temperatura mínima en C y la máxima en A da exactamente ochenta por ciento.",
-            F(r"e_{\text{Carnot}} = 1 - \frac{T_C}{T_A} = 1 - \frac{p_C}{p_A} = 1 - \frac{1}{5}"),
+        .di("Partimos de la eficiencia del formulario y aplicamos el límite reversible de Carnot entre la temperatura mínima en C y la máxima en A: da exactamente ochenta por ciento.",
+            F(r"e = 1 - \left|\frac{Q_c}{Q_H}\right|"),
+            M(r"\text{Carnot (reversible): } \left|\frac{Q_c}{Q_H}\right| = \frac{T_C}{T_A} \;\Rightarrow\; e_{\text{Carnot}} = 1 - \frac{T_C}{T_A} = 1 - \frac{p_C}{p_A} = 1 - \frac{1}{5}"),
+            NOTA("Aviso II-2026: $1-T_C/T_H$ no está impresa en el formulario oficial; se obtiene sustituyendo $|Q_c/Q_H|=T_C/T_H$ en $e=1-|Q_c/Q_H|$."),
             R(rf"e_{{\text{{Carnot}}}} = {tex(ecar, dec=2)} = 80\,\%", "rd"))
     L.responde("A", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J")\
      .responde("B", rf"Q_H={tex(qh, 5, sci='no')}\ \text{{J}}", qh, "J")\
      .responde("C", rf"Q_C={tex(qc, 5, sci='no')}\ \text{{J}}", qc, "J")\
      .responde("D", rf"e_{{\text{{Carnot}}}}={tex(ecar, dec=2)}", ecar, "")
-    return L.oficial("III Parcial extraordinario I-2025", 4099.0, 14229.0, -10130.0, 0.80).usa(r"W=nRT\ln\frac{V_2}{V_1}", r"e_{\text{Carnot}}=1-\frac{T_C}{T_H}")
+    return L.oficial("III Parcial extraordinario I-2025", 4099.0, 14229.0, -10130.0, 0.80).usa(r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
 
 
 # ============================================================================ Q129
