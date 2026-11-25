@@ -154,6 +154,7 @@ export class Reproductor {
     this.tablero.limpiar();
     this.lateral.abrirLeccion(lec);
     this.enun = new Enunciado(this.tablero, lec);
+    this.enun.alDato = (caja, color) => this.lateral.marcarDato(caja, color);
     bus.emit('leccion:abierta', lec);
     await this.enun.lista;
     if (gen !== this.gen) return;
@@ -247,7 +248,9 @@ export class Reproductor {
       else if (p.el.classList.contains('aclaracion') && Number(p.el.dataset.de || 0) > i) this.tablero.quitarPaso(p);
     }
     this.vistas.length = Math.min(this.vistas.length, i);
-    if (i === 0 && this.enun) this.enun.reiniciarOpciones();
+    if (i === 0 && this.enun) { this.enun.reiniciarOpciones(); this.lateral.quitarDatos(); }
+    if (i === 0 && this.lec.recorte) this.lateral.ver('enunciado');
+    else if (i === 1 && this.lateral.visual) this.lateral.ver('visual');
     for (let k = this.vistas.length; k < i; k += 1) this._pintarCompleto(k);
 
     this.i = i;
@@ -435,7 +438,7 @@ export class Reproductor {
 
   cambiarVisual(a) {
     if (a.tipo) this.lateral.ponerVisual({ tipo: a.tipo, ...(a.spec || {}) });
-    else if (a.cambio) this.lateral.cambiarVisual(a.cambio);
+    else if (a.cambio) this.lateral.cambiarVisual(a.cambio, this.i > 0 || !(this.lec && this.lec.recorte));
   }
 
   /* ---------------------------------------------------------------- aclaraciones */

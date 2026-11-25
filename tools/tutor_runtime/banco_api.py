@@ -14,6 +14,7 @@ from fastapi.responses import Response
 
 from .fisica3 import registro, rutas
 from .fisica3.dsl import revisar
+from .documentos import MAX_PDF
 from .pdf_rag import fold_accents
 from .voz import ServicioVoz
 
@@ -166,6 +167,68 @@ def crear_router(voz: ServicioVoz, progreso: Progreso, revisa_token: Callable[[R
             if rec:
                 j["recorte"] = rec
         return j
+
+    # -------------------------------------------------------- documentos
+
+    @r.get("/documentos")
+    async def api_documentos(request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+        return {"documentos": await asyncio.to_thread(documentos.lista) if documentos else []}
+
+    @r.get("/documentos/resolver")
+    async def api_resolver(request: Request, q: str = "") -> Dict[str, Any]:
+        revisa_token(request)
+        d = await asyncio.to_thread(documentos.resolver, q[:200]) if documentos else None
+        return d or {}
+
+    @r.post("/documentos/subir")
+    async def api_subir(request: Request, nombre: str = "documento.pdf") -> Dict[str, Any]:
+        revisa_token(request)
+        if documentos is None:
+            raise HTTPException(status_code=503, detail="Documentos no disponibles")
+        largo = _entero(request.headers.get("content-length"))
+        if largo > MAX_PDF:
+            raise HTTPException(status_code=413, detail="El PDF pasa de 60 MB")
+        datos = bytearray()
+        async for trozo in request.stream():
+            datos.extend(trozo)
+            if len(datos) > MAX_PDF:
+                raise HTTPException(status_code=413, detail="El PDF pasa de 60 MB")
+        try:
+            return await asyncio.to_thread(documentos.subir, nombre[:120], bytes(datos))
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)[:200])
+
+    @r.get("/documentos/{doc}")
+    async def api_documento(doc: str, request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+        try:
+            return await asyncio.to_thread(documentos.resumen, doc)
+        except (KeyError, AttributeError):
+            raise HTTPException(status_code=404, detail="Ese documento no está disponible")
+
+    @r.get("/documentos/{doc}/problema/{clave}")
+    async def api_problema(doc: str, clave: str, request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+
+        def _arma() -> Dict[str, Any]:
+            p = documentos.problema(doc, clave)
+            return {"doc": doc, "clave": p.clave, "etiqueta": documentos.etiqueta(doc, p.clave), "texto": p.texto[:1500],
+                    "leccion": documentos.leccion_de(doc, p.clave), "recorte": documentos.recorte(doc, p.clave)}
+
+        try:
+            return await asyncio.to_thread(_arma)
+        except (KeyError, AttributeError):
+            raise HTTPException(status_code=404, detail="Ese problema no está en el documento")
+
+    @r.get("/documentos/{doc}/recorte/{clave}.png")
+    async def api_recorte(doc: str, clave: str, request: Request) -> Response:
+        revisa_token(request)
+        try:
+            b = await asyncio.to_thread(documentos.png, doc, clave)
+        except (KeyError, AttributeError):
+            raise HTTPException(status_code=404, detail="Recorte no disponible")
+        return Response(content=b, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
 
     @r.post("/voz")
     async def api_voz(request: Request) -> Dict[str, Any]:

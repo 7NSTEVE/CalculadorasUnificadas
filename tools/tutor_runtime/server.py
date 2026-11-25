@@ -52,6 +52,7 @@ from tools.tutor_runtime.pdf_rag import (
 from tools.tutor_runtime.pedagogy_memory import PedagogyMemoryStore
 from tools.tutor_runtime.secrets_dpapi import load_tutor_secrets, sanitize_text
 from tools.tutor_runtime.sympy_verifier import verify_student_step
+from tools.tutor_runtime.documentos import Documentos
 from tools.tutor_runtime.voz import ServicioVoz
 from tools.tutor_runtime.telemetry_recorder import (
     LocalTelemetryRecorder,
@@ -194,6 +195,7 @@ class TutorRuntimeContext:
         hay_privada = privada.exists()
         self.voz = ServicioVoz(audio_key, (privada / "voz_cache") if hay_privada else None, voz=str(bootstrap.get("tts_voice") or "Kore"))
         self.progreso = Progreso((privada / "tutor_progreso.json") if hay_privada else None)
+        self.documentos = Documentos(self.repo_root, cache=(privada / "tutor_recortes") if hay_privada else None)
 
 
 def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
@@ -224,7 +226,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
     def _revisa_token(req: Request) -> None:
         _check_token(req.query_params.get("token"), req)
 
-    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token))
+    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token, ctx.documentos))
 
     @app.get("/api/health")
     async def api_health(request: Request, token: Optional[str] = Query(default=None)) -> Dict[str, Any]:

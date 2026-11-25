@@ -68,10 +68,32 @@ export class Lateral {
     this.ver('visual');
   }
 
-  cambiarVisual(cambio) {
+  /** `mostrar` = traer la pestaña del visual al frente. */
+  cambiarVisual(cambio, mostrar = true) {
     if (!this.visual) return;
     this.visual.cambiar(cambio);
-    if (this.tab !== 'visual') this.ver('visual');
+    if (mostrar && this.tab !== 'visual') this.ver('visual');
+  }
+
+  /** Subraya un dato sobre el enunciado del panel, a la vez que en la hoja. */
+  marcarDato(caja, color = 'naranja') {
+    if (!this.capa) return;
+    const m = document.createElement('span');
+    m.className = 'dato-marca';
+    m.style.left = `${(caja.x * 100).toFixed(2)}%`;
+    m.style.top = `${((caja.y + caja.h) * 100).toFixed(2)}%`;
+    m.style.width = `${(caja.w * 100).toFixed(2)}%`;
+    m.style.background = `var(--${color})`;
+    this.capa.appendChild(m);
+    if (this.tab === 'enunciado') {
+      const r = m.getBoundingClientRect();
+      const q = this.paneles.enunciado.getBoundingClientRect();
+      if (r.top > q.bottom - 30 || r.top < q.top + 20) m.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  quitarDatos() {
+    if (this.capa) this.capa.querySelectorAll('.dato-marca').forEach((m) => m.remove());
   }
 
   abrirLeccion(lec) {
@@ -80,21 +102,25 @@ export class Lateral {
     this.ponerVisual(lec.visual);
     this._enunciado(lec);
     this._formulas(lec);
-    this.ver(this.visual ? 'visual' : 'enunciado');
+    this.ver(this.capa || !this.visual ? 'enunciado' : 'visual');
   }
 
   _enunciado(lec) {
     const p = this.paneles.enunciado;
     p.replaceChildren();
+    this.capa = null;
     if (lec.recorte && lec.recorte.url) {
+      const marco = document.createElement('div');
+      marco.className = 'lateral-recorte';
       const img = document.createElement('img');
-      img.className = 'lateral-recorte';
       img.alt = 'Enunciado del problema';
       img.src = urlApi(lec.recorte.url);
       img.addEventListener('click', () => bus.emit('ver-imagen', { src: img.src, alt: img.alt }));
-      p.appendChild(img);
+      marco.appendChild(img);
+      p.appendChild(marco);
+      this.capa = marco;
     }
-    if (lec.enunciado) {
+    if (lec.enunciado && !lec.recorte) {
       const t = new TintaTexto(lec.enunciado, { clase: 'lateral-enunciado', px: 19 });
       t.progreso(1);
       p.appendChild(t.el);

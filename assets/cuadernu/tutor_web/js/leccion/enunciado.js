@@ -130,6 +130,7 @@ export class Enunciado {
     if (this.img && this.img.isConnected) {
       const cj = cajaDeFrase(frase, this.palabras);
       if (!cj) return null;
+      if (this.alDato) this.alDato(cj, color);
       return marcas.crear({
         tipo: 'subraya', que: frase, en: 'recorte', color, dy: 1,
         caja: () => {

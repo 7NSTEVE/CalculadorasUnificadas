@@ -196,7 +196,10 @@ body:not(.sin-lateral) .volver { left: 32%; }
 .lateral-tabs button { border: 0; background: transparent; padding: 0.5em 0.9em; min-height: 2.5em; color: var(--tinta2); border-bottom: 3px solid transparent; }
 .lateral-tabs button[aria-selected="true"] { color: var(--azul); border-bottom-color: var(--azul); font-weight: 600; }
 .lateral-panel { overflow: auto; padding: 0.8em; min-height: 0; }
-.lateral-recorte { display: block; width: 100%; border-radius: 8px; border: 1px solid var(--borde); background: #fff; cursor: zoom-in; }
+.lateral-recorte { position: relative; border-radius: 8px; border: 1px solid var(--borde); background: #fff; overflow: hidden; }
+.lateral-recorte img { display: block; width: 100%; cursor: zoom-in; }
+.dato-marca { position: absolute; height: 3.5px; border-radius: 2px; pointer-events: none; transform-origin: left; animation: traza 600ms ease-out; }
+@keyframes traza { from { transform: scaleX(0); } }
 .lateral-enunciado { font-size: 1.16em; margin-top: 0.7em; }
 .visual { display: flex; flex-direction: column; gap: 0.6em; height: 100%; min-height: 0; }
 .visual-marco { width: 100%; flex: 1 1 auto; min-height: 220px; display: grid; place-items: start center; }
