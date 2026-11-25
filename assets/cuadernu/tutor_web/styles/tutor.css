@@ -22,7 +22,7 @@
   --letra-texto: "Patrick Hand Tutor", "Ink Free", "Segoe Print", cursive;
   --letra-titulo: "Caveat Tutor", "Ink Free", "Segoe Print", cursive;
   --px: 34px; --px-texto: 22px;
-  --ui-px: clamp(14px, 0.55vw + 8.4px, 25px);
+  --ui-px: clamp(14px, 0.58vw + 8.2px, 28px);
   --r: 10px;
   color-scheme: light;
 }

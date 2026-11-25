@@ -109,8 +109,8 @@ export class Tablero {
     // La letra crece con la ventana: 4K no puede verse diminuto
     const w = this.vista.clientWidth || 900;
     const h = this.vista.clientHeight || 700;
-    const b = Math.min(w / 27, h / 19);
-    return Math.max(25, Math.min(62, b));
+    const b = Math.min(w / 26, h / 18);
+    return Math.max(25, Math.min(72, b));
   }
 
   anchoUtil(el = this.columna) {

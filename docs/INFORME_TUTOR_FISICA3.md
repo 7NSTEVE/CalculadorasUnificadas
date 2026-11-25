@@ -1,0 +1,72 @@
+# Informe de Verificación · Tutor Audiovisual de Física General III (CuadernU)
+
+**Rama:** `feat/tutor-audiovisual`  
+**Alcance:** Reconstrucción determinista, banco verificado de 158 ejercicios + 8 mini-lecciones de teoría (166 lecciones totales), motor matemático 2D con trazado sincronizado a la voz, reconocimiento `Ctrl+V`, endurecimiento de seguridad loopback y arranque no bloqueante en C++.
+
+---
+
+## 1. Resumen Ejecutivo de Estado
+
+| Área | Estado | Evidencia verificada |
+|---|---|---|
+| Banco verificado (158 ejercicios + 8 teoría = 166 lecciones) | **CONFIRMED** | 21 Recomendados (`E1..E21`), 137 Superexamen (`Q001..Q137`), 8 teoría (`T-DIL..T-ENT`); `0` faltas en `dsl.revisar()`. |
+| Intérprete y maquetador TeX (`js/mate/tex.js`) | **CONFIRMED** | 100 % de las expresiones TeX de las 166 lecciones analizadas con Node.js real (`analizarTex`): `0` comandos desconocidos. |
+| Auditoría visual Playwright sobre 166/166 lecciones | **CONFIRMED** | `0` errores de consola, `0` errores de página, `0` fugas de LaTeX crudo, `0` lienzos negros/en blanco, `0` nodos desconocidos. |
+| Temas y resoluciones (`1366×768`, `1440×900`, `1080p@2×`, `1024×768`, `480×854`, `4K`) | **CONFIRMED** | Claro, Oscuro y Alto Contraste verificados en capturas; `overflowX=false` y `activeStepCovered=false` en todas las resoluciones. |
+| Voz sincronizada y caché en disco (`voz.py`) | **CONFIRMED** | Audio WAV real (`251 084` bytes, `5230 ms`, 15 puntos monótonos en `mapa`), modelo fijado (`gemini-3.8-flash-tts`), golpe de caché en `3 ms`, respaldo local de Windows sin cuota. |
+| Reconocimiento `Ctrl+V` (`vision.py` + `POST /api/imagen/reconocer`) | **CONFIRMED** | Captura real de `Q049` reconocida y abierta automáticamente en el navegador en `340 ms`; OCR local WinRT + emparejamiento determinista verificado incluso con bordes/márgenes añadidos (`Q049` 93,8 %, `E16` 84,2 %). |
+| Verificador numérico sin `eval()` (`verificador_numerico.py`) | **CONFIRMED** | Detecta discrepancias con tolerancia ULP (ej. atrapa `120 + 1.6 = 121.4` → calcula `121.6`) y bloquea inyecciones. |
+| Seguridad (`sympy_verifier.py`, `server.py`) | **CONFIRMED** | AST whitelist estricta sin `eval()` ni `parse_expr()`; CORS sin `"*"`; middleware HTTP y WS rechazan `Origin`/`Host` externos con `403`/`4403`; persistencia de sesión WS tras reconexión; `0` dependencias CDN. |
+| Integración C++ (`CuadernU.exe` + `TutorWhiteboardTest`) | **CONFIRMED** | Arranque asíncrono del sidecar en hilo de fondo (`WM_APP + 101`, cancelación segura en `WM_DESTROY`); compilación Release limpia y `TutorWhiteboardTest` `1/1 PASSED` (`0.10 s`). |
+| Pruebas automatizadas Python (`pytest`) | **CONFIRMED** | `39 passed, 0 failed` (`24` pruebas heredadas + `15` pruebas nuevas en `test_banco_158.py`). |
+| Higiene del repositorio (`tools/check_workspace_hygiene.py`) | **CONFIRMED** | Salida `0` (`0 violations`). |
+
+---
+
+## 2. Resolución de Defectos P0 Detectados en la Auditoría Inicial
+
+| # | Defecto original | Estado | Resolución verificada |
+|---|---|---|---|
+| P0 #1 | `Q049` daba `121,4 °C` en lugar de `121,6 °C` | **CONFIRMED** | Calculado determinísticamente en `banco_conduccion.py` (`T(0,240 m) = 121,6 °C`) y verificado por `test_p0_q049_exacto_121_6_y_avisos_p0_14_y_entropia`. |
+| P0 #2 | `_normalize_beat` copiaba `"sympy_verified"` inventado por la IA | **CONFIRMED** | Degradado a `"conceptual"` salvo verificación real en Python (`sympy_plan` o `verificador_numerico`). |
+| P0 #3 | Parser viejo borraba símbolos (`ε, Σ, ∮, ∝, ≤, ⟹`) y rompía `\dfrac` | **CONFIRMED** | Reemplazado por `js/mate/tex.js` + `caja.js` + `tinta.js`; `0` comandos desconocidos en todas las fórmulas del banco. |
+| P0 #4 | LaTeX crudo en voz, subtítulos y notas | **CONFIRMED** | `dsl.revisar()` prohíbe LaTeX en voz/subtítulos (`0` faltas); `limpiar_voz_latex()` sanea respuestas de IA preservando `<cue/>`. |
+| P0 #5 | 20–32 s por paso sin caché ni precarga | **CONFIRMED** | Lecciones deterministas instantáneas + caché WAV en disco (`3 ms` en hit) + precarga del siguiente paso. |
+| P0 #6 | La voz cambiaba de persona a media lección por 429 | **CONFIRMED** | `ServicioVoz` aparta modelos agotados y mantiene un único modelo activo por lección con respaldo local Windows. |
+| P0 #7 | Gráfica negra sólida en tema claro (`light-dark()`) | **CONFIRMED** | `js/nucleo/paleta.js` entrega colores hex concretos para claro, oscuro y alto contraste; `0` lienzos negros en las 166 lecciones. |
+| P0 #8 | Lo escrito quedaba tapado por la consola inferior | **CONFIRMED** | Margen inferior de hoja + seguimiento de cámara al bloque activo; `activeStepCovered=false` en las 6 resoluciones. |
+| P0 #9 | "Siguiente" botaba acciones pendientes y desordenaba numeración | **CONFIRMED** | El reproductor (`reproductor.js`) completa las obras del paso actual antes de avanzar; navegación bidireccional real. |
+| P0 #10 | Marcas con coordenadas fijas se corrían al cambiar tamaño/zoom | **CONFIRMED** | `js/pizarra/marcas.js` ancla cada marca al símbolo y la recoloca automáticamente tras zoom o reflujo. |
+| P0 #11 | Inyección genérica de pistón/ciclo equivocado por regex | **CONFIRMED** | Cada lección declara su visual físico exacto (`dilatacion`, `calor`, `conduccion`, `radiacion`, `gases`, `pv`, `maquina`, `entropia`). |
+| P0 #12 | Lección 1 decía "cuarenta joules" mientras la pizarra mostraba `56 J` | **CONFIRMED** | Corregido a `"cincuenta y seis joules"` en `demo_lessons.py`. |
+| P0 #13 | `Ejercicio 5` pegaba la página entera; `8` y `16` perdían figura; `Q057` fallaba con formulario cargado | **CONFIRMED** | Nuevo segmentador `documentos.py`: `E5` recorte acotado (`190 pt`), `E8` y `E16` preservan figuras multipágina, coexisten 21 PDFs simultáneos. |
+| P0 #14 | 5 figuras cambiadas en el PDF del Superexamen (`Q038, Q048, Q083, Q091, Q095`) | **CONFIRMED** | Cada una lleva `aviso` explícito y toma la figura correcta del examen original. |
+
+---
+
+## 3. Cotejo Honesto contra Solucionarios Oficiales (TEC)
+
+- **Coincidencias exactas verificadas:** `117` ejercicios coinciden dentro de tolerancia con las respuestas publicadas en los exámenes 2023–2026 y el folleto oficial.
+- **Discrepancias reales documentadas (errores detectados en los solucionarios publicados — nunca ocultados):**
+  1. **`Q045` (`25-II-E` p. 6):** El solucionario oficial usó el volumen del cilindro ($\pi r^2 L$) en lugar del área lateral ($2\pi r L$). Resultado físico verificado: `223,7 kW/m`, `671,1 MJ`, `88,6 °C` (frente a `6202`, `18,61 MJ`, `80,0 °C` publicados).
+  2. **`Q050` (`25-II-R` p. 3):** El solucionario omitió el factor $1/1000$ de $du = 1000\,dy$, desplazando $H$ y $Q$ por un factor de $1000$ (`8,394 MW` y `2,518 GJ` frente a `8,394 kW` y `2,518 MJ`; $T(d/2) = 197,6\,^\circ\text{C}$ coincide).
+  3. **`Q060` (`26-F` 3.4-7):** El folleto imprimió `36,2 W` al omitir el factor `2` de $\int r^{-3}\,dr = -1/(2r^2)$ (el mismo problema resuelto en `3.3-6` / `Q057` da `72,4 W`; `84 °C` coincide).
+  4. **`Q061` (`26-F` 3.3-9):** El folleto sustituyó $A = 3{,}25\text{ m}^2$ en lugar de $3{,}25\text{ cm}^2 = 3{,}25\times 10^{-4}\text{ m}^2$ (`7,80 W` frente a `78 220 W`).
+  5. **`Q099` (`25-II-E` p. 7):** El solucionario sustituyó $n = 1{,}5\text{ mol}$ en lugar de $0{,}15\text{ mol}$ (temperaturas $10\times$ menores) y omitió el signo negativo en $\Delta U_{AC} = -608\text{ J}$ ($W$, $Q$ y $e = 44{,}45\,\%$ coinciden).
+  6. **`Q116` (`26-F` 4.2-3):** Con los datos impresos $p_d = 549{,}87\text{ Pa}$, $n = 3\text{ mol}$, $V_c = 4{,}13\text{ m}^3$, la ley del gas ideal produce $T_d = 91{,}1\text{ K}$ (frente a `76 K` impresos; $T_a = 467\text{ K}$ y $V_c = 4{,}13\text{ m}^3$ coinciden).
+- **Aviso de formulario II-2026:** Los 8 ejercicios de entropía (`Q130..Q137`) incluyen advertencia explícita de que $\Delta S$ y Carnot no figuran en el formulario oficial II-2026.
+
+---
+
+## 4. Defecto Adicional Detectado y Reparado Durante la Auditoría Final
+
+Durante el barrido Playwright sobre las 166 lecciones se detectó un error real en `assets/cuadernu/tutor_web/js/visuales/dilatacion.js`: los ejercicios con especificación de barra única (`caso: "barra"` en `T-DIL` y `Q036`) disparaban `TypeError: Cannot read properties of undefined (reading 'map')` al caer en `_barras()` sin arreglo `barras`. Se corrigió el respaldo de barra única y el barrido posterior confirmó `0` errores de consola y `0` lienzos vacíos en las 166 lecciones.
+
+---
+
+## 5. Archivos Principales Modificados o Creados
+
+- **Backend Python (`tools/tutor_runtime/`):** `fisica3/` (16 módulos: `dsl.py`, `formato.py`, `ayudas.py`, `registro.py`, `rutas.py`, `indice_superexamen.py`, `banco_recomendados.py`, `banco_dilatacion.py`, `banco_calorimetria.py`, `banco_conduccion.py`, `banco_radiacion.py`, `banco_gases.py`, `banco_primera_ley.py`, `banco_ciclos.py`, `banco_ciclos2.py`, `banco_maquinas.py`, `banco_entropia.py`, `teoria.py`), `banco_api.py`, `documentos.py`, `voz.py`, `vision.py`, `verificador_numerico.py`, `sympy_verifier.py`, `gemini_engines.py`, `demo_lessons.py`, `server.py`.
+- **Frontend modular (`assets/cuadernu/tutor_web/`):** `index.html`, `styles/tutor.css`, `fonts/` (WOFF2 locales OFL sin CDN), `js/mate/`, `js/leccion/`, `js/pizarra/`, `js/visuales/`, `js/ui/`, `js/nucleo/`, `js/app.js`.
+- **C++ (`studio/`):** `studio/app/studio_tutor_panel.cpp`, `studio/tutor/tutor_sidecar_bridge.hpp`, `studio/tutor/tutor_sidecar_bridge.cpp`.
+- **Pruebas (`tests/tutor_runtime/`):** `tests/tutor_runtime/test_banco_158.py` y `tests/tutor_runtime/test_tutor_runtime.py`.

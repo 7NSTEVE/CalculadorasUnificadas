@@ -56,23 +56,27 @@ export class VisualDilatacion extends Visual {
   }
 
   _barras(f, T) {
-    const bs = this.s.barras;
-    const Lm = Math.max(...bs.map((b) => b.L));
+    const bs = Array.isArray(this.s.barras) && this.s.barras.length
+      ? this.s.barras
+      : [{ n: this.s.nombre || 'barra', L: this.s.L0 || this.s.L || 2.0, a: this.s.a || 2e-5, color: this.s.color || 'naranja' }];
+    const unidad = this.s.u || (this.s.L0 ? 'm' : 'cm');
+    const Lm = Math.max(1e-9, ...bs.map((b) => b.L));
     const k = 330 / Lm;
-    const exag = this.s.exag || 0.16 / Math.max(...bs.map((b) => b.a * b.L / Lm * this.rango));
+    const maxDelta = Math.max(1e-9, ...bs.map((b) => Math.abs(b.a * b.L / Lm * Math.max(1, this.rango))));
+    const exag = this.s.exag || 0.16 / maxDelta;
     const dT = this.signo * this.rango * f;
     bs.forEach((b, i) => {
-      const y = 96 + i * 96;
+      const y = bs.length === 1 ? 150 : 96 + i * 96;
       const L = b.L * (1 + b.a * dT * exag);
       const x1 = 60 + L * k;
       this.caja(60, y, b.L * k, 40, { r: 4, relleno: alfa(b.color, 0.16), borde: 'tinta3', grosor: 1.2 });
       this.caja(60, y, L * k, 40, { r: 4, relleno: alfa(b.color, 0.5), borde: 'tinta', grosor: 2.2 });
       this.texto(`${b.n}`, 70, y - 8, { tam: 18, negrita: true, color: b.color });
-      this.texto(`L = ${num(b.L * (1 + b.a * dT), 6)} ${this.s.u || 'cm'}`, 200, y + 26, { tam: 17 });
+      this.texto(`L = ${num(b.L * (1 + b.a * dT), 6)} ${unidad}`, 200, y + 26, { tam: 17 });
       if (f > 0.02) this.flecha(60 + b.L * k, y + 52, x1, y + 52, { color: 'naranja', grosor: 2.4, punta: 7 });
       b.x1 = x1;
     });
-    this.linea(60, 70, 60, 260 + (bs.length - 2) * 40, { grosor: 4 });
+    this.linea(60, 70, 60, bs.length === 1 ? 230 : 260 + (bs.length - 2) * 40, { grosor: 4 });
     if (bs.length === 2) {
       const [a, b] = bs;
       const xa = Math.min(a.x1, b.x1); const xb = Math.max(a.x1, b.x1);
@@ -81,7 +85,7 @@ export class VisualDilatacion extends Visual {
       this.flecha((xa + xb) / 2, 296, xa, 296, { color: 'rojo', punta: 8 });
       this.flecha((xa + xb) / 2, 296, xb, 296, { color: 'rojo', punta: 8 });
       const dif = Math.abs(b.L * (1 + b.a * this.signo * this.rango * f) - a.L * (1 + a.a * this.signo * this.rango * f));
-      this.texto(`diferencia: ${num(dif, 4)} ${this.s.u || 'cm'}`, (xa + xb) / 2, 322, { tam: 17, alin: 'center', color: 'rojo', negrita: true });
+      this.texto(`diferencia: ${num(dif, 4)} ${unidad}`, (xa + xb) / 2, 322, { tam: 17, alin: 'center', color: 'rojo', negrita: true });
     }
   }
 

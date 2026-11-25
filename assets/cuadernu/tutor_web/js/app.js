@@ -332,4 +332,4 @@ const pedida = new URLSearchParams(window.location.search).get('leccion');
 })();
 
 /* Gancho de pruebas: no se usa en la aplicación */
-window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus };
+window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema };
