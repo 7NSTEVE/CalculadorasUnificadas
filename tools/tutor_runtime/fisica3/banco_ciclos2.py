@@ -5,8 +5,8 @@ from __future__ import annotations
 import math
 
 from .ayudas import ATM, R_GAS, Gas, explica_proceso, tabla_estados, tabla_quw, valores_visual, visual_pv
-from .dsl import DATO, F, LISTA, M, NOTA, Leccion, R, TABLA, V
-from .formato import n, nu, tex
+from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, T, TABLA, V, s
+from .formato import dice, n, nu, tex
 from .indice_superexamen import fuente, nivel, tema
 from .registro import leccion
 
@@ -18,43 +18,11 @@ def _des(q: str, titulo: str, enunciado: str, **k) -> Leccion:
 # ============================================================================ Q106
 @leccion("Q106")
 def q106() -> Leccion:
-    g = Gas(2.00, "dia")
-    v1, v2, p1, p2 = 7.00e-2, 9.00e-2, 1.22e5, 2.03e5
-    g.pone("B", p=p1, v=v1)
-    g.pone("C", p=p2, v=v1)
-    g.pone("D", p=p2, v=v2)
-    g.pone("A", p=p1, v=v2)
-    rbc = g.proceso("B", "C", "isocorico")
-    rcd = g.proceso("C", "D", "isobarico")
-    rda = g.proceso("D", "A", "isocorico")
-    rab = g.proceso("A", "B", "isobarico")
-    res = [("B→C", rbc), ("C→D", rcd), ("D→A", rda), ("A→B", rab)]
-    wnet = sum(r["W"] for _, r in res)
-    qh = rbc["Q"] + rcd["Q"]
-    qc = rda["Q"] + rab["Q"]
-    ef = wnet / qh
-    L = _des("Q106", "Ciclo rectangular diatómico (2 mol)",
-             "Dos moles de gas ideal diatómico recorren el rectángulo horario $B\\to C\\to D\\to A\\to B$ entre $V=7{,}00\\times 10^{-2}$ y $9{,}00\\times 10^{-2}\\ \\text{m}^3$, y $p=1{,}22\\times 10^5$ y $2{,}03\\times 10^5$ Pa. A) Trabajo neto. B) $Q_H$ y $Q_C$. C) Eficiencia.",
-             claves=["ciclo rectangular", "diatómico", "eficiencia"],
-             visual=visual_pv(g, [("B", "C", "isocorico"), ("C", "D", "isobarico"), ("D", "A", "isocorico"), ("A", "B", "isobarico")],
-                              uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
-    L.paso("A) Trabajo neto como área del rectángulo")\
-        .di(f"Partimos del trabajo isobárico del formulario en los dos tramos horizontales; al restar la compresión a la expansión sale base por altura: {nu(wnet, 'J', 4)}.", V(foco="ciclo"), DATO("ciclo mostrado"),
-            F(r"W = p(V_2 - V_1)"),
-            M(r"W_{\text{neto}} = p_2(V_2-V_1) - p_1(V_2-V_1) = (p_2-p_1)(V_2-V_1) = (2{,}03-1{,}22)\times 10^5(9{,}00-7{,}00)\times 10^{-2}"),
-            R(rf"W_{{\text{{neto}}}} = {tex(wnet, 4, u='J')}", "ra"))
-    L.paso("B y C) Calores absorbido y cedido, y eficiencia")\
-        .di("Como es diatómico, ce ve vale cinco medios de erre y ce pe siete medios de erre; entra calor al subir y expandir, sale al bajar y comprimir.",
-            tabla_quw(res),
-            M(rf"Q_H = Q_{{BC}}+Q_{{CD}} = {tex(qh, 5, u='J', sci='no')}\qquad |Q_C| = |Q_{{DA}}+Q_{{AB}}| = {tex(abs(qc), 5, u='J', sci='no')}"))\
-        .di(f"La eficiencia es trabajo neto entre calor absorbido: {n(ef * 100, 3)} por ciento.",
-            R(rf"e = \frac{{{tex(wnet, 4)}}}{{{tex(qh, 5, sci='no')}}} = {tex(ef * 100, 3)}\,\%\ \ (\approx 6\,\%)", "rbc"))
-    L.responde("A", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J")\
-     .responde("QH", rf"Q_H={tex(qh, 5, sci='no')}\ \text{{J}}", qh, "J")\
-     .responde("QC", rf"|Q_C|={tex(abs(qc), 5, sci='no')}\ \text{{J}}", abs(qc), "J")\
-     .responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("Reposición II-2023", 1620.0, 28381.0, 26762.0, 0.0571).usa(r"W=p(V_2-V_1)", r"e=\frac{W}{Q_H}")
+    from .banco_recomendados import _rectangulo
 
+    L = _rectangulo("Q106", fuente("Q106"))
+    L.titulo = "Ciclo rectangular diatómico (2 mol)"
+    return L.oficial("Reposición II-2023", 1620.0, 28381.0, -26762.0, 5.71, tol=0.02, nota="Es el mismo ejercicio 15 de los Recomendados.")
 
 # ============================================================================ Q107
 @leccion("Q107")
@@ -65,27 +33,46 @@ def q107() -> Leccion:
     g.pone("3", p=2.0, v=2.0)
     g.pone("4", p=1.0, v=2.0)
     ef = 2.0 / 19.0
-    L = _des("Q107", "Ciclo rectangular simbólico (p₀, V₀) con gas diatómico",
-             "Un gas ideal diatómico recorre el ciclo rectangular $1(V_0,p_0)\\to 2(V_0,2p_0)\\to 3(2V_0,2p_0)\\to 4(2V_0,p_0)\\to 1$. A) Trabajo y calor por proceso en términos de $p_0 V_0$. B) $Q_C$ y $Q_H$. C) Eficiencia.",
+    PV = r"p_0V_0"
+    L = _des("Q107", "Ciclo rectangular en términos de p₀ y V₀",
+             "Un gas ideal diatómico recorre el ciclo $1\\to2\\to3\\to4\\to1$ de la figura: $1(V_0,p_0)$, $2(V_0,2p_0)$, $3(2V_0,2p_0)$, $4(2V_0,p_0)$. A) Trabajo y calor de cada proceso en términos de $p_0$ y $V_0$. B) $Q_C$ y $Q_H$. C) Eficiencia.",
              claves=["ciclo simbólico", "p0 V0", "diatómico"],
-             visual=visual_pv(g, [("1", "2", "isocorico"), ("2", "3", "isobarico"), ("3", "4", "isocorico"), ("4", "1", "isobarico")],
-                              uv="V₀", up="p₀"))
-    L.paso("A) Trabajo y calor por etapa en función de p₀V₀")\
-        .di("Como ene erre delta te es delta de pe por ve, sustituimos ce ve igual a cinco medios y ce pe siete medios.", DATO("p0 y V0"),
-            TABLA(["Etapa", "$W$", "$\\Delta U = \\tfrac{5}{2}\\Delta(pV)$", "$Q = \\Delta U + W$"],
-                  [["$1\\to 2$ (isoc.)", "$0$", "$+\\tfrac{5}{2}p_0V_0$", "$+\\tfrac{5}{2}p_0V_0$"],
-                   ["$2\\to 3$ (isob.)", "$+2p_0V_0$", "$+5p_0V_0$", "$+7p_0V_0$"],
-                   ["$3\\to 4$ (isoc.)", "$0$", "$-5p_0V_0$", "$-5p_0V_0$"],
-                   ["$4\\to 1$ (isob.)", "$-p_0V_0$", "$-\\tfrac{5}{2}p_0V_0$", "$-\\tfrac{7}{2}p_0V_0$"]], resaltar=[[1, 3], [0, 3]]))
-    L.paso("B y C) Calores totales y eficiencia")\
-        .di("Sumamos los calores positivos para cu hache y los negativos para cu ce.", V(foco="ciclo"),
-            M(r"Q_H = \frac{5}{2}p_0V_0 + 7p_0V_0 = \frac{19}{2}\,p_0V_0 = 9{,}5\,p_0V_0"),
-            M(r"Q_C = -5p_0V_0 - \frac{7}{2}p_0V_0 = -\frac{17}{2}\,p_0V_0 = -8{,}5\,p_0V_0"))\
-        .di(f"El trabajo neto es un pe cero ve cero, así que la eficiencia da dos diecinueveavos, {n(ef * 100, 3)} por ciento.",
-            R(rf"e = \frac{{p_0V_0}}{{\frac{{19}}{{2}}p_0V_0}} = \frac{{2}}{{19}} \approx {tex(ef * 100, 3)}\,\%", "rc"))
-    L.responde("QH", r"\frac{19}{2}p_0V_0", 9.5, "p0V0").responde("QC", r"-\frac{17}{2}p_0V_0", -8.5, "p0V0").responde("e", r"\frac{2}{19}", ef, "")
-    return L.usa(r"pV=nRT", r"e=\frac{W}{Q_H}")
-
+             visual=visual_pv(g, [("1", "2", "isocorico"), ("2", "3", "isobarico"), ("3", "4", "isocorico"), ("4", "1", "isobarico")], uv="V₀", up="p₀"))
+    L.paso("Qué nos dan y qué piden")\
+        .di("No hay números: todo se deja en función de pe cero y ve cero.".replace("pe cero y ve cero", dice("p₀ y V₀", "pe cero y ve cero")), DATO("p0"),
+            LISTA(["$1$: $(V_0,\\ p_0)$ y $2$: $(V_0,\\ 2p_0)$", "$3$: $(2V_0,\\ 2p_0)$ y $4$: $(2V_0,\\ p_0)$", "Diatómico: $C_V=\\frac{5}{2}R$, $C_p=\\frac{7}{2}R$"]))\
+        .di("El truco: no hace falta la temperatura, porque ene erre te es pe por ve.".replace("ene erre te es pe por ve", dice("nRT = pV", "ene erre te es pe ve")), F(r"pV=nRT"), M(r"nRT_1=p_0V_0\quad nRT_2=2p_0V_0\quad nRT_3=4p_0V_0\quad nRT_4=2p_0V_0", "nrt", "azul"))
+    L.paso("La energía interna en términos de pV")\
+        .di("La energía interna con ce ve.".replace("ce ve", s("C_V")), F(r"\Delta U=nC_V\,\Delta T"), M(r"\Delta U=n\left(\frac{5}{2}R\right)\Delta T=\frac{5}{2}\,\Delta(nRT)"))\
+        .di("Y ene erre te es pe ve.".replace("ene erre te es pe ve", dice("nRT=pV", "ene erre te es pe ve")), M(r"\Delta U=\frac{5}{2}\,\Delta(pV)", "du", "azul"))
+    L.paso("A) Proceso 1→2 (volumen constante)")\
+        .di("Sin cambio de volumen no hay trabajo.", V(foco="12"), M(r"W_{12}=0"))\
+        .di("La energía interna.", M(rf"\Delta U_{{12}}=\frac{{5}}{{2}}(2{PV}-{PV})=\frac{{5}}{{2}}{PV}"))\
+        .di("El calor, por la primera ley.", F(r"\Delta U=Q-W"), R(rf"Q_{{12}}=\Delta U_{{12}}+W_{{12}}=+\frac{{5}}{{2}}{PV}", "q12"))
+    L.paso("A) Proceso 2→3 (presión constante 2p₀)")\
+        .di("Trabajo a presión constante.", V(foco="23"), F(r"W=p(V_2-V_1)"), M(rf"W_{{23}}=2p_0(2V_0-V_0)=+2{PV}"))\
+        .di("Energía interna.", M(rf"\Delta U_{{23}}=\frac{{5}}{{2}}(4{PV}-2{PV})=+5{PV}"))\
+        .di("Calor.", R(rf"Q_{{23}}=5{PV}+2{PV}=+7{PV}", "q23"))
+    L.paso("A) Proceso 3→4 (volumen constante 2V₀)")\
+        .di("Otra vez sin trabajo.", V(foco="34"), M(r"W_{34}=0"))\
+        .di("La presión baja a la mitad.", M(rf"\Delta U_{{34}}=\frac{{5}}{{2}}(2{PV}-4{PV})=-5{PV}"))\
+        .di("Calor que sale.", R(rf"Q_{{34}}=-5{PV}", "q34"))
+    L.paso("A) Proceso 4→1 (presión constante p₀)")\
+        .di("Se comprime: trabajo negativo.", V(foco="41"), M(rf"W_{{41}}=p_0(V_0-2V_0)=-{PV}"))\
+        .di("Energía interna.", M(rf"\Delta U_{{41}}=\frac{{5}}{{2}}({PV}-2{PV})=-\frac{{5}}{{2}}{PV}"))\
+        .di("Calor.", R(rf"Q_{{41}}=-\frac{{5}}{{2}}{PV}-{PV}=-\frac{{7}}{{2}}{PV}", "q41"))
+    L.paso("B) Calor absorbido y calor expulsado")\
+        .di("Ordenamos todo en una tabla.", TABLA(["Proceso", "$W$", "$\\Delta U$", "$Q$"],
+                                                  [["$1\\to2$", "$0$", "$+\\tfrac{5}{2}p_0V_0$", "$+\\tfrac{5}{2}p_0V_0$"], ["$2\\to3$", "$+2p_0V_0$", "$+5p_0V_0$", "$+7p_0V_0$"],
+                                                   ["$3\\to4$", "$0$", "$-5p_0V_0$", "$-5p_0V_0$"], ["$4\\to1$", "$-p_0V_0$", "$-\\tfrac{5}{2}p_0V_0$", "$-\\tfrac{7}{2}p_0V_0$"]]), V(foco="ciclo"))\
+        .di("Absorbido: los calores positivos.", R(rf"Q_H=\frac{{5}}{{2}}{PV}+7{PV}=\frac{{19}}{{2}}{PV}", "qh"))\
+        .di("Expulsado: los negativos.", R(rf"Q_C=-5{PV}-\frac{{7}}{{2}}{PV}=-\frac{{17}}{{2}}{PV}", "qc"))
+    L.paso("C) Eficiencia")\
+        .di("El trabajo neto es la suma de los trabajos: el área del rectángulo.", M(rf"W_{{\text{{neto}}}}=0+2{PV}+0-{PV}={PV}"))\
+        .di("Eficiencia.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{PV}}}{{\frac{{19}}{{2}}{PV}}}=\frac{{2}}{{19}}"))\
+        .di(f"Diez coma cinco por ciento.", R(rf"e=\frac{{2}}{{19}}={tex(ef * 100, 3)}\,\%", "re"))
+    L.responde("B", r"Q_H=\frac{19}{2}p_0V_0", 9.5, "p0V0").responde("B", r"Q_C=-\frac{17}{2}p_0V_0", -8.5, "p0V0").responde("C", r"e=\frac{2}{19}", ef, "")
+    return L.oficial("Reposición I-2024", 9.5, -8.5, 0.105, tol=0.01).usa(r"pV=nRT", r"W=p(V_2-V_1)", r"\Delta U=nC_V\Delta T", r"e=\frac{W}{Q_H}")
 
 # ============================================================================ Q108
 @leccion("Q108")
@@ -98,36 +85,36 @@ def q108() -> Leccion:
     rbc = g.proceso("B", "C", "recta")
     rca = g.proceso("C", "A", "recta")
     res = [("A→B", rab), ("B→C", rbc), ("C→A", rca)]
-    wnet = rab["W"] + rbc["W"] + rca["W"]
+    wnet = sum(r["W"] for _, r in res)
     qh = rab["Q"]
     ef = wnet / qh
     ds_ab = g.n * g.cp * math.log(g.t("B") / g.t("A"))
     L = _des("Q108", "Ciclo triangular de 1 mol monoatómico (trabajo, Q_H, e y ΔS)",
-             "Un mol de gas monoatómico recorre el triángulo horario $A(0{,}0020\\ \\text{m}^3, 2{,}0\\times 10^5\\ \\text{Pa})\\to B(0{,}0060, 2{,}0\\times 10^5)\\to C(0{,}0045, 1{,}0\\times 10^5)\\to A$. A) Trabajo por proceso. B) Calor entrante $Q_H$. C) Eficiencia. D) $\\Delta S_{A\\to B}$.",
-             claves=["triángulo", "monoatómico", "trapecio"],
-             visual=visual_pv(g, [("A", "B", "isobarico"), ("B", "C", "recta"), ("C", "A", "recta")],
-                              uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
-    L.paso("A) Trabajo de los tres procesos")\
-        .di("Partimos de las fórmulas de trabajo del formulario: de A a B es presión constante (rectángulo); en las rectas B a C y C a A la integral da el área del trapecio.", V(foco="AB"), DATO("tres veces mayor"),
-            F(r"W = p(V_2 - V_1) \qquad W = \int_{V_1}^{V_2} p\,dV"),
-            M(rf"W_{{AB}} = (2{{,}}0\times 10^5)(0{{,}}0060-0{{,}}0020) = +{tex(rab['W'], 3, u='J')}"),
-            M(rf"W_{{BC}} = \frac{{(2{{,}}0+1{{,}}0)\times 10^5}}{{2}}(0{{,}}0045-0{{,}}0060) = {tex(rbc['W'], 3, u='J')}"),
-            M(rf"W_{{CA}} = \frac{{(1{{,}}0+2{{,}}0)\times 10^5}}{{2}}(0{{,}}0020-0{{,}}0045) = {tex(rca['W'], 3, u='J')}"))
-    L.paso("B, C y D) Calor entrante, eficiencia y entropía A→B")\
-        .di("Solo entra calor en la expansión isobárica A a B; en los otros dos tramos el calor sale.", V(foco="ciclo"),
-            tabla_quw(res),
-            R(rf"Q_H = Q_{{AB}} = {tex(qh, 4, u='J')}\qquad e = \frac{{{tex(wnet, 3)}}}{{{tex(qh, 4)}}} = {tex(ef * 100, 3)}\,\%", "rbc"))\
-        .di(f"Como el volumen se triplica a presión constante, la temperatura se triplica y la entropía sube {nu(ds_ab, 'J/K', 3)}.",
-            M(rf"\Delta S_{{AB}} = nC_p\ln\frac{{T_B}}{{T_A}} = \frac{{5}}{{2}}(8{{,}}314)\ln 3"),
-            R(rf"\Delta S_{{AB}} = {tex(ds_ab, 3, u='J/K')}", "rd"))
-    L.responde("WAB", rf"{tex(rab['W'], 3)}\ \text{{J}}", rab["W"], "J")\
-     .responde("WBC", rf"{tex(rbc['W'], 3)}\ \text{{J}}", rbc["W"], "J")\
-     .responde("WCA", rf"{tex(rca['W'], 3)}\ \text{{J}}", rca["W"], "J")\
-     .responde("QH", rf"{tex(qh, 4)}\ \text{{J}}", qh, "J")\
-     .responde("e", rf"{tex(ef, 3)}", ef, "")\
-     .responde("dS", rf"{tex(ds_ab, 3)}\ \text{{J/K}}", ds_ab, "J/K")
+             "Un mol de gas monoatómico recorre el ciclo de la figura. $A$: $2{,}0\\times10^5$ Pa y $0{,}0020$ m³; $p_C=p_A/2$ y $V_C=0{,}0045$ m³; $V_B=3V_A$ a la presión de A. A) Trabajo de cada proceso. B) Calor que entra. C) Eficiencia. D) $\\Delta S_{A\\to B}$.",
+             claves=["triángulo", "monoatómico", "trapecio", "entropía"],
+             visual=visual_pv(g, [("A", "B", "isobarico"), ("B", "C", "recta"), ("C", "A", "recta")], uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Un triángulo: arriba una línea horizontal y dos rectas inclinadas.", DATO("tres veces"),
+            LISTA(["$A$: $p_A=2{,}0\\times10^5$ Pa, $V_A=0{,}0020$ m³", "$B$: misma presión, $V_B=3V_A=0{,}0060$ m³", "$C$: $p_C=\\frac{p_A}{2}=1{,}0\\times10^5$ Pa, $V_C=0{,}0045$ m³", "$n=1$ mol, monoatómico: $C_V=\\frac{3}{2}R$"]))\
+        .di("Primero las temperaturas, con el gas ideal.", F(r"T=\frac{pV}{nR}"), tabla_estados(g, ["A", "B", "C"], up="Pa", uv="m³", cp=2, cv=2, dt=1))
+    explica_proceso(L.paso("A) Proceso A→B (presión constante)"), g, "A", "B", "isobarico", foco="AB")
+    explica_proceso(L.paso("A) Proceso B→C (recta)"), g, "B", "C", "recta", foco="BC")
+    explica_proceso(L.paso("A) Proceso C→A (recta)"), g, "C", "A", "recta", foco="CA")
+    L.paso("B) Calor que entra")\
+        .di("Revisamos los signos de los tres calores.", tabla_quw(res), V(foco="ciclo"))\
+        .di("Solo es positivo el de A a B: es el único calor que entra.", R(rf"Q_H=Q_{{AB}}={tex(qh, 4, u='J')}", "qh"))\
+        .di("La cátedra pone mil novecientos noventa y nueve coma cinco por redondear las temperaturas.", NOTA("La oficial da $1999{,}5$ J: es el mismo valor redondeado."))
+    L.paso("C) Eficiencia")\
+        .di("El trabajo neto es la suma de los tres.", M(rf"W_{{\text{{neto}}}}={tex(rab['W'], 3)}+({tex(rbc['W'], 3)})+({tex(rca['W'], 3)})={tex(wnet, 3, u='J')}"))\
+        .di("Entre el calor que entra.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{tex(wnet, 3)}}}{{{tex(qh, 4)}}}"), R(rf"e={tex(ef, 2)}={tex(ef * 100, 2)}\,\%", "re"))
+    L.paso("D) Entropía de A a B")\
+        .di("La entropía se arma con calor entre temperatura.", M(r"dS=\frac{dQ}{T}"), F(r"dQ=nC_p\,dT"))\
+        .di("A presión constante, se integra y sale un logaritmo.", M(r"\Delta S_{AB}=\int_{T_A}^{T_B}\frac{nC_p\,dT}{T}=nC_p\ln\frac{T_B}{T_A}"))\
+        .di("Como el volumen se triplica a presión constante, la temperatura también se triplica.", M(r"\frac{T_B}{T_A}=\frac{V_B}{V_A}=3"), M(r"C_p=C_V+R=\frac{5}{2}R"))\
+        .di("Sustituimos.", M(r"\Delta S_{AB}=(1)\left(\frac{5}{2}\right)(8{,}314)\ln 3"), R(rf"\Delta S_{{AB}}={tex(ds_ab, 3, u='J/K')}", "rd"))
+    L.responde("A", rf"W_{{AB}}={tex(rab['W'], 3)}\ \text{{J}}", rab["W"], "J").responde("A", rf"W_{{BC}}={tex(rbc['W'], 3)}\ \text{{J}}", rbc["W"], "J").responde("A", rf"W_{{CA}}={tex(rca['W'], 3)}\ \text{{J}}", rca["W"], "J")\
+        .responde("B", rf"Q_H={tex(qh, 4)}\ \text{{J}}", qh, "J").responde("C", rf"e={tex(ef, 2)}", ef, "").responde("D", rf"\Delta S={tex(ds_ab, 3)}\ \text{{J/K}}", ds_ab, "J/K")
     return L.oficial("Reposición II-2024", 800.0, -225.0, -375.0, 1999.5, 0.10, 22.8).usa(r"W=\int_{V_1}^{V_2} p\,dV", r"W=p(V_2-V_1)", r"e=\frac{W}{Q_H}")
-
 
 # ============================================================================ Q109
 @leccion("Q109")

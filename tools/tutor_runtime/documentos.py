@@ -595,7 +595,7 @@ class Documentos:
     # ------------------------------------------------------------ recortes
 
     def _clave_cache(self, id: str, p: Problema) -> str:
-        base = f"{id}|{p.clave}|{ZOOM}|{[(i, [round(v, 1) for v in r]) for i, r in p.tiras]}"
+        base = f"{id}|{p.clave}|{ZOOM}|sin-resaltador-v2|{[(i, [round(v, 1) for v in r]) for i, r in p.tiras]}"
         return hashlib.sha256(base.encode()).hexdigest()[:20]
 
     def png(self, id: str, clave: str) -> bytes:
@@ -680,6 +680,10 @@ class Documentos:
                     c = t & r
                     if not c.is_empty:
                         lienzo.rectangle([(c.x0 - r.x0) * z, (c.y0 - r.y0) * z, (c.x1 - r.x0) * z, (c.y1 - r.y0) * z], fill="white")
+                for t, fondo in self._resaltes(d[i]):
+                    c = (t + (-0.9, -0.9, 0.9, 0.9)) & r  # el borde suavizado también se limpia
+                    if not c.is_empty:
+                        self._blanquear(im, [(c.x0 - r.x0) * z, (c.y0 - r.y0) * z, (c.x1 - r.x0) * z, (c.y1 - r.y0) * z], fondo)
                 ims.append(im)
         w = max(im.width for im in ims)
         sep = 10
@@ -692,6 +696,43 @@ class Documentos:
         buf = io.BytesIO()
         tela.save(buf, "PNG", optimize=True)
         return buf.getvalue()
+
+    @staticmethod
+    def _resaltes(page: fitz.Page) -> List[Tuple[fitz.Rect, Tuple[int, int, int]]]:
+        """Rectángulos de resaltador (amarillo, cian o verde puros) que los solucionarios ponen sobre la respuesta."""
+        out = []
+        try:
+            dib = page.get_drawings()
+        except Exception:
+            return out
+        for d in dib:
+            f = d.get("fill")
+            if not f or len(f) != 3:
+                continue
+            altos = sorted(f)
+            if altos[0] < 0.35 and altos[1] > 0.8 and altos[2] > 0.85:
+                r = fitz.Rect(d["rect"])
+                if 6 < r.height < 60 and r.width > 8:
+                    out.append((r, tuple(int(round(x * 255)) for x in f)))
+        return out
+
+    @staticmethod
+    def _blanquear(im: Any, caja: List[float], fondo: Tuple[int, int, int]) -> None:
+        """Vuelve blanco el fondo de color de una caja y deja el texto negro, con su suavizado."""
+        x0, y0, x1, y1 = (int(round(v)) for v in caja)
+        x0, y0 = max(0, x0), max(0, y0)
+        x1, y1 = min(im.width, x1), min(im.height, y1)
+        if x1 - x0 < 2 or y1 - y0 < 2:
+            return
+        zona = im.crop((x0, y0, x1, y1))
+        lum_f = max(1.0, 0.299 * fondo[0] + 0.587 * fondo[1] + 0.114 * fondo[2])
+        datos = []
+        for r, g, b in zona.getdata():
+            lum = 0.299 * r + 0.587 * g + 0.114 * b
+            v = max(0, min(255, int(round(255.0 * lum / lum_f))))
+            datos.append((v, v, v))
+        zona.putdata(datos)
+        im.paste(zona, (x0, y0))
 
     @staticmethod
     def _numeros_de_pagina(page: fitz.Page) -> List[fitz.Rect]:
@@ -707,11 +748,9 @@ class Documentos:
 
         p = self.problema(id, clave)
         if "_resaltado" not in p.extra:
-            im = Image.open(io.BytesIO(self.png(id, clave))).convert("RGB")
-            im.thumbnail((500, 500))
-            pix = list(im.getdata())
-            n = sum(1 for r, g, b in pix if g > 200 and max(r, g, b) > 225 and min(r, g, b) < 90)
-            p.extra["_resaltado"] = n > 45
+            with self._c:
+                d = self._abre(id)
+                p.extra["_resaltado"] = any(not (t & r).is_empty for i, r in p.tiras for t, _ in self._resaltes(d[i]))
         return bool(p.extra["_resaltado"])
 
     def recorte(self, id: str, clave: str) -> Dict[str, Any]:
@@ -777,11 +816,11 @@ class Documentos:
                 orig = f.get("original")  # (examen, pregunta) cuando se fuerza el original
                 if orig:
                     e, q = str(orig[0]), str(orig[1])
-                # El original está mejor compuesto y trae la figura correcta; si marca la respuesta
-                # con resaltador se usa el Superexamen.
+                # El original está mejor compuesto y trae la figura correcta. Si el solucionario marca la
+                # respuesta con resaltador, el recorte sale con ese fondo borrado (ver _blanquear).
                 if e in self.rutas() and q:
                     try:
-                        if orig or not self.resaltado(e, q):
+                        if True:
                             rec = self.recorte(e, q)
                             rec["pie"] = f"{lec.id} del Superexamen · {rec['etiqueta']}"
                             rec["etiqueta"] = f"{lec.id} · {self.titulo(e)}"

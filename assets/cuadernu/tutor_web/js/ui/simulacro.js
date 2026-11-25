@@ -60,7 +60,7 @@ export class Simulacro {
       const s = document.createElement('section');
       s.className = 'seccion';
       const t = document.createElement('h2');
-      t.textContent = `${i + 1}. ${nombreTema(lec.tema)}`;
+      t.textContent = `${i + 1}. ${nombreTema((banco.mapa.get(lec.id) || {}).tema || lec.tema)}`;
       s.appendChild(t);
       if (lec.recorte && lec.recorte.url) {
         const img = document.createElement('img');

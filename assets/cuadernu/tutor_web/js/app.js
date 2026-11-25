@@ -109,7 +109,13 @@ const acciones = {
   biblioteca: aBiblioteca,
   pizarra: aPizarra,
   adjuntar: () => $('archivo').click(),
-  simulacro: () => simulacro.abrir(),
+  // El simulacro se dibuja en la vista de inicio: hay que mostrarla aunque se pida desde el banco o la pizarra
+  simulacro: () => {
+    if (rep.estado === 'hablando') rep.pausar();
+    asistente.callar();
+    verVista('inicio');
+    return simulacro.abrir();
+  },
   preguntar: () => { aPizarra(); $('pregunta').focus(); },
   cambioVoz: () => { rep.motorLec = null; if (rep.lec && ['hablando', 'pausado'].includes(rep.estado)) rep.irA(rep.i, { reproducir: rep.estado === 'hablando' }); },
   cambioModelo: (m) => enviar({ type: 'UPDATE_SETTINGS', visual_model: m }),

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import ATM, R_GAS, T0, Gas, explica_proceso, revisar_opciones, tabla_estados, tabla_quw, valores_visual, visual_pv
-from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, TABLA, V
-from .formato import n, nu, tex
+from .ayudas import ATM, R_GAS, R_LATM, T0, Gas, explica_proceso, revisar_opciones, tabla_estados, tabla_quw, valores_visual, visual_pv
+from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, T, TABLA, V, s
+from .formato import dice, n, nu, tex
 from .indice_superexamen import fuente, nivel, tema
 from .registro import leccion
 
@@ -150,141 +150,200 @@ def q095() -> Leccion:
 # ============================================================================ Q096
 @leccion("Q096")
 def q096() -> Leccion:
-    p_lo, p_hi = 1.0 * ATM, 3.0 * ATM
+    pa_atm, pb_atm = 1.0, 3.0
     va, vb, vc, vd = 0.20, 0.09, 0.40, 1.20
+    pa, pb = pa_atm * ATM, pb_atm * ATM
     qbc, qda = 100e3, -150e3
-    wbc = p_hi * (vc - vb)
+    wbc = pb * (vc - vb)
     dubc = qbc - wbc
-    ducd = 0.0
-    wda = p_lo * (va - vd)
+    wda = pa * (va - vd)
     duda = qda - wda
-    duab = -(dubc + ducd + duda)
-    gamma = math.log(3.0 / 1.0) / math.log(va / vb)
+    duab = -(dubc + 0.0 + duda)
+    wab = -duab
+    num = pa * va - pb * vb
+    gamma = 1.0 + num / wab
+    gamma_pv = math.log(pb_atm / pa_atm) / math.log(va / vb)
     g = Gas(1.0, cv=R_GAS / (gamma - 1.0))
-    g.pone("A", p=p_lo, v=va)
-    g.pone("B", p=p_hi, v=vb)
-    g.pone("C", p=p_hi, v=vc)
-    g.pone("D", p=p_lo, v=vd)
+    g.pone("A", p=pa, v=va)
+    g.pone("B", p=pb, v=vb)
+    g.pone("C", p=pb, v=vc)
+    g.pone("D", p=pa, v=vd)
     L = _des("Q096", "Ciclo de cuatro procesos con calores dados y cálculo de γ",
-             "Un gas ideal sigue $A(0{,}20\\ \\text{m}^3, 1{,}0\\ \\text{atm})\\to B(0{,}09, 3{,}0)$ adiabático; $B\\to C(0{,}40, 3{,}0)$ isobárico con $Q_{BC}=+100$ kJ; $C\\to D(1{,}20, 1{,}0)$ isotérmico; $D\\to A$ isobárico con $Q_{DA}=-150$ kJ. Halle: A) $\\Delta U_{BC}$. B) $\\Delta U_{CD}$. C) $\\Delta U_{AB}$. D) $\\gamma=C_p/C_V$.",
+             "Un gas ideal recorre $A(0{,}20\\ \\text{m}^3;\\ 1{,}0\\ \\text{atm})\\to B(0{,}09;\\ 3{,}0)$ adiabático, $B\\to C(0{,}40;\\ 3{,}0)$ isobárico con $Q_{BC}=+100$ kJ, $C\\to D(1{,}20;\\ 1{,}0)$ isotérmico y $D\\to A$ isobárico con $Q_{DA}=-150$ kJ. A) $\\Delta U_{BC}$. B) $\\Delta U_{CD}$. C) $\\Delta U_{AB}$. D) $\\gamma=C_P/C_V$.",
              claves=["primera ley en ciclos", "adiabático", "gamma"],
-             visual=visual_pv(g, [("A", "B", "adiabatico"), ("B", "C", "isobarico"), ("C", "D", "isotermico"), ("D", "A", "isobarico")],
-                              uv="m³", up="atm", fp=1.0 / ATM))
-    L.paso("A y B) Energía interna en B→C y C→D")\
-        .di("En el tramo isobárico de B a C hallamos el trabajo y lo restamos al calor entrante.", V(foco="BC"), DATO("100 kJ"),
-            M(rf"W_{{BC}} = p_B(V_C-V_B) = (3{{,}}0\times 101325)(0{{,}}40-0{{,}}09) = {tex(wbc / 1e3, 4, u='kJ')}"),
-            R(rf"\Delta U_{{BC}} = Q_{{BC}} - W_{{BC}} = 100 - {tex(wbc / 1e3, 4)} = +{tex(dubc / 1e3, 3, u='kJ')}", "ra"))\
-        .di("De C a D es isotérmico, así que el cambio de energía interna es cero.", V(foco="CD"),
-            R(r"\Delta U_{CD} = 0", "rb"))
-    L.paso("C) Energía interna en A→B cerrando el ciclo")\
-        .di("Calculamos el tramo isobárico de D a A.", V(foco="DA"),
-            M(rf"W_{{DA}} = (1{{,}}0\times 101325)(0{{,}}20-1{{,}}20) = {tex(wda / 1e3, 4, u='kJ')}"),
-            M(rf"\Delta U_{{DA}} = -150 - ({tex(wda / 1e3, 4)}) = {tex(duda / 1e3, 3, u='kJ')}"))\
-        .di(f"Como la suma de los cuatro cambios en un ciclo es cero, despejamos el tramo adiabático: da {nu(duab / 1e3, 'kJ', 3)}.", V(foco="AB"),
-            F(r"\Delta U_{AB} + \Delta U_{BC} + \Delta U_{CD} + \Delta U_{DA} = 0"),
-            R(rf"\Delta U_{{AB}} = +{tex(duab / 1e3, 3, u='kJ')}", "rc"))
-    L.paso("D) Razón de capacidades caloríficas γ")\
-        .di("Usamos los puntos A y B del proceso adiabático y tomamos logaritmo.",
-            F(r"p_A V_A^\gamma = p_B V_B^\gamma \;\Rightarrow\; \gamma = \frac{\ln(p_B/p_A)}{\ln(V_A/V_B)}"),
-            M(r"\gamma = \frac{\ln(3{,}0/1{,}0)}{\ln(0{,}20/0{,}09)}"),
-            R(rf"\gamma = {tex(gamma, 3)}", "rd"))
-    L.responde("A", rf"\Delta U_{{BC}}={tex(dubc / 1e3, 3)}\ \text{{kJ}}", dubc, "J")\
-     .responde("B", r"0", 0.0, "J")\
-     .responde("C", rf"\Delta U_{{AB}}={tex(duab / 1e3, 3)}\ \text{{kJ}}", duab, "J")\
-     .responde("D", rf"\gamma={tex(gamma, 3)}", gamma, "")
-    return L.usa(r"\Delta U=Q-W", r"pV^\gamma=\text{cte}")
-
+             visual=visual_pv(g, [("A", "B", "adiabatico"), ("B", "C", "isobarico"), ("C", "D", "isotermico"), ("D", "A", "isobarico")], uv="m³", up="atm", fp=1.0 / ATM))
+    L.paso("Qué nos dan y qué piden")\
+        .di("No sabemos los moles ni qué gas es. Por eso todo se hace con la primera ley y con los datos de la figura.", DATO("100 kJ"),
+            LISTA(["$A$: $0{,}20$ m³ y $1{,}0$ atm; $B$: $0{,}09$ m³ y $3{,}0$ atm", "$C$: $0{,}40$ m³ y $3{,}0$ atm; $D$: $1{,}20$ m³ y $1{,}0$ atm", "$Q_{BC}=+100$ kJ (entra), $Q_{DA}=-150$ kJ (sale)"]))\
+        .di("Las presiones en atmósferas se pasan a pascales.", M(r"1{,}0\ \text{atm}=101\,325\ \text{Pa}\qquad 3{,}0\ \text{atm}=303\,975\ \text{Pa}"))
+    L.paso("A) Trabajo en B→C (presión constante)")\
+        .di("A presión constante, el trabajo es presión por cambio de volumen.", V(foco="BC"), F(r"W=p(V_2-V_1)"))\
+        .di("Sustituimos.", M(r"W_{BC}=(303\,975)(0{,}40-0{,}09)"))\
+        .di("Son unos noventa y cuatro kilojoules.", M(rf"W_{{BC}}={tex(wbc, 4, u='J')}", "wbc"))
+    L.paso("A) ΔU en B→C con la primera ley")\
+        .di("La primera ley.", F(r"\Delta U=Q-W"))\
+        .di("Entran cien kilojoules y el gas entrega casi todo como trabajo.", M(rf"\Delta U_{{BC}}=100\,000-{tex(wbc, 5, sci='no')}"))\
+        .di(f"Queda {nu(dubc / 1e3, 'kJ', 2)}.", R(rf"\Delta U_{{BC}}={tex(dubc / 1e3, 2, u='kJ')}", "ra"))
+    L.paso("B) ΔU en C→D")\
+        .di("De C a D la temperatura no cambia, y la energía interna depende solo de la temperatura.", V(foco="CD"), F(r"\Delta U=nC_V\,\Delta T"))\
+        .di("Delta te es cero, así que todo es cero.".replace("Delta te", s("ΔT")), R(r"\Delta U_{CD}=nC_V(0)=0", "rb"))
+    L.paso("C) ΔU en D→A")\
+        .di("Primero el trabajo, otra vez a presión constante.", V(foco="DA"), M(r"W_{DA}=p_A(V_A-V_D)=(101\,325)(0{,}20-1{,}20)"), M(rf"W_{{DA}}={tex(wda, 4, u='J')}", "wda"))\
+        .di("Primera ley, con el calor que sale.", M(rf"\Delta U_{{DA}}=Q_{{DA}}-W_{{DA}}=-150\,000-({tex(wda, 5, sci='no')})"), M(rf"\Delta U_{{DA}}={tex(duda / 1e3, 3, u='kJ')}", "dda"))
+    L.paso("C) ΔU en A→B: el ciclo suma cero")\
+        .di("En un ciclo completo el gas vuelve a su estado inicial: los cuatro cambios de energía interna suman cero.", V(foco="ciclo"), M(r"\Delta U_{AB}+\Delta U_{BC}+\Delta U_{CD}+\Delta U_{DA}=0", "cic", "azul"))\
+        .di("Despejamos el que falta.", M(r"\Delta U_{AB}=-(\Delta U_{BC}+\Delta U_{CD}+\Delta U_{DA})"))\
+        .di("Sustituimos, en kilojoules.", M(rf"\Delta U_{{AB}}=-({tex(dubc / 1e3, 3)}+0{tex(duda / 1e3, 3, signo=True)})"))\
+        .di(f"Da {nu(duab / 1e3, 'kJ', 3)}.", R(rf"\Delta U_{{AB}}=+{tex(duab / 1e3, 3, u='kJ')}", "rc"))\
+        .por_que("La energía interna es función de estado: depende solo de dónde está el gas, no del camino. Al volver a A, el total es cero.")
+    L.paso("D) Trabajo en la adiabática A→B")\
+        .di("En la adiabática no hay calor, así que el trabajo es menos el cambio de energía interna.", V(foco="AB"), F(r"\Delta U=Q-W"), M(r"\Delta U_{AB}=0-W_{AB}\;\Rightarrow\;W_{AB}=-\Delta U_{AB}"))\
+        .di("El gas se comprime: el trabajo sale negativo.", M(rf"W_{{AB}}={tex(wab, 4, u='J')}", "wab"))
+    L.paso("D) Despejar γ con el trabajo adiabático")\
+        .di("El formulario da el trabajo adiabático con gama.", F(r"W=\frac{1}{\gamma-1}\left(p_1V_1-p_2V_2\right)"))\
+        .di("Primero el paréntesis, con A como uno y B como dos.", M(rf"p_AV_A-p_BV_B=(101\,325)(0{{,}}20)-(303\,975)(0{{,}}09)={tex(num, 4, u='J')}"))\
+        .di("Despejamos gama menos uno.".replace("gama menos uno", dice("γ−1", "gama menos uno")), M(r"\gamma-1=\frac{p_AV_A-p_BV_B}{W_{AB}}"), M(rf"\gamma-1=\frac{{{tex(num, 4)}}}{{{tex(wab, 4)}}}={tex(gamma - 1, 3)}"))\
+        .di(f"Gama vale {n(gamma, 3)}.".replace("Gama", s("γ", "gama")), R(rf"\gamma={tex(gamma, 3)}", "rd"))
+    L.paso("Ojo con un atajo que no sirve aquí")\
+        .di("Si se usara pe por ve a la gama constante con los números redondeados de la figura, saldría otro valor.".replace("pe por ve a la gama", dice("pVᵞ", "pe ve a la gama")),
+            M(rf"\gamma=\frac{{\ln(3{{,}}0/1{{,}}0)}}{{\ln(0{{,}}20/0{{,}}09)}}={tex(gamma_pv, 3)}"))\
+        .di("La cátedra espera uno coma dieciséis, que sale de la energía de los incisos anteriores.", OJO("Los puntos de la figura no caen exactamente sobre una adiabática. La respuesta oficial, $\\gamma=1{,}16$, usa $W_{AB}=-\\Delta U_{AB}$."))
+    L.responde("A", rf"\Delta U_{{BC}}={tex(dubc / 1e3, 2)}\ \text{{kJ}}", dubc / 1e3, "kJ").responde("B", r"\Delta U_{CD}=0", 0.0, "kJ")\
+        .responde("C", rf"\Delta U_{{AB}}={tex(duab / 1e3, 3)}\ \text{{kJ}}", duab / 1e3, "kJ").responde("D", rf"\gamma={tex(gamma, 3)}", gamma, "")
+    return L.oficial("III Parcial extraordinario I-2024", 5.8, 0.0, 42.9, 1.16, tol=0.02).usa(r"\Delta U=Q-W", r"W=p(V_2-V_1)", r"W=\frac{1}{\gamma-1}(p_1V_1-p_2V_2)")
 
 # ============================================================================ Q097
 @leccion("Q097")
 def q097() -> Leccion:
-    pa, va, ta = 1.00 * ATM, 1.90e-3, 298.0
-    n_mol = pa * va / (R_GAS * ta)
-    g = Gas(n_mol, "dia")
-    g.pone("A", p=pa, v=va, t=ta)
-    vb = va / 10.0
-    pb = pa * (va / vb) ** g.g
-    g.pone("B", p=pb, v=vb)
-    vc = 2.0 * vb
-    g.pone("C", p=pb, v=vc)
-    pd = pb * (vc / va) ** g.g
-    g.pone("D", p=pd, v=va)
-    r_bc = g.proceso("B", "C", "isobarico")
-    r_da = g.proceso("D", "A", "isocorico")
-    qh, qc = r_bc["Q"], r_da["Q"]
-    ef = (qh + qc) / qh
-    ds_bc = g.n * g.cp * math.log(g.t("C") / g.t("B"))
-    ds_da = g.n * g.cv * math.log(g.t("A") / g.t("D"))
+    pa_atm, va_l, ta = 1.00, 1.90, 298.0
+    nm = pa_atm * va_l / (R_LATM * ta)
+    g = Gas(nm, "dia")
+    gm = g.g
+    vb_l, vc_l = va_l / 10.0, 2.0 * va_l / 10.0
+    pb_atm = pa_atm * 10.0 ** gm
+    tb = ta * 10.0 ** (gm - 1.0)
+    tc = 2.0 * tb
+    pd_atm = pb_atm * (vc_l / va_l) ** gm
+    td = tc * (vc_l / va_l) ** (gm - 1.0)
+    g.pone("A", p=pa_atm * ATM, v=va_l * 1e-3, t=ta)
+    g.pone("B", p=pb_atm * ATM, v=vb_l * 1e-3, t=tb)
+    g.pone("C", p=pb_atm * ATM, v=vc_l * 1e-3, t=tc)
+    g.pone("D", p=pd_atm * ATM, v=va_l * 1e-3, t=td)
+    qh = nm * g.cp * (tc - tb)
+    qc = nm * g.cv * (ta - td)
+    ef = 1.0 - abs(qc) / qh
+    ds_bc = nm * g.cp * math.log(tc / tb)
+    ds_da = nm * g.cv * math.log(ta / td)
     L = _des("Q097", "Ciclo Diésel completo (moles, estados, calores, eficiencia y ΔS)",
-             "Un motor Diésel (gas ideal diatómico) inicia en $A$ ($1{,}00$ atm, $1{,}90$ L, $298$ K) con $V_A=10V_B$ y $V_C=2V_B$: $A\\to B$ y $C\\to D$ adiabáticos, $B\\to C$ isobárico, $D\\to A$ isocórico. A) $n$. B) Estados $B, C, D$. C) $Q_H$ y $Q_C$. D) Eficiencia. E) Demuestre $\\Delta S_{\\text{ciclo}}=0$.",
-             claves=["ciclo Diésel", "adiabático", "eficiencia"],
-             visual=visual_pv(g, [("A", "B", "adiabatico"), ("B", "C", "isobarico"), ("C", "D", "adiabatico"), ("D", "A", "isocorico")],
-                              uv="L", up="atm", fv=1e3, fp=1.0 / ATM))
-    L.paso("A y B) Moles y tabla de los cuatro estados")\
-        .di(f"Con los datos del estado A hallamos los moles: {nu(n_mol, 'mol', 3)}.", DATO("1,90 L"),
-            M(rf"n = \frac{{p_A V_A}}{{RT_A}} = {tex(n_mol, 3, u='mol', sci='si')}"))\
-        .di("Aplicamos las relaciones adiabáticas en A a B y en C a D con gama igual a uno coma cuatro.",
-            M(rf"p_B = p_C = (1{{,}}00)(10)^{{1{{,}}4}} = {tex(pb / ATM, 3, u='atm')}\qquad p_D = p_C\left(\frac{{0{{,}}38}}{{1{{,}}90}}\right)^{{1{{,}}4}} = {tex(pd / ATM, 3, u='atm')}"),
-            tabla_estados(g, ["A", "B", "C", "D"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0))
-    L.paso("C y D) Calor suministrado, expulsado y eficiencia")\
-        .di("El calor solo entra en el tramo isobárico B a C y solo sale en el isocórico D a A.", V(foco="BC"),
-            M(rf"Q_H = nC_p(T_C-T_B) = {tex(qh, 4, u='J')}"),
-            M(rf"Q_C = nC_V(T_A-T_D) = {tex(qc, 3, u='J')}"))\
-        .di(f"La eficiencia térmica resulta {n(ef * 100, 3)} por ciento.", V(foco="ciclo"),
-            F(r"e = 1 - \frac{|Q_C|}{Q_H}"),
-            R(rf"Q_H={tex(qh, 4, u='J')}\quad Q_C={tex(qc, 3, u='J')}\quad e={tex(ef, 3)} = {tex(ef * 100, 3)}\,\%", "rcd"))
-    L.paso("E) Verificar que ΔS del ciclo es cero")\
-        .di("Los dos tramos adiabáticos reversibles tienen entropía cero; los otros dos son opuestos y se cancelan.",
-            M(rf"\Delta S_{{BC}} = nC_p\ln\frac{{T_C}}{{T_B}} = +{tex(ds_bc, 3, u='J/K')}"),
-            M(rf"\Delta S_{{DA}} = nC_V\ln\frac{{T_A}}{{T_D}} = {tex(ds_da, 3, u='J/K')}"),
-            R(r"\Delta S_{\text{ciclo}} = 0 + 1{,}57 + 0 - 1{,}57 = 0", "re"))
-    L.responde("A", rf"n={tex(n_mol, 3, sci='si')}\ \text{{mol}}", n_mol, "mol")\
-     .responde("QH", rf"Q_H={tex(qh, 4)}\ \text{{J}}", qh, "J")\
-     .responde("QC", rf"Q_C={tex(qc, 3)}\ \text{{J}}", qc, "J")\
-     .responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("III Parcial extraordinario II-2024", 7.77e-2, 1692.0, -789.0, 0.534).usa(r"pV^\gamma=\text{cte}", r"e=1-\frac{|Q_C|}{Q_H}")
-
+             "Motor Diésel con gas ideal diatómico. $A$: $1{,}00$ atm, $1{,}90$ L, $298$ K. $V_A=10V_B$ y $V_C=2V_B$. $A\\to B$ y $C\\to D$ adiabáticos, $B\\to C$ isobárico, $D\\to A$ isocórico. A) $n$. B) $p$, $V$, $T$ en B, C y D. C) Calor suministrado y expulsado. D) Eficiencia. E) Demuestre que $\\Delta S_{\\text{ciclo}}=0$.",
+             claves=["ciclo Diésel", "adiabático", "eficiencia", "entropía"],
+             visual=visual_pv(g, [("A", "B", "adiabatico"), ("B", "C", "isobarico"), ("C", "D", "adiabatico"), ("D", "A", "isocorico")], uv="L", up="atm", fv=1e3, fp=1.0 / ATM))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Un ciclo Diésel: comprime, quema a presión constante, se expande y suelta calor a volumen constante.", DATO("1,90 L"),
+            LISTA(["$A$: $p_A=1{,}00$ atm, $V_A=1{,}90$ L, $T_A=298$ K", "$V_A=10V_B$ y $V_C=2V_B$", "Diatómico: $\\gamma=1{,}40$", "$A\\to B$, $C\\to D$ adiabáticos; $B\\to C$ isobárico; $D\\to A$ isocórico"]))\
+        .di("Primero todos los volúmenes, que salen directo de las relaciones.", M(r"V_B=\frac{V_A}{10}=0{,}190\ \text{L}\qquad V_C=2V_B=0{,}380\ \text{L}"), M(r"V_D=V_A=1{,}90\ \text{L}\quad(\text{D}\to\text{A es isocórico})", "vd", "azul"))
+    L.paso("A) Número de moles")\
+        .di("Gas ideal en el estado A, con erre en litros atmósfera.".replace("erre", s("R")), F(r"pV=nRT"), M(r"n=\frac{p_AV_A}{RT_A}=\frac{(1{,}00)(1{,}90)}{(0{,}08206)(298)}"))\
+        .di(f"Son {nu(nm, 'mol', 3)}.", R(rf"n={tex(nm, 3, u='mol')}", "ra"))
+    L.paso("B) Estado B: compresión adiabática")\
+        .di("En la adiabática se cumple pe ve a la gama constante.".replace("pe ve a la gama", dice("pVᵞ", "pe ve a la gama")), V(foco="AB"), F(r"pV^\gamma=\text{cte}"), M(r"p_BV_B^\gamma=p_AV_A^\gamma\;\Rightarrow\;p_B=p_A\left(\frac{V_A}{V_B}\right)^\gamma"))\
+        .di("El cociente de volúmenes es diez.", M(rf"p_B=(1{{,}}00)(10)^{{1{{,}}40}}={tex(pb_atm, 3, u='atm')}", "pb"))\
+        .di("Y la temperatura con te ve a la gama menos uno.".replace("te ve a la gama menos uno", dice("TVᵞ⁻¹", "te ve a la gama menos uno")), F(r"TV^{\gamma-1}=\text{cte}"), M(rf"T_B=T_A\left(\frac{{V_A}}{{V_B}}\right)^{{\gamma-1}}=(298)(10)^{{0{{,}}40}}={tex(tb, 4, u='K')}", "tb"))
+    L.paso("B) Estado C: se calienta a presión constante")\
+        .di("De B a C la presión no cambia.", V(foco="BC"), M(rf"p_C=p_B={tex(pb_atm, 3, u='atm')}"))\
+        .di("A presión constante, volumen y temperatura van juntos: si el volumen se duplica, la temperatura también.", F(r"pV=nRT"), M(r"\frac{V_C}{T_C}=\frac{V_B}{T_B}\;\Rightarrow\;T_C=T_B\,\frac{V_C}{V_B}=2T_B"), M(rf"T_C=2({tex(tb, 4)})={tex(tc, 4, u='K')}", "tc"))
+    L.paso("B) Estado D: expansión adiabática")\
+        .di("De C a D otra vez adiabático, hasta el volumen de A.", V(foco="CD"), M(r"p_D=p_C\left(\frac{V_C}{V_D}\right)^\gamma=(25{,}1)\left(\frac{0{,}380}{1{,}90}\right)^{1{,}40}"), M(rf"p_D={tex(pd_atm, 3, u='atm')}", "pd"))\
+        .di("Y su temperatura.", M(rf"T_D=T_C\left(\frac{{V_C}}{{V_D}}\right)^{{\gamma-1}}=({tex(tc, 4)})(0{{,}}200)^{{0{{,}}40}}={tex(td, 3, u='K')}", "td"))
+    L.paso("B) Los cuatro estados")\
+        .di("Resumen en una tabla.", tabla_estados(g, ["A", "B", "C", "D"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0), V(foco="ciclo"))
+    L.paso("C) Calor suministrado (B→C)")\
+        .di("El calor entra solo al quemar el combustible, a presión constante.", V(foco="BC"), F(r"Q=nC_p\,\Delta T"), M(r"C_p=C_V+R=\frac{5}{2}R+R=\frac{7}{2}R"))\
+        .di("Sustituimos.", M(rf"Q_H=({tex(nm, 3)})\left(\frac{{7}}{{2}}\right)(8{{,}}314)({tex(tc, 4)}-{tex(tb, 4)})"))\
+        .di(f"Entran {nu(qh, 'J', 4)}.", R(rf"Q_H={tex(qh, 4, u='J')}", "rch"))
+    L.paso("C) Calor expulsado (D→A)")\
+        .di("El calor sale solo de D a A, a volumen constante, donde no hay trabajo.", V(foco="DA"), F(r"Q=nC_V\,\Delta T"), M(rf"Q_C=({tex(nm, 3)})\left(\frac{{5}}{{2}}\right)(8{{,}}314)(298-{tex(td, 3)})"))\
+        .di(f"Salen {nu(abs(qc), 'J', 3)}: por eso el signo menos.", R(rf"Q_C={tex(qc, 3, u='J')}", "rcc"))\
+        .di("En las dos adiabáticas no hay calor.", M(r"Q_{AB}=Q_{CD}=0"))
+    L.paso("D) Eficiencia")\
+        .di("Eficiencia: uno menos lo que se bota entre lo que entra.", F(r"e=1-\left|\frac{Q_c}{Q_H}\right|"), M(rf"e=1-\frac{{{tex(abs(qc), 3)}}}{{{tex(qh, 4)}}}"))\
+        .di(f"Casi cincuenta y tres por ciento.", R(rf"e={tex(ef, 3)}={tex(ef * 100, 3)}\,\%", "rd"))
+    L.paso("E) Entropía: de dónde sale la fórmula")\
+        .di("La entropía cambia con el calor dividido entre la temperatura a la que entra.", M(r"dS=\frac{dQ}{T}", "ds", "azul"))\
+        .di("En las adiabáticas reversibles no hay calor: no cambia la entropía.", M(r"\Delta S_{AB}=\Delta S_{CD}=0"))\
+        .di("A presión constante, de cu igual a ene ce pe de te; al integrar sale un logaritmo.".replace("de cu igual a ene ce pe de te", dice("dQ=nC_p dT", "de cu igual a ene ce pe de te")), F(r"dQ=nC_p\,dT"), M(r"\Delta S=\int_{T_1}^{T_2}\frac{nC_p\,dT}{T}=nC_p\ln\frac{T_2}{T_1}"))\
+        .por_que("La fórmula de entropía no está en el formulario: se arma con $dS=dQ/T$ y el $dQ$ que sí está impreso.")
+    L.paso("E) Sumar las entropías del ciclo")\
+        .di("De B a C, a presión constante.", M(rf"\Delta S_{{BC}}=nC_p\ln\frac{{T_C}}{{T_B}}=({tex(nm, 3)})(29{{,}}10)\ln 2={tex(ds_bc, 3, signo=True, u='J/K')}"))\
+        .di("De D a A, a volumen constante: igual pero con ce ve.".replace("ce ve", s("C_V")), M(rf"\Delta S_{{DA}}=nC_V\ln\frac{{T_A}}{{T_D}}=({tex(nm, 3)})(20{{,}}79)\ln\frac{{298}}{{{tex(td, 3)}}}={tex(ds_da, 3, u='J/K')}"))\
+        .di("La suma da cero, como debe ser en un ciclo.", R(rf"\Delta S_{{\text{{ciclo}}}}=0+({tex(ds_bc, 3)})+0+({tex(ds_da, 3)})=0", "re"))
+    L.responde("A", rf"n={tex(nm, 3)}\ \text{{mol}}", nm, "mol").responde("C", rf"Q_H={tex(qh, 4)}\ \text{{J}}", qh, "J").responde("C", rf"Q_C={tex(qc, 3)}\ \text{{J}}", qc, "J").responde("D", rf"e={tex(ef, 3)}", ef, "")
+    return L.oficial("III Parcial extraordinario II-2024", 7.77e-2, 1692.0, -789.0, 0.53, tol=0.02).usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"TV^{\gamma-1}=\text{cte}", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
 
 # ============================================================================ Q098
 @leccion("Q098")
 def q098() -> Leccion:
+    TH, TC = 600.0, 400.0
     g = Gas(1.00, "dia")
-    g.pone("A", p=25.0 * ATM, t=600.0)
-    g.pone("C", p=1.00 * ATM, t=400.0)
-    # B on Th=600 connected adiabatically to C: TB VB^(g-1) = TC VC^(g-1)
-    vb = g.v("C") * (400.0 / 600.0) ** (1.0 / (g.g - 1.0))
-    g.pone("B", v=vb, t=600.0)
-    vd = g.v("A") * (600.0 / 400.0) ** (1.0 / (g.g - 1.0))
-    g.pone("D", v=vd, t=400.0)
+    g.pone("A", p=25.0 * ATM, t=TH)
+    g.pone("C", p=1.00 * ATM, t=TC)
+    k = 1.0 / (g.g - 1.0)
+    vb = g.v("C") * (TC / TH) ** k
+    g.pone("B", v=vb, t=TH)
+    vd = g.v("A") * (TH / TC) ** k
+    g.pone("D", v=vd, t=TC)
+    VA, VB, VC, VD = (g.v(x) * 1e3 for x in "ABCD")
+    pB, pD = g.p("B") / ATM, g.p("D") / ATM
     rab = g.proceso("A", "B", "isotermico")
     rbc = g.proceso("B", "C", "adiabatico")
     rcd = g.proceso("C", "D", "isotermico")
     rda = g.proceso("D", "A", "adiabatico")
     res = [("A→B", rab), ("B→C", rbc), ("C→D", rcd), ("D→A", rda)]
     wnet = sum(r["W"] for _, r in res)
-    ef = 1.0 - 400.0 / 600.0
+    qh = rab["Q"]
+    ef = wnet / qh
     L = _des("Q098", "Ciclo de Carnot (1,00 mol diatómico entre 600 K y 400 K)",
-             "Un mol de gas ideal diatómico recorre un ciclo de Carnot con $A$ ($25{,}0$ atm, $600$ K) y $C$ ($1{,}00$ atm, $400$ K): $A\\to B$ y $C\\to D$ isotérmicos, $B\\to C$ y $D\\to A$ adiabáticos. A) $p$ y $V$ en A, B, C y D. B) Trabajo neto. C) Eficiencia.",
+             "Un mol de gas ideal diatómico recorre un ciclo de Carnot. $A$: $25{,}0$ atm y $600$ K; $C$: $1{,}00$ atm y $400$ K. $A\\to B$ expansión isotérmica, $B\\to C$ expansión adiabática, $C\\to D$ compresión isotérmica, $D\\to A$ compresión adiabática. A) $p$ y $V$ en A, B, C y D. B) Trabajo neto. C) Eficiencia.",
              claves=["Carnot", "adiabático", "isotérmico"],
-             visual=visual_pv(g, [("A", "B", "isotermico"), ("B", "C", "adiabatico"), ("C", "D", "isotermico"), ("D", "A", "adiabatico")],
-                              uv="L", up="atm", fv=1e3, fp=1.0 / ATM, valores=valores_visual(res)))
-    L.paso("A) Presiones y volúmenes en los cuatro vértices")\
-        .di("Primero sacamos los volúmenes en A y en C con el gas ideal.", DATO("25,0 atm"),
-            M(rf"V_A = \frac{{nRT_A}}{{p_A}} = {tex(g.v('A') * 1e3, 3, u='L')}\qquad V_C = \frac{{nRT_C}}{{p_C}} = {tex(g.v('C') * 1e3, 3, u='L')}"))\
-        .di("Con la relación adiabática temperatura por volumen a gama menos uno hallamos B y D.",
-            F(r"T_1 V_1^{\gamma-1} = T_2 V_2^{\gamma-1}"),
-            tabla_estados(g, ["A", "B", "C", "D"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0))
-    L.paso("B y C) Trabajo neto y eficiencia de Carnot")\
-        .di("Los trabajos adiabáticos de B a C y de D a A se cancelan exactamente; solo quedan los dos isotérmicos.", V(foco="ciclo"),
-            tabla_quw(res),
-            R(rf"W_{{\text{{neto}}}} = W_{{AB}} + W_{{CD}} = {tex(wnet, 4, u='J')}", "rb"))\
-        .di(f"Partiendo de la eficiencia del formulario y usando las relaciones isotérmicas y adiabáticas, los logaritmos se cancelan y da {n(ef * 100, 3)} por ciento.",
-            F(r"e = \frac{W}{Q_H} = 1 - \left|\frac{Q_c}{Q_H}\right| = 1 - \frac{nRT_C\ln(V_C/V_D)}{nRT_H\ln(V_B/V_A)}"),
-            M(r"\frac{V_B}{V_A} = \frac{V_C}{V_D} \;\Rightarrow\; e = 1 - \frac{T_C}{T_H} = 1 - \frac{400}{600}"),
-            R(rf"e = {tex(ef, 3)} = 33{{,}}3\,\%", "rc"))
-    L.responde("Wnet", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J").responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("III Parcial ordinario I-2025", 3024.0, 0.333, tol=0.015).usa(r"TV^{\gamma-1}=\text{cte}", r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
-
+             visual=visual_pv(g, [("A", "B", "isotermico"), ("B", "C", "adiabatico"), ("C", "D", "isotermico"), ("D", "A", "adiabatico")], uv="L", up="atm", fv=1e3, fp=1.0 / ATM, valores=valores_visual(res)))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Dos isotermas, a seiscientos y a cuatrocientos kelvin, unidas por dos adiabáticas.", DATO("25,0 atm"),
+            LISTA(["$n=1{,}00$ mol, **diatómico**: $\\gamma=1{,}40$", "$A$: $25{,}0$ atm, $600$ K", "$C$: $1{,}00$ atm, $400$ K"]))\
+        .di("En una isoterma la temperatura no cambia: B está a seiscientos y D a cuatrocientos.", M(r"T_B=T_A=600\ \text{K}\qquad T_D=T_C=400\ \text{K}", "tt", "azul"))\
+        .sale_de(("$T_B=600$ K", "A→B es isotérmico"), ("$T_D=400$ K", "C→D es isotérmico"))
+    L.paso("A) Volúmenes en A y en C")\
+        .di("Gas ideal. Con erre en litros atmósfera, el volumen sale en litros.".replace("erre", s("R")), F(r"pV=nRT"), M(r"V_A=\frac{nRT_A}{p_A}=\frac{(1{,}00)(0{,}08206)(600)}{25{,}0}"), M(rf"V_A={tex(VA, 3, u='L')}", "va"))\
+        .di("Igual para C.", M(r"V_C=\frac{(1{,}00)(0{,}08206)(400)}{1{,}00}"), M(rf"V_C={tex(VC, 3, u='L')}", "vc"))
+    L.paso("A) Volumen en B: B y C están en la misma adiabática")\
+        .di("En una adiabática, te por ve a la gama menos uno se mantiene.".replace("te por ve a la gama menos uno", dice("TVᵞ⁻¹", "te ve a la gama menos uno")), V(foco="BC"), F(r"TV^{\gamma-1}=\text{cte}"), M(r"T_BV_B^{\gamma-1}=T_CV_C^{\gamma-1}"))\
+        .di("Despejamos ve be: sacamos la raíz con exponente uno entre gama menos uno.".replace("ve be", s("V_B")), M(r"V_B=V_C\left(\frac{T_C}{T_B}\right)^{\frac{1}{\gamma-1}}"), M(r"\frac{1}{\gamma-1}=\frac{1}{0{,}40}=2{,}5"))\
+        .di("Sustituimos.", M(rf"V_B=({tex(VC, 3)})\left(\frac{{400}}{{600}}\right)^{{2{{,}}5}}=({tex(VC, 3)})({tex((TC / TH) ** k, 4)})"), M(rf"V_B={tex(VB, 4, u='L')}", "vb"))\
+        .despacio((r"T_BV_B^{0{,}4}=T_CV_C^{0{,}4}", "con $\\gamma-1=0{,}4$"), (r"V_B^{0{,}4}=V_C^{0{,}4}\,\frac{T_C}{T_B}", "se divide entre $T_B$"), (r"V_B=\left(V_C^{0{,}4}\,\frac{T_C}{T_B}\right)^{1/0{,}4}=V_C\left(\frac{T_C}{T_B}\right)^{2{,}5}", "se eleva todo a $1/0{,}4=2{,}5$"))
+    L.paso("A) Presión en B")\
+        .di("Gas ideal en B.", M(rf"p_B=\frac{{nRT_B}}{{V_B}}=\frac{{(1{{,}}00)(0{{,}}08206)(600)}}{{{tex(VB, 4)}}}"), R(rf"p_B={tex(pB, 3, u='atm')}", "pb"))
+    L.paso("A) Volumen y presión en D: D y A están en la otra adiabática")\
+        .di("Ahora entre D y A.", V(foco="DA"), M(r"T_DV_D^{\gamma-1}=T_AV_A^{\gamma-1}\;\Rightarrow\;V_D=V_A\left(\frac{T_A}{T_D}\right)^{2{,}5}"))\
+        .di("Sustituimos.", M(rf"V_D=({tex(VA, 3)})\left(\frac{{600}}{{400}}\right)^{{2{{,}}5}}=({tex(VA, 3)})({tex((TH / TC) ** k, 4)})={tex(VD, 3, u='L')}", "vd"))\
+        .di("Y su presión.", M(rf"p_D=\frac{{(1{{,}}00)(0{{,}}08206)(400)}}{{{tex(VD, 3)}}}"), R(rf"p_D={tex(pD, 3, u='atm')}", "pd"))
+    L.paso("A) Los cuatro estados")\
+        .di("Juntamos todo.", tabla_estados(g, ["A", "B", "C", "D"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0), V(foco="ciclo"))\
+        .di("La solución oficial redondea un poquito distinto: cuatro coma quince y seis coma cero uno atmósferas.", NOTA("La oficial usa $R=0{,}082$; por eso da $4{,}15$ atm y $6{,}01$ atm."))
+    explica_proceso(L.paso("B) Expansión isotérmica A→B"), g, "A", "B", "isotermico", foco="AB")
+    explica_proceso(L.paso("B) Expansión adiabática B→C"), g, "B", "C", "adiabatico", foco="BC")
+    explica_proceso(L.paso("B) Compresión isotérmica C→D"), g, "C", "D", "isotermico", foco="CD")
+    explica_proceso(L.paso("B) Compresión adiabática D→A"), g, "D", "A", "adiabatico", foco="DA")
+    L.paso("B) Trabajo neto")\
+        .di("Sumamos los cuatro trabajos. Los de las adiabáticas son iguales y opuestos: se cancelan.", tabla_quw(res), V(foco="ciclo"))\
+        .di("Queda la suma de los dos isotérmicos.", M(rf"W_{{\text{{neto}}}}={tex(rab['W'], 4)}+({tex(rcd['W'], 4)})"), R(rf"W_{{\text{{neto}}}}={tex(wnet, 4, u='J')}", "rw"))\
+        .di("La oficial da tres mil veinticuatro porque redondeó antes; la diferencia es de uno por ciento.", NOTA("La oficial obtiene $3024$ J con $R=0{,}082$ y volúmenes redondeados. El valor exacto es $2993$ J."))
+    L.paso("C) Eficiencia")\
+        .di("El calor solo entra en la isoterma caliente, de A a B.", F(r"e=\frac{W}{Q_H}"), M(rf"Q_H=Q_{{AB}}={tex(qh, 4, u='J')}"))\
+        .di("Dividimos.", M(rf"e=\frac{{{tex(wnet, 4)}}}{{{tex(qh, 4)}}}"), R(rf"e={tex(ef, 3)}={tex(ef * 100, 3)}\,\%", "re"))\
+        .di("Da justo uno menos cuatrocientos entre seiscientos: así es siempre en un ciclo de Carnot.", NOTA("Comprobación: $1-\\frac{T_C}{T_H}=1-\\frac{400}{600}=0{,}333$. Esa fórmula no viene en el formulario: sale de $e=W/Q_H$ como aquí."))
+    L.responde("A", rf"p_B={tex(pB, 3)}\ \text{{atm}}", pB, "atm").responde("A", rf"V_B={tex(VB, 4)}\ \text{{L}}", VB, "L").responde("A", rf"p_D={tex(pD, 3)}\ \text{{atm}}", pD, "atm").responde("A", rf"V_D={tex(VD, 3)}\ \text{{L}}", VD, "L")\
+        .responde("B", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J").responde("C", rf"e={tex(ef, 3)}", ef, "")
+    return L.oficial("III Parcial ordinario I-2025", 4.15, 11.87, 6.01, 5.45, 3024.0, 0.333, tol=0.015, nota="La oficial redondea R y los volúmenes; las diferencias son menores al 1,5 %.")\
+        .usa(r"pV=nRT", r"TV^{\gamma-1}=\text{cte}", r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=\frac{W}{Q_H}")
 
 # ============================================================================ Q099
 @leccion("Q099")

@@ -235,7 +235,10 @@ export function partirTexto(s) {
   while ((m = re.exec(src)) !== null) {
     if (m.index > i) out.push({ t: 'txt', v: src.slice(i, m.index) });
     if (m[1] !== undefined || m[2] !== undefined) out.push({ t: 'mate', v: m[1] !== undefined ? m[1] : m[2] });
-    else out.push({ t: 'neg', v: m[3] });
+    else {
+      // La negrita puede llevar fórmulas adentro: "**$8\pi$**" se dibuja como matemática, no como texto
+      for (const q of partirTexto(m[3])) out.push(q.t === 'txt' ? { t: 'neg', v: q.v } : q);
+    }
     i = m.index + m[0].length;
   }
   if (i < src.length) out.push({ t: 'txt', v: src.slice(i) });
