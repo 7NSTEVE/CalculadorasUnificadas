@@ -254,6 +254,9 @@ class ServicioVoz:
         self._local_tts_model = (os.environ.get("TUTOR_LOCAL_TTS_MODEL") or "zonos3-mini").strip()
         self._kokoro_dir = kokoro_dir
         self._kokoro_inst = None
+        self._espeak_wrapper = None
+        self._kokoro_lock = threading.Lock()
+        self._local_speakers_cache: Dict[str, List[Dict[str, Any]]] = {}
         self._apartado: Dict[str, float] = {}
         self._ultimo_error = ""
         self._en_curso: Dict[str, asyncio.Task] = {}
@@ -430,6 +433,40 @@ class ServicioVoz:
             self._apartado["edge-tts"] = time.time() + 180.0
         raise RuntimeError(self._ultimo_error)
 
+    def _resolver_voz_local_http(self, url_ok: str, voz: str) -> str:
+        """Resuelve nombres amigables ('Ximena', 'Rodrigo', 'es-default') contra GET /v2/speakers de ZONOS3."""
+        v = (voz or "").strip()
+        p = urllib.parse.urlparse(url_ok)
+        origen = f"{p.scheme}://{p.netloc}"
+        spks = self._local_speakers_cache.get(origen)
+        if spks is None:
+            spks = []
+            try:
+                with urllib.request.urlopen(f"{origen}/v2/speakers", timeout=2.0) as r:
+                    if r.status == 200:
+                        data = json.loads(r.read().decode("utf-8"))
+                        if isinstance(data, dict) and isinstance(data.get("speakers"), list):
+                            spks = data["speakers"]
+            except Exception:
+                spks = []
+            self._local_speakers_cache[origen] = spks
+        if not spks:
+            return v or "es-default"
+        ids = {str(s.get("id") or "") for s in spks}
+        if v in ids:
+            return v
+        vl = v.lower()
+        for s in spks:
+            label = str(s.get("label") or "").lower()
+            orig = str(s.get("original_name") or "").lower()
+            if vl and vl not in ("es-default", "default") and (vl in label or vl in orig):
+                return str(s.get("id") or v)
+        # Por defecto prioriza voz femenina en español (Ximena) si existe
+        for s in spks:
+            if "ximena" in str(s.get("label") or "").lower():
+                return str(s.get("id") or v)
+        return str(spks[0].get("id") or v or "es-default")
+
     def _sintetiza_local_http_bloqueante(
         self,
         texto: str,
@@ -437,24 +474,35 @@ class ServicioVoz:
         estilo: str,
         url: str,
     ) -> Tuple[bytes, str]:
-        """Llama a un servidor TTS local OpenAI-compatible (`/v1/audio/speech`), p. ej. ZONOS3-Mini Vulkan."""
+        """Llama a un servidor TTS local: OpenAI `/v1/audio/speech` (ZONOS3-Mini) o `/tts` (llama-server VoxCPM2)."""
         url_ok = validar_url_loopback(url)
         pros = ESTILOS_PROSODIA.get(estilo, ESTILOS_PROSODIA["normal"])
-        payload = json.dumps({
-            "model": self._local_tts_model,
-            "input": texto,
-            "voice": voz or "es-default",
-            "language": "es",
-            "response_format": "wav",
-            "speed": float(pros["speed"]),
-        }).encode("utf-8")
+        ruta_norm = urllib.parse.urlparse(url_ok).path.rstrip("/").lower()
+        if ruta_norm.endswith("/tts"):
+            desc = (voz or "").strip()
+            if desc and desc.lower() not in ("es-default", "default"):
+                prompt = desc if desc.startswith("(") else f"({desc}) {texto}"
+            else:
+                prompt = f"(Una profesora cálida y clara en español latinoamericano) {texto}"
+            body: Dict[str, Any] = {"input": prompt}
+        else:
+            voz_res = self._resolver_voz_local_http(url_ok, voz)
+            body = {
+                "model": self._local_tts_model,
+                "input": texto,
+                "voice": voz_res,
+                "language": "es",
+                "response_format": "wav",
+                "speed": float(pros["speed"]),
+            }
+        payload = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(
             url_ok,
             data=payload,
             headers={"Content-Type": "application/json", "Accept": "audio/wav, audio/mpeg, */*"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=18.0) as resp:
+        with urllib.request.urlopen(req, timeout=25.0) as resp:
             datos = resp.read()
             ctype = str(resp.headers.get("Content-Type") or "audio/wav").split(";")[0].strip().lower()
         if len(datos) < 100:
@@ -470,13 +518,33 @@ class ServicioVoz:
         pesos = _buscar_pesos_kokoro(self._kokoro_dir)
         if pesos is None:
             raise RuntimeError("faltan kokoro-v1.0.onnx y voices-v1.0.bin en D:\\DevTools\\TTSModels\\kokoro")
-        if self._kokoro_inst is None:
-            self._kokoro_inst = _kokoro_onnx.Kokoro(str(pesos[0]), str(pesos[1]))
         import soundfile as sf
+
+        with self._kokoro_lock:
+            if self._kokoro_inst is None:
+                import espeakng_loader
+                from phonemizer.backend.espeak.wrapper import EspeakWrapper
+
+                data_dir = str(pathlib.Path(espeakng_loader.get_data_path()))
+                lib_path = espeakng_loader.get_library_path()
+                os.environ["ESPEAK_DATA_PATH"] = data_dir
+                EspeakWrapper.set_library(lib_path)
+                EspeakWrapper.set_data_path(data_dir)
+                # Instancia persistente: evita bug de phonemizer en Windows donde espeak_Terminate descarga la DLL
+                ew = EspeakWrapper()
+                ew.set_voice("es")
+                self._espeak_wrapper = ew
+                cfg = _kokoro_onnx.EspeakConfig(lib_path=lib_path, data_path=data_dir)
+                self._kokoro_inst = _kokoro_onnx.Kokoro(str(pesos[0]), str(pesos[1]), espeak_config=cfg)
+
+            raw_ph = self._espeak_wrapper.text_to_phonemes(texto.strip())
+            raw_ph = re.sub(r"\s+", " ", raw_ph.replace("\n", " ").replace("_", "")).strip()
+            vocab = self._kokoro_inst.tokenizer.vocab
+            phonemes = "".join(ch for ch in raw_ph if ch in vocab)
 
         pros = ESTILOS_PROSODIA.get(estilo, ESTILOS_PROSODIA["normal"])
         v_k = voz if voz in _IDS_KOKORO else "ef_dora"
-        samples, sr = self._kokoro_inst.create(texto, voice=v_k, speed=float(pros["speed"]), lang="es")
+        samples, sr = self._kokoro_inst.create(phonemes, voice=v_k, speed=float(pros["speed"]), is_phonemes=True)
         buf = io.BytesIO()
         sf.write(buf, samples, int(sr), format="WAV", subtype="PCM_16")
         return buf.getvalue()
@@ -714,8 +782,9 @@ class ServicioVoz:
             )
             self._en_curso[clave] = tarea
             tarea.add_done_callback(lambda t, k=clave: self._en_curso.pop(k, None))
+        espera = (28.0 if motor_pref in ("kokoro", "local_http") else ESPERA_URGENTE_S) if urgente else 60.0
         try:
-            meta = await asyncio.wait_for(asyncio.shield(tarea), timeout=ESPERA_URGENTE_S if urgente else 60.0)
+            meta = await asyncio.wait_for(asyncio.shield(tarea), timeout=espera)
             return {**meta, "cache": False}
         except asyncio.TimeoutError:
             return {"motor": "local", "motivo": "el servicio de voz tardó demasiado", "clave": ""}

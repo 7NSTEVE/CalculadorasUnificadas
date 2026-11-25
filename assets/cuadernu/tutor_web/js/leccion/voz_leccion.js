@@ -314,8 +314,9 @@ export function prepararVoz(paso, urgente = true) {
   if (ajustes.motorVoz === 'local_http' && ajustes.servidorVozLocal) {
     cuerpo.servidor_local = ajustes.servidorVozLocal;
   }
+  const esLocalPesado = ajustes.motorVoz === 'kokoro' || ajustes.motorVoz === 'local_http';
   const pr = pedir('/api/voz', {
-    metodo: 'POST', tiempo: urgente ? 12000 : 70000,
+    metodo: 'POST', tiempo: urgente ? (esLocalPesado ? 30000 : 12000) : 70000,
     cuerpo,
   }).catch(() => ({ motor: 'local', motivo: 'sin conexión' }));
   metas.set(k, pr);
@@ -361,7 +362,7 @@ export async function probarVoz(vozId) {
   if (ajustes.motorVoz === 'local_http' && ajustes.servidorVozLocal) {
     cuerpo.servidor_local = ajustes.servidorVozLocal;
   }
-  const meta = await pedir('/api/voz', { metodo: 'POST', tiempo: 14000, cuerpo });
+  const meta = await pedir('/api/voz', { metodo: 'POST', tiempo: 30000, cuerpo });
   if (!meta || !meta.clave) return false;
   const a = new Audio(urlApi(`/api/voz/audio/${meta.clave}`));
   a.preservesPitch = true;
@@ -379,10 +380,12 @@ export async function crearVoz(paso, { paciencia = 9000, motor = 'auto' } = {}) 
   const texto = paso.habla || '';
   if (!texto || !ajustes.narracion) return new VozMuda(texto || ' '.repeat(40), 1.15);
   const localOk = hayVozLocal();
+  const esLocalPesado = ajustes.motorVoz === 'kokoro' || ajustes.motorVoz === 'local_http';
+  const pac = esLocalPesado ? Math.max(paciencia, 28000) : paciencia;
   if (ajustes.motorVoz !== 'local' && (motor !== 'local' || !localOk)) {
     const meta = await Promise.race([
       prepararVoz(paso, true),
-      new Promise((r) => setTimeout(() => r(null), localOk ? paciencia : 14000)),
+      new Promise((r) => setTimeout(() => r(null), localOk ? pac : 30000)),
     ]);
     if (meta && meta.clave) return new VozNube(meta);
   }
