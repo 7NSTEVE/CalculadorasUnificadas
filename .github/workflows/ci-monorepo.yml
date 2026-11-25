@@ -5,6 +5,10 @@ on:
     branches: [ main, "feat/**", "fix/**", "consolidation/**" ]
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   hygiene:
     name: Workspace Hygiene Rules
@@ -56,14 +60,17 @@ jobs:
       - name: Generate CuadernU.xcodeproj
         working-directory: apps/ios_native
         run: xcodegen generate
-      - name: Build & Run CuadernU 4-Calculator + Studio FFI tests on live iPad Simulator
+      - name: Build & Run CuadernU 4-Calculator + Studio FFI tests + Live iPadOS Screenshots
         working-directory: apps/ios_native
         run: |
+          SHOTS_DIR="${RUNNER_TEMP}/ipados_screenshots"
+          mkdir -p "${SHOTS_DIR}"
           SIM_ID="$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; cands=[x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x.get('isAvailable') and 'iPad' in x.get('name','')]; print(cands[0] if cands else '')")"
           if [ -z "${SIM_ID}" ]; then
             SIM_ID="$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; cands=[x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x.get('isAvailable')]; print(cands[0] if cands else '')")"
           fi
           echo "Using iOS Simulator UDID: ${SIM_ID}"
+          TEST_RUNNER_CUADERNU_SHOTS_DIR="${SHOTS_DIR}" \
           xcodebuild \
             -project CuadernU.xcodeproj \
             -scheme CuadernU \
@@ -73,3 +80,34 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             test -only-testing:CuadernUTests
+          ls -lh "${SHOTS_DIR}"
+      - name: Upload live iPadOS Simulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipados-cuadernu-screenshots
+          path: ${{ runner.temp }}/ipados_screenshots/*.png
+          if-no-files-found: warn
+      - name: Package unsigned CuadernU iPadOS/iOS IPA (for Sideloadly / 3uTools / AltStore)
+        working-directory: apps/ios_native
+        run: |
+          xcodebuild \
+            -project CuadernU.xcodeproj \
+            -scheme CuadernU \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "${RUNNER_TEMP}/dd_ios_device" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+          mkdir -p "${RUNNER_TEMP}/ipa_stage/Payload"
+          cp -R "${RUNNER_TEMP}/dd_ios_device/Build/Products/Debug-iphoneos/CuadernU.app" "${RUNNER_TEMP}/ipa_stage/Payload/"
+          (cd "${RUNNER_TEMP}/ipa_stage" && zip -qry "${RUNNER_TEMP}/CuadernU-iPadOS-unsigned.ipa" Payload)
+          ls -lh "${RUNNER_TEMP}/CuadernU-iPadOS-unsigned.ipa"
+      - name: Upload unsigned CuadernU iPadOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: cuadernu-ipados-unsigned-ipa
+          path: ${{ runner.temp }}/CuadernU-iPadOS-unsigned.ipa

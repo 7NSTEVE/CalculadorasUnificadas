@@ -1,3 +1,5 @@
+import SwiftUI
+import UIKit
 import XCTest
 @testable import CuadernU
 
@@ -67,9 +69,137 @@ final class CuadernU4CalculadorasTests: XCTestCase {
         XCTAssertEqual(cas["ok"] as? Bool, true)
 
         let chem = bridge.analizarQuimica("Fe + O2 -> Fe2O3")
-        XCTAssertEqual(chem["ok"] as? Bool, true)
+        XCTAssertEqual(chem["valid"] as? Bool, true)
+        XCTAssertEqual(chem["balanced"] as? Bool, true)
 
         let mna = bridge.resolverCircuito(netlist: "V1 1 0 12\nR1 1 2 1000\nR2 2 0 1000\n", modo: "dc")
         XCTAssertEqual(mna["ok"] as? Bool, true)
+
+        // Verify .cudoc binary roundtrip interoperable with Windows & Android
+        let tmpPath = NSTemporaryDirectory() + "cuadernu_ipados_test.cudoc"
+        try? FileManager.default.removeItem(atPath: tmpPath)
+        XCTAssertTrue(bridge.exportarResumenCudoc(
+            titulo: "Apuntes iPadOS Verificados",
+            bloquesTexto: ["Ley de Ohm: V = I * R", "fx-CG50 + CuadernU v47"],
+            rutaDestino: tmpPath))
+        let snap = bridge.inspeccionarCudoc(ruta: tmpPath)
+        XCTAssertNotNil(snap)
+        try? FileManager.default.removeItem(atPath: tmpPath)
+    }
+
+    @MainActor
+    func testCaptureLiveIPadOSScreenshots() {
+        let outDir = ProcessInfo.processInfo.environment["CUADERNU_SHOTS_DIR"]
+            ?? (NSTemporaryDirectory() + "ipados_screenshots")
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+
+        let ipadSize = CGSize(width: 820, height: 1180)
+
+        capturarVistaSwiftUI(
+            VistaSelector(),
+            nombre: "ipados_01_selector_4calcs.png",
+            tamano: ipadSize,
+            esperaSegundos: 0.6,
+            directorio: outDir
+        )
+
+        capturarVistaSwiftUI(
+            NavigationStack { VistaCalculadoraV47(modelo: .cg50) },
+            nombre: "ipados_02_fx_cg50_live.png",
+            tamano: ipadSize,
+            esperaSegundos: 1.5,
+            directorio: outDir
+        )
+
+        capturarVistaSwiftUI(
+            NavigationStack { VistaCalculadoraV47(modelo: .cw2) },
+            nombre: "ipados_03_fx_991cw_live.png",
+            tamano: ipadSize,
+            esperaSegundos: 1.5,
+            directorio: outDir
+        )
+
+        capturarVistaSwiftUI(
+            NavigationStack { VistaCalculadora(modelo: .classwiz) },
+            nombre: "ipados_04_fx_570lax_live.png",
+            tamano: ipadSize,
+            esperaSegundos: 1.2,
+            directorio: outDir
+        )
+
+        capturarVistaSwiftUI(
+            NavigationStack { VistaCalculadora(modelo: .esplus) },
+            nombre: "ipados_05_fx_570vnplus_live.png",
+            tamano: ipadSize,
+            esperaSegundos: 1.2,
+            directorio: outDir
+        )
+
+        GestorArchivosCuadernU.compartido.configurarRutaBase()
+        let bibliotecaNav = UINavigationController(rootViewController: BibliotecaCuadernosIPad())
+        capturarControlador(
+            bibliotecaNav,
+            nombre: "ipados_06_cuadernu_biblioteca.png",
+            tamano: CGSize(width: 1180, height: 820),
+            esperaSegundos: 0.8,
+            directorio: outDir
+        )
+    }
+
+    @MainActor
+    private func capturarVistaSwiftUI<V: View>(
+        _ vista: V,
+        nombre: String,
+        tamano: CGSize,
+        esperaSegundos: TimeInterval,
+        directorio: String
+    ) {
+        let host = UIHostingController(rootView: vista)
+        capturarControlador(host, nombre: nombre, tamano: tamano, esperaSegundos: esperaSegundos, directorio: directorio)
+    }
+
+    @MainActor
+    private func capturarControlador(
+        _ vc: UIViewController,
+        nombre: String,
+        tamano: CGSize,
+        esperaSegundos: TimeInterval,
+        directorio: String
+    ) {
+        let escena = UIApplication.shared.connectedScenes.first as? UIWindowScene
+        let ventana = escena.map { UIWindow(windowScene: $0) } ?? UIWindow(frame: CGRect(origin: .zero, size: tamano))
+        ventana.frame = CGRect(origin: .zero, size: tamano)
+        ventana.overrideUserInterfaceStyle = .light
+        ventana.rootViewController = vc
+        ventana.makeKeyAndVisible()
+
+        let fin = Date().addingTimeInterval(esperaSegundos)
+        while Date() < fin {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+        ventana.layoutIfNeeded()
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 2.0
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: tamano, format: format)
+        let img = renderer.image { _ in
+            ventana.drawHierarchy(in: ventana.bounds, afterScreenUpdates: true)
+        }
+
+        if let data = img.pngData() {
+            let destino = URL(fileURLWithPath: directorio).appendingPathComponent(nombre)
+            try? data.write(to: destino, options: .atomic)
+            XCTAssertGreaterThan(data.count, 4096, "Screenshot \(nombre) should be a valid non-empty PNG")
+            let att = XCTAttachment(image: img)
+            att.name = nombre
+            att.lifetime = .keepAlways
+            add(att)
+        } else {
+            XCTFail("Failed to encode PNG for \(nombre)")
+        }
+
+        ventana.isHidden = true
+        ventana.rootViewController = nil
     }
 }

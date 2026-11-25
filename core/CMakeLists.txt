@@ -102,6 +102,10 @@ target_include_directories(casio_cg50
 if(CG50_ENABLE_COVERAGE_COUNTERS)
     target_compile_definitions(casio_cg50 PUBLIC CG50_ENABLE_COVERAGE_COUNTERS=1)
 endif()
+if(APPLE)
+    # Prevent Clang de Xcode LLVM O2/Os compile-time blowup (>15m) on 8.6k-line SH7305 decoder TU.
+    set_source_files_properties(casio_cg50/cg50_native_core.cpp PROPERTIES COMPILE_OPTIONS "-O1")
+endif()
 set_target_properties(casio_cg50 PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # 4. Portable CuadernU Studio C++17 Engine (shared across Android/iOS/Windows/Linux via casio_native)

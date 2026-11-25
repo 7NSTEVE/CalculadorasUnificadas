@@ -169,6 +169,8 @@ final class EmuladorCalculadora: ObservableObject {
         pixeles = [UInt8](repeating: 0, count: max(0, ancho * alto))
         indicadores = [UInt8](repeating: 0, count: Int(calcemu_screen_row_size(emulador)))
         cargada = true
+        calcemu_advance(emulador, 450)
+        leerPantalla()
     }
 
     deinit {
