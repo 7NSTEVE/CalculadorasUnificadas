@@ -1,0 +1,16 @@
+Fuentes incluidas en esta carpeta
+=================================
+
+Caveat (Caveat-latin.woff2, Caveat-latin-ext.woff2)
+  Copyright 2014 The Caveat Project Authors (https://github.com/googlefonts/caveat)
+  Licencia: SIL Open Font License, Version 1.1 - https://openfontlicense.org
+
+Patrick Hand (PatrickHand-latin.woff2, PatrickHand-latin-ext.woff2)
+  Copyright (c) 2010-2012 Patrick Wagesreiter (mail@patrickwagesreiter.at)
+  Licencia: SIL Open Font License, Version 1.1 - https://openfontlicense.org
+
+Manuscrita y Apuntes (*.ttf)
+  Letra del autor del proyecto; copia de assets/fonts para que la aplicacion web la encuentre.
+
+La OFL permite usar, incrustar y redistribuir estas fuentes junto con el programa, siempre que no
+se vendan por separado y se conserve este aviso.

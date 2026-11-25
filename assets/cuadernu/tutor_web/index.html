@@ -1,270 +1,146 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="light" data-letra="manuscrita">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <title>CuadernU · Pizarra del Profesor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles/translucent.css">
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        packages: {'[+]': ['html']}
-      },
-      loader: { load: ['[tex]/html'] },
-      svg: { fontCache: 'none' },
-      startup: { typeset: false }
-    };
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <title>CuadernU · Pizarra del profesor</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d4ed8'/%3E%3Cpath d='M8 22l3-10 5 7 4-11 4 14' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles/tutor.css">
 </head>
-<body>
-  <!-- Row 1: Slim non-overlapping top strip -->
-  <header class="top-chrome" aria-label="Contexto de clase">
-    <div class="top-left">
-      <label class="sr-only" for="lesson-select">Elegir guía rápida</label>
-      <select id="lesson-select" class="compact-select" title="Elegir guía de ejemplo">
-        <option value="fis3_trabajo_cero">1. Integrar desde cero: W = ∫ P dV</option>
-        <option value="fis3_isotermico">2. Isotérmico: W = nRT ln(Vf / Vi)</option>
-        <option value="fis3_conduccion_esferica">3. Conducción esférica: ∫ r⁻² dr</option>
-      </select>
-      <button type="button" id="btn-start-lesson" class="quiet-btn accent-soft">Iniciar</button>
-      <button type="button" id="btn-audit-pdf" class="quiet-btn accent-soft" hidden title="Ver los temas y problemas que más se repiten en el PDF">
-        Auditar PDF
-      </button>
+<body data-vista="inicio">
+  <header class="barra" aria-label="Barra superior">
+    <button type="button" id="btn-inicio" class="btn-icono" aria-label="Volver al inicio" title="Inicio">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 3 10.6V21h6.2v-6.2h5.6V21H21V10.6L12 3.2Z"/></svg>
+    </button>
+    <div class="barra-titulo">
+      <strong id="titulo">Pizarra del profesor</strong>
+      <span id="subtitulo-barra"></span>
     </div>
-
-    <div class="top-center">
-      <span id="conn-dot" class="status-dot" aria-hidden="true"></span>
-      <span id="session-state-label" class="state-label">Conectando…</span>
+    <div id="progreso" class="progreso" hidden>
+      <span id="progreso-txt" class="progreso-txt"></span>
+      <div id="progreso-puntos" class="progreso-puntos" role="group" aria-label="Pasos de la lección"></div>
     </div>
-
-    <div class="top-right">
-      <button type="button" id="btn-theme-toggle" class="quiet-btn" title="Cambiar entre pizarra blanca y pizarra oscura">
-        Pizarra oscura
+    <div class="barra-fin">
+      <span class="estado" id="estado" role="status"><span class="punto" id="punto" aria-hidden="true"></span><span id="estado-txt">Conectando</span></span>
+      <button type="button" id="btn-enfoque" class="btn-icono" aria-pressed="false" aria-label="Modo enfoque" title="Modo enfoque (F)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4Zm11-5h5v5h-2V6h-3V4ZM4 15h2v3h3v2H4v-5Zm14 0h2v5h-5v-2h3v-3Z"/></svg>
       </button>
-      <button type="button" id="btn-bake-cudoc" class="quiet-btn" title="Guardar toda esta pizarra en tu cuaderno CuadernU">
-        Guardar en cuaderno
+      <button type="button" id="btn-ajustes" class="btn-icono" popovertarget="ajustes" aria-label="Ajustes" title="Voz, letra y tema">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9.2a3 3 0 0 1 5.6 0H20v2h-1.2a3 3 0 0 1-5.6 0H4V6Zm0 10h1.2a3 3 0 0 1 5.6 0H20v2h-9.2a3 3 0 0 1-5.6 0H4v-2Z"/></svg>
       </button>
     </div>
   </header>
 
-  <!-- Row 2: Pure unobstructed dot-grid Whiteboard Canvas (flex: 1, pannable & zoomable) -->
-  <main id="board-viewport" class="board-viewport" tabindex="0" aria-label="Pizarra interactiva">
-    <!-- Subtle iPadOS-style Zoom/Reset HUD (bottom-right inside viewport, zero collision) -->
-    <div id="zoom-hud" class="zoom-hud" role="group" aria-label="Zoom de pizarra">
-      <button type="button" id="btn-zoom-out" class="zoom-hud-btn" title="Alejar pizarra (Ctrl + −)" aria-label="Alejar">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h14v2H5z"/></svg>
-      </button>
-      <button type="button" id="btn-zoom-reset" class="zoom-hud-pct" title="Restablecer zoom al 100 % y centrar (Ctrl + 0)">100%</button>
-      <button type="button" id="btn-zoom-in" class="zoom-hud-btn" title="Acercar pizarra (Ctrl + +)" aria-label="Acercar">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
-      </button>
-    </div>
+  <main class="escena" id="escena">
+    <section id="vista-inicio" class="vista" aria-label="Inicio"></section>
+    <section id="vista-biblioteca" class="vista" aria-label="Banco de ejercicios" hidden></section>
 
-    <div id="board-stage" class="board-stage">
-      <!-- Hand-drawn origin arrows & professor colored marker annotations SVG overlay -->
-      <svg id="provenance-svg" class="provenance-layer" aria-hidden="true"></svg>
-      <svg id="marker-layer-svg" class="marker-layer" aria-hidden="true"></svg>
-
-      <!-- Two-column whiteboard: left = professor handwritten drawings & steps, right = PDF/images/tools -->
-      <div id="board-grid" class="board-grid single-col">
-        <section id="derivation-column" class="derivation-column" aria-label="Pizarra del profesor">
-          <div id="empty-welcome" class="welcome-board">
-            <h1 class="wb-welcome-title">Pizarra Audiovisual</h1>
-            <p class="wb-welcome-sub">
-              El profesor dibuja y escribe paso a paso a mano mientras te explica. Puedes interrumpirlo en cualquier momento, encerrar lo que no entendiste o pegar una captura con <kbd>Ctrl+V</kbd>.
-            </p>
-            <div class="welcome-actions">
-              <button type="button" id="welcome-open-pdf" class="welcome-card-btn">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 2.5L17.5 8H14V4.5ZM8 13h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
-                <span><strong>Abrir PDF o documento</strong><small>Busca problemas, temas o los más repetidos</small></span>
-              </button>
-              <button type="button" id="welcome-start-voice" class="welcome-card-btn">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z"/></svg>
-                <span><strong>Hablar con el profesor</strong><small>Voz en vivo con interrupción natural</small></span>
-              </button>
-              <button type="button" id="welcome-demo-thermo" class="welcome-card-btn">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16v2H4v-2Zm1.5-3.5L10 11l3 3 5.5-6.5 1.5 1.3-7 8.2-3-3-3 3-1.5-1.5Z"/></svg>
-                <span><strong>Ver ejemplo dibujado</strong><small>Primera Ley con pistón a mano</small></span>
-              </button>
-            </div>
-          </div>
-
-          <div id="thinking-indicator" class="thinking-pill" hidden>
-            <span class="thinking-dot" aria-hidden="true"></span>
-            <span id="thinking-label">El profesor está preparando el dibujo y el paso…</span>
-          </div>
-        </section>
-
-        <aside id="visual-column" class="visual-column" aria-label="Material, recortes y notas">
-          <div id="visual-lab-zone" class="zone-stack"></div>
-          <div id="media-layer-zone" class="zone-stack"></div>
-          <div id="formula-dock-zone" class="zone-stack"></div>
-          <div id="clarification-zone" class="zone-stack"></div>
-        </aside>
+    <section id="vista-pizarra" class="vista vista-pizarra" aria-label="Pizarra" hidden>
+      <div id="tablero" class="tablero" tabindex="0" aria-label="Hoja de la pizarra">
+        <div id="hoja" class="hoja">
+          <div id="columna" class="columna"></div>
+          <div id="material" class="material" hidden></div>
+          <svg id="capa-marcas" class="capa capa-marcas" aria-hidden="true"></svg>
+          <svg id="capa-lapiz" class="capa capa-lapiz" aria-hidden="true"></svg>
+        </div>
       </div>
-
-      <!-- Freehand pen / Circle-to-Ask Lasso transparent overlay -->
-      <canvas id="ink-canvas" class="ink-overlay" aria-hidden="true"></canvas>
-    </div>
+      <div class="herramientas" role="toolbar" aria-label="Herramientas" aria-orientation="vertical">
+        <button type="button" class="herr" data-herr="puntero" aria-pressed="true" title="Puntero: toca un símbolo para preguntar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 9-6.2 1.7L10 20 5 3Z"/></svg><span>Puntero</span>
+        </button>
+        <button type="button" class="herr" data-herr="encerrar" aria-pressed="false" title="Encerrar: rodea lo que no entendiste">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="11" rx="8.5" ry="6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/></svg><span>Encerrar</span>
+        </button>
+        <button type="button" class="herr" data-herr="lapiz" aria-pressed="false" title="Lápiz: escribe encima">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm17.71-10.21a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg><span>Lápiz</span>
+        </button>
+        <div id="colores-lapiz" class="colores" role="group" aria-label="Color del lápiz" hidden>
+          <button type="button" data-color="azul" aria-pressed="true" aria-label="Azul"></button>
+          <button type="button" data-color="rojo" aria-pressed="false" aria-label="Rojo"></button>
+          <button type="button" data-color="verde" aria-pressed="false" aria-label="Verde"></button>
+          <button type="button" data-color="tinta" aria-pressed="false" aria-label="Tinta"></button>
+        </div>
+        <button type="button" id="btn-borrar-lapiz" class="herr" title="Borrar mis trazos" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16.2 3.6 5 4.9c.8.8.8 2 0 2.8l-9.2 9.2a2 2 0 0 1-1.4.6H5.8a2 2 0 0 1-1.4-.6l-1.6-1.6a2 2 0 0 1 0-2.8L13.4 3.6a2 2 0 0 1 2.8 0ZM6.5 19.1h3.7l2.8-2.8-5.7-5.7-2.8 2.8 2 5.7Z"/></svg><span>Borrar</span>
+        </button>
+        <span class="herr-sep" aria-hidden="true"></span>
+        <button type="button" id="btn-menos" class="herr" title="Letra más pequeña (Ctrl −)" aria-label="Letra más pequeña"><b>A−</b></button>
+        <button type="button" id="btn-mas" class="herr" title="Letra más grande (Ctrl +)" aria-label="Letra más grande"><b>A+</b></button>
+      </div>
+      <button type="button" id="btn-volver" class="volver" hidden>Volver a lo que se está explicando</button>
+      <aside id="lateral" class="lateral" aria-label="Apoyo visual" hidden>
+        <div class="lateral-tabs" role="tablist" aria-label="Apoyo">
+          <button type="button" role="tab" data-tab="visual" aria-selected="true">Visual</button>
+          <button type="button" role="tab" data-tab="enunciado" aria-selected="false" tabindex="-1">Enunciado</button>
+          <button type="button" role="tab" data-tab="formulas" aria-selected="false" tabindex="-1">Fórmulas</button>
+        </div>
+        <div id="panel-visual" class="lateral-panel" role="tabpanel"></div>
+        <div id="panel-enunciado" class="lateral-panel" role="tabpanel" hidden></div>
+        <div id="panel-formulas" class="lateral-panel" role="tabpanel" hidden></div>
+      </aside>
+    </section>
   </main>
 
-  <!-- Contextual floating popover when student circles or taps a symbol/step/crop -->
-  <div id="circle-popover" class="circle-popover" hidden role="region" aria-label="Acciones sobre la selección">
-    <div class="popover-title" id="circle-popover-title">Selección en pizarra</div>
-    <div class="popover-actions">
-      <button type="button" id="pop-btn-origin" class="pop-action">¿De dónde salió esto?</button>
-      <button type="button" id="pop-btn-intermediate" class="pop-action">Abrir espacio con pasos y dibujo</button>
-      <button type="button" id="pop-btn-explain" class="pop-action">Explicar desde cero</button>
-    </div>
-    <div class="popover-ask-row">
-      <input id="pop-custom-input" type="text" placeholder="Pregunta algo específico sobre esto…" autocomplete="off">
-      <button type="button" id="pop-btn-send" class="quiet-btn accent-solid">Preguntar</button>
-    </div>
-  </div>
-
-  <!-- Hidden PDF/image picker -->
-  <input id="pdf-file-input" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" hidden>
-
-  <!-- Row 3: Non-overlapping Unified Bottom Console (normal flex flow, ZERO collisions) -->
-  <footer class="bottom-console">
-    <!-- Row 3A: Compact Tutor subtitle + quick chips (hidden when idle) -->
-    <div id="caption-strip" class="caption-bar" hidden>
-      <div class="caption-top">
-        <span id="caption-speaker" class="caption-speaker">Profesor</span>
-        <p id="caption-text" class="caption-text"></p>
-      </div>
-      <div id="followup-chips" class="followup-chips" aria-label="Respuestas rápidas"></div>
+  <footer class="consola" id="consola">
+    <div id="subtitulo" class="subtitulo" hidden aria-live="off">
+      <span id="subtitulo-quien" class="subtitulo-quien">Profesor</span>
+      <p id="subtitulo-txt" class="subtitulo-txt"></p>
     </div>
 
-    <!-- Row 3B: Math practice verifier (ONLY shown when a step expects an exact math expression) -->
-    <div id="practice-bar" class="practice-inline" hidden>
-      <span id="practice-prompt" class="practice-prompt"></span>
-      <input id="practice-input" type="text" placeholder="Tu expresión (ej. -1/r o x^3)…" autocomplete="off">
-      <button type="button" id="btn-verify-practice" class="quiet-btn accent-solid">Verificar</button>
-      <span id="practice-feedback" class="practice-feedback" hidden></span>
-    </div>
-
-    <!-- Row 3C: Always-visible Ask Bar + Clearly Labeled Tools -->
-    <div class="console-main-row">
-      <!-- Voice + Interrupt -->
-      <div class="console-voice-group">
-        <button type="button" id="btn-live-mic" class="dock-btn mic-btn" aria-pressed="false" title="Hablar en vivo con el profesor (interrumpe cuando quieras)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z"/></svg>
-          <span>Hablar</span>
-          <span id="mic-vu-track" class="mic-vu-track" hidden aria-hidden="true"><span id="mic-vu-fill" class="mic-vu-fill"></span></span>
+    <div id="transporte" class="transporte" hidden>
+      <div class="trans-izq">
+        <button type="button" id="btn-anterior" class="btn" title="Paso anterior (←)" aria-label="Paso anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 5 8 12l7.5 7 1.4-1.5L11 12l5.9-5.5L15.5 5Z"/></svg>
         </button>
-
-        <button type="button" id="btn-stop-interrupt" class="dock-btn danger-subtle" title="Pausar o interrumpir audio (Espacio)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-          <span>Parar</span>
+        <button type="button" id="btn-repetir" class="btn" title="Repetir este paso (R)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1.8L7 6.5l5 4.7V7.5a5 5 0 1 1-5 5H4.5A7.5 7.5 0 1 0 12 5Z"/></svg><span>Repetir</span>
+        </button>
+        <button type="button" id="btn-pausa" class="btn btn-fuerte" title="Pausa o continuar (Espacio)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path id="ico-pausa" d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z"/></svg><span id="txt-pausa">Pausa</span>
+        </button>
+        <button type="button" id="btn-siguiente" class="btn btn-principal" title="Siguiente paso (→)">
+          <span id="txt-siguiente">Siguiente</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 5 7.5 7-7.5 7-1.4-1.5L13 12 7.1 6.5 8.5 5Z"/></svg>
         </button>
       </div>
-
-      <!-- Always-visible Question / Command Input -->
-      <div class="console-input-wrap">
-        <input id="ask-input" type="text" placeholder='Pregunta cualquier materia, busca "Q057", "más repetidos" o pega captura (Ctrl+V)…' autocomplete="off">
-        <button type="button" id="btn-ask-send" class="quiet-btn accent-solid">Enviar</button>
-      </div>
-
-      <!-- Labeled Whiteboard Tools -->
-      <div class="console-tools" role="toolbar" focusgroup="toolbar wrap" aria-label="Herramientas de pizarra" aria-controls="board-viewport">
-        <button type="button" id="tool-pointer" class="dock-btn" aria-pressed="true" title="Toca fórmulas o arrastra el fondo para mover">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 9-6.2 1.7L10 20 5 3Z"/></svg>
-          <span>Puntero</span>
-        </button>
-        <button type="button" id="tool-pan" class="dock-btn" aria-pressed="false" title="Arrastrar y mover libremente la pizarra (o mantén Espacio / rueda central)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3.5a1.5 1.5 0 0 1 3 0V10h1V5a1.5 1.5 0 0 1 3 0v5h1V7.5a1.5 1.5 0 0 1 3 0v7.2c0 3.5-2.7 6.3-6.2 6.3h-2.1c-2.2 0-4.2-1.1-5.3-3l-3-5.1a1.5 1.5 0 0 1 2.4-1.7L7 13.8V5.5a1.5 1.5 0 0 1 3 0V10h0V3.5Z"/></svg>
-          <span>Mover</span>
-        </button>
-        <button type="button" id="tool-lasso" class="dock-btn" aria-pressed="false" title="Rodea cualquier símbolo o figura del PDF para preguntar">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="11" rx="8" ry="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
-          <span>Encerrar</span>
-        </button>
-        <button type="button" id="tool-pen" class="dock-btn" aria-pressed="false" title="Escribir o rayar a mano sobre la pizarra">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm17.71-10.21a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
-          <span>Lápiz</span>
-        </button>
-        <div id="pen-color-strip" class="pen-color-strip" hidden role="group" aria-label="Color de lápiz">
-          <button type="button" class="pen-swatch" data-pen-color="blue" aria-pressed="true" title="Tinta azul" aria-label="Tinta azul"></button>
-          <button type="button" class="pen-swatch" data-pen-color="red" aria-pressed="false" title="Tinta roja" aria-label="Tinta roja"></button>
-          <button type="button" class="pen-swatch" data-pen-color="green" aria-pressed="false" title="Tinta verde" aria-label="Tinta verde"></button>
-          <button type="button" class="pen-swatch" data-pen-color="ink" aria-pressed="false" title="Tinta neutra" aria-label="Tinta neutra"></button>
-        </div>
-        <button type="button" id="btn-clear-board" class="dock-btn" title="Borrar todo lo escrito y dibujado en la pizarra">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.24 3.56 21.19 8.5c.78.78.78 2.05 0 2.83L12 20.53a2 2 0 0 1-1.41.58H5.83a2 2 0 0 1-1.41-.58L2.81 18.9c-.78-.78-.78-2.05 0-2.83l10.6-10.51a2 2 0 0 1 2.83 0ZM6.54 19.1h3.65l2.8-2.8-5.65-5.65-2.8 2.8 2 5.65Z"/></svg>
-          <span>Borrar</span>
-        </button>
-        <button type="button" id="btn-import-pdf" class="dock-btn" title="Subir PDF o imagen (también puedes arrastrar o pegar con Ctrl+V)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 2.5L17.5 8H14V4.5ZM8 13h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
-          <span>PDF</span>
-        </button>
-        <button type="button" id="btn-next-step" class="dock-btn" title="Avanzar al siguiente paso">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
-          <span>Siguiente</span>
-        </button>
-        <button type="button" id="btn-more-menu" class="dock-btn" popovertarget="more-popover" aria-label="Más opciones" title="Más opciones (micrófono, voz, notas, limpiar)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
-        </button>
+      <div class="trans-der">
+        <button type="button" id="btn-despacio" class="btn btn-suave" title="Abrir los pasos intermedios">Más despacio</button>
+        <button type="button" id="btn-origen" class="btn btn-suave" title="De dónde sale cada cosa">¿De dónde salió?</button>
+        <button type="button" id="btn-porque" class="btn btn-suave" title="La razón de este paso">¿Por qué?</button>
       </div>
     </div>
 
-    <!-- Native viewport-aware options popover (plain button group) -->
-    <div id="more-popover" popover="auto" class="more-popover">
-      <div class="pop-section-label">Voz y Ritmo</div>
-      <label class="pop-row">
-        <input type="checkbox" id="opt-narration-audio" checked>
-        <span>Narración hablada en pasos</span>
-      </label>
-      <label class="pop-row">
-        <input type="checkbox" id="opt-auto-solve-paste" checked>
-        <span>Iniciar desarrollo al pegar imagen</span>
-      </label>
-      <label class="pop-row">
-        <span>Velocidad</span>
-        <input type="range" id="opt-speech-rate" min="0.80" max="1.25" step="0.05" value="0.96">
-        <span id="opt-speech-rate-val">0.96×</span>
-      </label>
-      <label class="pop-row">
-        <span>Micrófono</span>
-        <select id="opt-mic-select" class="compact-select">
-          <option value="">Predeterminado de Windows</option>
-        </select>
-      </label>
-      <label class="pop-row">
-        <span>Voz</span>
-        <select id="opt-voice-select" class="compact-select">
-          <option value="Kore">Kore (Clara · cálida)</option>
-          <option value="Aoede">Aoede (Expresiva)</option>
-          <option value="Puck">Puck (Dinámica)</option>
-          <option value="Charon">Charon (Pausada)</option>
-        </select>
-      </label>
-      <label class="pop-row">
-        <span>Modo</span>
-        <select id="opt-visual-model" class="compact-select">
-          <option value="gemini-2.5-flash">Rápido</option>
-          <option value="gemini-3.8-flash">Detallado</option>
-          <option value="gemini-3.5-flash">Equilibrado</option>
-        </select>
-      </label>
-      <hr class="pop-divider">
-      <button type="button" id="btn-repeat-step" class="pop-action">Repetir paso actual</button>
-      <button type="button" id="btn-add-note" class="pop-action">Agregar nota escrita</button>
-      <button type="button" id="opt-clear-ink" class="pop-action">Limpiar trazos de lápiz</button>
-      <hr class="pop-divider">
-      <button type="button" id="btn-mark-bug" class="pop-action" title="Guarda captura y registro local en private_local/telemetry para corregir fallos">Marcar fallo aquí (Ctrl+Shift+B)</button>
+    <div class="preguntar">
+      <button type="button" id="btn-mic" class="btn btn-mic" aria-pressed="false" title="Hablar en vivo con el profesor">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z"/></svg>
+        <span>Hablar</span><i id="nivel-mic" class="nivel-mic" aria-hidden="true"></i>
+      </button>
+      <input id="pregunta" type="text" placeholder="Pregunta algo, escribe “ejercicio 16” o “Q049”, o pega una imagen (Ctrl+V)" autocomplete="off" aria-label="Pregunta al profesor">
+      <button type="button" id="btn-enviar" class="btn btn-principal">Enviar</button>
+      <button type="button" id="btn-adjuntar" class="btn" title="Abrir PDF o imagen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 2.5L17.5 8H14V4.5Z"/></svg><span>Abrir</span>
+      </button>
     </div>
   </footer>
 
-  <!-- Persistent live region outside toolbar for screen-reader status announcements -->
-  <p id="a11y-status" role="status" class="sr-only"></p>
+  <div id="menu-seleccion" class="flotante" hidden role="dialog" aria-label="Qué hacer con lo seleccionado">
+    <div class="flotante-tit" id="sel-titulo"></div>
+    <div class="flotante-acc">
+      <button type="button" data-sel="origen">¿De dónde salió?</button>
+      <button type="button" data-sel="cero">Explícamelo desde cero</button>
+      <button type="button" data-sel="despacio">Con más pasos</button>
+    </div>
+    <div class="flotante-fila"><input id="sel-pregunta" type="text" placeholder="Pregunta sobre esto" autocomplete="off" aria-label="Pregunta sobre lo seleccionado"><button type="button" id="sel-enviar" class="btn btn-principal">Preguntar</button></div>
+  </div>
 
-  <script type="module" src="./js/app_whiteboard.js"></script>
+  <div id="ajustes" popover="auto" class="hoja-ajustes" aria-label="Ajustes"></div>
+
+  <dialog id="visor" class="visor" aria-label="Imagen ampliada"><img id="visor-img" alt=""><button type="button" id="visor-cerrar" class="btn">Cerrar</button></dialog>
+
+  <input id="archivo" type="file" accept="application/pdf,image/png,image/jpeg,image/webp,.zip" hidden>
+  <div id="avisos" class="avisos" aria-live="polite"></div>
+  <p id="lector" class="solo-lector" role="status"></p>
+
+  <script type="module" src="./js/app.js"></script>
 </body>
 </html>

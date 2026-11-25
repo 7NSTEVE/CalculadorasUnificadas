@@ -34,6 +34,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from tools.tutor_runtime.banco_api import Progreso, crear_router
 from tools.tutor_runtime.demo_lessons import get_lesson_beats, get_seed_lessons_catalog
 from tools.tutor_runtime.gemini_engines import (
     AlignedSpanishTts,
@@ -51,6 +52,7 @@ from tools.tutor_runtime.pdf_rag import (
 from tools.tutor_runtime.pedagogy_memory import PedagogyMemoryStore
 from tools.tutor_runtime.secrets_dpapi import load_tutor_secrets, sanitize_text
 from tools.tutor_runtime.sympy_verifier import verify_student_step
+from tools.tutor_runtime.voz import ServicioVoz
 from tools.tutor_runtime.telemetry_recorder import (
     LocalTelemetryRecorder,
     detect_tutor_antipattern,
@@ -188,6 +190,10 @@ class TutorRuntimeContext:
             telem_dir_raw is not None or (self.repo_root / "private_local").exists()
         )
         self.telemetry = LocalTelemetryRecorder(base_dir=telem_dir, enabled=telem_enabled)
+        privada = self.repo_root / "private_local"
+        hay_privada = privada.exists()
+        self.voz = ServicioVoz(audio_key, (privada / "voz_cache") if hay_privada else None, voz=str(bootstrap.get("tts_voice") or "Kore"))
+        self.progreso = Progreso((privada / "tutor_progreso.json") if hay_privada else None)
 
 
 def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
@@ -214,6 +220,11 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
         hdr = req.headers.get("X-CuadernU-Token", "") if req else ""
         if token_q != ctx.session_token and hdr != ctx.session_token:
             raise HTTPException(status_code=401, detail="Token de sesión inválido")
+
+    def _revisa_token(req: Request) -> None:
+        _check_token(req.query_params.get("token"), req)
+
+    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token))
 
     @app.get("/api/health")
     async def api_health(request: Request, token: Optional[str] = Query(default=None)) -> Dict[str, Any]:
