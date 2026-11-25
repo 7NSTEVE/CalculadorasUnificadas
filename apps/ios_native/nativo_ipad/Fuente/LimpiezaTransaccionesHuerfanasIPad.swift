@@ -33,8 +33,7 @@ enum LimpiadorTransaccionesHuerfanasIPad {
             options: [.skipsHiddenFiles])) ?? []
 
         for candidato in candidatos {
-            guard (try? candidato.resourceValues(forKeys: [.isDirectoryKey]))
-                .isDirectory == true else { continue }
+            guard (try? candidato.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else { continue }
             reporte.carpetasInspeccionadas += 1
             let nombre = candidato.lastPathComponent
             let journal = candidato.appendingPathComponent("journal.json")

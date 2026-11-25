@@ -184,6 +184,33 @@ final class RepositorioSesionesPersistenciaDocumentoIPad {
     }
 }
 
+enum EstadoReaperturaDocumentoIPad: Equatable {
+    case sinManifest
+    case integro(revisionId: UUID, archivosVerificados: Int)
+    case inconsistente(ReporteRevisionDocumentoIPad?)
+}
+
+final class GateReaperturaDocumentoIPad {
+    private let estricto: GateReaperturaEstrictoIPad
+
+    init(revisiones: RepositorioRevisionesGuardadoIPad = .compartido) {
+        self.estricto = GateReaperturaEstrictoIPad(revisiones: revisiones)
+    }
+
+    func verificar(_ documentoId: DocumentoPersistenteID) -> EstadoReaperturaDocumentoIPad {
+        switch estricto.verificar(documentoId) {
+        case .sinManifest:
+            return .sinManifest
+        case .integro(let revisionId, let archivosVerificados):
+            return .integro(revisionId: revisionId, archivosVerificados: archivosVerificados)
+        case .contenidoInconsistente(let reporte):
+            return .inconsistente(reporte)
+        case .manifestCorrupto, .manifestDeOtroDocumento:
+            return .inconsistente(nil)
+        }
+    }
+}
+
 struct ResultadoPreaperturaSeguraIPad: Equatable {
     enum Decision: Equatable {
         case abrir

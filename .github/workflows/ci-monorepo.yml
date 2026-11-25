@@ -28,7 +28,7 @@ jobs:
             -DBUILD_CORE_TESTS=ON \
             -DCUADERNU_BUILD_STUDIO_FFI=ON
       - name: Build core & Studio FFI tests
-        run: cmake --build build/core-linux --parallel
+        run: cmake --build build/core-linux --parallel "$(nproc)"
       - name: Run CTest
         run: ctest --test-dir build/core-linux --output-on-failure
 

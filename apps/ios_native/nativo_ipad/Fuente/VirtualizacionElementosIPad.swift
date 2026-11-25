@@ -59,7 +59,7 @@ enum PlanificadorVirtualizacionElementosIPad {
 
         var region = viewport.insetBy(dx: -margenX, dy: -margenY)
         var reutiliza = false
-        if let anterior, anterior.width > 0, anterior.height > 0 {
+        if let anterior = regionAnterior, anterior.width > 0, anterior.height > 0 {
             let f = min(max(politica.fraccionHistéresis, 0), 0.45)
             let zonaSegura = anterior.insetBy(
                 dx: anterior.width * f,

@@ -5,7 +5,10 @@
 #include <cmath>
 #include <complex>
 #include <cstring>
+#include <limits>
 #include <map>
+#include <memory>
+#include <new>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -14,6 +17,7 @@
 #include "archivo.h"
 #include "documento.h"
 #include "circuitos.h"
+#include "cronologia.h"
 #include "edicion.h"
 #include "formas.h"
 #include "grabacion.h"
@@ -27,6 +31,24 @@
 
 namespace {
 constexpr int64_t kFrecuenciaNs = 1'000'000'000;
+
+bool CopiarEntradaSegura(const uint8_t* datos, size_t cantidad,
+                         std::vector<uint8_t>* salida) {
+  if (!datos || !salida || cantidad == 0 ||
+      cantidad > tinta::kMaximoBytesArchivo) {
+    tinta::EstablecerErrorArchivo(
+        "la entrada supera el presupuesto seguro de lectura");
+    return false;
+  }
+  try {
+    salida->assign(datos, datos + cantidad);
+    return true;
+  } catch (const std::bad_alloc&) {
+    tinta::EstablecerErrorArchivo(
+        "no hay memoria suficiente para copiar la entrada");
+    return false;
+  }
+}
 }
 
 // La sesión es una página con su historial. Los buffers de salida se reutilizan
@@ -34,6 +56,8 @@ constexpr int64_t kFrecuenciaNs = 1'000'000'000;
 struct TintaSesion {
   tinta::Pagina pagina;
   tinta::Historial historial;
+  tinta::CronologiaDocumento cronologia;
+  int64_t tiempo_cronologia_qpc = 0;
 
   tinta::Trazo en_curso;
   bool hay_trazo = false;
@@ -64,6 +88,116 @@ struct TintaSesion {
 };
 
 namespace {
+
+int64_t SegundosAQpc(double tiempo_s) {
+  if (!std::isfinite(tiempo_s) || tiempo_s <= 0.0 ||
+      tiempo_s > static_cast<double>(std::numeric_limits<int64_t>::max()) /
+                     static_cast<double>(kFrecuenciaNs)) return 0;
+  return static_cast<int64_t>(tiempo_s * static_cast<double>(kFrecuenciaNs));
+}
+
+void NormalizarDespues(tinta::Operacion* operacion,
+                       const tinta::Pagina& pagina) {
+  if (!operacion) return;
+  const auto copiar_trazos = [&]() {
+    operacion->despues.clear();
+    for (const size_t indice : operacion->indices) {
+      if (indice < pagina.trazos.size())
+        operacion->despues.push_back(pagina.trazos[indice]);
+    }
+  };
+  const auto copiar_textos = [&]() {
+    operacion->textos_despues.clear();
+    for (const size_t indice : operacion->indices_textos) {
+      if (indice < pagina.textos.size())
+        operacion->textos_despues.push_back(pagina.textos[indice]);
+    }
+  };
+  const auto copiar_medios = [&]() {
+    operacion->medios_despues.clear();
+    for (const size_t indice : operacion->indices_medios) {
+      if (indice < pagina.medios.size())
+        operacion->medios_despues.push_back(pagina.medios[indice]);
+    }
+  };
+  switch (operacion->tipo) {
+    case tinta::TipoOperacion::AnadirTrazos:
+    case tinta::TipoOperacion::ReemplazarTrazos:
+      copiar_trazos();
+      break;
+    case tinta::TipoOperacion::ReemplazarPaginaTrazos:
+      operacion->despues = pagina.trazos;
+      break;
+    case tinta::TipoOperacion::ReemplazarPaginaCompleta:
+      operacion->despues = pagina.trazos;
+      operacion->textos_despues = pagina.textos;
+      operacion->medios_despues = pagina.medios;
+      break;
+    case tinta::TipoOperacion::AnadirTextos:
+    case tinta::TipoOperacion::ReemplazarTextos:
+      copiar_textos();
+      break;
+    case tinta::TipoOperacion::AnadirMedios:
+    case tinta::TipoOperacion::ReemplazarMedios:
+      copiar_medios();
+      break;
+    case tinta::TipoOperacion::QuitarTrazos:
+    case tinta::TipoOperacion::QuitarTextos:
+    case tinta::TipoOperacion::QuitarMedios:
+      break;
+  }
+}
+
+void RegistrarOperacion(TintaSesion* sesion, tinta::Operacion operacion,
+                        int64_t tiempo_qpc = 0) {
+  if (!sesion) return;
+  if (sesion->cronologia.activa()) {
+    if (!sesion->cronologia.PrepararPagina(&sesion->pagina)) return;
+    NormalizarDespues(&operacion, sesion->pagina);
+  }
+  sesion->historial.Registrar(operacion);
+  sesion->cronologia.RegistrarOperacion(
+      operacion, &sesion->pagina,
+      tiempo_qpc > 0 ? tiempo_qpc : sesion->tiempo_cronologia_qpc);
+}
+
+tinta::Pagina CopiarMetadatos(const tinta::Pagina& origen) {
+  tinta::Pagina copia;
+  copia.titulo = origen.titulo;
+  copia.papel = origen.papel;
+  copia.limites = origen.limites;
+  copia.orientacion = origen.orientacion;
+  copia.ancho = origen.ancho;
+  copia.alto = origen.alto;
+  copia.pagina_pdf = origen.pagina_pdf;
+  return copia;
+}
+
+void RegistrarMetadatos(TintaSesion* sesion,
+                        const tinta::Pagina& metadatos_antes) {
+  if (!sesion) return;
+  sesion->cronologia.RegistrarMetadatos(
+      metadatos_antes, sesion->pagina, sesion->tiempo_cronologia_qpc);
+}
+
+std::unique_ptr<tinta::Pagina> CopiarPaginaParaCronologia(
+    const TintaSesion* sesion) {
+  if (!sesion || !sesion->cronologia.activa()) return nullptr;
+  try {
+    return std::make_unique<tinta::Pagina>(sesion->pagina);
+  } catch (const std::bad_alloc&) {
+    tinta::EstablecerErrorArchivo(
+        "no hay memoria para registrar el cambio en la cronologia");
+    return nullptr;
+  }
+}
+
+void RegistrarCambioDirecto(TintaSesion* sesion,
+                            const std::unique_ptr<tinta::Pagina>& antes) {
+  if (!sesion || !antes) return;
+  sesion->cronologia.RegistrarCambio(
+      *antes, &sesion->pagina, sesion->tiempo_cronologia_qpc);
+}
 
 tinta::Muestra HacerMuestra(float x, float y, float presion, float altitud,
                             float azimut, double tiempo_s,
@@ -463,6 +597,9 @@ bool tinta_trazo_refinar(TintaSesion* sesion, size_t indice, int nivel) {
   if (!sesion || indice >= sesion->pagina.trazos.size() || nivel < 0 || nivel > 3)
     return false;
   auto& trazo = sesion->pagina.trazos[indice];
+  if (trazo.estilo_persistente && trazo.estilo.nivel_refinado == nivel)
+    return true;
+  const tinta::Trazo antes = trazo;
   if (!trazo.estilo_persistente) {
     trazo.estilo_persistente = true;
     trazo.estilo.exponente_presion = sesion->params.exponente_presion;
@@ -471,6 +608,9 @@ bool tinta_trazo_refinar(TintaSesion* sesion, size_t indice, int nivel) {
     trazo.estilo.suavizado_ancho = sesion->params.suavizado_ancho;
   }
   trazo.estilo.nivel_refinado = nivel;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionReemplazar(
+                  {indice}, {antes}, {trazo}));
   return true;
 }
 
@@ -484,6 +624,8 @@ bool tinta_refinar_todos(TintaSesion* sesion, int nivel) {
 void tinta_anadir_muestra(TintaSesion* sesion, float x, float y, float presion,
                           float altitud, float azimut, double tiempo_s) {
   if (!sesion || !sesion->hay_trazo) return;
+  const int64_t tiempo_qpc = SegundosAQpc(tiempo_s);
+  if (tiempo_qpc > 0) sesion->tiempo_cronologia_qpc = tiempo_qpc;
   sesion->en_curso.muestras.push_back(
       HacerMuestra(x, y, presion, altitud, azimut, tiempo_s));
 }
@@ -492,6 +634,8 @@ uint64_t tinta_anadir_muestra_actualizable(
     TintaSesion* sesion, float x, float y, float presion, float altitud,
     float azimut, double tiempo_s) {
   if (!sesion || !sesion->hay_trazo) return 0;
+  const int64_t tiempo_qpc = SegundosAQpc(tiempo_s);
+  if (tiempo_qpc > 0) sesion->tiempo_cronologia_qpc = tiempo_qpc;
   uint64_t id = sesion->siguiente_id_muestra++;
   if (id == 0) id = sesion->siguiente_id_muestra++;
   const tinta::Muestra muestra =
@@ -550,6 +694,9 @@ bool tinta_actualizar_muestra(TintaSesion* sesion, uint64_t id_muestra,
   actualizadas += sesion->historial.ActualizarMuestraEstimada(
       id_muestra, delta_x, delta_y, fuerza_normalizada, altitud, azimut,
       posicion, fuerza, inclinacion, direccion);
+  actualizadas += sesion->cronologia.ActualizarMuestraEstimada(
+      id_muestra, delta_x, delta_y, fuerza_normalizada, altitud, azimut,
+      posicion, fuerza, inclinacion, direccion);
   return actualizadas > 0;
 }
 
@@ -578,10 +725,12 @@ int64_t tinta_terminar_trazo(TintaSesion* sesion) {
     indice = sesion->en_curso.resaltador
         ? IndiceResaltadorInteligente(sesion->pagina, sesion->en_curso)
         : sesion->pagina.trazos.size();
+    const int64_t tiempo_evento = sesion->en_curso.muestras.front().tiempo_qpc;
     sesion->pagina.trazos.insert(sesion->pagina.trazos.begin() +
         static_cast<std::ptrdiff_t>(indice), sesion->en_curso);
-    sesion->historial.Registrar(
-        tinta::Historial::OperacionAnadir(indice, sesion->en_curso));
+    RegistrarOperacion(
+        sesion, tinta::Historial::OperacionAnadir(indice, sesion->en_curso),
+        tiempo_evento);
   }
   sesion->hay_trazo = false;
   sesion->en_curso.muestras.clear();
@@ -734,6 +883,65 @@ bool tinta_rango_temporal(const TintaSesion* sesion, double* inicio_s,
   return true;
 }
 
+// --- Cronología vectorial de Nota Viva -----------------------------------
+
+bool tinta_cronologia_comenzar(TintaSesion* sesion, double inicio_s) {
+  if (!sesion || sesion->documento_id.empty()) return false;
+  const int64_t inicio_qpc = SegundosAQpc(inicio_s);
+  if (inicio_qpc <= 0) return false;
+  sesion->tiempo_cronologia_qpc = inicio_qpc;
+  return sesion->cronologia.Comenzar(
+      &sesion->pagina, sesion->documento_id, inicio_qpc);
+}
+
+void tinta_cronologia_fijar_tiempo(TintaSesion* sesion, double tiempo_s) {
+  if (!sesion) return;
+  const int64_t tiempo_qpc = SegundosAQpc(tiempo_s);
+  if (tiempo_qpc > 0) sesion->tiempo_cronologia_qpc = tiempo_qpc;
+}
+
+void tinta_cronologia_cancelar(TintaSesion* sesion) {
+  if (!sesion) return;
+  sesion->cronologia.Cancelar();
+  sesion->tiempo_cronologia_qpc = 0;
+}
+
+size_t tinta_cronologia_cantidad_eventos(const TintaSesion* sesion) {
+  return sesion ? sesion->cronologia.cantidad_eventos() : 0u;
+}
+
+const uint8_t* tinta_cronologia_finalizar(TintaSesion* sesion,
+                                          size_t* cantidad) {
+  if (cantidad) *cantidad = 0;
+  if (!sesion || !sesion->cronologia.activa()) return nullptr;
+  sesion->bytes = sesion->cronologia.Serializar();
+  if (sesion->bytes.empty()) return nullptr;
+  sesion->cronologia.Cancelar();
+  sesion->tiempo_cronologia_qpc = 0;
+  if (cantidad) *cantidad = sesion->bytes.size();
+  return sesion->bytes.data();
+}
+
+bool tinta_cronologia_cargar(TintaSesion* sesion, const uint8_t* datos,
+                             size_t cantidad) {
+  if (!sesion || !datos || cantidad == 0) return false;
+  std::vector<uint8_t> copia;
+  if (!CopiarEntradaSegura(datos, cantidad, &copia)) return false;
+  tinta::Pagina base;
+  if (!sesion->cronologia.Cargar(copia, &base)) return false;
+  sesion->pagina = std::move(base);
+  sesion->historial.Limpiar();
+  tinta_descartar_trazo(sesion);
+  return true;
+}
+
+bool tinta_cronologia_mostrar_hasta(TintaSesion* sesion, double tiempo_s) {
+  if (!sesion) return false;
+  const int64_t tiempo_qpc = SegundosAQpc(tiempo_s);
+  if (tiempo_qpc <= 0) return false;
+  return sesion->cronologia.MostrarHasta(tiempo_qpc, &sesion->pagina);
+}
+
 const char* tinta_trazo_id(TintaSesion* sesion, size_t indice) {
   if (!sesion || indice >= sesion->pagina.trazos.size()) return nullptr;
   sesion->texto_salida = sesion->pagina.trazos[indice].id_colaboracion;
@@ -787,9 +995,10 @@ const float* tinta_trazo_puntos(TintaSesion* sesion, size_t indice,
 bool tinta_trazo_importar(TintaSesion* sesion, const uint8_t* datos,
                           size_t cantidad) {
   if (!sesion || !datos || cantidad == 0) return false;
+  std::vector<uint8_t> copia;
+  if (!CopiarEntradaSegura(datos, cantidad, &copia)) return false;
   tinta::Trazo trazo;
-  if (!tinta::DeserializarTrazo(
-          std::vector<uint8_t>(datos, datos + cantidad), &trazo) ||
+  if (!tinta::DeserializarTrazo(copia, &trazo) ||
       trazo.id_colaboracion.empty() || trazo.muestras.empty())
     return false;
   const auto existe = std::find_if(
@@ -803,7 +1012,8 @@ bool tinta_trazo_importar(TintaSesion* sesion, const uint8_t* datos,
       : sesion->pagina.trazos.size();
   sesion->pagina.trazos.insert(sesion->pagina.trazos.begin() +
       static_cast<std::ptrdiff_t>(indice), trazo);
-  sesion->historial.Registrar(tinta::Historial::OperacionAnadir(indice, trazo));
+  RegistrarOperacion(sesion,
+                     tinta::Historial::OperacionAnadir(indice, trazo));
   return true;
 }
 
@@ -811,9 +1021,10 @@ bool tinta_trazo_importar_copia(TintaSesion* sesion, const uint8_t* datos,
                                 size_t cantidad, const char* nuevo_id) {
   if (!sesion || !datos || cantidad == 0 || !nuevo_id || nuevo_id[0] == '\0')
     return false;
+  std::vector<uint8_t> copia;
+  if (!CopiarEntradaSegura(datos, cantidad, &copia)) return false;
   tinta::Trazo trazo;
-  if (!tinta::DeserializarTrazo(
-          std::vector<uint8_t>(datos, datos + cantidad), &trazo) ||
+  if (!tinta::DeserializarTrazo(copia, &trazo) ||
       trazo.muestras.empty())
     return false;
   const std::string solicitado(nuevo_id);
@@ -829,7 +1040,8 @@ bool tinta_trazo_importar_copia(TintaSesion* sesion, const uint8_t* datos,
       : sesion->pagina.trazos.size();
   sesion->pagina.trazos.insert(sesion->pagina.trazos.begin() +
       static_cast<std::ptrdiff_t>(indice), trazo);
-  sesion->historial.Registrar(tinta::Historial::OperacionAnadir(indice, trazo));
+  RegistrarOperacion(sesion,
+                     tinta::Historial::OperacionAnadir(indice, trazo));
   return true;
 }
 
@@ -843,19 +1055,29 @@ bool tinta_trazo_eliminar_id(TintaSesion* sesion, const char* id) {
       encontrado - sesion->pagina.trazos.begin());
   const tinta::Trazo quitado = *encontrado;
   sesion->pagina.trazos.erase(encontrado);
-  sesion->historial.Registrar(
-      tinta::Historial::OperacionQuitar({indice}, {quitado}));
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionQuitar({indice}, {quitado}));
   return true;
 }
 
 // --- Edición ---------------------------------------------------------------
 
 void tinta_deshacer(TintaSesion* sesion) {
-  if (sesion) sesion->historial.Deshacer(sesion->pagina);
+  if (!sesion) return;
+  tinta::Operacion operacion;
+  if (sesion->historial.Deshacer(sesion->pagina, &operacion)) {
+    sesion->cronologia.RegistrarOperacion(
+        operacion, &sesion->pagina, sesion->tiempo_cronologia_qpc, true);
+  }
 }
 
 void tinta_rehacer(TintaSesion* sesion) {
-  if (sesion) sesion->historial.Rehacer(sesion->pagina);
+  if (!sesion) return;
+  tinta::Operacion operacion;
+  if (sesion->historial.Rehacer(sesion->pagina, &operacion)) {
+    sesion->cronologia.RegistrarOperacion(
+        operacion, &sesion->pagina, sesion->tiempo_cronologia_qpc, false);
+  }
 }
 
 bool tinta_puede_deshacer(const TintaSesion* sesion) {
@@ -874,8 +1096,9 @@ void tinta_limpiar(TintaSesion* sesion) {
     return;
   }
   sesion->pagina.trazos.clear();
-  sesion->historial.Registrar(
-      tinta::Historial::OperacionPagina(antes, sesion->pagina.trazos));
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionPagina(antes,
+                                                 sesion->pagina.trazos));
   tinta_descartar_trazo(sesion);
 }
 
@@ -931,7 +1154,7 @@ bool tinta_borrar_filtrado(TintaSesion* sesion, float x, float y, float radio,
     }
     if (!cambio) return false;
     sesion->pagina.trazos = std::move(resultado);
-    sesion->historial.Registrar(tinta::Historial::OperacionPagina(
+    RegistrarOperacion(sesion, tinta::Historial::OperacionPagina(
         antes, sesion->pagina.trazos));
     return true;
   }
@@ -944,8 +1167,8 @@ bool tinta_borrar_filtrado(TintaSesion* sesion, float x, float y, float radio,
   }), tocados.end());
   if (tocados.empty()) return false;
   const auto quitados = tinta::BorrarTrazosCompletos(sesion->pagina, tocados);
-  sesion->historial.Registrar(
-      tinta::Historial::OperacionQuitar(tocados, quitados));
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionQuitar(tocados, quitados));
   return true;
 }
 
@@ -1160,7 +1383,7 @@ bool tinta_trazos_transformar(TintaSesion* sesion, const size_t* indices,
   t.reflejar_vertical = reflejar_vertical;
   tinta::TransformarTrazos(sesion->pagina, validos, t);
   const auto despues = CopiarTrazos(sesion->pagina, validos);
-  sesion->historial.Registrar(tinta::Historial::OperacionReemplazar(
+  RegistrarOperacion(sesion, tinta::Historial::OperacionReemplazar(
       validos, antes, despues));
   return true;
 }
@@ -1170,8 +1393,8 @@ bool tinta_trazos_eliminar(TintaSesion* sesion, const size_t* indices,
   const auto validos = IndicesValidos(sesion, indices, cantidad);
   if (validos.empty()) return false;
   const auto quitados = tinta::BorrarTrazosCompletos(sesion->pagina, validos);
-  sesion->historial.Registrar(
-      tinta::Historial::OperacionQuitar(validos, quitados));
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionQuitar(validos, quitados));
   return true;
 }
 
@@ -1182,7 +1405,7 @@ bool tinta_trazos_recolorear(TintaSesion* sesion, const size_t* indices,
   const auto antes = CopiarTrazos(sesion->pagina, validos);
   tinta::RecolorearTrazos(sesion->pagina, validos, color_argb);
   const auto despues = CopiarTrazos(sesion->pagina, validos);
-  sesion->historial.Registrar(tinta::Historial::OperacionReemplazar(
+  RegistrarOperacion(sesion, tinta::Historial::OperacionReemplazar(
       validos, antes, despues));
   return true;
 }
@@ -1212,7 +1435,7 @@ bool tinta_seleccion_transformar(
   t.reflejar_horizontal = reflejar_horizontal;
   t.reflejar_vertical = reflejar_vertical;
   tinta::TransformarSeleccion(sesion->pagina, seleccion, t);
-  sesion->historial.Registrar(tinta::Historial::OperacionPaginaCompleta(
+  RegistrarOperacion(sesion, tinta::Historial::OperacionPaginaCompleta(
       antes, sesion->pagina));
   return true;
 }
@@ -1229,7 +1452,7 @@ bool tinta_seleccion_eliminar(
   (void)tinta::BorrarTrazosCompletos(sesion->pagina, seleccion.trazos);
   BorrarIndicesTexto(&sesion->pagina.textos, seleccion.textos);
   BorrarIndicesMedio(&sesion->pagina.medios, seleccion.medios);
-  sesion->historial.Registrar(tinta::Historial::OperacionPaginaCompleta(
+  RegistrarOperacion(sesion, tinta::Historial::OperacionPaginaCompleta(
       antes, sesion->pagina));
   return true;
 }
@@ -1271,7 +1494,7 @@ TintaSeleccionInfo tinta_seleccion_duplicar(
   t.desplazar_x = desplazar_x;
   t.desplazar_y = desplazar_y;
   tinta::TransformarSeleccion(sesion->pagina, copias, t);
-  sesion->historial.Registrar(tinta::Historial::OperacionPaginaCompleta(
+  RegistrarOperacion(sesion, tinta::Historial::OperacionPaginaCompleta(
       antes, sesion->pagina));
   return ExportarSeleccion(sesion, copias);
 }
@@ -1298,7 +1521,7 @@ TintaSeleccionInfo tinta_seleccion_ordenar(
   nuevos.trazos = rango(sesion->pagina.trazos.size(), original.trazos.size());
   nuevos.textos = rango(sesion->pagina.textos.size(), original.textos.size());
   nuevos.medios = rango(sesion->pagina.medios.size(), original.medios.size());
-  sesion->historial.Registrar(tinta::Historial::OperacionPaginaCompleta(
+  RegistrarOperacion(sesion, tinta::Historial::OperacionPaginaCompleta(
       antes, sesion->pagina));
   return ExportarSeleccion(sesion, nuevos);
 }
@@ -1314,9 +1537,10 @@ int tinta_enderezar_ultimo_trazo(TintaSesion* sesion) {
   const tinta::Trazo ideal = tinta::TrazoDesdeForma(forma, original);
   if (ideal.muestras.empty()) return 0;
 
-  sesion->historial.Registrar(
-      tinta::Historial::OperacionReemplazar({indice}, {original}, {ideal}));
   sesion->pagina.trazos[indice] = ideal;
+  RegistrarOperacion(
+      sesion,
+      tinta::Historial::OperacionReemplazar({indice}, {original}, {ideal}));
   return static_cast<int>(forma.tipo);
 }
 
@@ -1325,6 +1549,7 @@ int tinta_enderezar_ultimo_trazo(TintaSesion* sesion) {
 void tinta_set_papel(TintaSesion* sesion, int tipo, int pauta, float separacion,
                      float margen_izquierdo) {
   if (!sesion) return;
+  const tinta::Pagina antes = CopiarMetadatos(sesion->pagina);
   // Los valores fuera de rango se ignoran en vez de convertirse en un enum
   // inválido, que sería comportamiento indefinido al leerlo.
   if (tipo >= 0 && tipo <= 5) {
@@ -1335,6 +1560,7 @@ void tinta_set_papel(TintaSesion* sesion, int tipo, int pauta, float separacion,
   }
   if (separacion > 0.0f) sesion->pagina.papel.separacion = separacion;
   sesion->pagina.papel.margen_izquierdo = margen_izquierdo;
+  RegistrarMetadatos(sesion, antes);
 }
 
 uint32_t tinta_color_papel(const TintaSesion* sesion) {
@@ -1395,6 +1621,7 @@ void tinta_set_papel_avanzado(TintaSesion* sesion, int pauta,
                               bool mostrar_ejes, float eje_x, float eje_y,
                               bool pauta_al_exportar) {
   if (!sesion) return;
+  const tinta::Pagina antes = CopiarMetadatos(sesion->pagina);
   tinta::Papel& papel = sesion->pagina.papel;
   if (pauta >= 0 && pauta <= 17) papel.pauta = static_cast<tinta::Pauta>(pauta);
   papel.separacion = std::max(1.0f, separacion);
@@ -1409,12 +1636,14 @@ void tinta_set_papel_avanzado(TintaSesion* sesion, int pauta,
   papel.eje_x = eje_x;
   papel.eje_y = eje_y;
   papel.pauta_al_exportar = pauta_al_exportar;
+  RegistrarMetadatos(sesion, antes);
 }
 
 void tinta_set_limites(TintaSesion* sesion, bool ancho_infinito,
                        bool alto_infinito, float ancho_min, float ancho_max,
                        float alto_min, float alto_max) {
   if (!sesion) return;
+  const tinta::Pagina antes = CopiarMetadatos(sesion->pagina);
   tinta::LimitesLienzo limites;
   limites.ancho_infinito = ancho_infinito;
   limites.alto_infinito = alto_infinito;
@@ -1428,6 +1657,7 @@ void tinta_set_limites(TintaSesion* sesion, bool ancho_infinito,
 
   sesion->pagina.limites = limites;
   tinta::AplicarLimites(limites, &sesion->pagina.ancho, &sesion->pagina.alto);
+  RegistrarMetadatos(sesion, antes);
 }
 
 float tinta_ancho_pagina(const TintaSesion* sesion) {
@@ -1447,45 +1677,67 @@ bool tinta_pagina_alto_infinito(const TintaSesion* sesion) {
 }
 
 bool tinta_crecer_si_hace_falta(TintaSesion* sesion, float margen) {
-  return sesion && sesion->pagina.CrecerSiHaceFalta(margen);
+  if (!sesion) return false;
+  const tinta::Pagina antes = CopiarMetadatos(sesion->pagina);
+  const bool cambio = sesion->pagina.CrecerSiHaceFalta(margen);
+  if (cambio) RegistrarMetadatos(sesion, antes);
+  return cambio;
 }
 
 void tinta_pagina_aplicar_modo(TintaSesion* sesion, int modo) {
   if (!sesion) return;
+  const tinta::Pagina antes = CopiarMetadatos(sesion->pagina);
   tinta::AplicarModoPagina(
       &sesion->pagina,
       DesdeEntero(modo, 6, tinta::ModoPagina::Hibrido));
+  RegistrarMetadatos(sesion, antes);
 }
 
 bool tinta_pagina_cambiar_tamano(TintaSesion* sesion, float ancho, float alto,
                                  int unidad, float ppp, int reacomodo) {
   if (!sesion) return false;
+  auto antes = CopiarPaginaParaCronologia(sesion);
+  if (sesion->cronologia.activa() && !antes) return false;
   const auto u = DesdeEntero(unidad, 3, tinta::UnidadLienzo::Pixeles);
   const auto r = DesdeEntero(reacomodo, 1, tinta::ReacomodoPagina::Conservar);
-  return tinta::CambiarTamanoAvanzado(
+  const bool cambio = tinta::CambiarTamanoAvanzado(
       &sesion->pagina, tinta::ALongitudLienzo(ancho, u, ppp),
       tinta::ALongitudLienzo(alto, u, ppp), r);
+  if (cambio) RegistrarCambioDirecto(sesion, antes);
+  return cambio;
 }
 
 bool tinta_pagina_ajustar_al_contenido(TintaSesion* sesion, float margen) {
-  return sesion && tinta::AjustarAlContenido(&sesion->pagina, margen);
+  if (!sesion) return false;
+  const tinta::Pagina antes = CopiarMetadatos(sesion->pagina);
+  const bool cambio = tinta::AjustarAlContenido(&sesion->pagina, margen);
+  if (cambio) RegistrarMetadatos(sesion, antes);
+  return cambio;
 }
 
 bool tinta_pagina_insertar_espacio(TintaSesion* sesion, int eje, float desde,
                                    float cantidad) {
   if (!sesion) return false;
-  return tinta::InsertarEspacio(
+  auto antes = CopiarPaginaParaCronologia(sesion);
+  if (sesion->cronologia.activa() && !antes) return false;
+  const bool cambio = tinta::InsertarEspacio(
       &sesion->pagina,
       DesdeEntero(eje, 1, tinta::EjeEspacio::Vertical), desde, cantidad);
+  if (cambio) RegistrarCambioDirecto(sesion, antes);
+  return cambio;
 }
 
 bool tinta_pagina_mover_borde(TintaSesion* sesion, int borde, float delta,
                               bool desplazar_contenido) {
   if (!sesion) return false;
-  return tinta::MoverBorde(
+  auto antes = CopiarPaginaParaCronologia(sesion);
+  if (sesion->cronologia.activa() && !antes) return false;
+  const bool cambio = tinta::MoverBorde(
       &sesion->pagina,
       DesdeEntero(borde, 3, tinta::BordePagina::Derecho), delta,
       desplazar_contenido);
+  if (cambio) RegistrarCambioDirecto(sesion, antes);
+  return cambio;
 }
 
 size_t tinta_reflujo_planificar(TintaSesion* sesion,
@@ -1548,15 +1800,27 @@ bool tinta_reflujo_aplicar(TintaSesion* sesion,
                            const TintaTransformacionTrazo* plan,
                            size_t cantidad) {
   if (!sesion || (!plan && cantidad)) return false;
+  std::vector<size_t> indices;
+  indices.reserve(cantidad);
   for (size_t i = 0; i < cantidad; ++i) {
     if (plan[i].indice_trazo >= sesion->pagina.trazos.size()) return false;
+    indices.push_back(plan[i].indice_trazo);
   }
+  std::sort(indices.begin(), indices.end());
+  if (std::adjacent_find(indices.begin(), indices.end()) != indices.end())
+    return false;
+  const auto antes = CopiarTrazos(sesion->pagina, indices);
   for (size_t i = 0; i < cantidad; ++i) {
     auto& trazo = sesion->pagina.trazos[plan[i].indice_trazo];
     for (auto& muestra : trazo.muestras) {
       muestra.posicion.x += plan[i].delta_x;
       muestra.posicion.y += plan[i].delta_y;
     }
+  }
+  const auto despues = CopiarTrazos(sesion->pagina, indices);
+  if (!indices.empty()) {
+    RegistrarOperacion(sesion, tinta::Historial::OperacionReemplazar(
+        indices, antes, despues));
   }
   return true;
 }
@@ -1629,7 +1893,8 @@ const uint8_t* tinta_guardar(TintaSesion* sesion, size_t* cantidad) {
 bool tinta_cargar(TintaSesion* sesion, const uint8_t* datos, size_t cantidad) {
   if (!sesion || !datos || cantidad == 0) return false;
 
-  const std::vector<uint8_t> copia(datos, datos + cantidad);
+  std::vector<uint8_t> copia;
+  if (!CopiarEntradaSegura(datos, cantidad, &copia)) return false;
   tinta::Documento documento;
   if (!tinta::Deserializar(copia, &documento)) return false;
   if (!documento.id.empty() && !sesion->documento_id.empty() &&
@@ -1655,7 +1920,8 @@ bool tinta_cargar(TintaSesion* sesion, const uint8_t* datos, size_t cantidad) {
 bool tinta_cargar_como_copia(TintaSesion* sesion, const uint8_t* datos,
                              size_t cantidad, const char* identidad_nueva) {
   if (!sesion || !datos || cantidad == 0 || !identidad_nueva) return false;
-  const std::vector<uint8_t> copia(datos, datos + cantidad);
+  std::vector<uint8_t> copia;
+  if (!CopiarEntradaSegura(datos, cantidad, &copia)) return false;
   tinta::Documento documento;
   if (!tinta::Deserializar(copia, &documento)) return false;
   if (documento.cuadernos.empty() ||
@@ -1898,6 +2164,10 @@ bool tinta_texto_anadir(TintaSesion* sesion, const char* id,
   item.marco = {x, y, ancho, alto};
   item.desde_dictado = desde_dictado;
   sesion->pagina.textos.push_back(std::move(item));
+  const size_t indice = sesion->pagina.textos.size() - 1u;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionAnadirTexto(
+                  indice, sesion->pagina.textos[indice]));
   return true;
 }
 
@@ -1928,19 +2198,29 @@ bool tinta_texto_actualizar(TintaSesion* sesion, const char* id,
   auto item = std::find_if(sesion->pagina.textos.begin(), sesion->pagina.textos.end(),
       [id](const tinta::CuadroTexto& candidato) { return candidato.id == id; });
   if (item == sesion->pagina.textos.end()) return false;
+  const size_t indice = static_cast<size_t>(item - sesion->pagina.textos.begin());
+  const tinta::CuadroTexto antes = *item;
   item->texto = texto;
   item->marco = {x, y, ancho, alto};
   item->rotacion = rotacion;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionReemplazarTexto(
+                  indice, antes, *item));
   return true;
 }
 
 bool tinta_texto_eliminar(TintaSesion* sesion, const char* id) {
   if (!sesion || !id) return false;
   auto& elementos = sesion->pagina.textos;
-  const auto previo = elementos.size();
-  elementos.erase(std::remove_if(elementos.begin(), elementos.end(),
-      [id](const tinta::CuadroTexto& item) { return item.id == id; }), elementos.end());
-  return elementos.size() != previo;
+  const auto item = std::find_if(elementos.begin(), elementos.end(),
+      [id](const tinta::CuadroTexto& actual) { return actual.id == id; });
+  if (item == elementos.end()) return false;
+  const size_t indice = static_cast<size_t>(item - elementos.begin());
+  const tinta::CuadroTexto quitado = *item;
+  elementos.erase(item);
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionQuitarTexto(indice, quitado));
+  return true;
 }
 
 bool tinta_medio_anadir(TintaSesion* sesion, const char* id,
@@ -1959,6 +2239,10 @@ bool tinta_medio_anadir(TintaSesion* sesion, const char* id,
   item.tipo = static_cast<tinta::TipoMedio>(tipo);
   item.marco = {x, y, ancho, alto};
   sesion->pagina.medios.push_back(std::move(item));
+  const size_t indice = sesion->pagina.medios.size() - 1u;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionAnadirMedio(
+                  indice, sesion->pagina.medios[indice]));
   return true;
 }
 
@@ -1996,9 +2280,14 @@ bool tinta_medio_actualizar_marco(TintaSesion* sesion, const char* id,
   auto item = std::find_if(sesion->pagina.medios.begin(), sesion->pagina.medios.end(),
       [id](const tinta::Medio& candidato) { return candidato.id == id; });
   if (item == sesion->pagina.medios.end()) return false;
+  const size_t indice = static_cast<size_t>(item - sesion->pagina.medios.begin());
+  const tinta::Medio antes = *item;
   item->marco = {x, y, ancho, alto};
   item->rotacion = rotacion;
   item->opacidad = std::clamp(opacidad, 0.0f, 1.0f);
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionReemplazarMedio(
+                  indice, antes, *item));
   return true;
 }
 
@@ -2008,8 +2297,13 @@ bool tinta_medio_set_fuente(TintaSesion* sesion, const char* id,
   auto item = std::find_if(sesion->pagina.medios.begin(), sesion->pagina.medios.end(),
       [id](const tinta::Medio& candidato) { return candidato.id == id; });
   if (item == sesion->pagina.medios.end()) return false;
+  const size_t indice = static_cast<size_t>(item - sesion->pagina.medios.begin());
+  const tinta::Medio antes = *item;
   item->pagina_fuente = pagina_fuente;
   item->segundo_inicio = segundo_inicio;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionReemplazarMedio(
+                  indice, antes, *item));
   return true;
 }
 
@@ -2019,8 +2313,14 @@ bool tinta_medio_recortar(TintaSesion* sesion, const char* id,
   auto item = std::find_if(sesion->pagina.medios.begin(), sesion->pagina.medios.end(),
       [id](const tinta::Medio& candidato) { return candidato.id == id; });
   if (item == sesion->pagina.medios.end()) return false;
+  const size_t indice = static_cast<size_t>(item - sesion->pagina.medios.begin());
+  const tinta::Medio antes = *item;
   tinta::RecortarRelativo(&*item, x, y, ancho, alto);
-  return item->recorte_valido();
+  if (!item->recorte_valido()) return false;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionReemplazarMedio(
+                  indice, antes, *item));
+  return true;
 }
 
 bool tinta_medio_quitar_recorte(TintaSesion* sesion, const char* id) {
@@ -2028,18 +2328,28 @@ bool tinta_medio_quitar_recorte(TintaSesion* sesion, const char* id) {
   auto item = std::find_if(sesion->pagina.medios.begin(), sesion->pagina.medios.end(),
       [id](const tinta::Medio& candidato) { return candidato.id == id; });
   if (item == sesion->pagina.medios.end()) return false;
+  const size_t indice = static_cast<size_t>(item - sesion->pagina.medios.begin());
+  const tinta::Medio antes = *item;
   item->recorte_x = 0.0f; item->recorte_y = 0.0f;
   item->recorte_ancho = 1.0f; item->recorte_alto = 1.0f;
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionReemplazarMedio(
+                  indice, antes, *item));
   return true;
 }
 
 bool tinta_medio_eliminar(TintaSesion* sesion, const char* id) {
   if (!sesion || !id) return false;
   auto& elementos = sesion->pagina.medios;
-  const auto previo = elementos.size();
-  elementos.erase(std::remove_if(elementos.begin(), elementos.end(),
-      [id](const tinta::Medio& item) { return item.id == id; }), elementos.end());
-  return elementos.size() != previo;
+  const auto item = std::find_if(elementos.begin(), elementos.end(),
+      [id](const tinta::Medio& actual) { return actual.id == id; });
+  if (item == elementos.end()) return false;
+  const size_t indice = static_cast<size_t>(item - elementos.begin());
+  const tinta::Medio quitado = *item;
+  elementos.erase(item);
+  RegistrarOperacion(
+      sesion, tinta::Historial::OperacionQuitarMedio(indice, quitado));
+  return true;
 }
 
 // --- Matemáticas avanzadas locales ---------------------------------------

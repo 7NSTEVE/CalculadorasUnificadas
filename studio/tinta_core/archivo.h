@@ -10,6 +10,7 @@
 // gana —poder leerlo con los ojos— no sirve para datos de digitalizador.
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -21,6 +22,10 @@ namespace tinta {
 // Versión del formato. Sube cuando cambie la estructura; el lector rechaza lo
 // que no entiende en vez de leer basura.
 constexpr uint16_t kVersionArchivo = 5;
+// Presupuesto previo a cualquier copia/reserva. Los lectores y la fachada C lo
+// comparten para que una entrada hostil no se duplique primero en memoria y se
+// rechace demasiado tarde.
+constexpr std::size_t kMaximoBytesArchivo = 256u * 1024u * 1024u;
 
 std::vector<uint8_t> Serializar(const Documento& documento);
 
@@ -34,8 +39,8 @@ bool Deserializar(const std::vector<uint8_t>& datos, Documento* documento);
 std::vector<uint8_t> SerializarTrazo(const Trazo& trazo);
 bool DeserializarTrazo(const std::vector<uint8_t>& datos, Trazo* trazo);
 
-// Motivo del último fallo de `Deserializar`, para poder diagnosticar un archivo
-// corrupto en vez de decir solo que no se pudo.
+// Motivo del último fallo del hilo actual, para poder diagnosticar un archivo
+// corrupto sin mezclar el error de otra columna/documento concurrente.
 const char* UltimoErrorArchivo();
 
 // Permite que las validaciones de la fachada C informen fallos de integridad

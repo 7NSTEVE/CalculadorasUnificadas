@@ -23,8 +23,8 @@ enum AplicadorAccesibilidadIPad {
             if vista.constraints.first(where:{$0.firstAttribute == .width && $0.relation == .greaterThanOrEqual})==nil{vista.widthAnchor.constraint(greaterThanOrEqualToConstant:objetivoMinimo).isActive=true}
         };return vista
     }
-    static func textoDinamico(_ label:UILabel,estilo:UIFont.TextStyle){label.font=.preferredFont(forTextStyle:estilo);label.adjustsFontForContentSizeCategory=true}
-    static func textoDinamico(_ textView:UITextView,estilo:UIFont.TextStyle){textView.font=.preferredFont(forTextStyle:estilo);textView.adjustsFontForContentSizeCategory=true}
+    static func textoDinamico(_ label:UILabel,estilo:UIFont.TextStyle){label.font = .preferredFont(forTextStyle:estilo);label.adjustsFontForContentSizeCategory=true}
+    static func textoDinamico(_ textView:UITextView,estilo:UIFont.TextStyle){textView.font = .preferredFont(forTextStyle:estilo);textView.adjustsFontForContentSizeCategory=true}
     static func animar(duracion:TimeInterval=0.25,cambios:@escaping()->Void,completion:((Bool)->Void)?=nil){if UIAccessibility.isReduceMotionEnabled{UIView.performWithoutAnimation{cambios();completion?(true)}}else{UIView.animate(withDuration:duracion,animations:cambios,completion:completion)}}
 }
 enum AuditorAccesibilidadIPad {

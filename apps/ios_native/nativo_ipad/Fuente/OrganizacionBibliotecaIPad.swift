@@ -69,7 +69,7 @@ final class RepositorioOrganizacionBibliotecaIPad {
 
     func instantanea() -> InstantaneaOrganizacionBibliotecaIPad {
         bloqueo.lock(); defer { bloqueo.unlock() }
-        return .init(carpetas: estado.carpetas.sorted(ordenCarpetas), cuadernos: estado.cuadernos)
+        return .init(carpetas: estado.carpetas.sorted(by: ordenCarpetas), cuadernos: estado.cuadernos)
     }
 
     func carpetas(en padre: UUID?) -> [CarpetaBibliotecaIPad] {

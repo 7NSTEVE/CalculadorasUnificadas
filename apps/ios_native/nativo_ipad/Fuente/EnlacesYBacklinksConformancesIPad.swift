@@ -1,3 +1,3 @@
 import Foundation
 
-extension TipoDestinoEnlaceIPad: Hashable {}
+// `TipoDestinoEnlaceIPad` ya declara conformidad a `Hashable` en EnlacesYBacklinksIPad.swift.

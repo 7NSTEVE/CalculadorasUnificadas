@@ -50,8 +50,8 @@ final class CoordinadorAccesoRecoveryAudioIPad: NSObject {
     private func escanear() {
         for case let escena as UIWindowScene in UIApplication.shared.connectedScenes
         where escena.activationState == .foregroundActive {
-            for ventana in escena.windows where !ventana.isHidden,
-                  let raiz = ventana.rootViewController {
+            for ventana in escena.windows where !ventana.isHidden {
+                guard let raiz = ventana.rootViewController else { continue }
                 buscarPanel(en: raiz)
             }
         }

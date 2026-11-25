@@ -33,16 +33,29 @@ class MotorBusqueda {
   std::vector<ResultadoBusqueda> Buscar(const std::string& consulta,
                                         const Documento& documento) const;
 
-  // Incorpora texto reconocido por el motor local de la plataforma (Vision en
-  // iPadOS), conservando su caja y el fragmento original. Una cadena vacía se
-  // ignora para que una falla de OCR no produzca coincidencias fantasma.
+  // Compatibilidad con callers antiguos: incorpora un fragmento OCR sin ID.
+  // Para indexación incremental debe preferirse ReemplazarOcr.
   void IndexarOcr(const Ubicacion& ubicacion, const Rect& area,
                   const std::string& texto, const std::string& fragmento);
+
+  // Fuente estable de OCR (por ejemplo hash de IDs de trazos). Volver a
+  // reconocer la misma fuente REEMPLAZA su entrada anterior en vez de crear
+  // duplicados. Una cadena vacía elimina el texto reconocido de esa fuente.
+  void ReemplazarOcr(const std::string& fuente_id,
+                     const Ubicacion& ubicacion, const Rect& area,
+                     const std::string& texto, const std::string& fragmento);
+  bool EliminarOcr(const std::string& fuente_id);
 
   // Limpia el índice actual.
   void Limpiar();
 
  private:
+  enum class OrigenEntrada {
+    Estructural,
+    OcrSinId,
+    OcrIdentificado,
+  };
+
   // Representa un fragmento indexado de texto o contenido.
   struct EntradaIndice {
     Ubicacion ubicacion;
@@ -50,6 +63,8 @@ class MotorBusqueda {
     std::string texto_buscable;
     std::string fragmento_original;
     float peso;
+    OrigenEntrada origen = OrigenEntrada::Estructural;
+    std::string fuente_id;
   };
 
   std::vector<EntradaIndice> indice_;
@@ -57,7 +72,8 @@ class MotorBusqueda {
   // Extrae etiquetas de los medios, como el nombre original o el tipo.
   std::string ExtraerEtiquetas(const Medio& medio) const;
 
-  // Utilidad para pasar a minúsculas y quitar acentos de forma muy básica.
+  // Normaliza UTF-8 de forma determinista para búsqueda latino/inglesa:
+  // minúsculas ASCII + plegado de los diacríticos latinos más usados.
   std::string NormalizarTexto(const std::string& texto) const;
 };
 

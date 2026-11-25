@@ -96,8 +96,9 @@ final class RenderizadorMiniaturasPDFIPad {
         cola.maxConcurrentOperationCount = max(1, min(concurrencia, 3))
 
         let memoria = ProcessInfo.processInfo.physicalMemory
-        let adaptativo = Int(min(max(memoria / 32, 32 * 1_024 * 1_024),
-                                 96 * 1_024 * 1_024))
+        let minCacheBytes: UInt64 = 32 * 1_024 * 1_024
+        let maxCacheBytes: UInt64 = 96 * 1_024 * 1_024
+        let adaptativo = Int(min(max(memoria / 32, minCacheBytes), maxCacheBytes))
         cache.totalCostLimit = max(limiteCacheBytes ?? adaptativo, 8 * 1_024 * 1_024)
         cache.countLimit = 192
 

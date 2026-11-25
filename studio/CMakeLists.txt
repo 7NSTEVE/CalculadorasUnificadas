@@ -27,7 +27,10 @@ add_library(tinta_nucleo STATIC
     tinta_core/api.cpp
     tinta_core/almacen.cpp
     tinta_core/buscador.cpp
+    tinta_core/buscador_api.cpp
     tinta_core/clip.cpp
+    tinta_core/cronologia.cpp
+    tinta_core/duplicacion.cpp
     tinta_core/estado_sesion.cpp
     tinta_core/exportador.cpp
     tinta_core/foco.cpp
@@ -36,6 +39,8 @@ add_library(tinta_nucleo STATIC
     tinta_core/pdf.cpp
     tinta_core/perspectiva.cpp
     tinta_core/simulador.cpp
+    tinta_core/transaccion_historial.cpp
+    tinta_core/transaccion_historial_api.cpp
     tinta_core/unidades.cpp
 )
 target_compile_features(tinta_nucleo PRIVATE cxx_std_20)

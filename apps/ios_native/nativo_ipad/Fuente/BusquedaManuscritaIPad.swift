@@ -159,7 +159,9 @@ final class PanelBusquedaManuscritaIPad: UITableViewController,
             titulo: resultado.fragmento)
         let url = destino.enlace()
         dismiss(animated: true) {
-            CoordinadorRouterEnlacesProfundosGlobalIPad.compartido.recibir(url)
+            if let url {
+                CoordinadorRouterEnlacesProfundosGlobalIPad.compartido.recibir(url)
+            }
         }
     }
 

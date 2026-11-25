@@ -316,8 +316,9 @@ final class RepositorioAudioResilienteIPad {
                 continue
             }
             let valores = try url.resourceValues(forKeys: [.fileSizeKey])
+            let hashActual = try sha256(url)
             if Int64(valores.fileSize ?? -1) != segmento.bytes
-                || (try sha256(url)) != segmento.sha256 {
+                || hashActual != segmento.sha256 {
                 alterados.append(segmento.archivo)
             }
         }

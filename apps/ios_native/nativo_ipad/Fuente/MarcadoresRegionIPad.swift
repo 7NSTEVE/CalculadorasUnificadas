@@ -260,7 +260,9 @@ final class PanelMarcadoresRegionIPad: UITableViewController {
         guard marcadores.indices.contains(indexPath.row) else { return }
         let url = marcadores[indexPath.row].destino.enlace()
         dismiss(animated: true) {
-            CoordinadorRouterEnlacesProfundosGlobalIPad.compartido.recibir(url)
+            if let url {
+                CoordinadorRouterEnlacesProfundosGlobalIPad.compartido.recibir(url)
+            }
         }
     }
 
@@ -297,7 +299,7 @@ final class CentroMarcadoresRegionIPad {
         guard let contexto = contextoPrincipal() else { return }
         let visible = contexto.navegador.regionVisibleDocumento
         let centro = CGPoint(x: visible.midX, y: visible.midY)
-        let zoom = max(Double(contexto.navegador.zoomScale), 0.01)
+        let zoom = max(Double(contexto.navegador.zoom), 0.01)
         let radio = max(Double(max(visible.width, visible.height)) * 0.12, 36)
         let documento = contexto.navegador.lienzo.sesion.documentoPersistenteId
 

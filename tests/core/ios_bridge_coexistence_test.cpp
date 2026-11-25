@@ -5,6 +5,9 @@
 #include "calcemu.h"
 #include "casio_ffi.h"
 #include "api.h"
+#include "duplicacion.h"
+#include "transaccion_historial_api.h"
+#include "buscador_api.h"
 #include "cuadernu_studio_ffi.h"
 
 #include <cstdio>

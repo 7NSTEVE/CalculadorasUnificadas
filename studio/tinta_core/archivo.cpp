@@ -1,6 +1,8 @@
 #include "archivo.h"
 
+#include <cmath>
 #include <cstring>
+#include <new>
 #include <utility>
 
 namespace tinta {
@@ -8,7 +10,26 @@ namespace {
 
 constexpr char kMagia[6] = {'T', 'I', 'N', 'T', 'A', '\0'};
 constexpr char kMagiaTrazo[6] = {'T', 'R', 'A', 'Z', 'O', '\0'};
-const char* g_error = "";
+// El editor puede guardar una columna mientras otra carga o recupera. El texto
+// de error pertenece a la operación/hilo que acaba de fallar; compartir un
+// puntero global hacía que una sesión pudiera leer el error de otra. El buffer
+// fijo copia también los mensajes temporales y sigue siendo utilizable cuando
+// precisamente el fallo fue `std::bad_alloc`.
+struct ErrorHilo {
+  ErrorHilo& operator=(const char* mensaje) noexcept {
+    const char* fuente = mensaje ? mensaje : "";
+    const size_t recibido = std::strlen(fuente);
+    const size_t largo = recibido < sizeof(texto) ? recibido : sizeof(texto) - 1u;
+    std::memcpy(texto, fuente, largo);
+    texto[largo] = '\0';
+    return *this;
+  }
+
+  const char* c_str() const noexcept { return texto; }
+
+  char texto[256]{};
+};
+thread_local ErrorHilo g_error;
 
 // --- Escritura -------------------------------------------------------------
 
@@ -54,19 +75,43 @@ class Lector {
 
   bool bien() const { return bien_; }
   size_t posicion() const { return pos_; }
+  size_t restantes() const {
+    return bien_ && pos_ <= tamano_ ? tamano_ - pos_ : 0u;
+  }
 
   uint8_t U8() { uint8_t v = 0; Crudo(&v, sizeof(v)); return v; }
   uint16_t U16() { uint16_t v = 0; Crudo(&v, sizeof(v)); return v; }
   uint32_t U32() { uint32_t v = 0; Crudo(&v, sizeof(v)); return v; }
   int32_t I32() { int32_t v = 0; Crudo(&v, sizeof(v)); return v; }
   int64_t I64() { int64_t v = 0; Crudo(&v, sizeof(v)); return v; }
-  float F32() { float v = 0.0f; Crudo(&v, sizeof(v)); return v; }
-  double F64() { double v = 0.0; Crudo(&v, sizeof(v)); return v; }
-  bool Bool() { return U8() != 0u; }
+  float F32() {
+    float v = 0.0f;
+    Crudo(&v, sizeof(v));
+    if (bien_ && !std::isfinite(v)) bien_ = false;
+    return v;
+  }
+  double F64() {
+    double v = 0.0;
+    Crudo(&v, sizeof(v));
+    if (bien_ && !std::isfinite(v)) bien_ = false;
+    return v;
+  }
+  bool Bool() {
+    const uint8_t v = U8();
+    if (bien_ && v > 1u) bien_ = false;
+    return v == 1u;
+  }
+
+  uint8_t EnumU8(uint8_t maximo) {
+    const uint8_t v = U8();
+    if (bien_ && v > maximo) bien_ = false;
+    return bien_ ? v : 0u;
+  }
 
   std::string Texto() {
     const uint32_t largo = U32();
-    if (!bien_ || pos_ + largo > tamano_) {
+    constexpr uint32_t kTextoMaximo = 16u * 1024u * 1024u;
+    if (!bien_ || largo > kTextoMaximo || largo > restantes()) {
       bien_ = false;
       return {};
     }
@@ -86,15 +131,19 @@ class Lector {
   // Lee un contador de elementos, rechazando los absurdos. Sin este tope, un
   // archivo corrupto que diga «4 mil millones de trazos» reserva memoria hasta
   // tumbar el proceso antes de que falle ninguna lectura.
-  uint32_t Cuenta(uint32_t tope) {
+  uint32_t Cuenta(uint32_t tope, size_t bytes_minimos = 0u) {
     const uint32_t n = U32();
-    if (n > tope) bien_ = false;
+    if (n > tope ||
+        (bytes_minimos != 0u &&
+         static_cast<size_t>(n) > restantes() / bytes_minimos)) {
+      bien_ = false;
+    }
     return bien_ ? n : 0u;
   }
 
  private:
   void Crudo(void* destino, size_t bytes) {
-    if (!bien_ || pos_ + bytes > tamano_) {
+    if (!bien_ || bytes > restantes()) {
       bien_ = false;
       return;
     }
@@ -109,6 +158,9 @@ class Lector {
 };
 
 constexpr uint32_t kTopeElementos = 20'000'000u;
+constexpr uint32_t kTopeMuestrasPorTrazo = 4'000'000u;
+constexpr size_t kBytesMuestraSerializada =
+    sizeof(float) * 5u + sizeof(int64_t);
 
 // --- Estructuras -----------------------------------------------------------
 
@@ -135,7 +187,8 @@ EstiloTexto LeerEstilo(Lector& l) {
   s.tachado = l.Bool();
   s.color_argb = l.U32();
   s.color_resaltado = l.U32();
-  s.alineacion = static_cast<Alineacion>(l.U8());
+  s.alineacion = static_cast<Alineacion>(
+      l.EnumU8(static_cast<uint8_t>(Alineacion::Justificado)));
   s.interlineado = l.F32();
   return s;
 }
@@ -191,7 +244,8 @@ Trazo LeerTrazo(Lector& l, uint16_t version) {
       t.estilo.nivel_refinado = l.I32();
     }
   }
-  const uint32_t n = l.Cuenta(kTopeElementos);
+  const uint32_t n =
+      l.Cuenta(kTopeMuestrasPorTrazo, kBytesMuestraSerializada);
   if (!l.bien()) return t;
   t.muestras.reserve(n);
   for (uint32_t i = 0; i < n && l.bien(); ++i) {
@@ -230,7 +284,8 @@ NotaFija LeerNota(Lector& l, uint16_t version) {
   n.ancho = l.F32();
   n.alto = l.F32();
   n.color_argb = l.U32();
-  n.alcance = static_cast<AlcanceNota>(l.U8());
+  n.alcance = static_cast<AlcanceNota>(
+      l.EnumU8(static_cast<uint8_t>(AlcanceNota::Global)));
   n.contraida = l.Bool();
   n.anclada = l.Bool();
   const uint32_t n_trazos = l.Cuenta(kTopeElementos);
@@ -260,7 +315,8 @@ Medio LeerMedio(Lector& l) {
   m.id = l.Texto();
   m.hash = l.Texto();
   m.nombre_original = l.Texto();
-  m.tipo = static_cast<TipoMedio>(l.U8());
+  m.tipo = static_cast<TipoMedio>(
+      l.EnumU8(static_cast<uint8_t>(TipoMedio::Audio)));
   m.marco = l.Rectangulo();
   m.rotacion = l.F32();
   m.opacidad = l.F32();
@@ -330,8 +386,10 @@ void EscribirPagina(Escritor& e, const Pagina& p) {
 Pagina LeerPagina(Lector& l, uint16_t version) {
   Pagina p;
   p.titulo = l.Texto();
-  p.papel.tipo = static_cast<TipoPapel>(l.U8());
-  p.papel.pauta = static_cast<Pauta>(l.U8());
+  p.papel.tipo = static_cast<TipoPapel>(
+      l.EnumU8(static_cast<uint8_t>(TipoPapel::Negro)));
+  p.papel.pauta = static_cast<Pauta>(
+      l.EnumU8(static_cast<uint8_t>(Pauta::Personalizada)));
   p.papel.separacion = l.F32();
   p.papel.margen_izquierdo = l.F32();
   if (version >= 2) {
@@ -357,7 +415,8 @@ Pagina LeerPagina(Lector& l, uint16_t version) {
   p.limites.alto_minimo = l.F32();
   p.limites.alto_maximo = l.F32();
 
-  p.orientacion = static_cast<OrientacionPagina>(l.U8());
+  p.orientacion = static_cast<OrientacionPagina>(
+      l.EnumU8(static_cast<uint8_t>(OrientacionPagina::Horizontal)));
   p.ancho = l.F32();
   p.alto = l.F32();
   p.pagina_pdf = l.I32();
@@ -392,12 +451,22 @@ Pagina LeerPagina(Lector& l, uint16_t version) {
 }  // namespace
 
 std::vector<uint8_t> SerializarTrazo(const Trazo& trazo) {
-  std::vector<uint8_t> datos;
-  Escritor e(&datos);
-  for (char c : kMagiaTrazo) e.U8(static_cast<uint8_t>(c));
-  e.U16(kVersionArchivo);
-  EscribirTrazo(e, trazo);
-  return datos;
+  g_error = "";
+  try {
+    std::vector<uint8_t> datos;
+    Escritor e(&datos);
+    for (char c : kMagiaTrazo) e.U8(static_cast<uint8_t>(c));
+    e.U16(kVersionArchivo);
+    EscribirTrazo(e, trazo);
+    if (datos.size() > kMaximoBytesArchivo) {
+      g_error = "el trazo excede el presupuesto seguro del formato";
+      return {};
+    }
+    return datos;
+  } catch (const std::bad_alloc&) {
+    g_error = "no hay memoria suficiente para serializar el trazo";
+    return {};
+  }
 }
 
 bool DeserializarTrazo(const std::vector<uint8_t>& datos, Trazo* trazo) {
@@ -406,24 +475,33 @@ bool DeserializarTrazo(const std::vector<uint8_t>& datos, Trazo* trazo) {
     g_error = "trazo demasiado corto o destino nulo";
     return false;
   }
+  if (datos.size() > kMaximoBytesArchivo) {
+    g_error = "el trazo supera el presupuesto seguro de lectura";
+    return false;
+  }
   if (std::memcmp(datos.data(), kMagiaTrazo, sizeof(kMagiaTrazo)) != 0) {
     g_error = "la cabecera no es de un trazo de tinta";
     return false;
   }
-  Lector l(datos.data(), datos.size());
-  for (size_t i = 0; i < sizeof(kMagiaTrazo); ++i) l.U8();
-  const uint16_t version = l.U16();
-  if (version == 0 || version > kVersionArchivo) {
-    g_error = "version de trazo desconocida";
+  try {
+    Lector l(datos.data(), datos.size());
+    for (size_t i = 0; i < sizeof(kMagiaTrazo); ++i) l.U8();
+    const uint16_t version = l.U16();
+    if (version == 0 || version > kVersionArchivo) {
+      g_error = "version de trazo desconocida";
+      return false;
+    }
+    Trazo leido = LeerTrazo(l, version);
+    if (!l.bien() || l.posicion() != datos.size()) {
+      g_error = "trazo truncado o con datos sobrantes";
+      return false;
+    }
+    *trazo = std::move(leido);
+    return true;
+  } catch (const std::bad_alloc&) {
+    g_error = "no hay memoria suficiente para leer el trazo";
     return false;
   }
-  Trazo leido = LeerTrazo(l, version);
-  if (!l.bien() || l.posicion() != datos.size()) {
-    g_error = "trazo truncado o con datos sobrantes";
-    return false;
-  }
-  *trazo = std::move(leido);
-  return true;
 }
 
 std::vector<uint8_t> Serializar(const Documento& documento) {
@@ -434,37 +512,46 @@ std::vector<uint8_t> Serializar(const Documento& documento) {
     g_error = "el documento no tiene identidad durable";
     return {};
   }
-  std::vector<uint8_t> datos;
-  Escritor e(&datos);
+  try {
+    std::vector<uint8_t> datos;
+    Escritor e(&datos);
 
-  for (char c : kMagia) e.U8(static_cast<uint8_t>(c));
-  e.U16(kVersionArchivo);
+    for (char c : kMagia) e.U8(static_cast<uint8_t>(c));
+    e.U16(kVersionArchivo);
 
-  // Desde v5 la identidad durable forma parte del agregado canónico. Antes
-  // existía en `Documento`, pero se perdía al serializar y los sidecars del
-  // iPad terminaban dependiendo del orden de apertura del proceso.
-  e.Texto(documento.id);
-  e.Texto(documento.titulo);
+    // Desde v5 la identidad durable forma parte del agregado canónico. Antes
+    // existía en `Documento`, pero se perdía al serializar y los sidecars del
+    // iPad terminaban dependiendo del orden de apertura del proceso.
+    e.Texto(documento.id);
+    e.Texto(documento.titulo);
 
-  e.U32(static_cast<uint32_t>(documento.notas.size()));
-  for (const auto& n : documento.notas) EscribirNota(e, n);
+    e.U32(static_cast<uint32_t>(documento.notas.size()));
+    for (const auto& n : documento.notas) EscribirNota(e, n);
 
-  e.U32(static_cast<uint32_t>(documento.cuadernos.size()));
-  for (const auto& cuaderno : documento.cuadernos) {
-    e.Texto(cuaderno.titulo);
+    e.U32(static_cast<uint32_t>(documento.cuadernos.size()));
+    for (const auto& cuaderno : documento.cuadernos) {
+      e.Texto(cuaderno.titulo);
 
-    e.U32(static_cast<uint32_t>(cuaderno.notas.size()));
-    for (const auto& n : cuaderno.notas) EscribirNota(e, n);
+      e.U32(static_cast<uint32_t>(cuaderno.notas.size()));
+      for (const auto& n : cuaderno.notas) EscribirNota(e, n);
 
-    e.U32(static_cast<uint32_t>(cuaderno.secciones.size()));
-    for (const auto& seccion : cuaderno.secciones) {
-      e.Texto(seccion.titulo);
-      e.U32(static_cast<uint32_t>(seccion.paginas.size()));
-      for (const auto& pagina : seccion.paginas) EscribirPagina(e, pagina);
+      e.U32(static_cast<uint32_t>(cuaderno.secciones.size()));
+      for (const auto& seccion : cuaderno.secciones) {
+        e.Texto(seccion.titulo);
+        e.U32(static_cast<uint32_t>(seccion.paginas.size()));
+        for (const auto& pagina : seccion.paginas) EscribirPagina(e, pagina);
+      }
     }
-  }
 
-  return datos;
+    if (datos.size() > kMaximoBytesArchivo) {
+      g_error = "el documento excede el presupuesto seguro del formato";
+      return {};
+    }
+    return datos;
+  } catch (const std::bad_alloc&) {
+    g_error = "no hay memoria suficiente para serializar el documento";
+    return {};
+  }
 }
 
 bool Deserializar(const std::vector<uint8_t>& datos, Documento* documento) {
@@ -477,68 +564,77 @@ bool Deserializar(const std::vector<uint8_t>& datos, Documento* documento) {
     g_error = "archivo demasiado corto para tener cabecera";
     return false;
   }
+  if (datos.size() > kMaximoBytesArchivo) {
+    g_error = "el documento supera el presupuesto seguro de lectura";
+    return false;
+  }
   if (std::memcmp(datos.data(), kMagia, sizeof(kMagia)) != 0) {
     g_error = "la cabecera no es de un archivo de tinta";
     return false;
   }
 
-  Lector l(datos.data(), datos.size());
-  for (size_t i = 0; i < sizeof(kMagia); ++i) l.U8();
+  try {
+    Lector l(datos.data(), datos.size());
+    for (size_t i = 0; i < sizeof(kMagia); ++i) l.U8();
 
-  const uint16_t version = l.U16();
-  if (version == 0 || version > kVersionArchivo) {
-    g_error = "version de formato desconocida";
-    return false;
-  }
-
-  // Se llena un documento aparte: si el archivo está truncado, el que ya tenía
-  // el usuario abierto no se toca.
-  Documento leido;
-  if (version >= 5) {
-    leido.id = l.Texto();
-    if (!l.bien() || leido.id.empty()) {
-      g_error = "el archivo v5 no contiene identidad durable";
+    const uint16_t version = l.U16();
+    if (version == 0 || version > kVersionArchivo) {
+      g_error = "version de formato desconocida";
       return false;
     }
-  }
-  leido.titulo = l.Texto();
 
-  uint32_t n = l.Cuenta(kTopeElementos);
-  for (uint32_t i = 0; i < n && l.bien(); ++i)
-    leido.notas.push_back(LeerNota(l, version));
-
-  const uint32_t cuadernos = l.Cuenta(kTopeElementos);
-  for (uint32_t c = 0; c < cuadernos && l.bien(); ++c) {
-    Cuaderno cuaderno;
-    cuaderno.titulo = l.Texto();
-
-    n = l.Cuenta(kTopeElementos);
-    for (uint32_t i = 0; i < n && l.bien(); ++i)
-      cuaderno.notas.push_back(LeerNota(l, version));
-
-    const uint32_t secciones = l.Cuenta(kTopeElementos);
-    for (uint32_t s = 0; s < secciones && l.bien(); ++s) {
-      Seccion seccion;
-      seccion.titulo = l.Texto();
-      const uint32_t paginas = l.Cuenta(kTopeElementos);
-      for (uint32_t p = 0; p < paginas && l.bien(); ++p) {
-        seccion.paginas.push_back(LeerPagina(l, version));
+    // Se llena un documento aparte: si el archivo está truncado, el que ya tenía
+    // el usuario abierto no se toca.
+    Documento leido;
+    if (version >= 5) {
+      leido.id = l.Texto();
+      if (!l.bien() || leido.id.empty()) {
+        g_error = "el archivo v5 no contiene identidad durable";
+        return false;
       }
-      cuaderno.secciones.push_back(std::move(seccion));
     }
-    leido.cuadernos.push_back(std::move(cuaderno));
-  }
+    leido.titulo = l.Texto();
 
-  if (!l.bien()) {
-    g_error = "los datos se acaban antes de tiempo o traen cuentas imposibles";
+    uint32_t n = l.Cuenta(kTopeElementos);
+    for (uint32_t i = 0; i < n && l.bien(); ++i)
+      leido.notas.push_back(LeerNota(l, version));
+
+    const uint32_t cuadernos = l.Cuenta(kTopeElementos);
+    for (uint32_t c = 0; c < cuadernos && l.bien(); ++c) {
+      Cuaderno cuaderno;
+      cuaderno.titulo = l.Texto();
+
+      n = l.Cuenta(kTopeElementos);
+      for (uint32_t i = 0; i < n && l.bien(); ++i)
+        cuaderno.notas.push_back(LeerNota(l, version));
+
+      const uint32_t secciones = l.Cuenta(kTopeElementos);
+      for (uint32_t s = 0; s < secciones && l.bien(); ++s) {
+        Seccion seccion;
+        seccion.titulo = l.Texto();
+        const uint32_t paginas = l.Cuenta(kTopeElementos);
+        for (uint32_t p = 0; p < paginas && l.bien(); ++p) {
+          seccion.paginas.push_back(LeerPagina(l, version));
+        }
+        cuaderno.secciones.push_back(std::move(seccion));
+      }
+      leido.cuadernos.push_back(std::move(cuaderno));
+    }
+
+    if (!l.bien() || l.posicion() != datos.size()) {
+      g_error = "los datos se acaban antes de tiempo, traen cuentas imposibles o bytes sobrantes";
+      return false;
+    }
+
+    *documento = std::move(leido);
+    return true;
+  } catch (const std::bad_alloc&) {
+    g_error = "no hay memoria suficiente para leer el documento";
     return false;
   }
-
-  *documento = std::move(leido);
-  return true;
 }
 
-const char* UltimoErrorArchivo() { return g_error; }
+const char* UltimoErrorArchivo() { return g_error.c_str(); }
 
 void EstablecerErrorArchivo(const char* mensaje) {
   g_error = mensaje ? mensaje : "";

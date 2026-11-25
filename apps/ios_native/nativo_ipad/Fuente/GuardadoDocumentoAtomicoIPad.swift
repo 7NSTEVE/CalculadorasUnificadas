@@ -19,6 +19,7 @@ struct ResultadoGuardadoDocumentoAtomicoIPad: Equatable {
     var participantes: [String]
     var archivos: Int
     var huboCambios: Bool { archivos > 0 }
+    var revisionId: UUID? { transaccionId }
 }
 
 enum ErrorGuardadoDocumentoAtomicoIPad: LocalizedError, Equatable {

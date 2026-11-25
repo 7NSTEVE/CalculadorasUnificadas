@@ -119,7 +119,7 @@ private extension JSONDecoder {
 /// Overlay reusable; Canvas sólo debe alimentarlo con bounds/transform correctos.
 final class VistaCursoresRemotosIPad: UIView {
     var cursores: [CursorRemotoCuadernUIPad] = [] { didSet { setNeedsDisplay() } }
-    override init(frame: CGRect) { super.init(frame: frame); isOpaque=false; backgroundColor=.clear; isUserInteractionEnabled=false; accessibilityElementsHidden=true }
+    override init(frame: CGRect) { super.init(frame: frame); isOpaque = false; backgroundColor = .clear; isUserInteractionEnabled = false; accessibilityElementsHidden = true }
     required init?(coder: NSCoder) { fatalError("init(coder:) no implementado") }
 
     override func draw(_ rect: CGRect) {

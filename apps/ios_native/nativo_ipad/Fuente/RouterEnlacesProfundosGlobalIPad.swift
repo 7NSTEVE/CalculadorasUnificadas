@@ -436,8 +436,8 @@ final class CoordinadorRouterEnlacesProfundosGlobalIPad {
     private func refrescarListenersLegados() {
         for case let escena as UIWindowScene in UIApplication.shared.connectedScenes
         where escena.activationState != .unattached {
-            for ventana in escena.windows where !ventana.isHidden,
-                  let raiz = ventana.rootViewController {
+            for ventana in escena.windows where !ventana.isHidden {
+                guard let raiz = ventana.rootViewController else { continue }
                 quitarListenerLegado(en: raiz)
             }
         }

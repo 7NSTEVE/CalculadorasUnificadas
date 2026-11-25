@@ -129,6 +129,27 @@ double tinta_frecuencia_hz(const TintaSesion* sesion);
 bool tinta_rango_temporal(const TintaSesion* sesion, double* inicio_s,
                           double* fin_s);
 
+// --- Cronología vectorial de Nota Viva -----------------------------------
+
+// Captura la página actual como estado base. `inicio_s` y los tiempos que se
+// marquen después pertenecen al mismo reloj monotónico que los UITouch.
+bool tinta_cronologia_comenzar(TintaSesion* sesion, double inicio_s);
+void tinta_cronologia_fijar_tiempo(TintaSesion* sesion, double tiempo_s);
+void tinta_cronologia_cancelar(TintaSesion* sesion);
+size_t tinta_cronologia_cantidad_eventos(const TintaSesion* sesion);
+
+// Serializa estado base + deltas y termina la captura. El puntero pertenece a
+// la sesión y vale hasta la siguiente llamada que reutilice su buffer.
+const uint8_t* tinta_cronologia_finalizar(TintaSesion* sesion,
+                                          size_t* cantidad);
+
+// Carga una cronología en una sesión aislada de solo lectura. `mostrar_hasta`
+// devuelve true únicamente cuando aplicó o revirtió eventos de composición;
+// la tinta puede seguir avanzando dentro de un trazo aunque devuelva false.
+bool tinta_cronologia_cargar(TintaSesion* sesion, const uint8_t* datos,
+                             size_t cantidad);
+bool tinta_cronologia_mostrar_hasta(TintaSesion* sesion, double tiempo_s);
+
 // Identidad y formato unitario para sincronización conflict-free. Importar dos
 // veces un trazo con el mismo ID es idempotente. El puntero de serialización y
 // el texto del ID valen hasta la siguiente llamada a esta sesión.

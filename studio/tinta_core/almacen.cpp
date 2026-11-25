@@ -4,6 +4,7 @@
 #include <fstream>
 #include <chrono>
 #include <cstdlib>
+#include <new>
 
 namespace tinta {
 namespace fs = std::filesystem;
@@ -142,9 +143,22 @@ bool CargarCuaderno(const std::string& id, Documento* doc) {
 
   std::ifstream ifs(ruta_trazos, std::ios::binary | std::ios::ate);
   if (!ifs.is_open()) return false;
-  std::streamsize size = ifs.tellg();
+  const std::streamsize size = ifs.tellg();
+  if (size <= 0 ||
+      size > static_cast<std::streamsize>(kMaximoBytesArchivo)) {
+    EstablecerErrorArchivo(
+        "el archivo almacenado supera el presupuesto seguro de lectura");
+    return false;
+  }
   ifs.seekg(0, std::ios::beg);
-  std::vector<uint8_t> bytes(size);
+  std::vector<uint8_t> bytes;
+  try {
+    bytes.resize(static_cast<std::size_t>(size));
+  } catch (const std::bad_alloc&) {
+    EstablecerErrorArchivo(
+        "no hay memoria suficiente para cargar el archivo almacenado");
+    return false;
+  }
   if (ifs.read(reinterpret_cast<char*>(bytes.data()), size)) {
     if (!Deserializar(bytes, doc)) return false;
   } else {

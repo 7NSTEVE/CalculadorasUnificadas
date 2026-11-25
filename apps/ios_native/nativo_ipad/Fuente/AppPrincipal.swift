@@ -83,8 +83,13 @@ final class EscenaPrincipal: UIResponder, UIWindowSceneDelegate {
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        guard let url = URLContexts.first?.url else { return }
-        CentroEnlacesProfundos.compartido.recibir(url)
+        if let url = URLContexts.first?.url {
+            CentroEnlacesProfundos.compartido.recibir(url)
+        }
+        if let ventana = scene as? UIWindowScene {
+            let urls = URLContexts.map(\.url)
+            CentroEntradaOneNoteIPad.compartido.recibir(urls: urls, en: ventana)
+        }
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
@@ -97,6 +102,9 @@ final class EscenaPrincipal: UIResponder, UIWindowSceneDelegate {
 
     func sceneWillEnterForeground(_ scene: UIScene) {
         MonitorDistraccionIPad.compartido.registrarRegreso()
+        if let ventana = scene as? UIWindowScene {
+            CentroEntradaOneNoteIPad.compartido.instalarBotonImportar(en: ventana)
+        }
     }
 }
 

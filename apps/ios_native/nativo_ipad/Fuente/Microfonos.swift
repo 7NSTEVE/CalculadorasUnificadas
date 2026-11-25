@@ -101,7 +101,7 @@ enum Microfonos {
         if !yaAdmiteEntrada {
             try? sesion.setCategory(.playAndRecord, mode: .videoRecording,
                                     options: [.mixWithOthers, .defaultToSpeaker,
-                                              .allowBluetoothHFP, .allowBluetoothA2DP])
+                                              .allowBluetooth, .allowBluetoothA2DP])
         }
         defer {
             if !yaAdmiteEntrada {
@@ -171,7 +171,7 @@ enum Microfonos {
         do {
             try sesion.setCategory(.playAndRecord, mode: .videoRecording,
                                    options: [.mixWithOthers, .defaultToSpeaker,
-                                             .allowBluetoothHFP, .allowBluetoothA2DP])
+                                             .allowBluetooth, .allowBluetoothA2DP])
             try sesion.setActive(true)
             let maximo = max(1, sesion.maximumInputNumberOfChannels)
             try? sesion.setActive(false, options: [.notifyOthersOnDeactivation])
@@ -223,7 +223,7 @@ enum Microfonos {
         try sesion.setCategory(.playAndRecord,
                                mode: .videoRecording,
                                options: [.mixWithOthers, .defaultToSpeaker,
-                                         .allowBluetoothHFP, .allowBluetoothA2DP])
+                                         .allowBluetooth, .allowBluetoothA2DP])
         try sesion.setPreferredSampleRate(Double(ajustes.frecuencia_hz))
         try sesion.setActive(true)
 

@@ -230,7 +230,7 @@ private final class CoordinadorGestosTintaNaturalIPad: NSObject,
         var ajustes = AjustesSeleccionLienzo()
         ajustes.filtro = .tinta
         ajustes.requerirCompleto = false
-        ajustes.radioPincel = max(8, lienzo.anchoPluma * 1.8)
+        ajustes.radioPincel = max(8, CGFloat(lienzo.anchoPluma) * 1.8)
         let tocada = sesion.seleccionarPincel(puntos, ajustes: ajustes)
         let idsObjetivo = tocada.trazos
             .filter { $0 != indiceGarabato }

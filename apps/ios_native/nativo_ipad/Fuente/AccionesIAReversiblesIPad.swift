@@ -158,10 +158,10 @@ final class PanelPreviewAccionIAIPad: UIViewController {
     required init?(coder:NSCoder){fatalError("init(coder:) no implementado")}
     override func viewDidLoad(){
         super.viewDidLoad();title="Revisar cambio de IA";view.backgroundColor = .systemBackground
-        let titulo=UILabel();titulo.text=accion.titulo;titulo.font=.preferredFont(forTextStyle:.title2);titulo.adjustsFontForContentSizeCategory=true;titulo.numberOfLines=0
-        let explicacion=UILabel();explicacion.text=accion.explicacion;explicacion.font=.preferredFont(forTextStyle:.body);explicacion.adjustsFontForContentSizeCategory=true;explicacion.numberOfLines=0
-        let antes=UITextView();antes.isEditable=false;antes.text=String(data:accion.antes,encoding:.utf8) ?? "Contenido binario";antes.font=.preferredFont(forTextStyle:.body);antes.adjustsFontForContentSizeCategory=true
-        let despues=UITextView();despues.isEditable=false;despues.text=String(data:accion.despues,encoding:.utf8) ?? "Contenido binario";despues.font=.preferredFont(forTextStyle:.body);despues.adjustsFontForContentSizeCategory=true
+        let titulo=UILabel();titulo.text=accion.titulo;titulo.font = .preferredFont(forTextStyle:.title2);titulo.adjustsFontForContentSizeCategory=true;titulo.numberOfLines=0
+        let explicacion=UILabel();explicacion.text=accion.explicacion;explicacion.font = .preferredFont(forTextStyle:.body);explicacion.adjustsFontForContentSizeCategory=true;explicacion.numberOfLines=0
+        let antes=UITextView();antes.isEditable=false;antes.text=String(data:accion.antes,encoding:.utf8) ?? "Contenido binario";antes.font = .preferredFont(forTextStyle:.body);antes.adjustsFontForContentSizeCategory=true
+        let despues=UITextView();despues.isEditable=false;despues.text=String(data:accion.despues,encoding:.utf8) ?? "Contenido binario";despues.font = .preferredFont(forTextStyle:.body);despues.adjustsFontForContentSizeCategory=true
         let columnas=UIStackView(arrangedSubviews:[grupo("Antes",antes),grupo("Propuesta",despues)]);columnas.axis = .horizontal;columnas.distribution = .fillEqually;columnas.spacing=12
         let aplicar=UIButton(type:.system);aplicar.configuration = .filled();aplicar.configuration?.title="Aplicar cambio";aplicar.addTarget(self,action:#selector(aplicarCambio),for:.touchUpInside);aplicar.accessibilityLabel="Aplicar cambio propuesto por IA"
         let descartar=UIButton(type:.system);descartar.configuration = .bordered();descartar.configuration?.title="Descartar";descartar.addTarget(self,action:#selector(descartarCambio),for:.touchUpInside)
@@ -169,6 +169,6 @@ final class PanelPreviewAccionIAIPad: UIViewController {
         let pila=UIStackView(arrangedSubviews:[titulo,explicacion,columnas,acciones]);pila.axis = .vertical;pila.spacing=12;pila.translatesAutoresizingMaskIntoConstraints=false;view.addSubview(pila)
         NSLayoutConstraint.activate([pila.topAnchor.constraint(equalTo:view.safeAreaLayoutGuide.topAnchor,constant:16),pila.leadingAnchor.constraint(equalTo:view.leadingAnchor,constant:16),pila.trailingAnchor.constraint(equalTo:view.trailingAnchor,constant:-16),pila.bottomAnchor.constraint(equalTo:view.safeAreaLayoutGuide.bottomAnchor,constant:-16),columnas.heightAnchor.constraint(greaterThanOrEqualToConstant:260)])
     }
-    private func grupo(_ nombre:String,_ vista:UIView)->UIView{let l=UILabel();l.text=nombre;l.font=.preferredFont(forTextStyle:.headline);let p=UIStackView(arrangedSubviews:[l,vista]);p.axis = .vertical;p.spacing=6;return p}
+    private func grupo(_ nombre:String,_ vista:UIView)->UIView{let l=UILabel();l.text=nombre;l.font = .preferredFont(forTextStyle:.headline);let p=UIStackView(arrangedSubviews:[l,vista]);p.axis = .vertical;p.spacing=6;return p}
     @objc private func aplicarCambio(){alAplicar?()};@objc private func descartarCambio(){alDescartar?()}
 }

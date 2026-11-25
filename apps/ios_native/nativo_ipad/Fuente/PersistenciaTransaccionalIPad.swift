@@ -164,8 +164,7 @@ final class CoordinadorPersistenciaTransaccionalIPad {
             options: [.skipsHiddenFiles])) ?? []
 
         for carpeta in candidatos {
-            let esDirectorio = (try? carpeta.resourceValues(forKeys: [.isDirectoryKey]))
-                ?.isDirectory == true
+            let esDirectorio = (try? carpeta.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
             guard esDirectorio, let journal = try? cargarJournal(carpeta) else {
                 continue
             }

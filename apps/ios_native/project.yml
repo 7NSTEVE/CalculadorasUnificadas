@@ -59,6 +59,9 @@ targets:
       # CuadernU iOS/iPadOS host (Swift + Metal Ink 120Hz + lápiz del iPad + Stage Manager)
       - path: nativo_ipad/Fuente
       - path: nativo_ipad/Compartido
+      - path: Circuitos
+      - path: Matematicas
+      - path: HerramientasTecnicas
 
       # Canonical single-source C++ ink engine (shared with Windows/Linux CuadernU)
       - path: ../../studio/tinta_core

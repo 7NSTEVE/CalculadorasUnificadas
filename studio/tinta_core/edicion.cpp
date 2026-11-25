@@ -610,6 +610,60 @@ Operacion Historial::OperacionPaginaCompleta(const Pagina& antes,
   return op;
 }
 
+Operacion Historial::OperacionAnadirTexto(size_t indice,
+                                          const CuadroTexto& texto) {
+  Operacion op;
+  op.tipo = TipoOperacion::AnadirTextos;
+  op.indices_textos = {indice};
+  op.textos_despues = {texto};
+  return op;
+}
+
+Operacion Historial::OperacionQuitarTexto(size_t indice,
+                                          const CuadroTexto& texto) {
+  Operacion op;
+  op.tipo = TipoOperacion::QuitarTextos;
+  op.indices_textos = {indice};
+  op.textos_antes = {texto};
+  return op;
+}
+
+Operacion Historial::OperacionReemplazarTexto(
+    size_t indice, const CuadroTexto& antes, const CuadroTexto& despues) {
+  Operacion op;
+  op.tipo = TipoOperacion::ReemplazarTextos;
+  op.indices_textos = {indice};
+  op.textos_antes = {antes};
+  op.textos_despues = {despues};
+  return op;
+}
+
+Operacion Historial::OperacionAnadirMedio(size_t indice, const Medio& medio) {
+  Operacion op;
+  op.tipo = TipoOperacion::AnadirMedios;
+  op.indices_medios = {indice};
+  op.medios_despues = {medio};
+  return op;
+}
+
+Operacion Historial::OperacionQuitarMedio(size_t indice, const Medio& medio) {
+  Operacion op;
+  op.tipo = TipoOperacion::QuitarMedios;
+  op.indices_medios = {indice};
+  op.medios_antes = {medio};
+  return op;
+}
+
+Operacion Historial::OperacionReemplazarMedio(
+    size_t indice, const Medio& antes, const Medio& despues) {
+  Operacion op;
+  op.tipo = TipoOperacion::ReemplazarMedios;
+  op.indices_medios = {indice};
+  op.medios_antes = {antes};
+  op.medios_despues = {despues};
+  return op;
+}
+
 void Historial::Registrar(const Operacion& operacion) {
   hechas_.push_back(operacion);
   // Cualquier acción nueva invalida la rama rehecha, como en cualquier editor.
@@ -661,24 +715,94 @@ void Historial::Aplicar(Pagina& pagina, const Operacion& operacion,
       pagina.medios = invertida ? operacion.medios_antes
                                 : operacion.medios_despues;
       break;
+    case TipoOperacion::AnadirTextos:
+    case TipoOperacion::QuitarTextos: {
+      const bool insertar =
+          (operacion.tipo == TipoOperacion::AnadirTextos) != invertida;
+      const auto& textos = operacion.tipo == TipoOperacion::AnadirTextos
+                               ? operacion.textos_despues
+                               : operacion.textos_antes;
+      if (insertar) {
+        for (size_t k = 0;
+             k < operacion.indices_textos.size() && k < textos.size(); ++k) {
+          const size_t indice = std::min(operacion.indices_textos[k],
+                                         pagina.textos.size());
+          pagina.textos.insert(pagina.textos.begin() + indice, textos[k]);
+        }
+      } else {
+        auto indices = operacion.indices_textos;
+        std::sort(indices.begin(), indices.end(), std::greater<size_t>());
+        for (const size_t indice : indices) {
+          if (indice < pagina.textos.size())
+            pagina.textos.erase(pagina.textos.begin() + indice);
+        }
+      }
+      break;
+    }
+    case TipoOperacion::ReemplazarTextos: {
+      const auto& fuente = invertida ? operacion.textos_antes
+                                     : operacion.textos_despues;
+      for (size_t k = 0;
+           k < operacion.indices_textos.size() && k < fuente.size(); ++k) {
+        const size_t indice = operacion.indices_textos[k];
+        if (indice < pagina.textos.size()) pagina.textos[indice] = fuente[k];
+      }
+      break;
+    }
+    case TipoOperacion::AnadirMedios:
+    case TipoOperacion::QuitarMedios: {
+      const bool insertar =
+          (operacion.tipo == TipoOperacion::AnadirMedios) != invertida;
+      const auto& medios = operacion.tipo == TipoOperacion::AnadirMedios
+                               ? operacion.medios_despues
+                               : operacion.medios_antes;
+      if (insertar) {
+        for (size_t k = 0;
+             k < operacion.indices_medios.size() && k < medios.size(); ++k) {
+          const size_t indice = std::min(operacion.indices_medios[k],
+                                         pagina.medios.size());
+          pagina.medios.insert(pagina.medios.begin() + indice, medios[k]);
+        }
+      } else {
+        auto indices = operacion.indices_medios;
+        std::sort(indices.begin(), indices.end(), std::greater<size_t>());
+        for (const size_t indice : indices) {
+          if (indice < pagina.medios.size())
+            pagina.medios.erase(pagina.medios.begin() + indice);
+        }
+      }
+      break;
+    }
+    case TipoOperacion::ReemplazarMedios: {
+      const auto& fuente = invertida ? operacion.medios_antes
+                                     : operacion.medios_despues;
+      for (size_t k = 0;
+           k < operacion.indices_medios.size() && k < fuente.size(); ++k) {
+        const size_t indice = operacion.indices_medios[k];
+        if (indice < pagina.medios.size()) pagina.medios[indice] = fuente[k];
+      }
+      break;
+    }
   }
 }
 
-bool Historial::Deshacer(Pagina& pagina) {
+bool Historial::Deshacer(Pagina& pagina, Operacion* aplicada) {
   if (hechas_.empty()) return false;
   const Operacion op = hechas_.back();
   hechas_.pop_back();
   Aplicar(pagina, op, true);
   deshechas_.push_back(op);
+  if (aplicada) *aplicada = op;
   return true;
 }
 
-bool Historial::Rehacer(Pagina& pagina) {
+bool Historial::Rehacer(Pagina& pagina, Operacion* aplicada) {
   if (deshechas_.empty()) return false;
   const Operacion op = deshechas_.back();
   deshechas_.pop_back();
   Aplicar(pagina, op, false);
   hechas_.push_back(op);
+  if (aplicada) *aplicada = op;
   return true;
 }
 

@@ -69,9 +69,9 @@ final class PanelComentariosDocumentoIPad: UITableViewController {
         a.addAction(UIAlertAction(title: "Responder", style: .default) { [weak self] _ in
             self?.pedir("Responder") { texto in
                 guard let self else { return }
-                do { _ = try repo.responder(hiloId: h.id, documentoId: documentoId,
-                    autorId: "local", autorNombre: "Yo", texto: texto); refrescar() }
-                catch { mostrar(error) }
+                do { _ = try self.repo.responder(hiloId: h.id, documentoId: self.documentoId,
+                    autorId: "local", autorNombre: "Yo", texto: texto); self.refrescar() }
+                catch { self.mostrar(error) }
             }
         })
         a.addAction(UIAlertAction(title: h.resuelto ? "Reabrir" : "Resolver", style: .default) {

@@ -627,7 +627,7 @@ bool Cg50Backend::SaveStateToFile(const wchar_t* path)
     }
     std::vector<std::uint8_t> bytes;
     if (!impl_->native->ExportState(bytes)) return false;
-    std::ofstream output(path, std::ios::binary | std::ios::trunc);
+    std::ofstream output(fs::path(path), std::ios::binary | std::ios::trunc);
     if (!output) return false;
     output.write(reinterpret_cast<const char*>(bytes.data()),
                  static_cast<std::streamsize>(bytes.size()));
@@ -640,7 +640,7 @@ bool Cg50Backend::LoadStateFromFile(const wchar_t* path)
         path == nullptr) {
         return false;
     }
-    std::ifstream input(path, std::ios::binary);
+    std::ifstream input(fs::path(path), std::ios::binary);
     if (!input) return false;
     std::vector<std::uint8_t> bytes(
         (std::istreambuf_iterator<char>(input)),

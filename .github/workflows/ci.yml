@@ -46,7 +46,7 @@ jobs:
       - name: Configure & Build CMake (Release)
         run: |
           cmake -S core -B build-ci -DCMAKE_BUILD_TYPE=Release -DBUILD_CORE_TESTS=ON -DBUILD_CG50_BATTERY=OFF
-          cmake --build build-ci --parallel
+          cmake --build build-ci --parallel "$(nproc)"
 
       - name: Run Deterministic Hardware & ISA Tests
         env:
@@ -76,6 +76,9 @@ jobs:
       - name: Run flutter pub get, analyze & test
         working-directory: apps/android
         run: |
+          mkdir -p assets_staged
+          ln -snf ../../../assets/roms assets_staged/roms
+          ln -snf ../../../assets/skins assets_staged/skins
           flutter pub get
           flutter analyze
           flutter test

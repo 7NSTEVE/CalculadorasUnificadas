@@ -32,7 +32,9 @@ build_slice() {
     -DBUILD_CG50_BATTERY=OFF \
     -DCUADERNU_BUILD_STUDIO_FFI=ON
 
-  cmake --build "${bdir}" --target casio_nx casio_cw2 casio_cg50 cuadernu_studio_portable --parallel
+  local jobs
+  jobs="$(sysctl -n hw.ncpu 2>/dev/null || echo 4)"
+  cmake --build "${bdir}" --target casio_nx casio_cw2 casio_cg50 cuadernu_studio_portable --parallel "${jobs}"
 
   # Combine static archives + FFI object into a single static library for XCFramework
   local ffi_obj="${bdir}/casio_ffi.o"

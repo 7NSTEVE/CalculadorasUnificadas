@@ -91,18 +91,6 @@ final class CentroEntradaOneNoteIPad: NSObject {
     }
 }
 
-extension EscenaPrincipal {
-    /// Entrada estándar de documentos desde Archivos/Mail/Share Sheet.
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        guard let ventana = scene as? UIWindowScene else { return }
-        let urls = URLContexts.map(\.url)
-        CentroEntradaOneNoteIPad.compartido.recibir(urls: urls, en: ventana)
-    }
-
-    /// Se usa además de sceneDidBecomeActive para que el botón exista antes de que el usuario
-    /// interactúe con la Biblioteca y sin tocar el hot path del lienzo.
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        guard let ventana = scene as? UIWindowScene else { return }
-        CentroEntradaOneNoteIPad.compartido.instalarBotonImportar(en: ventana)
-    }
-}
+// Los hooks de escena (openURLContexts / sceneWillEnterForeground) se invocan
+// directamente desde EscenaPrincipal en AppPrincipal.swift para evitar
+// redeclaración de métodos del protocolo UIWindowSceneDelegate.
