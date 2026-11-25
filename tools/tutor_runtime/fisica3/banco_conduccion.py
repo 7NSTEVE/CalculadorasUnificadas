@@ -21,6 +21,143 @@ def _des(q: str, titulo: str, enunciado: str, **k) -> Leccion:
     return Leccion(q, titulo, tema=tema(q), nivel=nivel(q), fuente=fuente(q), enunciado=enunciado, **k)
 
 
+# ============================================================================ moldes de conducción
+def _nm(x: float, c: int = 3) -> str:
+    """Número con las cifras del enunciado (0,220 y no 0,22)."""
+    return tex(x, c)
+
+
+def _area_lineal(q: str, titulo: str, enunciado: str, incisos, *, k: float, h: float, a0: float, m: float, t1: float, t2: float,
+                 dt_s: float = 0.0, dt_txt: str = "", oficial=None, aviso: str = "", et_a: str = "") -> Leccion:
+    """Barra con área en línea recta, A(y) = a0 + m·y: Fourier, separar, cambio de variable y despejar.
+
+    incisos: lista en el orden del examen con 'lados', 'H', 'Q', 'T' o 'inter'.
+    """
+    ah = a0 + m * h
+    ym = h / 2.0
+    am = a0 + m * ym
+    ab = abs(m)
+    neg = m < 0
+    I = math.log(ah / a0) / m
+    H = k * (t1 - t2) / I
+    Im = math.log(am / a0) / m
+    tm = t1 - (H / k) * Im
+    Q = H * dt_s
+    sg = "-" if neg else "+"
+    A_tex = rf"{_nm(a0)}{sg}{'' if abs(ab - 1.0) < 1e-12 else _nm(ab)}y"
+
+    def cociente(a_fin: float) -> str:
+        return rf"\frac{{{_nm(a0)}}}{{{tex(a_fin, 5)}}}" if neg else rf"\frac{{{tex(a_fin, 5)}}}{{{_nm(a0)}}}"
+
+    pts = [[round(h * i / 40, 5), round(t1 - (t1 - t2) * math.log((a0 + m * h * i / 40) / a0) / math.log(ah / a0), 2)] for i in range(41)]
+    L = _des(q, titulo, enunciado, aviso=aviso, claves=["área variable", "integral", "logaritmo", "Fourier"],
+             visual={"tipo": "conduccion", "geo": "pared", "L": h, "T1": t1, "T2": t2, "eje": "y", "uT": "°C",
+                     "forma": f"({a0} + ({m}) * {h} * u) / {max(a0, ah)}", "pts": pts, "xm": ym, "etA": et_a or A_tex.replace("{,}", ",")})
+    L.paso("Qué nos dan y qué piden")\
+        .di("Un bloque cuya área cambia con la altura: el calor sube por él.", DATO("A(y)"),
+            LISTA([f"$k={_nm(k)}$ W/(m·K)", f"Altura: $h={_nm(h)}$ m", f"$A(y)={A_tex}$ en m²", f"Abajo ($y=0$): $T_1={_nm(t1)}\\ ^\\circ\\text{{C}}$", f"Arriba ($y=h$): $T_2={_nm(t2)}\\ ^\\circ\\text{{C}}$"]))\
+        .di("Como el área cambia, la fórmula de pared plana no sirve: hay que integrar.", OJO("$H=kA\\frac{\\Delta T}{L}$ solo vale con área constante."))
+    letras = iter("ABCDEFG")
+    resp = []
+    for inc in incisos:
+        lt = next(letras)
+        if inc == "lados":
+            L.paso(f"{lt}) Lado de cada cara cuadrada")\
+                .di("Abajo, en ye igual a cero.".replace("ye igual a cero", dice("y = 0", "ye igual a cero")), M(rf"A(0)={_nm(a0)}\ \text{{m}}^2"), M(rf"L_{{\text{{inf}}}}=\sqrt{{{_nm(a0)}}}={tex(math.sqrt(a0), 3, u='m')}", "li", "verde"))\
+                .di("Arriba, en la altura completa.", M(rf"A({_nm(h)})={_nm(a0)}{sg}{_nm(ab)}({_nm(h)})={tex(ah, 4, u='m^2')}"), M(rf"L_{{\text{{sup}}}}=\sqrt{{{tex(ah, 4)}}}={tex(math.sqrt(ah), 3, u='m')}", "ls", "verde"))\
+                .por_que("Las caras son cuadradas: el área es lado por lado, así que el lado es la raíz del área.")
+            resp += [(lt, rf"L_{{\text{{inf}}}}={tex(math.sqrt(a0), 3)}\ \text{{m}}", math.sqrt(a0), "m"), (lt, rf"L_{{\text{{sup}}}}={tex(math.sqrt(ah), 3)}\ \text{{m}}", math.sqrt(ah), "m")]
+        elif inc == "H":
+            L.paso(f"{lt}) Fourier en una rebanada delgadita")\
+                .di("Tomamos una rebanada de grosor de ye: ahí el área casi no cambia.".replace("de ye", dice("dy", "de ye")), V(foco="dx"), F(r"H=-kA\frac{dT}{dy}"))\
+                .di("Ponemos el área de esa altura.", M(rf"H=-k\,({A_tex})\,\frac{{dT}}{{dy}}"))\
+                .por_que("En estado estacionario el mismo $H$ atraviesa todas las rebanadas; lo que cambia es cuánto cae la temperatura en cada una.")
+            L.paso(f"{lt}) Separar variables")\
+                .di("Lo que tiene ye a un lado y la temperatura al otro.".replace("ye", s("y")), M(rf"\frac{{H\,dy}}{{{A_tex}}}=-k\,dT"))\
+                .di("Integramos de abajo hacia arriba.", M(rf"H\int_0^{{{_nm(h)}}}\frac{{dy}}{{{A_tex}}}=-k\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT", "int", "azul"))\
+                .di("El lado de la temperatura es directo.", M(rf"-k\,(T_2-T_1)=-({_nm(k)})({_nm(t2)}-{_nm(t1)})={tex(k * (t1 - t2), 5, sci='no')}"))
+            L.paso(f"{lt}) La integral del área: cambio de variable")\
+                .di("Llamamos u al área.", M(rf"u={A_tex}\qquad du={sg if neg else ''}{_nm(ab)}\,dy\;\Rightarrow\;dy={'-' if neg else ''}\frac{{du}}{{{_nm(ab)}}}"))\
+                .di("Los límites pasan a ser las áreas de abajo y de arriba.", M(rf"y=0\Rightarrow u={_nm(a0)}\qquad y={_nm(h)}\Rightarrow u={tex(ah, 5)}"))\
+                .di("La integral de uno entre u es el logaritmo.", M(rf"\int\frac{{dy}}{{{A_tex}}}={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\ln u"))\
+                .di("Evaluamos arriba menos abajo.", M(rf"I=\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)={tex(I, 4)}\ \text{{m}}^{{-1}}", "ii", "verde"))\
+                .despacio((rf"{'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\left(\ln {tex(ah, 5)}-\ln {_nm(a0)}\right)", "arriba menos abajo"),
+                          (rf"\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)", "el signo menos da vuelta al cociente" if neg else "se juntan en un solo logaritmo"))
+            L.paso(f"{lt}) Despejar el flujo")\
+                .di("Juntamos las dos integrales.", M(rf"H\,({tex(I, 4)})={tex(k * (t1 - t2), 5, sci='no')}"))\
+                .di("Despejamos.", M(rf"H=\frac{{{tex(k * (t1 - t2), 5, sci='no')}}}{{{tex(I, 4)}}}"))\
+                .di(f"Son {nu(H / 1e3, 'kW', 4)}.", R(rf"H={tex(H, 5, u='W', sci='no')}={tex(H / 1e3, 4, u='kW')}", "rh"))
+            resp.append((lt, rf"H={tex(H / 1e3, 4)}\ \text{{kW}}", H, "W"))
+        elif inc == "Q":
+            L.paso(f"{lt}) Energía en {dt_txt}")\
+                .di("El flujo es energía por segundo: se multiplica por el tiempo en segundos.", F(r"H=\frac{dQ}{dt}\;\Rightarrow\;Q=H\,\Delta t"), M(rf"\Delta t={dt_txt}={_nm(dt_s)}\ \text{{s}}"))\
+                .di("Multiplicamos.", M(rf"Q=({tex(H, 5, sci='no')})({_nm(dt_s)})"), R(rf"Q={tex(Q, 3, u='J')}", "rq"))
+            resp.append((lt, rf"Q={tex(Q, 3)}\ \text{{J}}", Q, "J"))
+        elif inc == "T":
+            L.paso(f"{lt}) Temperatura a la mitad de la altura")\
+                .di("Integramos solo hasta la mitad.", V(foco="punto"), M(rf"H\int_0^{{{_nm(ym)}}}\frac{{dy}}{{{A_tex}}}=-k\,(T-{_nm(t1)})"))\
+                .di("El área a media altura.", M(rf"A({_nm(ym)})={_nm(a0)}{sg}{_nm(ab)}({_nm(ym)})={tex(am, 5)}\ \text{{m}}^2"))\
+                .di("La integral hasta ahí.", M(rf"I_{{1/2}}=\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(am)}\right)={tex(Im, 4)}\ \text{{m}}^{{-1}}"))\
+                .di("Despejamos la temperatura.", M(rf"T={_nm(t1)}-\frac{{H}}{{k}}\,I_{{1/2}}={_nm(t1)}-\frac{{{tex(H, 5, sci='no')}}}{{{_nm(k)}}}({tex(Im, 4)})"))\
+                .di(f"Da {nu(tm, '°C', dec=1)}.", R(rf"T(h/2)={tex(tm, dec=1)}\ ^\circ\text{{C}}", "rt"))\
+                .por_que("No da el promedio: donde el área es menor, la resistencia es mayor y ahí cae más temperatura.")
+            resp.append((lt, rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C"))
+        elif inc == "inter":
+            L.paso(f"{lt}) ¿Cambia el flujo si se intercambian los focos?")\
+                .di("La integral del área depende solo de la forma del bloque, no de las temperaturas.", M(rf"I={tex(I, 4)}\ \text{{m}}^{{-1}}\ \text{{igual}}"))\
+                .di("Y la diferencia de temperatura tiene el mismo tamaño.", M(r"|T_1-T_2|=\text{igual}\;\Rightarrow\;|H|=\frac{k\,|T_1-T_2|}{I}"))\
+                .di("El flujo tiene el mismo tamaño; solo cambia de sentido.", R(r"|H|\ \text{se mantiene igual}", "ri"))
+    for r in resp:
+        L.responde(*r)
+    if oficial:
+        de, vals, nota = oficial
+        L.oficial(de, *vals, nota=nota)
+    return L.usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}")
+
+
+def _tubo(q: str, titulo: str, enunciado: str, *, k: float, lc: float, r1: float, r2: float, t1: float, t2: float, rm: float,
+          dt_s: float, dt_txt: str, por_longitud: bool = True, oficial=None, aviso: str = "") -> Leccion:
+    """Tubo de una capa: Fourier con el área lateral 2πrL, separar e integrar."""
+    lnr = math.log(r2 / r1)
+    H = 2.0 * math.pi * k * lc * (t1 - t2) / lnr
+    HL = H / lc
+    Q = H * dt_s
+    tm = t1 - (H / (2.0 * math.pi * k * lc)) * math.log(rm / r1)
+    L = _des(q, titulo, enunciado, aviso=aviso, claves=["cilindro", "flujo radial", "logaritmo"],
+             visual={"tipo": "conduccion", "geo": "cilindro", "r1": r1, "r2": r2, "L": lc, "T1": t1, "T2": t2, "k": k, "r": rm, "uT": "°C"})
+    L.paso("Qué nos dan y qué piden")\
+        .di("Un tubo: el calor sale del centro hacia afuera, en dirección radial.", DATO("radio"),
+            LISTA([f"$k={_nm(k)}$ W/(m·K), largo $L={_nm(lc)}$ m", f"Radio interno $r_1={_nm(r1)}$ m a ${_nm(t1)}\\ ^\\circ\\text{{C}}$", f"Radio externo $r_2={_nm(r2)}$ m a ${_nm(t2)}\\ ^\\circ\\text{{C}}$"]))\
+        .di("El área por donde pasa el calor crece con el radio: hay que integrar.", OJO("El área es la pared lateral $2\\pi rL$, **no** el volumen $\\pi r^2L$."))
+    L.paso("A) Fourier en un cascarón cilíndrico")\
+        .di("Tomamos un cascarón de radio erre y grosor de erre.".replace("radio erre", "radio " + dice("r", "erre")).replace("grosor de erre", "grosor " + dice("dr", "de erre")), V(foco="dr"), F(r"H=-kA\frac{dT}{dr}"))\
+        .di("Su área es la pared del cilindro.", M(r"A=2\pi rL"), M(r"H=-k\,(2\pi rL)\,\frac{dT}{dr}", "f", "azul"))
+    L.paso("A) Separar variables e integrar")\
+        .di("Erre con de erre a un lado; la temperatura al otro.".replace("Erre con de erre", dice("r y dr", "erre y de erre")), M(r"H\,\frac{dr}{r}=-2\pi kL\,dT"))\
+        .di("Integramos del radio interno al externo.", M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(r2)}}}\frac{{dr}}{{r}}=-2\pi kL\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT"))\
+        .di("La de la izquierda es un logaritmo.", M(rf"\int_{{{_nm(r1)}}}^{{{_nm(r2)}}}\frac{{dr}}{{r}}=\ln\frac{{{_nm(r2)}}}{{{_nm(r1)}}}={tex(lnr, 4)}"))\
+        .di("La de la derecha, la resta de temperaturas.", M(rf"-2\pi kL\,(T_2-T_1)=2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})"))
+    L.paso("A) Despejar el flujo")\
+        .di("Despejamos hache.".replace("hache", s("H", "hache")), M(rf"H=\frac{{2\pi kL\,(T_1-T_2)}}{{\ln(r_2/r_1)}}=\frac{{2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})}}{{{tex(lnr, 4)}}}"))\
+        .di(f"En todo el tubo: {nu(H / 1e3, 'kW', 4)}.", M(rf"H={tex(H, 4, u='W')}"))
+    if por_longitud:
+        L.paso("A) Por cada metro de tubo")\
+            .di("Dividimos entre el largo.", M(rf"\frac{{H}}{{L}}=\frac{{{tex(H, 4)}}}{{{_nm(lc)}}}"), R(rf"\frac{{H}}{{L}}={tex(HL, 4, u='W/m')}={tex(HL / 1e3, 4, u='kW/m')}", "ra"))
+    L.paso(f"B) Energía en {dt_txt}")\
+        .di("Flujo por tiempo, en segundos.", F(r"Q=H\,\Delta t"), M(rf"Q=({tex(H, 4)})({_nm(dt_s)})"))\
+        .di("Queda.", R(rf"Q={tex(Q, 4, u='J')}", "rb"))
+    L.paso(f"C) Temperatura en r = {_nm(rm * 100, 3)} cm")\
+        .di("Integramos solo hasta ese radio.", V(foco="punto"), M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(rm)}}}\frac{{dr}}{{r}}=-2\pi kL\,(T-{_nm(t1)})"))\
+        .di("Despejamos la temperatura.", M(rf"T={_nm(t1)}-\frac{{H}}{{2\pi kL}}\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}"))\
+        .di("Sustituimos.", M(rf"T={_nm(t1)}-\frac{{{tex(H, 4)}}}{{2\pi({_nm(k)})({_nm(lc)})}}\ln({tex(rm / r1, 3)})"))\
+        .di(f"Da {nu(tm, '°C', dec=1)}.", R(rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", "rc"))
+    L.responde("A", rf"H/L={tex(HL / 1e3, 4)}\ \text{{kW/m}}", HL, "W/m").responde("B", rf"Q={tex(Q, 4)}\ \text{{J}}", Q, "J").responde("C", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
+    if oficial:
+        de, vals, nota = oficial
+        L.oficial(de, *vals, nota=nota)
+    return L.usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}")
+
+
 # ============================================================================ Q036
 @leccion("Q036")
 def q036() -> Leccion:
@@ -347,71 +484,19 @@ def q044() -> Leccion:
 # ============================================================================ Q045
 @leccion("Q045")
 def q045() -> Leccion:
-    k, lc, r1, r2, t1, t2, rm = 235.0, 5.00, 0.0400, 0.0800, 150.0, 45.0, 0.0600
-    h_por_l = 2.0 * math.pi * k * (t1 - t2) / math.log(r2 / r1)
-    Q = h_por_l * lc * (10.0 * 60.0)
-    tm = t1 - (t1 - t2) * math.log(rm / r1) / math.log(r2 / r1)
-    L = _des("Q045", "Tubería cilíndrica de aluminio: flujo por longitud y T(6 cm)",
-             "Tubería cilíndrica de aluminio ($k=235$ W/m·K, $L=5{,}00$ m, $r_1=4{,}00$ cm a $150\\ ^\\circ$C, $r_2=8{,}00$ cm a $45\\ ^\\circ$C). A) Flujo por unidad de longitud $H/L$. B) Calor total en $10{,}0$ min. C) Temperatura a $r=6{,}00$ cm.",
-             aviso="Ojo: el solucionario oficial de 25-II-E usó por error el volumen πr²L en lugar del área lateral cilíndrica 2πrL. Aquí resolvemos con el área correcta 2πrL.",
-             claves=["cilindro", "flujo por longitud", "logaritmo"],
-             visual={"tipo": "conduccion", "geo": "cilindro", "r1": r1, "r2": r2, "L": lc, "T1": t1, "T2": t2, "k": k, "r": rm, "uT": "°C"})
-    L.paso("A) Flujo por unidad de longitud")\
-        .di("El flujo es radial a través de la pared lateral del cilindro: área dos pi erre ele.", V(foco="dr"), DATO("flujo radial"),
-            F(r"H = -k(2\pi r L)\frac{dT}{dr}"),
-            OJO("El área lateral es $2\\pi r L$, **no** el volumen $\\pi r^2 L$."))\
-        .di("Integramos de cuatro a ocho centímetros.", V(foco="barrido"),
-            M(r"\frac{H}{L} = \frac{2\pi k\,(T_1-T_2)}{\ln(r_2/r_1)} = \frac{2\pi(235)(150-45)}{\ln(8{,}00/4{,}00)}"))\
-        .di(f"Da {nu(h_por_l / 1e3, 'kW/m', 4)}.", R(rf"\frac{{H}}{{L}} = {tex(h_por_l / 1e3, 4, u='kW/m')}", "ra"))
-    L.paso("B) Calor transferido por toda la tubería en 10 min")\
-        .di("Multiplicamos por los cinco metros de tubo y por seiscientos segundos.", V(foco="flujo"),
-            M(rf"Q = \left(\frac{{H}}{{L}}\right)L\,\Delta t = ({tex(h_por_l, 4, sci='si')})(5{{,}}00)(600)"))\
-        .di(f"Resultan {nu(Q / 1e6, 'MJ', 4)}.", R(rf"Q = {tex(Q, 4, u='J', sci='si')} = {tex(Q / 1e6, 4, u='MJ')}", "rb"))
-    L.paso("C) Temperatura en r = 6,00 cm")\
-        .di("Integrando solo hasta seis centímetros, la fracción del salto de temperatura sigue el logaritmo.", V(foco="punto"),
-            M(r"T(r) = T_1 - (T_1-T_2)\frac{\ln(r/r_1)}{\ln(r_2/r_1)}"))\
-        .di(f"Sustituimos y da {nu(tm, '°C', dec=1)}.",
-            M(rf"T(6{{,}}00\ \text{{cm}}) = 150 - 105\,\frac{{\ln(6/4)}}{{\ln(8/4)}}"),
-            R(rf"T(6{{,}}00\ \text{{cm}}) = {tex(tm, dec=1, u='°C')}", "rc"))
-    L.responde("A", rf"H/L={tex(h_por_l / 1e3, 4)}\ \text{{kW/m}}", h_por_l, "W/m")\
-     .responde("B", rf"Q={tex(Q, 4, sci='si')}\ \text{{J}}", Q, "J")\
-     .responde("C", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
-    return L.oficial("III Parcial extraordinario II-2025", 6202.0, 18.61e6, 80.0,
-                     nota="El solucionario oficial usó A = πr²L (volumen) en vez del área lateral 2πrL; con 2πrL da 223,7 kW/m, 671,1 MJ y 88,6 °C.").usa(r"H=-kA\frac{dT}{dx}")
-
+    return _tubo("Q045", "Tubería cilíndrica de aluminio: flujo por metro y T a 6 cm",
+                 "Tubería cilíndrica de aluminio ($k=235$ W/m·K) de $5{,}00$ m de largo, radio interno $4{,}00$ cm y externo $8{,}00$ cm. Adentro hay un fluido a $150\\ ^\\circ\\text{C}$ y afuera la tubería está a $45\\ ^\\circ\\text{C}$, en estado estacionario. A) Flujo de calor por unidad de longitud. B) Calor transferido en $10{,}0$ min. C) Temperatura a $6{,}00$ cm del eje.",
+                 k=235.0, lc=5.00, r1=0.0400, r2=0.0800, t1=150.0, t2=45.0, rm=0.0600, dt_s=600.0, dt_txt="10,0 min",
+                 aviso="El solucionario oficial de 25-II-E usó por error πr²L (un volumen) en vez del área lateral 2πrL. Aquí se resuelve con el área correcta.",
+                 oficial=("III Parcial extraordinario II-2025", (6202.0, 18.61e6, 80.0), "El solucionario oficial usó A = πr²L (volumen) en vez del área lateral 2πrL; con 2πrL da 223,7 kW/m, 671,1 MJ y 88,6 °C."))
 
 # ============================================================================ Q046
 @leccion("Q046")
 def q046() -> Leccion:
-    k, h, a_inf, a_sup, t1, t2 = 429.0, 0.100, 0.100, 0.200, 100.0, 20.0
-    # A(y) = 0.100 + y -> int_0^0.1 dy/(0.1+y) = ln(0.2/0.1) = ln(2)
-    H = k * (t1 - t2) / math.log(a_sup / a_inf)
-    Q = H * 60.0
-    tm = t1 - (t1 - t2) * math.log(0.150 / a_inf) / math.log(a_sup / a_inf)
-    pts = [[round(h * i / 40, 4), round(t1 - (t1 - t2) * math.log((a_inf + h * i / 40) / a_inf) / math.log(a_sup / a_inf), 2)] for i in range(41)]
-    L = _des("Q046", "Barra trapezoidal de plata en lámina aislante",
-             "Barra de plata ($k=429$ W/m·K) de grosor $h=0{,}100$ m con área lineal $A(y)=0{,}100+y$ (de $0{,}100$ a $0{,}200\\ \\text{m}^2$) entre $T_1=100{,}0\\ ^\\circ$C (abajo) y $T_2=20{,}0\\ ^\\circ$C (arriba). A) Flujo $H$. B) Energía en $1$ min. C) Temperatura en $y=h/2$.",
-             claves=["barra trapezoidal", "área lineal", "plata"],
-             visual={"tipo": "conduccion", "geo": "pared", "L": h, "T1": t1, "T2": t2, "eje": "y", "uT": "°C",
-                     "forma": "0.5 + 0.5 * u", "pts": pts, "xm": h / 2, "etA": "0,100+y"})
-    L.paso("A) Flujo de calor integrando 1/A(y)")\
-        .di("Sustituimos el área lineal en Fourier y separamos variables.", V(foco="dx"), DATO("A(y)"),
-            M(r"A(y) = 0{,}100 + \frac{0{,}200-0{,}100}{0{,}100}\,y = 0{,}100 + y"),
-            F(r"\frac{H}{k}\int_0^{0{,}100}\frac{dy}{0{,}100+y} = -\int_{T_1}^{T_2}dT"))\
-        .di("Con el cambio u igual a cero coma uno más ye sale el logaritmo de dos.", V(foco="barrido"),
-            M(r"\frac{H}{k}\ln\left(\frac{0{,}200}{0{,}100}\right) = T_1 - T_2 \;\Rightarrow\; H = \frac{429(100{,}0-20{,}0)}{\ln 2}"))\
-        .di(f"Resultan {nu(H / 1e3, 'kW', 4)}.", R(rf"H = {tex(H / 1e3, 4, u='kW')}", "ra"))
-    L.paso("B) Energía en 1 minuto")\
-        .di(f"Multiplicamos el flujo por sesenta segundos: da {nu(Q / 1e6, 'MJ', 4)}.",
-            M(rf"Q = H\,\Delta t = ({tex(H, 4, sci='si')})(60)"),
-            R(rf"Q = {tex(Q, 4, u='J', sci='si')} = {tex(Q / 1e6, 4, u='MJ')}", "rb"))
-    L.paso("C) Temperatura a la mitad (y = 0,050 m)")\
-        .di("Integramos solo hasta la mitad del grosor, donde el área vale cero coma quince.", V(foco="punto"),
-            M(r"T(h/2) = T_1 - \frac{H}{k}\ln\left(\frac{0{,}150}{0{,}100}\right) = 100{,}0 - 80{,}0\,\frac{\ln(1{,}5)}{\ln 2}"))\
-        .di(f"La temperatura a media altura es {nu(tm, '°C', dec=2)}.", R(rf"T(h/2) = {tex(tm, dec=2, u='°C')}", "rc"))
-    L.responde("A", rf"H={tex(H / 1e3, 4)}\ \text{{kW}}", H, "W").responde("B", rf"Q={tex(Q / 1e6, 4)}\ \text{{MJ}}", Q, "J").responde("C", rf"T={tex(tm, dec=2)}\ ^\circ\text{{C}}", tm, "°C")
-    return L.oficial("III Parcial ordinario II-2025", 49510.0, 2.971e6, 53.21).usa(r"H=-kA\frac{dT}{dx}")
-
+    return _area_lineal("Q046", "Barra trapezoidal de plata en lámina aislante",
+                        "Una barra de plata ($k=429$ W/m·K) atraviesa una lámina aislante de grosor $h=0{,}100$ m. Su área cambia en línea recta de $A_{inf}=0{,}100\\ \\text{m}^2$ (abajo, $T_1=100{,}0\\ ^\\circ\\text{C}$) a $A_{sup}=0{,}200\\ \\text{m}^2$ (arriba, $T_2=20{,}0\\ ^\\circ\\text{C}$): $A(y)=A_{inf}+\\frac{A_{sup}-A_{inf}}{h}y$. A) Flujo de calor. B) Energía en 1 minuto. C) Temperatura a la mitad del grosor.",
+                        ["H", "Q", "T"], k=429.0, h=0.100, a0=0.100, m=1.0, t1=100.0, t2=20.0, dt_s=60.0, dt_txt="1 minuto",
+                        oficial=("III Parcial ordinario II-2025", (49510.0, 2.971e6, 53.21), ""))
 
 # ============================================================================ Q047
 @leccion("Q047")
@@ -486,57 +571,10 @@ def q048() -> Leccion:
 # ============================================================================ Q049
 @leccion("Q049")
 def q049() -> Leccion:
-    k, h, t1, t2 = 235.0, 0.480, 200.0, 25.0
-    a0 = 0.220
-    m_c = 0.157
-    ah = a0 - m_c * h
-    am = a0 - m_c * (h / 2.0)
-    l_inf = math.sqrt(a0)
-    l_sup = math.sqrt(ah)
-    I_tot = math.log(a0 / ah) / m_c
-    H = k * (t1 - t2) / I_tot
-    I_mid = math.log(a0 / am) / m_c
-    t_mid = t1 - (H / k) * I_mid
-    Q = H * 120.0
-    pts = [[round(h * i / 40, 4), round(t1 - (t1 - t2) * math.log(a0 / (a0 - m_c * h * i / 40)) / math.log(a0 / ah), 2)] for i in range(41)]
-    L = _des("Q049", "Barra piramidal de aluminio A(y) = 0,220 − 0,157y",
-             "Bloque piramidal de aluminio ($k=235$ W/m·K, altura $h=0{,}480$ m) entre $200{,}0\\ ^\\circ$C (base $y=0$) y $25{,}0\\ ^\\circ$C (tope $y=h$), con área cuadrada $A(y)=0{,}220-0{,}157y$. A) Lados inferior y superior. B) Flujo $H$. C) Temperatura a $y=h/2$. D) Energía en $2$ min. E) ¿Cambia $H$ si se intercambian los reservorios?",
-             claves=["barra piramidal", "área variable", "logaritmo"],
-             visual={"tipo": "conduccion", "geo": "pared", "L": h, "T1": t1, "T2": t2, "eje": "y", "uT": "°C",
-                     "forma": "Math.sqrt(1 - 0.3425 * u)", "pts": pts, "xm": h / 2, "etA": "0,220−0,157y"})
-    L.paso("A) Lados de las caras cuadradas")\
-        .di("Evaluamos el área en la base y en el tope, y sacamos la raíz cuadrada.", DATO("A(y) = 0,220"),
-            M(rf"A(0) = 0{{,}}220\ \text{{m}}^2 \;\Rightarrow\; L_{{\text{{inf}}}} = \sqrt{{0{{,}}220}} = {tex(l_inf, 3, u='m')}"),
-            M(rf"A(0{{,}}480) = 0{{,}}220 - 0{{,}}157(0{{,}}480) = {tex(ah, 4, u='m^2')} \;\Rightarrow\; L_{{\text{{sup}}}} = {tex(l_sup, 3, u='m')}"),
-            R(rf"L_{{\text{{inf}}}} = {tex(l_inf, 3, u='m')}\qquad L_{{\text{{sup}}}} = {tex(l_sup, 3, u='m')}", "ra"))
-    L.paso("B) Flujo calorífico integrando 1/A(y)")\
-        .di("Separamos variables en la ley de Fourier.", V(foco="dx"),
-            F(r"H = -k A(y)\frac{dT}{dy} \;\Rightarrow\; \frac{H}{k}\int_0^{0{,}480}\frac{dy}{0{,}220-0{,}157y} = -\int_{200{,}0}^{25{,}0}dT"))\
-        .di(f"La integral con logaritmo vale {n(I_tot, 4)} metros a la menos uno.", V(foco="barrido"),
-            M(rf"I = \frac{{1}}{{0{{,}}157}}\ln\left(\frac{{0{{,}}220}}{{{tex(ah, 5)}}}\right) = {tex(I_tot, 4)}\ \text{{m}}^{{-1}}"))\
-        .di(f"Despejamos hache y sale {nu(H / 1e3, 'kW', 4)}.",
-            M(rf"H = \frac{{(235)(200{{,}}0-25{{,}}0)}}{{{tex(I_tot, 4)}}}"),
-            R(rf"H = {tex(H / 1e3, 4, u='kW')}\ \ ({tex(H, 5, u='W', sci='no')})", "rb"))
-    L.paso("C) Temperatura a la mitad de la altura (y = 0,240 m)")\
-        .di("Integramos solo desde la base hasta cero coma veinticuatro metros.", V(foco="punto"),
-            M(rf"A(0{{,}}240) = 0{{,}}220 - 0{{,}}157(0{{,}}240) = {tex(am, 5, u='m^2')}"),
-            M(rf"I_{{1/2}} = \frac{{1}}{{0{{,}}157}}\ln\left(\frac{{0{{,}}220}}{{{tex(am, 5)}}}\right) = {tex(I_mid, 4)}\ \text{{m}}^{{-1}}"))\
-        .di(f"Restamos la caída desde doscientos grados: da exactamente {nu(t_mid, '°C', dec=1)}.",
-            M(rf"T(0{{,}}240) = 200{{,}}0 - \frac{{{tex(H, 5, sci='no')}}}{{235}}({tex(I_mid, 4)})"),
-            R(rf"T(0{{,}}240\ \text{{m}}) = {tex(t_mid, dec=1, u='°C')}", "rc"))\
-        .por_que("Como la barra se angosta arriba, la mitad superior tiene más resistencia y ahí cae más temperatura: $121{,}6\\ ^\\circ\\text{C} > 112{,}5\\ ^\\circ\\text{C}$.")
-    L.paso("D y E) Energía en 2 minutos e intercambio de focos")\
-        .di(f"En ciento veinte segundos pasan {nu(Q / 1e6, 'MJ', 3)}.",
-            M(rf"Q = H\,\Delta t = ({tex(H, 4, sci='si')})(120)"), R(rf"Q = {tex(Q, 3, u='J', sci='si')}", "rd"))\
-        .di("Si se intercambian las temperaturas, la integral geométrica y la diferencia de temperaturas no cambian: la magnitud del flujo se mantiene igual.",
-            R(r"|H|\ \text{se mantiene igual (solo se invierte el sentido)}", "re"))
-    L.responde("A1", rf"L_{{\text{{inf}}}}={tex(l_inf, 3)}\ \text{{m}}", l_inf, "m")\
-     .responde("A2", rf"L_{{\text{{sup}}}}={tex(l_sup, 3)}\ \text{{m}}", l_sup, "m")\
-     .responde("B", rf"H={tex(H / 1e3, 4)}\ \text{{kW}}", H, "W")\
-     .responde("C", rf"T={tex(t_mid, dec=1)}\ ^\circ\text{{C}}", t_mid, "°C")\
-     .responde("D", rf"Q={tex(Q / 1e6, 3)}\ \text{{MJ}}", Q, "J")
-    return L.oficial("III Parcial ordinario I-2026", 0.469, 0.380, 15397.0, 121.6, 1.85e6).usa(r"H=-kA\frac{dT}{dx}")
-
+    return _area_lineal("Q049", "Barra piramidal de aluminio A(y) = 0,220 − 0,157y",
+                        "Dos reservorios, uno a $200{,}0\\ ^\\circ\\text{C}$ (abajo) y otro a $25{,}0\\ ^\\circ\\text{C}$ (arriba), se conectan con un bloque de aluminio ($k=235$ W/m·K) de $0{,}480$ m de altura, con caras cuadradas y área $A(y)=0{,}220-0{,}157y$ (m²). A) Lado de la cara inferior y superior. B) Flujo de calor. C) Temperatura a la mitad de la altura. D) Energía en 2 min. E) ¿Cambia el flujo si se intercambian los reservorios?",
+                        ["lados", "H", "T", "Q", "inter"], k=235.0, h=0.480, a0=0.220, m=-0.157, t1=200.0, t2=25.0, dt_s=120.0, dt_txt="2 min",
+                        oficial=("III Parcial ordinario I-2026", (0.469, 0.380, 15397.0, 121.6, 1.85e6), ""), et_a="0,220−0,157y")
 
 # ============================================================================ Q050
 @leccion("Q050")
