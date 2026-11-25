@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import pathlib
 import threading
@@ -16,6 +17,7 @@ from .fisica3 import registro, rutas
 from .fisica3.dsl import revisar
 from .documentos import MAX_PDF
 from .pdf_rag import fold_accents
+from .vision import MAX_IMAGEN_BYTES, reconocer_imagen
 from .voz import ServicioVoz
 
 
@@ -137,8 +139,35 @@ def _entero(x: Any, por_defecto: int = 0) -> int:
         return por_defecto
 
 
-def crear_router(voz: ServicioVoz, progreso: Progreso, revisa_token: Callable[[Request], None], documentos: Any = None) -> APIRouter:
+def crear_router(
+    voz: ServicioVoz,
+    progreso: Progreso,
+    revisa_token: Callable[[Request], None],
+    documentos: Any = None,
+    visual_director: Any = None,
+) -> APIRouter:
     r = APIRouter(prefix="/api")
+
+    @r.post("/imagen/reconocer")
+    async def api_imagen_reconocer(request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+        b = await cuerpo_json(request)
+        b64 = str(b.get("imagen") or "")
+        mime = str(b.get("tipo") or "image/png")[:40]
+        if not b64:
+            raise HTTPException(status_code=400, detail="Falta la imagen")
+        if len(b64) > (MAX_IMAGEN_BYTES * 4) // 3 + 128:
+            raise HTTPException(status_code=413, detail="La imagen pasa de 12 MB")
+        try:
+            raw = base64.b64decode(b64, validate=False)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Imagen en base64 inválida")
+        if len(raw) > MAX_IMAGEN_BYTES:
+            raise HTTPException(status_code=413, detail="La imagen pasa de 12 MB")
+        try:
+            return await asyncio.to_thread(reconocer_imagen, raw, mime, documentos, visual_director)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)[:200])
 
     @r.get("/banco")
     async def api_banco(request: Request) -> Dict[str, Any]:

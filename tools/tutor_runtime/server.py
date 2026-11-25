@@ -34,7 +34,9 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.tutor_runtime.banco_api import Progreso, crear_router
+from tools.tutor_runtime.banco_api import Progreso, buscar as buscar_banco, crear_router
+from tools.tutor_runtime.fisica3 import registro as registro_banco
+from tools.tutor_runtime.vision import generar_leccion_ia, reconocer_imagen
 from tools.tutor_runtime.demo_lessons import get_lesson_beats, get_seed_lessons_catalog
 from tools.tutor_runtime.gemini_engines import (
     AlignedSpanishTts,
@@ -226,7 +228,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
     def _revisa_token(req: Request) -> None:
         _check_token(req.query_params.get("token"), req)
 
-    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token, ctx.documentos))
+    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token, ctx.documentos, ctx.visual_director))
 
     @app.get("/api/health")
     async def api_health(request: Request, token: Optional[str] = Query(default=None)) -> Dict[str, Any]:
@@ -832,6 +834,47 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                     reason="live_tool_clear_whiteboard",
                 )
                 return {"ok": True, "cleared": True, "clear_ink": clear_ink, "clear_media": clear_media}
+
+            if tname == "buscar_leccion_banco":
+                q = str(args.get("query") or "").strip()
+                hits = await asyncio.to_thread(buscar_banco, q[:200], 8)
+                return {
+                    "ok": True,
+                    "total": len(hits),
+                    "resultados": [
+                        {
+                            "id": h.get("id"),
+                            "titulo": h.get("titulo"),
+                            "tema": h.get("tema"),
+                            "pasos": h.get("pasos"),
+                        }
+                        for h in hits
+                    ],
+                }
+
+            if tname == "abrir_leccion_banco":
+                lid = str(args.get("lesson_id") or "").strip().upper()
+                if not registro_banco.existe(lid):
+                    hits = await asyncio.to_thread(buscar_banco, lid, 3)
+                    if hits:
+                        lid = str(hits[0]["id"])
+                if not registro_banco.existe(lid):
+                    return {"ok": False, "error": f"No existe la lección '{lid}' en el banco."}
+                lec = await asyncio.to_thread(registro_banco.obtener, lid)
+                await send_json_safe({"type": "ABRIR_LECCION", "id": lid, "titulo": lec.titulo})
+                resps = [
+                    f"{(r.get('inciso') + ') ') if r.get('inciso') else ''}{r.get('tex', '')} {r.get('nota', '')}".strip()
+                    for r in (lec.respuestas or [])
+                ]
+                return {
+                    "ok": True,
+                    "id": lec.id,
+                    "titulo": lec.titulo,
+                    "enunciado": (lec.enunciado or "")[:1200],
+                    "pasos": [p.titulo for p in lec.pasos],
+                    "respuestas_verificadas": resps[:8],
+                    "aviso": lec.aviso or "",
+                }
 
             if tname == "find_and_crop_pdf_problem":
                 q = str(args.get("query") or "").strip()
@@ -1839,10 +1882,140 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                         "misconception": misconception,
                     })
 
+                elif etype == "PREGUNTA_LIBRE":
+                    cancel_active_generation()
+                    q_text = str(evt.get("texto") or "").strip()
+                    ctx_lec = evt.get("contexto") if isinstance(evt.get("contexto"), dict) else None
+                    sel = evt.get("seleccion") if isinstance(evt.get("seleccion"), dict) else None
+                    img_b64 = str(evt.get("imagen") or "")
+                    mod_req = str(evt.get("modelo") or "")
+                    if mod_req:
+                        ctx.visual_director.primary_model = mod_req
+                    if not q_text:
+                        continue
+                    extra_ctx_pl: Dict[str, Any] = {}
+                    if ctx_lec:
+                        extra_ctx_pl["leccion_actual"] = ctx_lec
+                    if sel:
+                        extra_ctx_pl["seleccion"] = sel
+                    q_full = q_text
+                    if sel and sel.get("texto"):
+                        q_full = f"{q_text} [Seleccionado en la pizarra: '{sel['texto']}' (fórmula: {sel.get('tex', '')})]"
+
+                    async def _run_pregunta_libre() -> None:
+                        nonlocal beat_counter
+                        beat_counter += 1
+                        await send_json_safe({"type": "STATE_CHANGE", "state": "THINKING_VERIFYING"})
+                        b, m = await ctx.visual_director.generate_beat(
+                            session_id=session_id,
+                            beat_num=beat_counter,
+                            step_index=len(scene_history) + 1,
+                            user_prompt=q_full,
+                            intent="question",
+                            scene_summary=scene_history,
+                            provenance_edges=provenance_edges,
+                            rag_citations=[],
+                            pedagogy_summary=ctx.memory.build_pedagogical_summary(),
+                            crop_png_b64=img_b64 or None,
+                            active_problem=active_problem,
+                            extra_context=extra_ctx_pl,
+                        )
+                        await record_and_dispatch_beat(b, meta=m, synthesize_tts=False)
+
+                    active_task = asyncio.create_task(_run_pregunta_libre())
+
+                elif etype == "RESOLVER_IMAGEN":
+                    cancel_active_generation()
+                    img_b64 = str(evt.get("imagen") or "")
+                    mime_in = str(evt.get("tipo") or "image/png")
+                    nota = str(evt.get("nota") or "").strip()
+                    texto_ocr = str(evt.get("texto") or "").strip()
+                    nombre = str(evt.get("nombre") or "Imagen pegada").strip()
+                    mod_req = str(evt.get("modelo") or "")
+                    if not img_b64:
+                        continue
+                    try:
+                        raw_img = base64.b64decode(img_b64, validate=False)
+                    except Exception:
+                        await send_json_safe({"type": "ERROR_RECOVERY", "message": "Imagen inválida."})
+                        continue
+
+                    async def _run_resolver_imagen() -> None:
+                        await send_json_safe({"type": "STATE_CHANGE", "state": "THINKING_VERIFYING"})
+                        try:
+                            prompt = nota or (
+                                "Resuelve completamente el ejercicio o explica el contenido de esta imagen "
+                                "paso a paso en español claro para alguien que necesita pasos cortos."
+                            )
+                            lec = await generar_leccion_ia(
+                                ctx.visual_director,
+                                prompt=prompt,
+                                imagen_bytes=raw_img,
+                                mime=mime_in,
+                                texto_ocr=texto_ocr,
+                                modelo=mod_req,
+                                titulo_hint=nombre,
+                            )
+                            await send_json_safe({"type": "LECCION_IA", "leccion": lec})
+                            await send_json_safe({"type": "STATE_CHANGE", "state": "WAITING_FOR_STUDENT"})
+                        except Exception as exc:
+                            await send_json_safe({"type": "ERROR_RECOVERY", "message": sanitize_text(str(exc))[:180]})
+
+                    active_task = asyncio.create_task(_run_resolver_imagen())
+
+                elif etype == "RESOLVER_DOCUMENTO":
+                    cancel_active_generation()
+                    doc_id = str(evt.get("doc") or "").strip()
+                    clave = str(evt.get("clave") or "").strip()
+                    mod_req = str(evt.get("modelo") or "")
+                    if not doc_id or not clave:
+                        continue
+
+                    async def _run_resolver_doc() -> None:
+                        await send_json_safe({"type": "STATE_CHANGE", "state": "THINKING_VERIFYING"})
+                        try:
+                            lec_id = await asyncio.to_thread(ctx.documentos.leccion_de, doc_id, clave)
+                            if lec_id and registro_banco.existe(lec_id):
+                                await send_json_safe({"type": "ABRIR_LECCION", "id": lec_id})
+                                return
+                            prob = await asyncio.to_thread(ctx.documentos.problema, doc_id, clave)
+                            png_bytes = await asyncio.to_thread(ctx.documentos.png, doc_id, clave)
+                            sol_txt = await asyncio.to_thread(ctx.documentos.texto_solucion, doc_id, clave)
+                            etiq = ctx.documentos.etiqueta(doc_id, clave)
+                            lec = await generar_leccion_ia(
+                                ctx.visual_director,
+                                prompt=f"Resuelve paso a paso este ejercicio ({etiq}).",
+                                imagen_bytes=png_bytes,
+                                mime="image/png",
+                                texto_ocr=prob.texto,
+                                guia_solucion=sol_txt,
+                                modelo=mod_req,
+                                titulo_hint=etiq,
+                            )
+                            lec["recorte"] = await asyncio.to_thread(ctx.documentos.recorte, doc_id, clave)
+                            await send_json_safe({"type": "LECCION_IA", "leccion": lec})
+                            await send_json_safe({"type": "STATE_CHANGE", "state": "WAITING_FOR_STUDENT"})
+                        except Exception as exc:
+                            await send_json_safe({"type": "ERROR_RECOVERY", "message": sanitize_text(str(exc))[:180]})
+
+                    active_task = asyncio.create_task(_run_resolver_doc())
+
                 elif etype == "START_LIVE_VOICE":
                     cancel_active_generation()
                     mic_frames_received = 0
                     lines = []
+                    ctx_lec = evt.get("contexto") if isinstance(evt.get("contexto"), dict) else None
+                    if ctx_lec:
+                        lines.append(
+                            f"Lección abierta en la pizarra: {ctx_lec.get('id', '')} — {ctx_lec.get('titulo', '')} "
+                            f"(paso {ctx_lec.get('paso', 1)} de {ctx_lec.get('total', 1)}: {ctx_lec.get('titulo_paso', '')})"
+                        )
+                        if ctx_lec.get("enunciado"):
+                            lines.append(f"Enunciado: {str(ctx_lec['enunciado'])[:1500]}")
+                        if ctx_lec.get("escrito"):
+                            lines.append("Escrito en este paso: " + " | ".join(str(x)[:160] for x in ctx_lec["escrito"][:10]))
+                        if ctx_lec.get("respuestas"):
+                            lines.append("Respuestas verificadas del banco: " + " ; ".join(str(x)[:120] for x in ctx_lec["respuestas"][:6]))
                     if ctx.pdf_store.list_docs():
                         docs_s = ", ".join(f"{d['filename']} ({d['problem_count']} problemas)" for d in ctx.pdf_store.list_docs())
                         lines.append(f"PDFs cargados disponibles para buscar/recortar/auditar: {docs_s}")

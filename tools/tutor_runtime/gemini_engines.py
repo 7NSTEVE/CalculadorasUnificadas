@@ -692,7 +692,17 @@ def _extract_json_object(raw_text: str) -> Dict[str, Any]:
     return json.loads(s)
 
 
-def _normalize_beat(raw: Dict[str, Any], session_id: str, turn_id: str, beat_num: int, step_index: int) -> Dict[str, Any]:
+def _normalize_beat(
+    raw: Dict[str, Any],
+    session_id: str,
+    turn_id: str,
+    beat_num: int,
+    step_index: int,
+    *,
+    verified_by_code: bool = False,
+) -> Dict[str, Any]:
+    from .verificador_numerico import limpiar_voz_latex
+
     beat_id = f"beat_{beat_num:04d}"
     actions = raw.get("actions") if isinstance(raw.get("actions"), list) else []
     clean_actions = []
@@ -714,6 +724,16 @@ def _normalize_beat(raw: Dict[str, Any], session_id: str, turn_id: str, beat_num
     ver = raw.get("verification") if isinstance(raw.get("verification"), dict) else {}
     prov = raw.get("provenance") if isinstance(raw.get("provenance"), list) else []
 
+    # P0 #2: NUNCA confiar en un status "sympy_verified" inventado por el LLM.
+    raw_status = str(ver.get("status") or "conceptual").strip()
+    if verified_by_code:
+        safe_status = raw_status if raw_status in ("sympy_verified", "numeric_verified", "conceptual", "discrepancy_detected") else "sympy_verified"
+    else:
+        safe_status = "conceptual" if raw_status in ("sympy_verified", "numeric_verified", "verified", "") else raw_status
+
+    raw_speech = str(raw.get("speech_markup") or "Revisemos este paso en la pizarra.")
+    clean_speech = limpiar_voz_latex(raw_speech, preservar_cues=True) or "Revisemos este paso en la pizarra."
+
     return {
         "protocol": "cuadernu.tutor.v1.1",
         "session_id": session_id,
@@ -722,13 +742,13 @@ def _normalize_beat(raw: Dict[str, Any], session_id: str, turn_id: str, beat_num
         "step_index": int(raw.get("step_index", step_index)),
         "checkpoint_id": str(raw.get("checkpoint_id") or f"cp_{beat_id}"),
         "branch_id": raw.get("branch_id"),
-        "speech_markup": str(raw.get("speech_markup") or "Revisemos este paso en la pizarra."),
+        "speech_markup": clean_speech,
         "speech_rate": float(max(0.75, min(1.35, float(raw.get("speech_rate", 0.95))))),
         "actions": clean_actions,
         "provenance": prov,
         "verification": {
-            "status": str(ver.get("status") or "conceptual"),
-            "sympy_rule": ver.get("sympy_rule"),
+            "status": safe_status,
+            "sympy_rule": ver.get("sympy_rule") if verified_by_code else None,
             "dimensional_check": ver.get("dimensional_check"),
             "source_citation": ver.get("source_citation"),
         },
@@ -853,11 +873,32 @@ class GeminiVisualDirector:
                 )
                 latency_ms = int((time.perf_counter() - t0) * 1000)
                 parsed = _extract_json_object(resp.text or "{}")
-                beat = _normalize_beat(parsed, session_id, turn_id, beat_num, step_index)
+                beat = _normalize_beat(parsed, session_id, turn_id, beat_num, step_index, verified_by_code=False)
                 if sympy_plan and sympy_plan.get("ok"):
                     beat["verification"]["status"] = "sympy_verified"
+                    beat["verification"]["sympy_rule"] = "manualintegrate.integral_steps"
                     if not beat["verification"].get("dimensional_check") and sympy_plan.get("dimensional_note"):
                         beat["verification"]["dimensional_check"] = sympy_plan["dimensional_note"]
+                else:
+                    from .verificador_numerico import verificar_beat_numerico
+
+                    vnum = verificar_beat_numerico(beat)
+                    if vnum["discrepancias"]:
+                        beat["verification"]["status"] = "discrepancy_detected"
+                        beat["verification"]["numeric_check"] = vnum
+                        aviso = " ".join(d["mensaje"] for d in vnum["discrepancias"][:2])
+                        beat["actions"].append({
+                            "action_id": f"act_chk_{beat_num}",
+                            "type": "write_text",
+                            "object_id": f"chk_{beat_num}",
+                            "placement": {"zone": "derivation_flow", "relation": "auto_next", "gap_px": 14},
+                            "animation": {"style": "fade_in", "duration_ms": 400, "cue_id": "c1"},
+                            "color_token": "accent_red",
+                            "payload": {"text": f"Aviso numérico (Python): {aviso}"},
+                        })
+                    elif vnum["verificado"]:
+                        beat["verification"]["status"] = "numeric_verified"
+                        beat["verification"]["numeric_check"] = vnum
                 return beat, {"model": model_name, "latency_ms": latency_ms}
             except Exception as exc:
                 last_err = sanitize_text(str(exc))[:160]
@@ -921,6 +962,7 @@ class GeminiVisualDirector:
                 turn_id,
                 beat_num,
                 step_index,
+                verified_by_code=True,
             )
 
         return _normalize_beat(
@@ -1266,6 +1308,30 @@ class GeminiLiveVoiceBridge:
                         ),
                     ),
                     types.FunctionDeclaration(
+                        name="buscar_leccion_banco",
+                        description="Busca en el banco verificado de 166 lecciones de Física General III (21 Recomendados E1..E21, 137 Superexamen Q001..Q137 y 8 mini-lecciones de teoría T-DIL..T-ENT) por código, tema o palabras del enunciado. Úsala SIEMPRE antes de improvisar un ejercicio de Física III.",
+                        behavior=types.Behavior.NON_BLOCKING,
+                        parameters=types.Schema(
+                            type=types.Type.OBJECT,
+                            required=["query"],
+                            properties={
+                                "query": types.Schema(type=types.Type.STRING, description="Código (ej. Q049, E8) o palabras del problema/tema"),
+                            },
+                        ),
+                    ),
+                    types.FunctionDeclaration(
+                        name="abrir_leccion_banco",
+                        description="Abre directamente en la pizarra una lección verificada del banco (ej. E8, Q049, T-CON) y devuelve sus pasos y respuestas exactas calculadas en Python para que nunca inventes números.",
+                        behavior=types.Behavior.NON_BLOCKING,
+                        parameters=types.Schema(
+                            type=types.Type.OBJECT,
+                            required=["lesson_id"],
+                            properties={
+                                "lesson_id": types.Schema(type=types.Type.STRING, description="Identificador exacto del banco ej. E1, E8, Q049, Q122, T-PV"),
+                            },
+                        ),
+                    ),
+                    types.FunctionDeclaration(
                         name="connect_origin_arrow",
                         description="Dibuja a mano una flecha curva de color conectando un dato/término previo con otro término en la pizarra.",
                         behavior=types.Behavior.NON_BLOCKING,
@@ -1338,7 +1404,9 @@ class GeminiLiveVoiceBridge:
             "SIEMPRE prioriza la ÚLTIMA selección/marca del alumno (símbolo exacto, bloque y fórmula indicados en el banner rojo "
             "y el zoom ampliado) y responde directamente sobre ESE símbolo exacto sin confundirlo con dibujos o pasos anteriores "
             "más arriba en la pizarra (y llama a `trace_data_provenance` si pregunta de dónde salió). "
-            "Si el alumno pide buscar un problema del PDF (ej. Q057, Q122 o un tema), llama a `find_and_crop_pdf_problem`. "
+            "Si el alumno menciona un ejercicio del banco de Física General III (ej. E1..E21, Q001..Q137, Recomendados, Superexamen o un tema de calorimetría, dilatación, conducción, radiación, gases, ciclos p-V o máquinas), "
+            "llama PRIMERO a `buscar_leccion_banco` o `abrir_leccion_banco` para abrir la lección verificada en la pizarra y usar SUS cifras exactas (jamás calcules de memoria lo que ya está verificado en Python). "
+            "Si el alumno pide buscar un problema de un PDF externo (ej. Q057, Q122 o un tema), llama a `find_and_crop_pdf_problem`. "
             "Si pregunta qué problemas se repiten más en el PDF, llama a `audit_pdf_repeated_problems`. "
             "Antes de resolver una integral nueva, llama a `verify_integral_sympy`. "
             "Si se queda pegado en álgebra intermedia, llama a `open_inline_visual_explanation` "

@@ -58,7 +58,7 @@ def _lesson_trabajo_cero(session_id: str) -> List[Dict[str, Any]]:
                 "Vamos desde cero absoluto, sin memorizar nada todavía. "
                 "<cue id='c1'/> En física, cuando un gas empuja un pistón a presión constante, el trabajo es presión por cambio de volumen. "
                 "<cue id='c2'/> Pero cuando la presión cambia conforme el gas se expande, dividimos el área en rectángulos muy angostos de ancho dV y los sumamos todos. "
-                "Mueve el deslizador de rectángulos para ver cómo esa suma se acerca al valor exacto de cuarenta joules."
+                "Mueve el deslizador de rectángulos para ver cómo esa suma se acerca al valor exacto de cincuenta y seis joules."
             ),
             "speech_rate": 0.96,
             "actions": [
