@@ -316,11 +316,15 @@ int main()
               cg50core_state(empty) == CG50CORE_MACHINE_READY);
 
     /* --- 12. fallo honesto: opcode no soportado -> FAULTED ------------ */
+    /* Nota H-003 (SH7305 real): 0xFFFF pertenece al espacio 0xFxxx sin FPU y
+     * genera EXPEVT 0x180 (General Illegal Instruction) en vez de detener la
+     * maquina; usamos 0x3001 (espacio 0x3nm1 no asignado en SH-4A) para
+     * acreditar el contrato CG50CORE_MACHINE_FAULTED sin romper fidelidad SH7305. */
     std::vector<std::uint8_t> bad(rom.size());
     FillNops(bad);
-    bad[0] = 0xFFu;
-    bad[1] = 0xFFu;
-    RequireOk("carga ROM 0xFFFF = OK (estructuralmente válida)",
+    bad[0] = 0x30u;
+    bad[1] = 0x01u;
+    RequireOk("carga ROM 0x3001 = OK (estructuralmente válida)",
               cg50core_load_firmware_raw(empty, bad.data(), bad.size(), nullptr,
                                          0, nullptr, 0) == CG50CORE_OK);
     cg50core_tick(empty, 1000, 0);
@@ -332,7 +336,7 @@ int main()
     RequireOk("telemetría de fallo honesta",
               faulted.cpuState == CG50CORE_CPU_HALTED &&
                   faulted.unsupportedOpcodeSeen == 1 &&
-                  faulted.unsupportedOpcode == 0xFFFFu &&
+                  faulted.unsupportedOpcode == 0x3001u &&
                   faulted.faulted == 1);
     RequireOk("diagnóstico superviviente al fallo (nunca vacío)",
               cg50core_last_error(empty, nullptr, 0) > 0);

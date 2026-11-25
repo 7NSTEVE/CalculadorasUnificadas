@@ -1,0 +1,96 @@
+{
+  "profile": "full-cert",
+  "threads": 16,
+  "soak_hours_requested": 0.25,
+  "soak_rounds_completed": 2209,
+  "strict_no_hle_verified": true,
+  "total_operations": 4872220000,
+  "total_failures": 0,
+  "elapsed_sec": 943.226,
+  "rss_before_bytes": 4255744,
+  "rss_after_bytes": 31215616,
+  "status": "PASS",
+  "suites": [
+    {
+      "name": "cpu_sh4al_dsp_sequences",
+      "target": 10000000,
+      "executed": 4428000000,
+      "failures": 0,
+      "elapsed_sec": 638.462,
+      "status": "PASS",
+      "notes": "StrictSh7305NoFpu=true; includes ALU, MAC, CLIPS/CLIPU, SH4AL-DSP, delay-slot BRA + determinism check"
+    },
+    {
+      "name": "bcd_alu_1m_oracle",
+      "target": 1000000,
+      "executed": 442800000,
+      "failures": 0,
+      "elapsed_sec": 261.903,
+      "status": "PASS",
+      "notes": "All 6 modes (ADD/SUB/ADDC/SUBB/ADD+1/SUB-1) + chained multi-word carry/borrow latch + alias +0x0C/+0x1C verified against pure integer base-10 oracle"
+    },
+    {
+      "name": "keystroke_matrix_stress",
+      "target": 1000000,
+      "executed": 1000000,
+      "failures": 0,
+      "elapsed_sec": 0.13374,
+      "status": "PASS",
+      "notes": "KIU KeyDown/IsKeyDown/KeyUp bursts + interleaved CPU ticks"
+    },
+    {
+      "name": "dmac0_6ch_transfers",
+      "target": 100000,
+      "executed": 100000,
+      "failures": 0,
+      "elapsed_sec": 0.0985561,
+      "status": "PASS",
+      "notes": "All 6 SH7305 DMAC0 channels verified bit-exact with OC cache coherency"
+    },
+    {
+      "name": "interrupt_delivery_stress",
+      "target": 100000,
+      "executed": 100000,
+      "failures": 0,
+      "elapsed_sec": 0.227113,
+      "status": "PASS",
+      "notes": "Exact ISR + RTE entry/return verification across INTC2 IRQ0..7 and NMI"
+    },
+    {
+      "name": "r61524_lcd_ops_stress",
+      "target": 100000,
+      "executed": 100000,
+      "failures": 0,
+      "elapsed_sec": 0.0123974,
+      "status": "PASS",
+      "notes": "GRAM write/readback (1-dummy contract), scroll, CABC, FMARK & full framebuffer render"
+    },
+    {
+      "name": "mmu_utlb_itlb_translations",
+      "target": 100000,
+      "executed": 100000,
+      "failures": 0,
+      "elapsed_sec": 0.103766,
+      "status": "PASS",
+      "notes": "Real CPU instruction fetch (4-entry ITLB) + data read/write (64-entry UTLB) verified against physical RAM"
+    },
+    {
+      "name": "save_restore_bit_exact",
+      "target": 10000,
+      "executed": 10000,
+      "failures": 0,
+      "elapsed_sec": 42.2061,
+      "status": "PASS",
+      "notes": "Full state ExportState -> ImportState -> ExportState byte-for-byte identity across chunks 1..105"
+    },
+    {
+      "name": "flash_nor_cfi_cycles",
+      "target": 10000,
+      "executed": 10000,
+      "failures": 0,
+      "elapsed_sec": 0.0011933,
+      "status": "PASS",
+      "notes": "Spansion S29GL256P Sector Erase + Word Program + DQ6/DQ7 busy polling verified"
+    }
+  ]
+}

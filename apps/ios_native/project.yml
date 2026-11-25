@@ -1,0 +1,153 @@
+# Unified XcodeGen spec for iOS / iPadOS: CuadernU (Metal Ink 120Hz +
+# Portable C++17 CuadernU Studio FFI + ALL 4 Casio v47 native calculators)
+# Single-source monorepo layout: links directly against ../../studio/, ../../academic/ and ../../core/.
+name: CuadernU
+
+options:
+  bundleIdPrefix: com.calculadorasunificadas
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    CLANG_CXX_LANGUAGE_STANDARD: c++20
+    CLANG_CXX_LIBRARY: libc++
+    GCC_C_LANGUAGE_STANDARD: c11
+    SWIFT_VERSION: "5.0"
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    ENABLE_BITCODE: NO
+
+targets:
+  CasioNxCore:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: ../../core/casio_nx/src
+        name: CasioNxSources
+    settings:
+      base:
+        CLANG_CXX_LANGUAGE_STANDARD: c++17
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/../../core/casio_nx/include
+          - $(SRCROOT)/../../core/casio_nx/src
+          - $(SRCROOT)/../../core/casio_nx/compat
+
+  CasioCw2Core:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: ../../core/casio_cw2/src
+        name: CasioCw2Sources
+    settings:
+      base:
+        CLANG_CXX_LANGUAGE_STANDARD: c++17
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/../../core/casio_cw2/include
+          - $(SRCROOT)/../../core/casio_cw2/src
+          - $(SRCROOT)/../../core/casio_cw2/compat
+
+  CuadernU:
+    type: application
+    platform: iOS
+    dependencies:
+      - target: CasioNxCore
+      - target: CasioCw2Core
+    sources:
+      # CuadernU iOS/iPadOS host (Swift + Metal Ink 120Hz + lápiz del iPad + Stage Manager)
+      - path: nativo_ipad/Fuente
+      - path: nativo_ipad/Compartido
+
+      # Canonical single-source C++ ink engine (shared with Windows/Linux CuadernU)
+      - path: ../../studio/tinta_core
+        name: NucleoTinta
+        excludes:
+          - tests/**
+
+      # Canonical single-source portable C++17 CuadernU Studio FFI
+      # (.cudoc ZIP, CAS #varsub, Chemistry 118, MNA/Bode/Laplace/K-Map, Graph, SM-2, PDF/DOCX/PPTX/DXF)
+      - path: ../../studio/core/spatial_index.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/page_layout.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/zip_container.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/document_model.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/command_stack.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/cudoc_storage.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/ink_engine.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/knowledge_graph.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/notebook_vault.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/core/structured_database.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/math/engineering_cas.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/math/reactive_math_chemistry.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/circuit/mna_solver.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/pdf/pdf_parser.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/pdf/pdf_writer.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/pdf/interop_openxml.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/pdf/table_interop.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/c_api/cuadernu_studio_ffi.cpp
+        group: CuadernUStudioCore
+      - path: ../../academic/horarios_tec/src
+        name: HorariosTecCore
+        excludes:
+          - horarios_tec_cli.cpp
+
+      # Calculadoras Casio UI panel (4 models: fx-CG50, fx-991CW, fx-570LA X, fx-570VN PLUS)
+      - path: CalculadorasCasio/Fuentes
+      - path: CalculadorasCasio/Recursos
+        type: folder
+        buildPhase: resources
+
+      # Canonical single-source v47 C++ calculator engines (NX & CW2 linked via isolated static targets)
+      - path: ../../core/casio_cg50
+        name: CasioCg50Core
+        excludes:
+          - c_api/**
+      - path: ../../core/casio_ffi
+        name: CasioFfi
+
+      # Shared ROM & skin assets (single source of truth)
+      - path: ../../assets/roms
+        type: folder
+        buildPhase: resources
+      - path: ../../assets/skins
+        type: folder
+        buildPhase: resources
+
+    settings:
+      base:
+        PRODUCT_NAME: CuadernU
+        PRODUCT_BUNDLE_IDENTIFIER: com.calculadorasunificadas.tinta
+        INFOPLIST_FILE: nativo_ipad/Fuente/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: CalculadorasCasio/Fuentes/Puente.h
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/nativo_ipad/Fuente/Puente
+          - $(SRCROOT)/../../studio
+          - $(SRCROOT)/../../studio/c_api
+          - $(SRCROOT)/../../studio/third_party
+          - $(SRCROOT)/../../studio/tinta_core
+          - $(SRCROOT)/../../academic/horarios_tec/include
+          - $(SRCROOT)/../../core/casio_ffi
+          - $(SRCROOT)/../../core/casio_nx/include
+          - $(SRCROOT)/../../core/casio_cw2/include
+          - $(SRCROOT)/../../core/casio_cg50
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        OTHER_LDFLAGS: "-lz"

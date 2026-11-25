@@ -1,0 +1,34 @@
+// Snippet con las pruebas del GestorFoco para integrar en pruebas.cpp
+// Copiar e incluir en el archivo pruebas.cpp original
+#include "../foco.h"
+
+void ProbarGestorFoco() {
+  CASO("Foco inicial es Pagina");
+  tinta::GestorFoco gestor;
+  VERIFICAR(gestor.ObtenerEstado().nivel == tinta::NivelFoco::Pagina);
+
+  CASO("Elementos visibles en Pagina");
+  auto visibilidad = gestor.ObtenerVisibilidadActual();
+  VERIFICAR(visibilidad.mostrar_barra_herramientas == true);
+  VERIFICAR(visibilidad.permitir_cambio_app == true);
+  VERIFICAR(visibilidad.bloquear_notificaciones == false);
+
+  CASO("Cambio a DeepStudy");
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::DeepStudy) == true);
+  VERIFICAR(gestor.ObtenerEstado().nivel == tinta::NivelFoco::DeepStudy);
+  visibilidad = gestor.ObtenerVisibilidadActual();
+  VERIFICAR(visibilidad.mostrar_barra_herramientas == false);
+  VERIFICAR(visibilidad.permitir_cambio_app == false);
+  VERIFICAR(visibilidad.bloquear_notificaciones == true);
+
+  CASO("Transicion a Region requiere Rect valido");
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::Region) == false); // Falla sin region
+  
+  tinta::Rect rect_vacio;
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::Region, rect_vacio) == false); // Falla region vacia
+  
+  tinta::Rect rect_valido{0.0f, 0.0f, 100.0f, 100.0f};
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::Region, rect_valido) == true);
+  VERIFICAR(gestor.ObtenerEstado().nivel == tinta::NivelFoco::Region);
+  VERIFICAR(gestor.ObtenerEstado().region_objetivo.has_value() == true);
+}

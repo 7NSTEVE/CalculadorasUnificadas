@@ -265,10 +265,10 @@ def main() -> int:
 
             for idx, case in enumerate(MATH_CASES_V46, 1):
                 # Clear Run-Matrix history before each case
-                auditor.press_sequence(["EXIT", "EXIT", "AC", "F2", "F2", "F1", "AC"], default_hold=0.10, default_wait=0.18)
+                auditor.press_sequence(["EXIT", "EXIT", "AC", "F2", "F2", "F1", "AC"], default_hold=0.07, default_wait=0.11)
                 t0 = time.perf_counter()
-                auditor.press_sequence(case["keys"], default_hold=0.11, default_wait=0.17)
-                time.sleep(case.get("wait_sec", 0.85))
+                auditor.press_sequence(case["keys"], default_hold=0.07, default_wait=0.11)
+                time.sleep(case.get("wait_sec", 0.55))
                 elapsed_ms = (time.perf_counter() - t0) * 1000.0
                 rec = auditor.capture_and_audit(case["case_id"], expected_tokens=case["expected_tokens"])
                 results.append({
@@ -348,7 +348,7 @@ def main() -> int:
             print(f"[ORACLE-V46] [52/54] {'ULTRA-SYS-3X3-EPS6':20s} pass={srec6['passed']} ({ms_sys6:.0f}ms) ocr={srec6['ocr_text'][:60]!r}")
 
             # 53. POLY-NEAR-ROOTS-001 in Equation -> Polynomial (F2) -> Deg 3 (F2) -> SOLVE (F1)
-            auditor.press_sequence(["EXIT", "EXIT", "F2", "F2"], default_hold=0.14, default_wait=0.40)
+            auditor.press_sequence(["EXIT", "EXIT", "EXIT", "EXIT", "F2", "F2"], default_hold=0.14, default_wait=0.40)
             t0 = time.perf_counter()
             auditor.press_sequence([
                 "1", "EXE",

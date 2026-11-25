@@ -1,0 +1,67 @@
+name: Monorepo CI (Hygiene + Core/FFI Linux + iOS CuadernU)
+
+on:
+  push:
+    branches: [ main, "feat/**", "fix/**", "consolidation/**" ]
+  pull_request:
+
+jobs:
+  hygiene:
+    name: Workspace Hygiene Rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run workspace hygiene validator
+        run: python3 tools/check_workspace_hygiene.py
+
+  core-linux:
+    name: Core v47 + CuadernU Studio FFI (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install zlib development headers
+        run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
+      - name: Configure core & CuadernU Studio FFI tests
+        run: |
+          cmake -S core -B build/core-linux \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_CORE_TESTS=ON \
+            -DCUADERNU_BUILD_STUDIO_FFI=ON
+      - name: Build core & Studio FFI tests
+        run: cmake --build build/core-linux --parallel
+      - name: Run CTest
+        run: ctest --test-dir build/core-linux --output-on-failure
+
+  ios-xcframework:
+    name: iOS CasioNativeCore + Studio FFI XCFramework (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build CasioNativeCore.xcframework
+        run: |
+          chmod +x tools/build_ios_xcframework.sh
+          ./tools/build_ios_xcframework.sh
+      - name: Verify XCFramework slices
+        run: ls -la build/ios-xcframework/CasioNativeCore.xcframework
+
+  ios-cuadernu-app:
+    name: iOS / iPadOS CuadernU Swift + Metal + C++20 Build (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate CuadernU.xcodeproj
+        working-directory: apps/ios_native
+        run: xcodegen generate
+      - name: Build CuadernU for iOS Simulator (unsigned CI verification)
+        working-directory: apps/ios_native
+        run: |
+          xcodebuild \
+            -project CuadernU.xcodeproj \
+            -scheme CuadernU \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build

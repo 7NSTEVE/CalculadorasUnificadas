@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:label="Calculadoras"
+        android:label="CuadernU"
         android:name="${applicationName}"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

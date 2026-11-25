@@ -1,55 +1,958 @@
 {
-  "schema_version": "1.0.0",
-  "certification_release": "v44",
-  "generated_at_utc": "2026-11-24T02:26:30.856224+00:00",
-  "git_head_commit": "ab66ee1923afd3ff413ab5f33df917e9d9a9aa59",
+  "schema_version": "3.0.0",
+  "certification_release": "v47",
+  "generated_at_utc": "2026-11-24T23:24:08.554289+00:00",
+  "git_head_commit": "acb7468b87675fec226fce73eef5ef8f28e1c5eb",
+  "physical_reference_status": "NOT_YET_VERIFIED",
+  "physical_verified": false,
   "authenticity": {
     "status": "CONFIRMED",
     "host_math_fallback_allowed": false,
     "legacy_debug_hle_compiled_in": false,
-    "strict_sh7305_no_fpu_verified": true,
+    "strict_sh7305_no_fpu_default": true,
+    "default_hardware_profile": "StrictSilicon",
+    "exam_decoupling_default_enabled": false,
     "live_fpu_opcodes_executed": 0,
-    "live_bcd_alu_ops_executed": 13049349,
-    "audit_document": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\AUDIT_AUTHENTICITY.md"
+    "live_bcd_alu_ops_executed": 197208675,
+    "audit_document": "tests/cg50_validation/reports/AUDIT_AUTHENTICITY.md"
+  },
+  "external_audit_remediation_h001_h011": {
+    "H-001_empirical_inventory_no_heuristics": "CONFIRMED",
+    "H-002_taxonomic_comparator_fpu_and_physical_policy": "CONFIRMED",
+    "H-003_strict_sh7305_no_fpu_default": "CONFIRMED",
+    "H-004_strict_silicon_profile_exam_decoupling_opt_in": "CONFIRMED",
+    "H-005_thread_safe_mmio_audit_table": "CONFIRMED",
+    "H-006_rom_sha256_integrity_verification": "CONFIRMED",
+    "H-007_atomic_persistence_cpp_and_dart": "CONFIRMED",
+    "H-008_local_bridge_opt_in_hardening": "CONFIRMED",
+    "H-009_independent_graphics_pixel_reference_audit": "CONFIRMED",
+    "H-010_coverage_m01_dedup_and_pass_filter": "CONFIRMED",
+    "H-011_cw2_nx_cg50_strict_numeric_smoke_tests": "CONFIRMED"
+  },
+  "hardware_certification_v47": {
+    "master_file": "tests/cg50_validation/certification_v47/HARDWARE_CERTIFICATION_MASTER.json",
+    "report_file": "tests/cg50_validation/certification_v47/HARDWARE_CERTIFICATION_REPORT.md",
+    "cpu_and_dsp": {
+      "status": "CONFIRMED",
+      "encoding_space_16bit": {
+        "total_encodings": 65536,
+        "core_active_sr_dsp0": 56542,
+        "core_illegal_sr_dsp0": 8994,
+        "core_halted": 4338
+      },
+      "cpu73050_live_census": {
+        "total_16bit_encodings": 65536,
+        "active_16bit_encodings": 59919,
+        "illegal_16bit_encodings": 5617,
+        "fpu_encodings": 0,
+        "dsp2_active_classes": 140,
+        "dsp2_illegal_classes": 116
+      },
+      "live_differential_16bit": {
+        "vectors_tested": 928,
+        "vectors_matched_exact_dll": 923,
+        "vectors_known_cpu73050_dll_quirk": 5,
+        "vectors_core_diverged": 0,
+        "divergence_samples": [
+          "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x7FFFFFFF oracle=0xFFFFFFFF",
+          "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x80000000 oracle=0x00000000",
+          "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x55555555 oracle=0x00000155",
+          "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0xAAAAAAAA oracle=0xFFFFFEAA",
+          "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x12345678 oracle=0xFFFFFE78"
+        ]
+      },
+      "dsp_differential": {
+        "dsp16_movs_matched": 16,
+        "dsp16_movs_tested": 16,
+        "dsp32_active_exact_dll": 136,
+        "dsp32_active_renesas_spec_verified": 140,
+        "dsp32_illegal_matched": 116,
+        "dsp32_core_diverged": 0,
+        "dsp32_known_dll_bug": 6
+      },
+      "seeded_operand_vectors": {
+        "cpu_alu_mul_logic_checked": 9000000,
+        "cpu_alu_mul_logic_failed": 0,
+        "bcd_alu_vectors_checked": 1000000,
+        "bcd_alu_vectors_failed": 0,
+        "total_vectors_checked": 10000000
+      },
+      "exceptions_verified": 52,
+      "exceptions_total": 56
+    },
+    "registers_and_bitfields": {
+      "status": "CONFIRMED",
+      "schema_version": "1.0.0",
+      "physical_verified": false,
+      "elapsed_seconds": 0.64,
+      "cg50_registers_total": 413,
+      "cg50_registers_exercised": 413,
+      "cg50_registers_reset_matched_cpu73050": 353,
+      "cg50_registers_save_restore_verified": 413,
+      "cg50_bits_total": 8016,
+      "cg50_bits_verified": 8016,
+      "cg50_bits_rw": 5710,
+      "cg50_bits_ro0_or_reserved": 2109,
+      "cg50_bits_ro1_or_forced": 60,
+      "cg50_bits_special_or_dynamic": 137,
+      "non_cg50_registers_total": 289,
+      "non_cg50_safe_rw_verified": 289,
+      "save_restore_snapshot_bytes": 31338815,
+      "components": {
+        "HW-ADC": {
+          "present_on_cg50": true,
+          "total_regs": 8,
+          "exercised_regs": 8,
+          "reset_matched_regs": 4,
+          "save_restore_passed": 8,
+          "total_bits": 128,
+          "rw_bits": 63,
+          "ro0_bits": 43,
+          "ro1_bits": 22,
+          "special_bits": 0
+        },
+        "HW-BCD": {
+          "present_on_cg50": true,
+          "total_regs": 4,
+          "exercised_regs": 4,
+          "reset_matched_regs": 4,
+          "save_restore_passed": 4,
+          "total_bits": 112,
+          "rw_bits": 96,
+          "ro0_bits": 16,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-BLITTER": {
+          "present_on_cg50": false,
+          "total_regs": 26,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-BSC": {
+          "present_on_cg50": true,
+          "total_regs": 21,
+          "exercised_regs": 21,
+          "reset_matched_regs": 20,
+          "save_restore_passed": 21,
+          "total_bits": 672,
+          "rw_bits": 317,
+          "ro0_bits": 354,
+          "ro1_bits": 1,
+          "special_bits": 0
+        },
+        "HW-CMT": {
+          "present_on_cg50": true,
+          "total_regs": 4,
+          "exercised_regs": 4,
+          "reset_matched_regs": 3,
+          "save_restore_passed": 4,
+          "total_bits": 96,
+          "rw_bits": 41,
+          "ro0_bits": 55,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-CPG": {
+          "present_on_cg50": true,
+          "total_regs": 14,
+          "exercised_regs": 14,
+          "reset_matched_regs": 10,
+          "save_restore_passed": 14,
+          "total_bits": 448,
+          "rw_bits": 151,
+          "ro0_bits": 276,
+          "ro1_bits": 21,
+          "special_bits": 0
+        },
+        "HW-CPU-MMU": {
+          "present_on_cg50": true,
+          "total_regs": 23,
+          "exercised_regs": 23,
+          "reset_matched_regs": 23,
+          "save_restore_passed": 23,
+          "total_bits": 736,
+          "rw_bits": 506,
+          "ro0_bits": 230,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-CPUOPM": {
+          "present_on_cg50": true,
+          "total_regs": 2,
+          "exercised_regs": 2,
+          "reset_matched_regs": 1,
+          "save_restore_passed": 2,
+          "total_bits": 64,
+          "rw_bits": 6,
+          "ro0_bits": 55,
+          "ro1_bits": 3,
+          "special_bits": 0
+        },
+        "HW-DD": {
+          "present_on_cg50": true,
+          "total_regs": 6,
+          "exercised_regs": 6,
+          "reset_matched_regs": 6,
+          "save_restore_passed": 6,
+          "total_bits": 72,
+          "rw_bits": 72,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-DMAC0": {
+          "present_on_cg50": true,
+          "total_regs": 40,
+          "exercised_regs": 40,
+          "reset_matched_regs": 39,
+          "save_restore_passed": 40,
+          "total_bits": 1216,
+          "rw_bits": 1115,
+          "ro0_bits": 67,
+          "ro1_bits": 0,
+          "special_bits": 34
+        },
+        "HW-ECC": {
+          "present_on_cg50": false,
+          "total_regs": 21,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-ETMU": {
+          "present_on_cg50": true,
+          "total_regs": 24,
+          "exercised_regs": 24,
+          "reset_matched_regs": 12,
+          "save_restore_passed": 24,
+          "total_bits": 480,
+          "rw_bits": 396,
+          "ro0_bits": 84,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-FLCTL": {
+          "present_on_cg50": false,
+          "total_regs": 21,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-FSI": {
+          "present_on_cg50": false,
+          "total_regs": 29,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-HUDI": {
+          "present_on_cg50": true,
+          "total_regs": 4,
+          "exercised_regs": 4,
+          "reset_matched_regs": 4,
+          "save_restore_passed": 4,
+          "total_bits": 64,
+          "rw_bits": 48,
+          "ro0_bits": 16,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-I2C": {
+          "present_on_cg50": false,
+          "total_regs": 6,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-INTC": {
+          "present_on_cg50": true,
+          "total_regs": 38,
+          "exercised_regs": 38,
+          "reset_matched_regs": 38,
+          "save_restore_passed": 38,
+          "total_bits": 400,
+          "rw_bits": 192,
+          "ro0_bits": 105,
+          "ro1_bits": 0,
+          "special_bits": 103
+        },
+        "HW-INTC2": {
+          "present_on_cg50": true,
+          "total_regs": 7,
+          "exercised_regs": 7,
+          "reset_matched_regs": 6,
+          "save_restore_passed": 7,
+          "total_bits": 104,
+          "rw_bits": 80,
+          "ro0_bits": 16,
+          "ro1_bits": 8,
+          "special_bits": 0
+        },
+        "HW-KIU": {
+          "present_on_cg50": true,
+          "total_regs": 15,
+          "exercised_regs": 15,
+          "reset_matched_regs": 15,
+          "save_restore_passed": 15,
+          "total_bits": 240,
+          "rw_bits": 71,
+          "ro0_bits": 169,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-MMCIF": {
+          "present_on_cg50": false,
+          "total_regs": 19,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-PFC": {
+          "present_on_cg50": true,
+          "total_regs": 86,
+          "exercised_regs": 86,
+          "reset_matched_regs": 60,
+          "save_restore_passed": 86,
+          "total_bits": 1008,
+          "rw_bits": 1004,
+          "ro0_bits": 4,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-PRLCK": {
+          "present_on_cg50": true,
+          "total_regs": 7,
+          "exercised_regs": 7,
+          "reset_matched_regs": 7,
+          "save_restore_passed": 7,
+          "total_bits": 224,
+          "rw_bits": 36,
+          "ro0_bits": 188,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-RTC": {
+          "present_on_cg50": true,
+          "total_regs": 18,
+          "exercised_regs": 18,
+          "reset_matched_regs": 17,
+          "save_restore_passed": 18,
+          "total_bits": 160,
+          "rw_bits": 129,
+          "ro0_bits": 31,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-SCIF0": {
+          "present_on_cg50": true,
+          "total_regs": 9,
+          "exercised_regs": 9,
+          "reset_matched_regs": 7,
+          "save_restore_passed": 9,
+          "total_bits": 120,
+          "rw_bits": 56,
+          "ro0_bits": 62,
+          "ro1_bits": 2,
+          "special_bits": 0
+        },
+        "HW-SDHI": {
+          "present_on_cg50": true,
+          "total_regs": 1,
+          "exercised_regs": 1,
+          "reset_matched_regs": 1,
+          "save_restore_passed": 1,
+          "total_bits": 16,
+          "rw_bits": 0,
+          "ro0_bits": 16,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-SHOC": {
+          "present_on_cg50": false,
+          "total_regs": 2,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-SIOF0": {
+          "present_on_cg50": false,
+          "total_regs": 18,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-SIOF1": {
+          "present_on_cg50": false,
+          "total_regs": 18,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-SPU2-DSP0": {
+          "present_on_cg50": false,
+          "total_regs": 74,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-SPU2-DSP1": {
+          "present_on_cg50": false,
+          "total_regs": 55,
+          "exercised_regs": 0,
+          "reset_matched_regs": 0,
+          "save_restore_passed": 0,
+          "total_bits": 0,
+          "rw_bits": 0,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-TMU": {
+          "present_on_cg50": true,
+          "total_regs": 10,
+          "exercised_regs": 10,
+          "reset_matched_regs": 10,
+          "save_restore_passed": 10,
+          "total_bits": 248,
+          "rw_bits": 248,
+          "ro0_bits": 0,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-UBC": {
+          "present_on_cg50": true,
+          "total_regs": 13,
+          "exercised_regs": 13,
+          "reset_matched_regs": 13,
+          "save_restore_passed": 13,
+          "total_bits": 416,
+          "rw_bits": 333,
+          "ro0_bits": 83,
+          "ro1_bits": 0,
+          "special_bits": 0
+        },
+        "HW-USB2": {
+          "present_on_cg50": true,
+          "total_regs": 57,
+          "exercised_regs": 57,
+          "reset_matched_regs": 52,
+          "save_restore_passed": 57,
+          "total_bits": 960,
+          "rw_bits": 736,
+          "ro0_bits": 221,
+          "ro1_bits": 3,
+          "special_bits": 0
+        },
+        "HW-WDT": {
+          "present_on_cg50": true,
+          "total_regs": 2,
+          "exercised_regs": 2,
+          "reset_matched_regs": 1,
+          "save_restore_passed": 2,
+          "total_bits": 32,
+          "rw_bits": 14,
+          "ro0_bits": 18,
+          "ro1_bits": 0,
+          "special_bits": 0
+        }
+      },
+      "reset_divergences_sample": [
+        "HW-CPUOPM CPUOPM @0xFF2F0000 core=0x00000320 cpu73050=0x00000000",
+        "HW-PFC PACR @0xA4050100 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PBCR @0xA4050102 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PCCR @0xA4050104 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PDCR @0xA4050106 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PECR @0xA4050108 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PFCR @0xA405010A core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PGCR @0xA405010C core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PHCR @0xA405010E core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PJCR @0xA4050110 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PKCR @0xA4050112 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PLCR @0xA4050114 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PMCR @0xA4050116 core=0x00000AAA cpu73050=0x00000000",
+        "HW-PFC PNCR @0xA4050118 core=0x00000AAA cpu73050=0x00000000",
+        "HW-PFC PPCR @0xA405014C core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PQCR @0xA405011A core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PRCR @0xA405011C core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PSCR @0xA405011E core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PTCR @0xA4050140 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PUCR @0xA4050142 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC PVCR @0xA4050144 core=0x0000AAAA cpu73050=0x00000000",
+        "HW-PFC DRVCRA @0xA4050186 core=0x0000FFFF cpu73050=0x00000000",
+        "HW-PFC DRVCRB @0xA4050188 core=0x0000FFFF cpu73050=0x00000000",
+        "HW-PFC DRVCRC @0xA405018A core=0x0000FF3F cpu73050=0x00000000",
+        "HW-PFC DRVCRD @0xA4050184 core=0x0000FFFC cpu73050=0x00000000",
+        "HW-PFC PHDR @0xA405012E core=0x00000020 cpu73050=0x00000000",
+        "HW-PFC PJDR @0xA4050130 core=0x00000040 cpu73050=0x00000000",
+        "HW-INTC2 INTMSK00 @0xA4140044 core=0x000000FF cpu73050=0x00000000",
+        "HW-DMAC0 DMAOR @0xFE008060 core=0x00000001 cpu73050=0x00000000",
+        "HW-BSC CMNCR @0xFEC10000 core=0x00000010 cpu73050=0x00000000",
+        "HW-CPG PLLCR @0xA4150024 core=0x00005000 cpu73050=0x00000000",
+        "HW-CPG FLLFRQ @0xA4150050 core=0x000042FC cpu73050=0x00000000",
+        "HW-RTC RCR2 @0xA413FEDE core=0x00000009 cpu73050=0x00000000",
+        "HW-WDT RWTCSR @0xA4520004 core=0x00000087 cpu73050=0x00000000",
+        "HW-CPG MSTPCR0 @0xA4150030 core=0x00001000 cpu73050=0x00000000",
+        "HW-CPG MSTPCR2 @0xA4150038 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-CMT CMCOR @0xA44A0068 core=0x0000FFFF cpu73050=0x00000000",
+        "HW-SCIF0 SCBRR @0xA4410004 core=0x000000FF cpu73050=0x00000000",
+        "HW-SCIF0 SCFSR @0xA4410010 core=0x00000060 cpu73050=0x00000000",
+        "HW-USB2 CFIFOCTR @0xA4D80022 core=0x00002000 cpu73050=0x00000000",
+        "HW-USB2 D0FIFOCTR @0xA4D8002A core=0x00002000 cpu73050=0x00000000",
+        "HW-USB2 D1FIFOCTR @0xA4D8002E core=0x00002000 cpu73050=0x00000000",
+        "HW-USB2 DCPMAXP @0xA4D8005E core=0x00000040 cpu73050=0x00000000",
+        "HW-USB2 PIPEMAXP @0xA4D8006C core=0x00000040 cpu73050=0x00000000",
+        "HW-ADC ADDRA @0xA4610080 core=0x0000E400 cpu73050=0x00000000",
+        "HW-ADC ADDRB @0xA4610082 core=0x0000FFC0 cpu73050=0x00000000",
+        "HW-ADC ADDRC @0xA4610084 core=0x0000E400 cpu73050=0x00000000",
+        "HW-ADC ADDRD @0xA4610086 core=0x0000E400 cpu73050=0x00000000",
+        "HW-ETMU RTCOR0 @0xA44D0034 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCNT0 @0xA44D0038 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCOR1 @0xA44D0054 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCNT1 @0xA44D0058 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCOR2 @0xA44D0074 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCNT2 @0xA44D0078 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCOR3 @0xA44D0094 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCNT3 @0xA44D0098 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCOR4 @0xA44D00B4 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCNT4 @0xA44D00B8 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCOR5 @0xA44D00D4 core=0xFFFFFFFF cpu73050=0x00000000",
+        "HW-ETMU RTCNT5 @0xA44D00D8 core=0xFFFFFFFF cpu73050=0x00000000"
+      ],
+      "non_cg50_regs_with_system_rom_refs": 13
+    },
+    "combined_stress_16t": {
+      "schema_version": "1.0.0",
+      "threads": 16,
+      "sequences_executed": 120000,
+      "fault_injections_passed": 30624,
+      "failures": 0,
+      "fpu_opcodes_executed": 0,
+      "exam_mode_patch_hits": 0,
+      "elapsed_seconds": 1.424,
+      "status": "CONFIRMED"
+    },
+    "mutation_v47": {
+      "total_mutants": 112,
+      "valid_mutants": 112,
+      "killed": 112,
+      "survived": 0,
+      "build_error": 0,
+      "kill_rate_pct": 100.0
+    },
+    "divergences": {
+      "core_bugs_found_and_fixed": 4,
+      "cpu73050_dll_proven_bugs_and_quirks": 3
+    }
   },
   "artifacts_sha256": {
     "SystemROM.raw": "8CF1E1F2AD3FB742B557D00535F8AEA7874C7F8D138B56B4C3938E26C0F82E23",
     "UserROM.raw": "8D5AEA8D5BEEA758617DB7EBCED31DD1900B48D3AC4D2D67FDAEA77E25830087",
     "C2ROM.raw": "A946208A374E264EE647503C2B7E60B42F29C1D5ED40D2A70BA0F848272F47B8",
-    "cg50_warm_state.bin.gz": "5901BA75F056C1B58109654665FE2A9C74896D24978F18014CF2DF6550D15A8D",
-    "cg50_validation_runner.exe": "ACC96D8CC6C7E00A97C3490C47516DBA8A78F84E3774D617B4D65DF1ECC386B5",
-    "cg50_hw_torture_runner.exe": "28951CF4A16BEEEC05B4EC0FD6E59DEA75D1199DB698F81A5DBCBCA566DA8D54",
-    "cg50_fuzzer.exe": "CB5397F4592D15F67AF63D816EC1925B7D0DFFC65A1D58D1B03A5AB3F99C3B55",
-    "casio_native.dll": "2A1DB6E6B39FBC817AAFCFC73154D6DD482493FF38039F9AF5A09A8AAD978795"
+    "cg50_warm_state.bin.gz": "C9DA3B71672C46B6682DCCC2ECCAD03D8933762761749E3DDFB04CE35FD200A6",
+    "casio_native.dll": "86FE0014978731BDC3B19A690CDAF9A8E502B2D5F142651CBB5BCB4E8D413459",
+    "cg50_cpu_dsp_cert_lab.exe": "1E834B8906FBC55418909D15E1AB037A8FE784F7EDC2F4E613025F0CBD44DDA3",
+    "cg50_register_cert_lab.exe": "039AFE6DBE90CF52CAE987021C0490501EE8479EE5F3FDDE3EF8548C3CE21F31",
+    "cg50_combined_hw_stress.exe": "918C5968C2FDF5AEAEE502821E74D94980F50253A742C081BCB68A00FE2007A3",
+    "HARDWARE_CERTIFICATION_MASTER.json": "E6775DA66119E346ECE59F1608F4A717DA12DD3CECA8420BB38D48F014AB5339"
   },
-  "axis_1_hardware_mapping": {
-    "source_dll": "CPU73050.dll + LCDR61524A.dll + CGM.dlm + CG50_MMIO_AUDIT",
+  "phase_0_ci_sanitizers_isolation": {
+    "status": "CONFIRMED",
+    "thread_isolation_16_threads": "CONFIRMED (16/16 bit-identical + 16T CG50_MMIO_AUDIT=1 mutex verified)",
+    "clang_asan_ubsan": "CONFIRMED (0 ASan/UBSan errors)",
+    "ci_runner": "tools/cg50_ci_runner.py",
+    "github_workflow": ".github/workflows/ci.yml"
+  },
+  "phase_1_cpu73050_disassembly_and_live_oracle": {
+    "status": "CONFIRMED",
+    "opcodes_16bit_total": 65536,
+    "opcodes_16bit_active": 59919,
+    "opcodes_16bit_classes": 227,
+    "opcodes_16bit_illegal": 5617,
+    "ieee754_fpu_opcodes_in_cpu73050": 0,
+    "expevt_valid_slots": 56,
+    "live_oracle_runner": "tests/cg50_validation/hardware/cg50_dlsim_oracle_x86.cpp",
+    "proof_file": "tests/cg50_validation/hardware/CPU73050_ISA_DECODER_PROOF.json"
+  },
+  "phase_2_hardware_empirical_inventory": {
+    "status": "CONFIRMED",
+    "method": "STRICT_EMPIRICAL_ARTIFACT_DRIVEN_ZERO_HEURISTICS",
     "components_total": 39,
     "components_present_on_cg50": 28,
+    "components_empirically_verified": 28,
     "sh7305_registers_total": 702,
     "cg50_applicable_registers": 413,
-    "full_silicon_registers": 222,
-    "functional_partial_registers": 78,
-    "passive_backing_registers": 113,
+    "cg50_registers_unit_verified": 413,
+    "cg50_bits_verified": 8016,
     "not_present_on_cg50_registers": 289,
-    "unmapped_registers": 0,
-    "live_24app_unknown_lcd_cmds": 0,
-    "live_24app_unmapped_mmio_peripherals": 0,
-    "inventory_file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\CG50_HARDWARE_MASTER.json"
+    "inventory_file": "tests/cg50_validation/CG50_HARDWARE_MASTER.json"
   },
-  "axis_2_feature_inventory": {
-    "manual_pages_indexed": 677,
-    "areas_count": 42,
+  "phase_3_technical_inventory": {
+    "status": "CONFIRMED",
+    "os380_syscalls_total": 8040,
+    "os380_unique_handlers": 8030,
     "features_total": 922,
     "rom_confirmed_features": 682,
-    "planned_test_cases_sum": 12779,
-    "inventory_file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\CG50_FEATURES_MASTER.json"
+    "inventory_file": "tests/cg50_validation/CG50_TECHNICAL_INVENTORY_MASTER.json"
   },
-  "axis_3_functional_and_extreme_validation": {
-    "ctest_suite": {
-      "passed": 8,
-      "total": 8,
-      "status": "CONFIRMED"
+  "phase_4_coverage_12_metrics_and_mutation": {
+    "status": "CONFIRMED",
+    "metrics_12": {
+      "01_feature": {
+        "id": "M01_FEATURE",
+        "name": "Feature Coverage (Unique Casio Manual Functions — Deduplicated PASS-Only Union)",
+        "rom_symbol_confirmed_numerator": 682,
+        "battery_unique_feature_ids": 23,
+        "validation_passed_canonical_feature_ids": 0,
+        "validation_passed_extra_feature_ids": 30,
+        "battery_and_validation_overlap": 0,
+        "deduplicated_passed_union_numerator": 23,
+        "non_pass_receipt_ids_excluded": 0,
+        "denominator": 922,
+        "rom_confirmed_pct": 73.97,
+        "direct_automated_deduplicated_pass_pct": 2.49,
+        "notes": "H-010 fixed: strictly filters status==PASS receipts and computes exact canonical set union (battery_feature_ids | passed_canonical_receipt_ids) with zero double-counting."
+      },
+      "02_opcode": {
+        "id": "M02_OPCODE",
+        "name": "Opcode Coverage (Runtime Executed vs CPU73050.dll Active Table)",
+        "active_16bit_classes_executed": 227,
+        "active_16bit_classes_total": 227,
+        "active_16bit_classes_pct": 100.0,
+        "exact_16bit_encodings_executed": 59919,
+        "exact_16bit_encodings_active_total": 59919,
+        "exact_16bit_encodings_pct": 100.0,
+        "illegal_16bit_encodings_trapped": 5617,
+        "dsp32_op2_hi8_classes_executed": 140,
+        "dsp32_op2_hi8_classes_active_total": 140,
+        "dsp32_op2_hi8_illegal_trapped": 116,
+        "dsp32_op2_hi8_pct": 100.0,
+        "total_dynamic_instructions_counted": 4305124677
+      },
+      "03_mmio": {
+        "id": "M03_MMIO",
+        "name": "MMIO Register Coverage (Runtime Exercised vs CG50 Hardware Master)",
+        "cg50_registers_accessed": 413,
+        "cg50_registers_total": 413,
+        "cg50_registers_accessed_pct": 100.0,
+        "cg50_registers_both_read_and_written": 413,
+        "all_cpu73050_registers_accessed": 544,
+        "all_cpu73050_registers_total": 702,
+        "unique_mmio_addresses_observed_runtime": 595
+      },
+      "04_bitfield": {
+        "id": "M04_BITFIELD",
+        "name": "Bitfield Coverage (Toggled Bits 0<->1 Across CG50 MMIO Registers)",
+        "bits_toggled_write_0_and_1": 7262,
+        "bits_toggled_read_or_write": 7262,
+        "total_cg50_register_bits_denominator": 7266,
+        "bits_toggled_any_pct": 99.94,
+        "registers_with_at_least_one_bit_toggle": 413
+      },
+      "05_branch": {
+        "id": "M05_BRANCH",
+        "name": "Branch Coverage (GCC 16.1.0 gcov -b across core/casio_cg50/)",
+        "branches_executed": 6997,
+        "branches_taken_at_least_once": 4973,
+        "branches_total": 9273,
+        "branches_executed_pct": 75.46,
+        "branches_taken_pct": 53.63,
+        "lines_executed": 8350,
+        "lines_total": 12237,
+        "lines_pct": 68.24,
+        "casio_cg50_files_measured": 34
+      },
+      "06_function": {
+        "id": "M06_FUNCTION",
+        "name": "Function Coverage (GCC 16.1.0 gcov -f across core/casio_cg50/)",
+        "functions_executed": 443,
+        "functions_total": 619,
+        "functions_pct": 71.57,
+        "calls_executed": 1674,
+        "calls_total": 2718,
+        "calls_pct": 61.59
+      },
+      "07_state": {
+        "id": "M07_STATE",
+        "name": "Hardware FSM State Coverage (CPU + Flash CFI + DMAC0 Channels)",
+        "states_exercised": 20,
+        "states_total": 25,
+        "states_pct": 80.0,
+        "breakdown": {
+          "cpu_states_hit": 2,
+          "cpu_states_total": 4,
+          "flash_cfi_states_hit": 12,
+          "flash_cfi_states_total": 15,
+          "dmac_channels_hit": 6,
+          "dmac_channels_total": 6
+        }
+      },
+      "08_transition": {
+        "id": "M08_TRANSITION",
+        "name": "Hardware FSM Transition Coverage (CPU + Spansion Flash CFI)",
+        "transitions_exercised": 22,
+        "transitions_reference_edges": 28,
+        "transitions_pct": 78.57,
+        "cpu_state_transitions_observed": 4,
+        "flash_cfi_transitions_observed": 18,
+        "flash_cfi_transition_map": {
+          "0->1": 2605,
+          "1->2": 2606,
+          "2->7": 2601,
+          "7->8": 2601,
+          "8->9": 2601,
+          "9->0": 2601,
+          "0->11": 1001,
+          "11->0": 1000,
+          "2->3": 1,
+          "2->0": 1,
+          "11->1": 1,
+          "2->4": 2,
+          "10->0": 1,
+          "5->6": 2,
+          "3->0": 1,
+          "4->5": 2,
+          "6->0": 2,
+          "2->10": 1
+        }
+      },
+      "09_error": {
+        "id": "M09_ERROR",
+        "name": "Error & Exception Path Coverage (SH7305 EXPEVT + INTEVT + DMAC/OS Errors)",
+        "expevt_codes_triggered": 13,
+        "expevt_valid_slots_in_cpu73050": 56,
+        "expevt_triggered_list": [
+          "0x040",
+          "0x060",
+          "0x080",
+          "0x0A0",
+          "0x0C0",
+          "0x0E0",
+          "0x100",
+          "0x140",
+          "0x160",
+          "0x180",
+          "0x1A0",
+          "0x1C0",
+          "0x1E0"
+        ],
+        "intevt_codes_triggered": 38,
+        "intevt_triggered_list": [
+          "0x400",
+          "0x420",
+          "0x440",
+          "0x480",
+          "0x4A0",
+          "0x4C0",
+          "0x560",
+          "0x600",
+          "0x620",
+          "0x640",
+          "0x660",
+          "0x680",
+          "0x6A0",
+          "0x6C0",
+          "0x6E0",
+          "0x800",
+          "0x820",
+          "0x840",
+          "0x860",
+          "0x880",
+          "0x8A0",
+          "0x8C0",
+          "0x8E0",
+          "0x900",
+          "0x920",
+          "0x940",
+          "0x960",
+          "0x980",
+          "0x9A0",
+          "0x9C0",
+          "0xA20",
+          "0xBE0",
+          "0xC00",
+          "0xE80",
+          "0xEA0",
+          "0xEC0",
+          "0xEE0",
+          "0xF00"
+        ],
+        "dmac_address_errors_triggered": 65,
+        "delay_slot_exceptions_triggered": 3
+      },
+      "10_boundary": {
+        "id": "M10_BOUNDARY",
+        "name": "Architectural Boundary & Corner-Case Probes",
+        "boundaries_triggered": 9,
+        "boundaries_defined": 9,
+        "boundaries_pct": 100.0,
+        "hits": {
+          "bcd_alu_op": 2395888,
+          "bsc_refresh_tick": 12312211,
+          "rtc_periodic_fire": 292515,
+          "rtc_alarm_fire": 1,
+          "dmac_addr_error": 65,
+          "delay_slot_exception": 3,
+          "dsp_repeat_loop": 3,
+          "mmu_at_enabled": 50184,
+          "irq_wake_from_sleep": 1131
+        }
+      },
+      "11_combination": {
+        "id": "M11_COMBINATION",
+        "name": "Multi-Subsystem & Suite Combination Coverage",
+        "suites_passed": 14,
+        "suites_total": 14,
+        "suites_pct": 100.0,
+        "note": "Expanded with Setup/mode Cartesian combinations and 100K parametric sweep in Phase 5."
+      },
+      "12_mutation": {
+        "id": "M12_MUTATION",
+        "name": "Mutation Testing Kill Rate (Isolated Sandbox)",
+        "status": "CONFIRMED",
+        "mutants_killed": 112,
+        "mutants_survived": 0,
+        "mutants_build_failed_or_timeout": 0,
+        "mutants_total": 112,
+        "kill_rate_pct": 100.0,
+        "source_report": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\certification_v47\\mutation_report_v47.json"
+      }
+    },
+    "mutation_summary": {
+      "total_mutants": 112,
+      "valid_mutants": 112,
+      "killed": 112,
+      "survived": 0,
+      "build_error": 0,
+      "kill_rate_pct": 100.0
+    },
+    "coverage_report": "tests/cg50_validation/reports/coverage_v46/coverage_12_metrics_report.json",
+    "mutation_report": "tests/cg50_validation/certification_v47/mutation_report_v47.json"
+  },
+  "phase_5_extreme_math_100k_and_graphics": {
+    "stage_1_gui_3k_extreme_apps_coldboot": {
+      "suite": "all",
+      "threads": 16,
+      "strict_no_hle_verified": true,
+      "strict_sh7305_no_fpu": true,
+      "total_cases": 3044,
+      "passed": 3043,
+      "casio_fidelity_notes": 1,
+      "failed": 0,
+      "total_instructions": 108130382733,
+      "total_bcd_alu_ops": 9097170,
+      "total_fpu_opcodes": 0,
+      "total_dsp_opcodes": 0,
+      "elapsed_sec": 901.12,
+      "throughput_cases_per_sec": 3.38
+    },
+    "stage_2_bcd15_sigma_30k": {
+      "execution_mode": "casio_os_3_80_run_matrix_sigma_bcd15",
+      "threads": 16,
+      "strict_no_hle_verified": true,
+      "strict_sh7305_no_fpu": true,
+      "terms_per_batch": 250,
+      "total_batches": 120,
+      "passed_batches": 120,
+      "failed_batches": 0,
+      "total_evaluations": 30000,
+      "passed_evaluations": 30000,
+      "failed_evaluations": 0,
+      "total_instructions": 15682543821,
+      "total_bcd_alu_ops": 42164775,
+      "total_fpu_opcodes": 0,
+      "elapsed_sec": 131.16,
+      "throughput_evals_per_sec": 228.72
+    },
+    "stage_3_bcd15_sigma_100k": {
+      "execution_mode": "casio_os_3_80_run_matrix_sigma_bcd15",
+      "threads": 16,
+      "strict_no_hle_verified": true,
+      "strict_sh7305_no_fpu": true,
+      "terms_per_batch": 250,
+      "total_batches": 400,
+      "passed_batches": 400,
+      "failed_batches": 0,
+      "total_evaluations": 100000,
+      "passed_evaluations": 100000,
+      "failed_evaluations": 0,
+      "total_instructions": 52162293216,
+      "total_bcd_alu_ops": 140862835,
+      "total_fpu_opcodes": 0,
+      "elapsed_sec": 402.14,
+      "throughput_evals_per_sec": 248.67
+    },
+    "stage_3_micropython_sh7305_100k": {
+      "execution_mode": "casio_os_3_80_micropython_sh7305_identity_sweep",
+      "shards": 10,
+      "passed_shards": 10,
+      "strict_no_hle_verified": true,
+      "strict_sh7305_no_fpu": true,
+      "total_evaluations": 100000,
+      "passed_evaluations": 100000,
+      "failed_evaluations": 0,
+      "total_instructions": 5479748431,
+      "total_fpu_opcodes": 0,
+      "elapsed_sec": 60.04,
+      "throughput_evals_per_sec": 1665.62
+    },
+    "graphics_and_compute_11_benchmarks": {
+      "total_benchmarks": 11,
+      "passed": 11,
+      "failed": 0,
+      "independent_pixel_reference_audit": {},
+      "file": "tests/cg50_validation/reports/graphics_v46/graphics_pixel_reference_audit.json"
     },
     "legacy_battery_strict_no_hle": {
       "passed": 133,
@@ -61,81 +964,470 @@
     "apps_and_addins_cert2900": {
       "passed": 24,
       "total": 24,
-      "instructions": 2103862284,
-      "bcd_alu_ops": 3804147,
+      "unknown_lcd_cmds": 0,
+      "exam_mode_patch_hits": 0,
       "status": "CONFIRMED"
-    },
-    "extreme_and_parametric_runner": {
-      "suite": "all",
-      "threads": 16,
-      "strict_no_hle_verified": true,
-      "strict_sh7305_no_fpu": true,
-      "total_cases": 3031,
-      "passed": 3031,
-      "casio_fidelity_notes": 0,
-      "failed": 0,
-      "total_instructions": 99647637546,
-      "total_bcd_alu_ops": 8965454,
-      "total_fpu_opcodes": 0,
-      "total_dsp_opcodes": 0
     }
   },
-  "axis_4_differential_oracles": {
+  "phase_6_differential_taxonomic_oracles": {
     "mpmath_sympy_50dps": {
       "status": "CONFIRMED",
-      "file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\extreme_math\\oracle_extreme_math_50dps.json"
+      "file": "tests/cg50_validation/extreme_math/oracle_extreme_math_50dps.json"
     },
-    "official_casio_dll_oracle": {
+    "official_casio_manager_plus_live": {
       "status": "CONFIRMED",
       "official_emulator_verified": true,
-      "cases_passed": 10,
-      "cases_total": 10,
-      "file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\manager_plus_oracle_results.json"
+      "cases_passed": 54,
+      "cases_total": 54,
+      "file": "tests/cg50_validation/reports/diff_v46/manager_plus_oracle_v46.json"
     },
-    "triple_comparator": {
-      "classifications": {
-        "MATCH_BOTH": 3025,
-        "MATCH_CASIO_FIDELITY": 6,
-        "EMULATOR_BUG": 0
+    "taxonomic_comparator_v47": {
+      "taxonomy_counts": {
+        "MATCH_BOTH": 12,
+        "MATCH_MATH_ONLY": 3005,
+        "MATCH_CASIO_ONLY": 36,
+        "MATCH_CASIO_FIDELITY": 10,
+        "CORE_BUG": 0,
+        "ORACLE_BUG": 0,
+        "VERSION_DIFF": 0,
+        "BAD_INPUT": 0,
+        "NON_DETERMINISTIC": 0,
+        "DECODER_BUG": 0,
+        "NO_REFERENCE": 11,
+        "INCOMPLETE_TEST": 0
       },
-      "emulator_bugs_exported": 0,
-      "file": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\differential\\diff_certification_report.json"
+      "core_bugs_exported": 0,
+      "unit_tests": "10/10 PASS (test_diff_comparator.py)",
+      "file": "tests/cg50_validation/reports/diff_v46/diff_certification_report_v46.json"
     },
     "physical_fx_cg50_hardware": {
-      "physical_reference_verified": false,
-      "status": "PENDING",
-      "reason": "No physical fx-CG50 unit on hand during this session; certified against official Casio DLLs + mpmath/SymPy 50-digit oracles."
+      "status": "NOT_YET_VERIFIED",
+      "physical_verified": false,
+      "reason": "No physical fx-CG50 calculator attached in this session; certified via live CPU73050.dll oracle, live fx-CG Manager PLUS, Renesas SH4AL-DSP manual, and independent 50-digit mpmath/SymPy/RGB565 oracles."
     }
   },
-  "axis_5_hardware_torture_and_fuzzing": {
-    "hw_torture_full_cert": {
+  "phase_7_performance_scaling_and_soak": {
+    "before_vs_after_optimization": {
+      "schema": "cg50_perf_before_vs_after_v46",
+      "strict_no_hle": true,
+      "bit_exact_instruction_counts_identical": true,
+      "host_cpu": "AMD Ryzen 7 5700G (8C/16T), 48 GB RAM",
+      "optimizations_kept": [
+        "Inline R61524::TickFrameMark (eliminates 2x out-of-line call + 2x 64-bit modulo % 550000 per SH7305 instruction)",
+        "Namespace-scoped cached diagnostic flags (eliminates MSVC function-local static TLS guards on Read/Write/Step)",
+        "Direct SDRAM/SystemROM/ILRAM fast-paths in Read8/16/32 and Write8/16/32 (guarded by #ifndef CG50_ENABLE_COVERAGE_COUNTERS)",
+        "TickRtc() next-boundary comparison (eliminates 64-bit % 32000 per instruction)",
+        "HasAnyPendingInterrupt() + Intc2Unit::AnyPending() + Scif0Unit::HasPendingIrq() fast-out",
+        "EtmuUnit/tmu0/tpu/BSC/RTC/FlashCFI idle guards in TickTimerUnit()",
+        "Cold noinline extraction of HandleAppIfTrap, LogStepDiagnostics and HaltFetchOutOfMap out of StepInstruction() (eliminates wstringstream EH frame & GS stack cookie on hot loop)"
+      ],
+      "empirical_lesson_documented": "An intermediate experiment inlining RAM/ROM fast-paths into all 6 ExecuteOpcode lambdas caused L1i cache bloat (32 KB I-cache thrash: 15.2 -> 11.6 MIPS 1T) and was reverted after empirical measurement.",
+      "ctest_suite_11_tests": {
+        "before_sec": 36.13,
+        "after_sec": 29.73,
+        "delta_pct": -17.71,
+        "usb_smem_qr_before_sec": 7.87,
+        "usb_smem_qr_after_sec": 5.54,
+        "usb_smem_qr_delta_pct": -29.61,
+        "thread_isolation_16t_before_sec": 17.44,
+        "thread_isolation_16t_after_sec": 14.16,
+        "thread_isolation_16t_delta_pct": -18.81
+      },
+      "workloads": {
+        "run_matrix_trig": {
+          "instructions": 110925772,
+          "bit_exact_match": true,
+          "before_mips": 16.11,
+          "after_mips": 16.69,
+          "mips_delta_pct": 3.6,
+          "before_ms": 6887.18,
+          "after_ms": 6644.71
+        },
+        "calculus_integral_x3": {
+          "instructions": 36343874,
+          "bit_exact_match": true,
+          "before_mips": 16.64,
+          "after_mips": 16.4,
+          "mips_delta_pct": -1.44,
+          "before_ms": 2184.17,
+          "after_ms": 2215.47
+        },
+        "micropython_compute": {
+          "instructions": 954091,
+          "bit_exact_match": true,
+          "before_mips": 16.19,
+          "after_mips": 16.53,
+          "mips_delta_pct": 2.1,
+          "before_ms": 58.94,
+          "after_ms": 57.72
+        },
+        "graph_polar_rose": {
+          "instructions": 112163234,
+          "bit_exact_match": true,
+          "before_mips": 15.5,
+          "after_mips": 14.86,
+          "mips_delta_pct": -4.13,
+          "before_ms": 7236.54,
+          "after_ms": 7549.11
+        }
+      },
+      "scaling_1_to_16_threads": {
+        "before": [
+          {
+            "threads": 1,
+            "total_instructions": 36343874,
+            "wall_ms": 2390.02,
+            "aggregate_mips": 15.21,
+            "per_thread_mips": 15.21,
+            "speedup_vs_1t": 1.0,
+            "rss_mb": 149.16
+          },
+          {
+            "threads": 2,
+            "total_instructions": 72687748,
+            "wall_ms": 2230.7,
+            "aggregate_mips": 32.59,
+            "per_thread_mips": 16.29,
+            "speedup_vs_1t": 2.143,
+            "rss_mb": 206.5
+          },
+          {
+            "threads": 4,
+            "total_instructions": 145375496,
+            "wall_ms": 2792.5,
+            "aggregate_mips": 52.06,
+            "per_thread_mips": 13.01,
+            "speedup_vs_1t": 3.423,
+            "rss_mb": 319.05
+          },
+          {
+            "threads": 8,
+            "total_instructions": 290750992,
+            "wall_ms": 3074.89,
+            "aggregate_mips": 94.56,
+            "per_thread_mips": 11.82,
+            "speedup_vs_1t": 6.218,
+            "rss_mb": 543.84
+          },
+          {
+            "threads": 12,
+            "total_instructions": 436126488,
+            "wall_ms": 4239.76,
+            "aggregate_mips": 102.87,
+            "per_thread_mips": 8.57,
+            "speedup_vs_1t": 6.765,
+            "rss_mb": 767.97
+          },
+          {
+            "threads": 16,
+            "total_instructions": 581501984,
+            "wall_ms": 5385.01,
+            "aggregate_mips": 107.99,
+            "per_thread_mips": 6.75,
+            "speedup_vs_1t": 7.101,
+            "rss_mb": 993.17
+          }
+        ],
+        "after": [
+          {
+            "threads": 1,
+            "total_instructions": 36343874,
+            "wall_ms": 2505.11,
+            "aggregate_mips": 14.51,
+            "per_thread_mips": 14.51,
+            "speedup_vs_1t": 1.0,
+            "rss_mb": 148.77
+          },
+          {
+            "threads": 2,
+            "total_instructions": 72687748,
+            "wall_ms": 2410.97,
+            "aggregate_mips": 30.15,
+            "per_thread_mips": 15.07,
+            "speedup_vs_1t": 2.078,
+            "rss_mb": 204.53
+          },
+          {
+            "threads": 4,
+            "total_instructions": 145375496,
+            "wall_ms": 2776.51,
+            "aggregate_mips": 52.36,
+            "per_thread_mips": 13.09,
+            "speedup_vs_1t": 3.609,
+            "rss_mb": 316.8
+          },
+          {
+            "threads": 8,
+            "total_instructions": 290750992,
+            "wall_ms": 3778.3,
+            "aggregate_mips": 76.95,
+            "per_thread_mips": 9.62,
+            "speedup_vs_1t": 5.304,
+            "rss_mb": 542.01
+          },
+          {
+            "threads": 12,
+            "total_instructions": 436126488,
+            "wall_ms": 4395.13,
+            "aggregate_mips": 99.23,
+            "per_thread_mips": 8.27,
+            "speedup_vs_1t": 6.84,
+            "rss_mb": 767.52
+          },
+          {
+            "threads": 16,
+            "total_instructions": 581501984,
+            "wall_ms": 7526.01,
+            "aggregate_mips": 77.27,
+            "per_thread_mips": 4.83,
+            "speedup_vs_1t": 5.326,
+            "rss_mb": 992.4
+          }
+        ]
+      },
+      "before_raw": {
+        "schema": "cg50_perf_benchmark_v46",
+        "label": "before",
+        "hardware_concurrency": 16,
+        "cold_boot_ms": 8722.47,
+        "cold_boot_instructions": 149031753,
+        "warm_restore_ms": 3.815,
+        "state_export_ms": 9.844,
+        "state_export_bytes": 52965599,
+        "keyboard_response_latency_ms": 13.774,
+        "graph_effective_fps": 3.32,
+        "peak_rss_mb": 1153.88,
+        "workloads": [
+          {
+            "name": "run_matrix_trig",
+            "instructions": 110925772,
+            "bcd_ops": 16378,
+            "fpu_ops": 0,
+            "elapsed_ms": 6887.18,
+            "mips": 16.11,
+            "speedup_vs_58mhz": 0.278
+          },
+          {
+            "name": "calculus_integral_x3",
+            "instructions": 36343874,
+            "bcd_ops": 5030,
+            "fpu_ops": 0,
+            "elapsed_ms": 2184.17,
+            "mips": 16.64,
+            "speedup_vs_58mhz": 0.287
+          },
+          {
+            "name": "micropython_compute",
+            "instructions": 954091,
+            "bcd_ops": 0,
+            "fpu_ops": 0,
+            "elapsed_ms": 58.94,
+            "mips": 16.19,
+            "speedup_vs_58mhz": 0.279
+          },
+          {
+            "name": "graph_polar_rose",
+            "instructions": 112163234,
+            "bcd_ops": 658063,
+            "fpu_ops": 0,
+            "elapsed_ms": 7236.54,
+            "mips": 15.5,
+            "speedup_vs_58mhz": 0.267
+          }
+        ],
+        "thread_scaling": [
+          {
+            "threads": 1,
+            "total_instructions": 36343874,
+            "wall_ms": 2390.02,
+            "aggregate_mips": 15.21,
+            "per_thread_mips": 15.21,
+            "speedup_vs_1t": 1.0,
+            "rss_mb": 149.16
+          },
+          {
+            "threads": 2,
+            "total_instructions": 72687748,
+            "wall_ms": 2230.7,
+            "aggregate_mips": 32.59,
+            "per_thread_mips": 16.29,
+            "speedup_vs_1t": 2.143,
+            "rss_mb": 206.5
+          },
+          {
+            "threads": 4,
+            "total_instructions": 145375496,
+            "wall_ms": 2792.5,
+            "aggregate_mips": 52.06,
+            "per_thread_mips": 13.01,
+            "speedup_vs_1t": 3.423,
+            "rss_mb": 319.05
+          },
+          {
+            "threads": 8,
+            "total_instructions": 290750992,
+            "wall_ms": 3074.89,
+            "aggregate_mips": 94.56,
+            "per_thread_mips": 11.82,
+            "speedup_vs_1t": 6.218,
+            "rss_mb": 543.84
+          },
+          {
+            "threads": 12,
+            "total_instructions": 436126488,
+            "wall_ms": 4239.76,
+            "aggregate_mips": 102.87,
+            "per_thread_mips": 8.57,
+            "speedup_vs_1t": 6.765,
+            "rss_mb": 767.97
+          },
+          {
+            "threads": 16,
+            "total_instructions": 581501984,
+            "wall_ms": 5385.01,
+            "aggregate_mips": 107.99,
+            "per_thread_mips": 6.75,
+            "speedup_vs_1t": 7.101,
+            "rss_mb": 993.17
+          }
+        ]
+      },
+      "after_raw": {
+        "schema": "cg50_perf_benchmark_v46",
+        "label": "after",
+        "hardware_concurrency": 16,
+        "cold_boot_ms": 8869.78,
+        "cold_boot_instructions": 149031753,
+        "warm_restore_ms": 4.177,
+        "state_export_ms": 10.251,
+        "state_export_bytes": 52965599,
+        "keyboard_response_latency_ms": 11.776,
+        "graph_effective_fps": 3.18,
+        "peak_rss_mb": 1154.25,
+        "workloads": [
+          {
+            "name": "run_matrix_trig",
+            "instructions": 110925772,
+            "bcd_ops": 16378,
+            "fpu_ops": 0,
+            "elapsed_ms": 6644.71,
+            "mips": 16.69,
+            "speedup_vs_58mhz": 0.288
+          },
+          {
+            "name": "calculus_integral_x3",
+            "instructions": 36343874,
+            "bcd_ops": 5030,
+            "fpu_ops": 0,
+            "elapsed_ms": 2215.47,
+            "mips": 16.4,
+            "speedup_vs_58mhz": 0.283
+          },
+          {
+            "name": "micropython_compute",
+            "instructions": 954091,
+            "bcd_ops": 0,
+            "fpu_ops": 0,
+            "elapsed_ms": 57.72,
+            "mips": 16.53,
+            "speedup_vs_58mhz": 0.285
+          },
+          {
+            "name": "graph_polar_rose",
+            "instructions": 112163234,
+            "bcd_ops": 658063,
+            "fpu_ops": 0,
+            "elapsed_ms": 7549.11,
+            "mips": 14.86,
+            "speedup_vs_58mhz": 0.256
+          }
+        ],
+        "thread_scaling": [
+          {
+            "threads": 1,
+            "total_instructions": 36343874,
+            "wall_ms": 2505.11,
+            "aggregate_mips": 14.51,
+            "per_thread_mips": 14.51,
+            "speedup_vs_1t": 1.0,
+            "rss_mb": 148.77
+          },
+          {
+            "threads": 2,
+            "total_instructions": 72687748,
+            "wall_ms": 2410.97,
+            "aggregate_mips": 30.15,
+            "per_thread_mips": 15.07,
+            "speedup_vs_1t": 2.078,
+            "rss_mb": 204.53
+          },
+          {
+            "threads": 4,
+            "total_instructions": 145375496,
+            "wall_ms": 2776.51,
+            "aggregate_mips": 52.36,
+            "per_thread_mips": 13.09,
+            "speedup_vs_1t": 3.609,
+            "rss_mb": 316.8
+          },
+          {
+            "threads": 8,
+            "total_instructions": 290750992,
+            "wall_ms": 3778.3,
+            "aggregate_mips": 76.95,
+            "per_thread_mips": 9.62,
+            "speedup_vs_1t": 5.304,
+            "rss_mb": 542.01
+          },
+          {
+            "threads": 12,
+            "total_instructions": 436126488,
+            "wall_ms": 4395.13,
+            "aggregate_mips": 99.23,
+            "per_thread_mips": 8.27,
+            "speedup_vs_1t": 6.84,
+            "rss_mb": 767.52
+          },
+          {
+            "threads": 16,
+            "total_instructions": 581501984,
+            "wall_ms": 7526.01,
+            "aggregate_mips": 77.27,
+            "per_thread_mips": 4.83,
+            "speedup_vs_1t": 5.326,
+            "rss_mb": 992.4
+          }
+        ]
+      }
+    },
+    "hw_torture_measured_soak": {
       "profile": "full-cert",
       "threads": 16,
-      "soak_hours_requested": 0,
-      "soak_rounds_completed": 0,
+      "soak_hours_requested": 0.25,
+      "soak_rounds_completed": 2209,
       "strict_no_hle_verified": true,
-      "total_operations": 12420000,
+      "total_operations": 4872220000,
       "total_failures": 0,
-      "elapsed_sec": 56.2209,
-      "rss_before_bytes": 4431872,
-      "rss_after_bytes": 9973760,
+      "elapsed_sec": 943.226,
+      "rss_before_bytes": 4255744,
+      "rss_after_bytes": 31215616,
       "status": "PASS",
       "suites": [
         {
           "name": "cpu_sh4al_dsp_sequences",
           "target": 10000000,
-          "executed": 10000000,
+          "executed": 4428000000,
           "failures": 0,
-          "elapsed_sec": 0.353069,
+          "elapsed_sec": 638.462,
           "status": "PASS",
           "notes": "StrictSh7305NoFpu=true; includes ALU, MAC, CLIPS/CLIPU, SH4AL-DSP, delay-slot BRA + determinism check"
         },
         {
           "name": "bcd_alu_1m_oracle",
           "target": 1000000,
-          "executed": 1000000,
+          "executed": 442800000,
           "failures": 0,
-          "elapsed_sec": 0.140303,
+          "elapsed_sec": 261.903,
           "status": "PASS",
           "notes": "All 6 modes (ADD/SUB/ADDC/SUBB/ADD+1/SUB-1) + chained multi-word carry/borrow latch + alias +0x0C/+0x1C verified against pure integer base-10 oracle"
         },
@@ -144,7 +1436,7 @@
           "target": 1000000,
           "executed": 1000000,
           "failures": 0,
-          "elapsed_sec": 0.162942,
+          "elapsed_sec": 0.13374,
           "status": "PASS",
           "notes": "KIU KeyDown/IsKeyDown/KeyUp bursts + interleaved CPU ticks"
         },
@@ -153,7 +1445,7 @@
           "target": 100000,
           "executed": 100000,
           "failures": 0,
-          "elapsed_sec": 0.0969336,
+          "elapsed_sec": 0.0985561,
           "status": "PASS",
           "notes": "All 6 SH7305 DMAC0 channels verified bit-exact with OC cache coherency"
         },
@@ -162,7 +1454,7 @@
           "target": 100000,
           "executed": 100000,
           "failures": 0,
-          "elapsed_sec": 0.22059,
+          "elapsed_sec": 0.227113,
           "status": "PASS",
           "notes": "Exact ISR + RTE entry/return verification across INTC2 IRQ0..7 and NMI"
         },
@@ -171,7 +1463,7 @@
           "target": 100000,
           "executed": 100000,
           "failures": 0,
-          "elapsed_sec": 0.0091338,
+          "elapsed_sec": 0.0123974,
           "status": "PASS",
           "notes": "GRAM write/readback (1-dummy contract), scroll, CABC, FMARK & full framebuffer render"
         },
@@ -180,7 +1472,7 @@
           "target": 100000,
           "executed": 100000,
           "failures": 0,
-          "elapsed_sec": 0.107181,
+          "elapsed_sec": 0.103766,
           "status": "PASS",
           "notes": "Real CPU instruction fetch (4-entry ITLB) + data read/write (64-entry UTLB) verified against physical RAM"
         },
@@ -189,7 +1481,7 @@
           "target": 10000,
           "executed": 10000,
           "failures": 0,
-          "elapsed_sec": 55.1285,
+          "elapsed_sec": 42.2061,
           "status": "PASS",
           "notes": "Full state ExportState -> ImportState -> ExportState byte-for-byte identity across chunks 1..105"
         },
@@ -198,7 +1490,7 @@
           "target": 10000,
           "executed": 10000,
           "failures": 0,
-          "elapsed_sec": 0.0019555,
+          "elapsed_sec": 0.0011933,
           "status": "PASS",
           "notes": "Spansion S29GL256P Sector Erase + Word Program + DQ6/DQ7 busy polling verified"
         }
@@ -223,40 +1515,61 @@
     "continuous_24h_72h_wallclock_soak": {
       "status": "PENDING",
       "cli_ready": true,
-      "command": "cg50_hw_torture_runner.exe --profile full-cert --hours 24 --out <dir>",
-      "reason": "Multi-hour wall-clock endurance soak was not waited 24-72 real hours inside an interactive session; full-cert 12.4M+ torture ops and RSS delta verified cleanly."
+      "command": "cg50_hw_torture_runner.exe --profile full-cert --hours 24 --out <dir>"
     }
   },
-  "axis_6_android_16_integration": {
+  "phase_8_android_16_integration": {
     "status": "CONFIRMED",
+    "certification_release": "v47",
     "device_serial": "emulator-5554",
+    "avd_name": "Pixel_Phone_Android16_PlayStore",
     "android_release": "16",
     "android_sdk": 36,
+    "abi": "x86_64",
     "resolution": "1080x2400",
     "package": "com.calculadorasunificadas.app",
     "apk_path": "D:\\Proyectos\\CalculadorasUnificadas\\apps\\android\\build\\app\\outputs\\flutter-apk\\app-release.apk",
-    "apk_bytes": 80725557,
-    "apk_sha256": "7D1DAB3AABB4672079A2D9B7132893FCB60E708DBC8C595EF544594DAC684CAD",
+    "apk_bytes": 87053369,
+    "apk_sha256": "D7159AF428A58903BFDD258CD4E0D625A4ED8A14552821D7DEB41D8D2B2FB566",
+    "apksigner_cert_sha256": "b968ffdfc6c8ea5cdccbde0707d7db33674a0c67d1133d25166d04e6a1f9c8ca",
     "zipalign_16kb_exit": 0,
     "apksigner_verify_exit": 0,
-    "elf_load_align_arm64_v8a": "0x4000",
-    "elf_load_align_x86_64": "0x4000",
-    "libcasio_native_arm64_bytes": 1343008,
-    "libcasio_native_x86_64_bytes": 1354144,
-    "warm_state_stamp": "cg50_warm_v44.stamp",
+    "elf_load_align_arm64_v8a": {
+      "libcasio_native.so": "0x4000",
+      "libflutter.so": "0x10000",
+      "libapp.so": "0x10000"
+    },
+    "elf_load_align_x86_64": {
+      "libcasio_native.so": "0x4000",
+      "libflutter.so": "0x10000",
+      "libapp.so": "0x10000"
+    },
+    "warm_state_stamp": "cg50_warm_v47.stamp",
+    "warm_state_gz_sha256": "C9DA3B71672C46B6682DCCC2ECCAD03D8933762761749E3DDFB04CE35FD200A6",
+    "rom_sha256_integrity_check": "CONFIRMED_FIPS_180_4_ALL_8_ROMS",
+    "atomic_persistence_force_stop_verified": true,
+    "strict_silicon_profile_default": true,
+    "strict_sh7305_no_fpu_default": true,
     "flutter_analyze_issues": 0,
-    "flutter_test_passed": 4,
-    "flutter_test_total": 4,
+    "flutter_test_passed": 9,
+    "flutter_test_total": 9,
+    "cold_launch_total_time_ms": 7891,
+    "relaunch_total_time_ms": 5803,
+    "alive_pid_initial": "3011",
+    "alive_pid_after_relaunch": "4965",
+    "meminfo_initial_pss_kb": 234099,
+    "meminfo_initial_rss_kb": 327080,
+    "meminfo_active_pss_kb": 142584,
+    "meminfo_active_rss_kb": 230780,
+    "meminfo_active_native_heap_kb": 90592,
     "logcat_bad_lines": 0,
-    "alive_pid_after_relaunch": "5403",
-    "screenshots": {
-      "01_main_menu": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_01_main_menu.png",
-      "02_run_matrix_symbolic": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_02_run_matrix_symbolic.png",
-      "03_run_matrix_sd": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_03_run_matrix_sd.png",
-      "04_graph_polar_rose": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_04_graph_polar_rose.png",
-      "05_micropython_1024": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_05_micropython_1024.png",
-      "06_system_version": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_06_system_version.png",
-      "07_after_force_stop": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android_v44_07_after_force_stop.png"
+    "screenshots_visually_verified": {
+      "01_main_menu": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v47_01_main_menu.png",
+      "02_run_matrix_symbolic_pi_over_6": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v47_02_run_matrix_symbolic.png",
+      "03_run_matrix_sd_decimal": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v47_03_run_matrix_sd.png",
+      "04_smem_conectar_y_archivos": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v47_04_smem_sheet.png",
+      "05_after_force_stop_relaunch": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v47_05_after_relaunch.png",
+      "06_live_calc_123x456_56088": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v47_06_live_calc_56088.png"
     }
   }
 }

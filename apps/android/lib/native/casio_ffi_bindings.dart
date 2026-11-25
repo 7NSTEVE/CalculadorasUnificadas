@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -346,6 +347,69 @@ class CasioNativeBindings {
 }
 
 // ---------------------------------------------------------------------------
+// Zero-dependency FIPS 180-4 SHA-256 (H-008 content integrity verification)
+// ---------------------------------------------------------------------------
+String computeSha256Hex(Uint8List data) {
+  const k = <int>[
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+  ];
+  int h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+  int h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+
+  final len = data.length;
+  final padLen = ((len + 9 + 63) ~/ 64) * 64;
+  final buf = Uint8List(padLen);
+  buf.setRange(0, len, data);
+  buf[len] = 0x80;
+  final bitLen = len * 8;
+  final bd = ByteData.sublistView(buf);
+  bd.setUint32(padLen - 8, (bitLen ~/ 0x100000000) & 0xFFFFFFFF, Endian.big);
+  bd.setUint32(padLen - 4, bitLen & 0xFFFFFFFF, Endian.big);
+
+  final w = Uint32List(64);
+  for (int off = 0; off < padLen; off += 64) {
+    for (int i = 0; i < 16; i++) {
+      w[i] = bd.getUint32(off + i * 4, Endian.big);
+    }
+    for (int i = 16; i < 64; i++) {
+      final a = w[i - 15];
+      final s0 = ((a >>> 7) | (a << 25)) ^ ((a >>> 18) | (a << 14)) ^ (a >>> 3);
+      final b = w[i - 2];
+      final s1 = ((b >>> 17) | (b << 15)) ^ ((b >>> 19) | (b << 13)) ^ (b >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) & 0xFFFFFFFF;
+    }
+    int a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+    for (int i = 0; i < 64; i++) {
+      final s1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      final ch = (e & f) ^ ((~e) & g);
+      final t1 = (h + s1 + ch + k[i] + w[i]) & 0xFFFFFFFF;
+      final s0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      final maj = (a & b) ^ (a & c) ^ (b & c);
+      final t2 = (s0 + maj) & 0xFFFFFFFF;
+      h = g; g = f; f = e; e = (d + t1) & 0xFFFFFFFF;
+      d = c; c = b; b = a; a = (t1 + t2) & 0xFFFFFFFF;
+    }
+    h0 = (h0 + a) & 0xFFFFFFFF; h1 = (h1 + b) & 0xFFFFFFFF;
+    h2 = (h2 + c) & 0xFFFFFFFF; h3 = (h3 + d) & 0xFFFFFFFF;
+    h4 = (h4 + e) & 0xFFFFFFFF; h5 = (h5 + f) & 0xFFFFFFFF;
+    h6 = (h6 + g) & 0xFFFFFFFF; h7 = (h7 + h) & 0xFFFFFFFF;
+  }
+  final words = [h0, h1, h2, h3, h4, h5, h6, h7];
+  final sb = StringBuffer();
+  for (final wd in words) {
+    sb.write(wd.toRadixString(16).padLeft(8, '0').toUpperCase());
+  }
+  return sb.toString();
+}
+
+// ---------------------------------------------------------------------------
 // Persistent Runtime Staging (ApplicationSupportDirectory, never systemTemp)
 // ---------------------------------------------------------------------------
 class CasioRomStaging {
@@ -360,13 +424,71 @@ class CasioRomStaging {
     'official-ILRAM-FD800000-4000.bin': 16384,
   };
 
-  static Future<void> _writeAtomic(File target, List<int> bytes) async {
-    final tmp = File('${target.path}.tmp');
+  static const Map<String, String> expectedRomSha256 = {
+    'fx991lax.rom': '5361A19A7F717805CE7447898088C4D7640436960D519F72524C362A0F70846A',
+    'fx570vnplus.rom': 'D02C5EF66D84BE9DD953C8180C4C2E473601B250C46C4E2DD324D5D7E061D9C3',
+    'fx991cw_rom.bin': 'B8EE84312A11E5D8C54DCA90EC9593E15900613D837B8B01E934DD1D18E90EA0',
+    'fx991cw_default_en.ram': 'C49F33F58A4342C34DC02B642B098B55068019F916185DE2E210924ECC709AB7',
+    'SystemROM.raw': '8CF1E1F2AD3FB742B557D00535F8AEA7874C7F8D138B56B4C3938E26C0F82E23',
+    'UserROM.raw': '8D5AEA8D5BEEA758617DB7EBCED31DD1900B48D3AC4D2D67FDAEA77E25830087',
+    'C2ROM.raw': 'A946208A374E264EE647503C2B7E60B42F29C1D5ED40D2A70BA0F848272F47B8',
+    'official-ILRAM-FD800000-4000.bin': '085A81EC1FB894772B033A84B26134F25412B7F836B41946F975DA94984CF30C',
+  };
+
+  static int _tmpCounter = 0;
+
+  /// Safe atomic write (H-007 fix): NEVER deletes the existing target before replacement.
+  static Future<void> writeAtomic(File target, List<int> bytes) async {
+    final nonce = '${pid}_${DateTime.now().microsecondsSinceEpoch}_${_tmpCounter++}';
+    final tmp = File('${target.path}.$nonce.tmp');
     await tmp.writeAsBytes(bytes, flush: true);
-    if (await target.exists()) {
-      await target.delete();
+    try {
+      // On POSIX (Android/Linux/macOS), File.rename atomically replaces target.
+      await tmp.rename(target.path);
+    } catch (_) {
+      // Windows fallback: move existing file to .bak BEFORE replacing so original is never lost.
+      final bak = File('${target.path}.$nonce.bak');
+      bool movedToBak = false;
+      try {
+        if (await target.exists()) {
+          await target.rename(bak.path);
+          movedToBak = true;
+        }
+        await tmp.rename(target.path);
+        if (movedToBak && await bak.exists()) {
+          try {
+            await bak.delete();
+          } catch (_) {}
+        }
+      } catch (e) {
+        if (movedToBak && await bak.exists() && !await target.exists()) {
+          try {
+            await bak.rename(target.path);
+          } catch (_) {}
+        }
+        if (await tmp.exists()) {
+          try {
+            await tmp.delete();
+          } catch (_) {}
+        }
+        rethrow;
+      }
     }
-    await tmp.rename(target.path);
+  }
+
+  /// Validates both byte length AND SHA-256 content hash (H-008 fix).
+  static Future<bool> verifyRomFile(File file, String romName) async {
+    final expectedSize = expectedRomSizes[romName];
+    final expectedHash = expectedRomSha256[romName];
+    if (expectedSize == null || expectedHash == null) return false;
+    if (!await file.exists()) return false;
+    if (await file.length() != expectedSize) return false;
+    // UserROM.raw is mutable (SMEM Fugue FTL writes user add-ins/eActivity/Python files),
+    // so only read-only ROMs enforce immutable SHA-256 after initial staging.
+    if (romName == 'UserROM.raw') return true;
+    final bytes = await file.readAsBytes();
+    final actualHash = await Isolate.run(() => computeSha256Hex(bytes));
+    return actualHash == expectedHash;
   }
 
   static Future<String> ensureStaged({String? customTargetDir}) async {
@@ -383,7 +505,7 @@ class CasioRomStaging {
 
     for (final entry in expectedRomSizes.entries) {
       final outFile = File('${dir.path}/${entry.key}');
-      if (await outFile.exists() && await outFile.length() == entry.value) {
+      if (await verifyRomFile(outFile, entry.key)) {
         continue;
       }
       final data = await rootBundle.load('assets_staged/roms/${entry.key}');
@@ -391,7 +513,7 @@ class CasioRomStaging {
         data.offsetInBytes,
         data.lengthInBytes,
       );
-      await _writeAtomic(outFile, bytes);
+      await writeAtomic(outFile, bytes);
     }
 
     // Seed fx-991CW live RAM on first launch
@@ -399,13 +521,13 @@ class CasioRomStaging {
     if (!await cw2LiveRam.exists() || await cw2LiveRam.length() != 24832) {
       final defRam = File('${dir.path}/fx991cw_default_en.ram');
       if (await defRam.exists()) {
-        await _writeAtomic(cw2LiveRam, await defRam.readAsBytes());
+        await writeAtomic(cw2LiveRam, await defRam.readAsBytes());
       }
     }
 
     // Decompress pre-baked CG50 warm state (.bin.gz) on first launch or core upgrade
     final warmBin = File('${dir.path}/cg50_warm_state.bin');
-    final warmStamp = File('${dir.path}/cg50_warm_v44.stamp');
+    final warmStamp = File('${dir.path}/cg50_warm_v47.stamp');
     if (!await warmBin.exists() ||
         await warmBin.length() < 1024 * 1024 ||
         !await warmStamp.exists()) {
@@ -418,8 +540,8 @@ class CasioRomStaging {
         );
         final decoded = await Isolate.run(() => gzip.decode(gzBytes));
         if (decoded.length > 1024 * 1024) {
-          await _writeAtomic(warmBin, decoded);
-          await _writeAtomic(warmStamp, utf8.encode('v44-sh7305-dsp-cache-nohle'));
+          await writeAtomic(warmBin, decoded);
+          await writeAtomic(warmStamp, utf8.encode('v47-sh7305-strict-silicon'));
         }
       } catch (_) {
         // Optional warm state; CG50 falls back to cold boot if absent.

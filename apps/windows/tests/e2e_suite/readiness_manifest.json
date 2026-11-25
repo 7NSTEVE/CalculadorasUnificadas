@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "updated_utc": "2026-11-17T23:55:00Z",
+  "features": {
+    "core_cudoc_storage": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "Verified in DocumentCoreTest / document_core_linux_test (F1) and DocumentStudio CLI."
+    },
+    "core_command_stack": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "Undo/redo command stack verified in F1."
+    },
+    "core_layout_camera_lru": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "PageLayout, Camera2D, LRU byte cache verified in F2."
+    },
+    "core_ink_d2d_cairo": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "InkEngine, stabilization, D2D/Cairo rendering verified in F3."
+    },
+    "core_pdf_edit_merge_split": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "PdfParser/PdfWriter merge, split, flatten, text replace verified in F4-F5."
+    },
+    "core_quadtree_100k": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "Infinite canvas 100k quadtree spatial index verified in F6."
+    },
+    "core_pdf_pkcs7_openxml": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "PKCS#7 PDF signatures & DOCX/PPTX OpenXML interop verified in F7."
+    },
+    "core_audit_p0_fixes": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "P0 audit regressions verified in F8."
+    },
+    "core_goodnotes_onenote_parity": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "NotebookVault, WAL, FTS, SM-2, ErrorBook, Presenter layers verified in F9."
+    },
+    "core_stem_engineering": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "engineering_cas, mna_solver, calc_bridge, transient MNA, phasors verified in F10-F11."
+    },
+    "doc_studio_win_cli": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "build-studio-x64/Release/DocumentStudio.exe supports --smoke-test --mode --open --page --calc-card --showcase-stem --screenshot-out."
+    },
+    "doc_studio_linux_cli": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "linux/dist-linux/run_document_studio.sh supports headless offscreen & Xvfb smoke/screenshots."
+    },
+    "calc_win_4models": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "CalculadoraUnificada.exe Win32 (--compact*, --popup, --help-search) + InspectGui + CTest targets."
+    },
+    "calc_linux_4models": {
+      "status": "READY",
+      "milestone": "CORE",
+      "notes": "linux/dist-linux/run_calculadora.sh (--smoke-test, --compact*, --popup, --help-search, --screenshot-out) + test_linux_engines."
+    },
+    "cas_matrix_full_parity": {
+      "status": "READY",
+      "milestone": "M1",
+      "notes": "Full 319-matrix CAS/units/DAG/ExamMode/Variants/AES256-GCM/A11y/DXF parity implemented & wired on Win & Linux."
+    },
+    "mna_53_components_full": {
+      "status": "READY",
+      "milestone": "M1",
+      "notes": "Full 53-component SPICE/MNA solver & topology diagnostics (floating node/voltage loop rejection) wired on Win & Linux."
+    },
+    "check_my_work_ui": {
+      "status": "READY",
+      "milestone": "M1",
+      "notes": "Check My Work + Confirmation Card + TeachMe + Local Grounded Q&A wired on Win & Linux."
+    },
+    "calc_bridge_live_sync": {
+      "status": "READY",
+      "milestone": "M1",
+      "notes": "Bidirectional CalcBridge sync + Presenter freeze + Macro replay wired on Win & Linux."
+    },
+    "real_mic_audio_win_linux": {
+      "status": "READY",
+      "milestone": "M2",
+      "notes": "Real microphone WinMM/ALSA capture, clamped offset, bookmarks, offline VAD transcription & synced HTML5 tutorial wired on Win & Linux."
+    },
+    "win_table_interop": {
+      "status": "READY",
+      "milestone": "M2",
+      "notes": "Shared doc_studio/pdf/table_interop CSV/XLSX/Markdown/DXF + cyclic formula detection + OLS regression wired on Win & Linux."
+    },
+    "lan_qr_remote": {
+      "status": "READY",
+      "milestone": "M2",
+      "notes": "Local-only LAN QR remote, SVG QR encoder, PIN gate & CRDT P2P sync wired on Win & Linux."
+    },
+    "custom_keymap_config": {
+      "status": "READY",
+      "milestone": "M2",
+      "notes": "Configurable keymap.json with collision guard & corrupt fallback wired on Win & Linux."
+    },
+    "academic_ui_wiring": {
+      "status": "READY",
+      "milestone": "M2",
+      "notes": "Native academic_tec_digital & academic_horarios_tec linked & wired into DocumentStudio on Win & Linux."
+    },
+    "academic_tec_digital": {
+      "status": "READY",
+      "milestone": "M3",
+      "notes": "academic/ TecDigitalService native C++17 subsystem + tec_digital_cli built on Win & Linux."
+    },
+    "horarios_tec": {
+      "status": "READY",
+      "milestone": "M3",
+      "notes": "academic/ HorariosSolver native C++17 planner + horarios_tec_cli built on Win & Linux."
+    }
+  }
+}

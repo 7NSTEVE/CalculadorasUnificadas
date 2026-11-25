@@ -1,0 +1,14 @@
+{
+  "execution_mode": "casio_os_3_80_micropython_sh7305_identity_sweep",
+  "shards": 10,
+  "passed_shards": 10,
+  "strict_no_hle_verified": true,
+  "strict_sh7305_no_fpu": true,
+  "total_evaluations": 100000,
+  "passed_evaluations": 100000,
+  "failed_evaluations": 0,
+  "total_instructions": 5479748431,
+  "total_fpu_opcodes": 0,
+  "elapsed_sec": 60.04,
+  "throughput_evals_per_sec": 1665.62
+}

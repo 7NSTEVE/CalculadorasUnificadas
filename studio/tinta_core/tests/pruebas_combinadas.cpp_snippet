@@ -1,0 +1,337 @@
+#include "../circuitos.h"
+#include <iostream>
+
+using namespace tinta;
+
+void ProbarReconocimientoCable() {
+  CASO("circuitos: una linea recta se reconoce como cable");
+  Trazo t;
+  // Simular una línea recta
+  for (int i = 0; i < 10; ++i) {
+    Muestra m;
+    m.posicion = {float(i * 10), float(i * 10)};
+    t.muestras.push_back(m);
+  }
+  std::vector<Trazo> trazos = {t};
+
+  ReconocimientoCircuito rec = ReconocerComponente(trazos);
+  VERIFICAR(rec.tipo == TipoComponenteCircuito::Cable);
+  VERIFICAR(rec.confianza >= 0.8f);
+}
+
+void ProbarGeneracionSpice() {
+  CASO("circuitos: SPICE conserva valores confirmados sin inventar unidades");
+  Circuito c;
+  
+  NodoCircuito n0{0, {0.0f, 0.0f}};
+  NodoCircuito n1{1, {100.0f, 0.0f}};
+  c.nodos = {n0, n1};
+  
+  ComponenteCircuito r1;
+  r1.tipo = TipoComponenteCircuito::Resistor;
+  r1.id_texto = "R1";
+  r1.nodos = {1, 0};
+  r1.valor = 1000.0f;
+  
+  ComponenteCircuito v1;
+  v1.tipo = TipoComponenteCircuito::FuenteVoltaje;
+  v1.id_texto = "V1";
+  v1.nodos = {1, 0};
+  v1.valor = 5.0f;
+  
+  c.componentes = {v1, r1};
+
+  std::string spice = GenerarSpice(c);
+  VERIFICAR(spice.find("V1 1 0 DC 5\n") != std::string::npos);
+  VERIFICAR(spice.find("R1 1 0 1000\n") != std::string::npos);
+
+  CASO("circuitos: SPICE omite un valor no confirmado");
+  r1.valor = 0.0f;
+  c.componentes = {r1};
+  spice = GenerarSpice(c);
+  VERIFICAR(spice.find("* OMITIDO R1") != std::string::npos);
+  VERIFICAR(spice.find("R1 1 0 1000") == std::string::npos);
+}
+
+void EjecutarPruebasCircuitos() {
+  ProbarReconocimientoCable();
+  ProbarGeneracionSpice();
+  std::cout << "Pruebas de circuitos finalizadas.\n";
+}
+#include "../estado_sesion.h"
+
+// Nota: se asume que las macros VERIFICAR, CASO y la variable casiIgual 
+// están disponibles en el contexto de pruebas.cpp.
+// Como esto se fusionará, no las redefino aquí.
+
+void PruebasEstadoSesion() {
+  CASO("EstadoSesion - Serializar y Deserializar");
+  {
+    tinta::EstadoSesion original;
+    original.documento_id = "doc_12345";
+    original.indice_pagina = 3;
+    original.vista_x = 100.5f;
+    original.vista_y = -20.25f;
+    original.vista_zoom = 1.5f;
+    original.herramienta_activa = "resaltador";
+    original.colores_seleccionados = {0xFF000000, 0xFFFF0000, 0xFF00FF00};
+
+    std::string serializado = tinta::SerializarEstadoSesion(original);
+
+    tinta::EstadoSesion restaurado;
+    bool exito = tinta::DeserializarEstadoSesion(serializado, &restaurado);
+
+    VERIFICAR(exito);
+    VERIFICAR(restaurado.documento_id == "doc_12345");
+    VERIFICAR(restaurado.indice_pagina == 3);
+    VERIFICAR(restaurado.vista_x == 100.5f);
+    VERIFICAR(restaurado.vista_y == -20.25f);
+    VERIFICAR(restaurado.vista_zoom == 1.5f);
+    VERIFICAR(restaurado.herramienta_activa == "resaltador");
+    VERIFICAR(restaurado.colores_seleccionados.size() == 3);
+    if (restaurado.colores_seleccionados.size() == 3) {
+      VERIFICAR(restaurado.colores_seleccionados[0] == 0xFF000000);
+      VERIFICAR(restaurado.colores_seleccionados[1] == 0xFFFF0000);
+      VERIFICAR(restaurado.colores_seleccionados[2] == 0xFF00FF00);
+    }
+  }
+
+  CASO("EstadoSesion - Deserializar vacío o inválido");
+  {
+    tinta::EstadoSesion estado;
+    bool exito = tinta::DeserializarEstadoSesion("", &estado);
+    VERIFICAR(exito); // Debería tener éxito pero quedarse con valores por defecto
+    VERIFICAR(estado.documento_id == "");
+    VERIFICAR(estado.indice_pagina == 0);
+  }
+}
+// Snippet con las pruebas del GestorFoco para integrar en pruebas.cpp
+// Copiar e incluir en el archivo pruebas.cpp original
+#include "../foco.h"
+
+void ProbarGestorFoco() {
+  CASO("Foco inicial es Pagina");
+  tinta::GestorFoco gestor;
+  VERIFICAR(gestor.ObtenerEstado().nivel == tinta::NivelFoco::Pagina);
+
+  CASO("Elementos visibles en Pagina");
+  auto visibilidad = gestor.ObtenerVisibilidadActual();
+  VERIFICAR(visibilidad.mostrar_barra_herramientas == true);
+  VERIFICAR(visibilidad.permitir_cambio_app == true);
+  VERIFICAR(visibilidad.bloquear_notificaciones == false);
+
+  CASO("Cambio a DeepStudy");
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::DeepStudy) == true);
+  VERIFICAR(gestor.ObtenerEstado().nivel == tinta::NivelFoco::DeepStudy);
+  visibilidad = gestor.ObtenerVisibilidadActual();
+  VERIFICAR(visibilidad.mostrar_barra_herramientas == false);
+  VERIFICAR(visibilidad.permitir_cambio_app == false);
+  VERIFICAR(visibilidad.bloquear_notificaciones == true);
+
+  CASO("Transicion a Region requiere Rect valido");
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::Region) == false); // Falla sin region
+  
+  tinta::Rect rect_vacio;
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::Region, rect_vacio) == false); // Falla region vacia
+  
+  tinta::Rect rect_valido{0.0f, 0.0f, 100.0f, 100.0f};
+  VERIFICAR(gestor.CambiarNivel(tinta::NivelFoco::Region, rect_valido) == true);
+  VERIFICAR(gestor.ObtenerEstado().nivel == tinta::NivelFoco::Region);
+  VERIFICAR(gestor.ObtenerEstado().region_objetivo.has_value() == true);
+}
+#include "../matematicas.h"
+#include <iostream>
+#include <string>
+
+using namespace tinta;
+
+void ProbarDisenoFraccion() {
+    CASO("matematicas: diseno de fraccion a LaTeX");
+    std::vector<SimboloReconocido> simbolos;
+    
+    SimboloReconocido num;
+    num.texto = "1";
+    num.caja = {0.0f, 0.0f, 10.0f, 10.0f};
+    simbolos.push_back(num);
+
+    SimboloReconocido linea;
+    linea.texto = "-";
+    linea.caja = {1.0f, 12.0f, 15.0f, 14.0f}; 
+    simbolos.push_back(linea);
+
+    SimboloReconocido den;
+    den.texto = "2";
+    den.caja = {2.0f, 16.0f, 10.0f, 26.0f};
+    simbolos.push_back(den);
+
+    auto arbol = AnalizarDisenoMatematico(simbolos);
+    std::string latex = GenerarLaTeX(arbol.get());
+    VERIFICAR(latex == "\\frac{1}{2}");
+}
+
+void ProbarDisenoSuperindice() {
+    CASO("matematicas: superindice a LaTeX");
+    std::vector<SimboloReconocido> simbolos;
+    
+    SimboloReconocido base;
+    base.texto = "x";
+    base.caja = {0.0f, 10.0f, 10.0f, 20.0f};
+    simbolos.push_back(base);
+
+    SimboloReconocido exp;
+    exp.texto = "2";
+    exp.caja = {12.0f, 2.0f, 18.0f, 8.0f}; 
+    simbolos.push_back(exp);
+
+    auto arbol = AnalizarDisenoMatematico(simbolos);
+    std::string latex = GenerarLaTeX(arbol.get());
+    VERIFICAR(latex == "x^{2}");
+}
+
+void ProbarUnidadesMultiplicacion() {
+    CASO("matematicas: kiloohmios por miliamperios da voltios");
+    ValorConUnidad r = { 10.0, PrefijoSI::Kilo, UnidadSI::Ohmio }; 
+    ValorConUnidad i = { 2.0, PrefijoSI::Mili, UnidadSI::Amperio }; 
+    
+    ValorConUnidad v = MultiplicarValores(r, i);
+    
+    VERIFICAR(v.valor == 20.0);
+    VERIFICAR(v.unidad == UnidadSI::Voltio);
+    VERIFICAR(v.prefijo == PrefijoSI::Ninguno);
+}
+
+void EjecutarPruebasMatematicas() {
+    ProbarDisenoFraccion();
+    ProbarDisenoSuperindice();
+    ProbarUnidadesMultiplicacion();
+    std::cout << "Pruebas de matemáticas superadas." << std::endl;
+}
+#include "../perspectiva.h"
+#include <cmath>
+#include <iostream>
+
+using namespace tinta;
+
+void ProbarHomografiaIdentidad() {
+  CASO("perspectiva: homografia identidad");
+  std::array<Punto, 4> origen = {{{0,0}, {100,0}, {100,100}, {0,100}}};
+  auto matriz = CalcularMatrizPerspectiva(origen, origen);
+  Punto p = AplicarPerspectiva(matriz, {50, 50});
+  
+  VERIFICAR(std::abs(p.x - 50.0f) < 1e-4f);
+  VERIFICAR(std::abs(p.y - 50.0f) < 1e-4f);
+}
+
+void ProbarHomografiaEscalaYTraslacion() {
+  CASO("perspectiva: escala y traslacion");
+  std::array<Punto, 4> origen = {{{0,0}, {100,0}, {100,100}, {0,100}}};
+  std::array<Punto, 4> destino = {{{10,10}, {210,10}, {210,210}, {10,210}}};
+  auto matriz = CalcularMatrizPerspectiva(origen, destino);
+  Punto p = AplicarPerspectiva(matriz, {50, 50});
+  
+  // (50, 50) debería mapearse a (110, 110)
+  VERIFICAR(std::abs(p.x - 110.0f) < 1e-4f);
+  VERIFICAR(std::abs(p.y - 110.0f) < 1e-4f);
+}
+
+void ProbarCorreccionContraste() {
+  CASO("perspectiva: correccion de contraste acotada");
+  CorreccionContraste corr = {0.2f, 0.8f};
+
+  VERIFICAR(std::abs(AplicarCorreccionContraste(0.2f, corr) - 0.0f) < 1e-4f);
+  VERIFICAR(std::abs(AplicarCorreccionContraste(0.8f, corr) - 1.0f) < 1e-4f);
+  VERIFICAR(std::abs(AplicarCorreccionContraste(0.5f, corr) - 0.5f) < 1e-4f);
+  VERIFICAR(std::abs(AplicarCorreccionContraste(0.0f, corr) - 0.0f) < 1e-4f);
+  VERIFICAR(std::abs(AplicarCorreccionContraste(1.0f, corr) - 1.0f) < 1e-4f);
+}
+
+// Llama a esto desde pruebas.cpp
+void EjecutarPruebasPerspectiva() {
+  ProbarHomografiaIdentidad();
+  ProbarHomografiaEscalaYTraslacion();
+  ProbarCorreccionContraste();
+  std::cout << "Pruebas de perspectiva pasaron correctamente." << std::endl;
+}
+#include "../api.h"
+#include <iostream>
+
+void PruebaMultiplesDocumentos() {
+    CASO("documentos: multiples sesiones independientes");
+    
+    // Abrir dos documentos
+    TintaDocumentoId doc1 = tinta_documento_abrir();
+    TintaDocumentoId doc2 = tinta_documento_abrir();
+    VERIFICAR(doc1 != 0);
+    VERIFICAR(doc2 != 0);
+    VERIFICAR(doc1 != doc2);
+    
+    // Verificar cantidad de abiertos
+    TintaDocumentoId ids[10];
+    size_t cantidad = tinta_documentos_abiertos(ids, 10);
+    VERIFICAR(cantidad >= 2);
+    
+    bool encontrado1 = false;
+    bool encontrado2 = false;
+    for (size_t i = 0; i < cantidad; ++i) {
+        if (ids[i] == doc1) encontrado1 = true;
+        if (ids[i] == doc2) encontrado2 = true;
+    }
+    VERIFICAR(encontrado1);
+    VERIFICAR(encontrado2);
+    
+    // Obtener las sesiones y verificar que no sean nulas
+    TintaSesion* sesion1 = tinta_documento_sesion(doc1);
+    TintaSesion* sesion2 = tinta_documento_sesion(doc2);
+    VERIFICAR(sesion1 != nullptr);
+    VERIFICAR(sesion2 != nullptr);
+    VERIFICAR(sesion1 != sesion2);
+    
+    // Cerrar y verificar
+    tinta_documento_cerrar(doc1);
+    cantidad = tinta_documentos_abiertos(ids, 10);
+    encontrado1 = false;
+    for (size_t i = 0; i < cantidad; ++i) {
+        if (ids[i] == doc1) encontrado1 = true;
+    }
+    VERIFICAR(!encontrado1); // Ya no debería estar en la lista
+    
+    tinta_documento_cerrar(doc2);
+    
+}
+
+void PruebaSplitView() {
+    CASO("documentos: Split View mantiene sesiones aisladas");
+    
+    TintaDocumentoId doc1 = tinta_documento_abrir();
+    TintaDocumentoId doc2 = tinta_documento_abrir();
+    
+    // Asignar a viewports
+    tinta_viewport_set_documento(TintaViewportPrincipal, doc1);
+    tinta_viewport_set_documento(TintaViewportSecundario, doc2);
+    
+    VERIFICAR(tinta_viewport_get_documento(TintaViewportPrincipal) == doc1);
+    VERIFICAR(tinta_viewport_get_documento(TintaViewportSecundario) == doc2);
+    
+    // Configurar y verificar vistas
+    tinta_viewport_set_vista(TintaViewportPrincipal, 2.0f, 100.0f, -50.0f);
+    tinta_viewport_set_vista(TintaViewportSecundario, 0.5f, 0.0f, 20.0f);
+    
+    float zoom, pan_x, pan_y;
+    
+    tinta_viewport_get_vista(TintaViewportPrincipal, &zoom, &pan_x, &pan_y);
+    VERIFICAR(zoom == 2.0f);
+    VERIFICAR(pan_x == 100.0f);
+    VERIFICAR(pan_y == -50.0f);
+    
+    tinta_viewport_get_vista(TintaViewportSecundario, &zoom, &pan_x, &pan_y);
+    VERIFICAR(zoom == 0.5f);
+    VERIFICAR(pan_x == 0.0f);
+    VERIFICAR(pan_y == 20.0f);
+    
+    // Verificar limpieza al cerrar documento
+    tinta_documento_cerrar(doc1);
+    VERIFICAR(tinta_viewport_get_documento(TintaViewportPrincipal) == 0); // Debería haberse limpiado
+    
+    tinta_documento_cerrar(doc2);
+    VERIFICAR(tinta_viewport_get_documento(TintaViewportSecundario) == 0);
+}

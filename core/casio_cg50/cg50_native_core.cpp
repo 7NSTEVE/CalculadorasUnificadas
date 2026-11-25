@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
+#include <mutex>
 #include <sstream>
 #include <unordered_map>
 
@@ -143,14 +144,13 @@ const bool kFlashNoSwallow = std::getenv("CG50_FLASH_NO_SWALLOW") != nullptr;
 const bool kDiagFileEnabled = std::getenv("CG50_DIAG_FILE") != nullptr;
 const char* const kBuf9cSeedPath = std::getenv("CG50_BUF9C_FILE");
 
-// In-Memory Examination Mode Decoupling (Seat #461 / fsP3b3):
-// Secondary guard alongside normal-mode flash provisioning (0x9505) so older
-// saved states or snapshots with 0x95FF also open restricted apps/add-ins
-// cleanly without touching SystemROM.raw or failing boot anti-tamper sweeps.
-const bool kExamDecouplingEnabled = [] {
+// H-004 Strict Hardware Profile Policy:
+// In StrictSilicon (default), ZERO dynamic firmware instruction patching occurs.
+// Legacy Exam Mode decoupling (Seat #461 / fsP3b3) is opt-in ONLY via
+// HardwareProfile::ManagerPlusCompat or explicit CG50_EXAM_DECOUPLING=1.
+const bool kExamDecouplingEnvOptIn = [] {
     const char* v = std::getenv("CG50_EXAM_DECOUPLING");
-    if (v != nullptr && std::strcmp(v, "0") == 0) return false;
-    return true;
+    return (v != nullptr && std::strcmp(v, "1") == 0);
 }();
 
 } // namespace
@@ -171,6 +171,10 @@ Cg50NativeCore::Cg50NativeCore()
     flashCfi_.Reset();
     cpuLockFlag_ = false;
     peripheralBus_.Reset();
+    if (kExamDecouplingEnvOptIn) {
+        hardwareProfile_ = HardwareProfile::ManagerPlusCompat;
+        examDecouplingEnabled_ = true;
+    }
 }
 
 Cg50NativeCore::~Cg50NativeCore()
@@ -198,8 +202,9 @@ struct MmioAuditEntry {
 };
 
 struct MmioAuditTable {
+    std::mutex mutex;
+    std::once_flag regOnce;
     std::unordered_map<std::uint64_t, MmioAuditEntry> entries;
-    bool registered = false;
 
     static MmioAuditTable& Instance()
     {
@@ -210,9 +215,12 @@ struct MmioAuditTable {
     static void DumpAtExit()
     {
         auto& inst = Instance();
-        if (inst.entries.empty()) return;
-        std::vector<std::pair<std::uint64_t, MmioAuditEntry>> sorted(
-            inst.entries.begin(), inst.entries.end());
+        std::vector<std::pair<std::uint64_t, MmioAuditEntry>> sorted;
+        {
+            std::lock_guard<std::mutex> lock(inst.mutex);
+            if (inst.entries.empty()) return;
+            sorted.assign(inst.entries.begin(), inst.entries.end());
+        }
         std::sort(sorted.begin(), sorted.end(),
                   [](const auto& a, const auto& b) { return a.first < b.first; });
         std::fprintf(stderr, "\n=== CG50_MMIO_AUDIT FALLBACK SUMMARY (%zu unique) ===\n",
@@ -233,14 +241,12 @@ struct MmioAuditTable {
                        const std::size_t bytes, const std::uint32_t pc)
     {
         auto& inst = Instance();
-        if (!inst.registered) {
-            inst.registered = true;
-            std::atexit(&DumpAtExit);
-        }
+        std::call_once(inst.regOnce, []() { std::atexit(&DumpAtExit); });
         const std::uint64_t key =
             static_cast<std::uint64_t>(phys) |
             (isWrite ? (1ull << 32) : 0ull) |
             (static_cast<std::uint64_t>(bytes & 0xFu) << 33);
+        std::lock_guard<std::mutex> lock(inst.mutex);
         auto& e = inst.entries[key];
         if (e.count == 0) {
             e.firstPc = pc;
@@ -4523,7 +4529,13 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
 #endif
             }
             ++authStats_.dspOpcodesExecuted;
-            dsp_.ExecuteParallel32(op, op2, regs_.r, Read16, Write16, Read32, Write32);
+            if (!dsp_.ExecuteParallel32(op, op2, regs_.r, regs_.sr, regs_.mach, regs_.macl,
+                                        Read16, Write16, Read32, Write32)) {
+                return EnterGeneralException(
+                    pc,
+                    executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction,
+                    false, 0);
+            }
             stats_.cycles += 1;
             return true;
         }
@@ -4819,6 +4831,28 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
             ++authStats_.dspOpcodesExecuted;
             stats_.cycles += 1;
             return true;
+        case 0x34u: // SETRC Rm (SH4AL-DSP form 0x4n34: gated on SR.DSP & not delay slot)
+            if ((regs_.sr & kSrDsp) == 0u || executingDelaySlot_) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            regs_.sr = (regs_.sr & ~(kSrRcMask | 0x0000000Cu)) | ((regs_.r[n] & 0x0FFFu) << 16);
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        case 0x3Au: // LDC Rm, SGR (CPU73050.dll 0x18496)
+            if (!requirePrivileged()) return true;
+            regs_.sgr = regs_.r[n];
+            stats_.cycles += 1;
+            return true;
+        case 0x36u: { // LDC.L @Rm+, SGR (CPU73050.dll 0x1883A)
+            if (!requirePrivileged()) return true;
+            std::uint32_t val = 0;
+            if (!Read32(regs_.r[n], val)) return FailMemory(pc, op, regs_.r[n], false);
+            regs_.r[n] += 4u;
+            regs_.sgr = val;
+            stats_.cycles += 1;
+            return true;
+        }
         case 0x5Eu: // LDC Rm, MOD
             dsp_.mod = regs_.r[n];
             ++authStats_.dspOpcodesExecuted;
@@ -4834,6 +4868,135 @@ bool Cg50NativeCore::ExecuteOpcode(const std::uint32_t pc, const std::uint16_t o
             ++authStats_.dspOpcodesExecuted;
             stats_.cycles += 1;
             return true;
+        case 0x53u: // STC.L MOD, @-Rn (CPU73050.dll 0x19859)
+        case 0x63u: // STC.L RS, @-Rn (CPU73050.dll 0x198F7)
+        case 0x73u: { // STC.L RE, @-Rn (CPU73050.dll 0x198A8)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            const std::uint32_t target = regs_.r[n] - 4u;
+            const std::uint32_t val = ((op & 0xFFu) == 0x53u) ? dsp_.mod :
+                                      ((op & 0xFFu) == 0x63u) ? dsp_.rs : dsp_.re;
+            if (!Write32(target, val)) return FailMemory(pc, op, target, true);
+            regs_.r[n] = target;
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x57u: // LDC.L @Rm+, MOD (CPU73050.dll 0x18944)
+        case 0x67u: // LDC.L @Rm+, RS (CPU73050.dll 0x189A1)
+        case 0x77u: { // LDC.L @Rm+, RE (CPU73050.dll 0x18A0E)
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            std::uint32_t val = 0;
+            if (!Read32(regs_.r[n], val)) return FailMemory(pc, op, regs_.r[n], false);
+            regs_.r[n] += 4u;
+            if ((op & 0xFFu) == 0x57u) dsp_.mod = val;
+            else if ((op & 0xFFu) == 0x67u) dsp_.rs = val;
+            else dsp_.re = val;
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x52u: { // STS.L FPUL, @-Rn (illegal on SH7305)
+            if (strictSh7305NoFpu_) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            if ((regs_.sr & kSrFd) != 0) {
+                (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
+                return true;
+            }
+            const std::uint32_t target = regs_.r[n] - 4u;
+            if (!Write32(target, regs_.fpul)) return FailMemory(pc, op, target, true);
+            regs_.r[n] = target;
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x56u: { // LDS.L @Rm+, FPUL (illegal on SH7305)
+            if (strictSh7305NoFpu_) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            if ((regs_.sr & kSrFd) != 0) {
+                (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
+                return true;
+            }
+            std::uint32_t val = 0;
+            if (!Read32(regs_.r[n], val)) return FailMemory(pc, op, regs_.r[n], false);
+            regs_.r[n] += 4u;
+            regs_.fpul = val;
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x62u: // STS.L DSR, @-Rn (SH7305 DSP) / STS.L FPSCR, @-Rn (legacy FPU)
+        case 0x72u: // STS.L A0, @-Rn
+        case 0x82u: // STS.L X0, @-Rn
+        case 0x92u: // STS.L X1, @-Rn
+        case 0xA2u: // STS.L Y0, @-Rn
+        case 0xB2u: { // STS.L Y1, @-Rn
+            const std::uint16_t lo = op & 0xFFu;
+            if (lo == 0x62u && !strictSh7305NoFpu_ && (regs_.sr & kSrDsp) == 0u) {
+                if ((regs_.sr & kSrFd) != 0) {
+                    (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
+                    return true;
+                }
+                const std::uint32_t target = regs_.r[n] - 4u;
+                if (!Write32(target, regs_.fpscr)) return FailMemory(pc, op, target, true);
+                regs_.r[n] = target;
+                stats_.cycles += 1;
+                return true;
+            }
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            const std::uint32_t val =
+                (lo == 0x62u) ? dsp_.dsr :
+                (lo == 0x72u) ? dsp_.GetA0Low() :
+                (lo == 0x82u) ? dsp_.x0 :
+                (lo == 0x92u) ? dsp_.x1 :
+                (lo == 0xA2u) ? dsp_.y0 : dsp_.y1;
+            const std::uint32_t target = regs_.r[n] - 4u;
+            if (!Write32(target, val)) return FailMemory(pc, op, target, true);
+            regs_.r[n] = target;
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
+        case 0x66u: // LDS.L @Rm+, DSR (SH7305 DSP) / LDS.L @Rm+, FPSCR (legacy FPU)
+        case 0x76u: // LDS.L @Rm+, A0
+        case 0x86u: // LDS.L @Rm+, X0
+        case 0x96u: // LDS.L @Rm+, X1
+        case 0xA6u: // LDS.L @Rm+, Y0
+        case 0xB6u: { // LDS.L @Rm+, Y1
+            const std::uint16_t lo = op & 0xFFu;
+            if (lo == 0x66u && !strictSh7305NoFpu_ && (regs_.sr & kSrDsp) == 0u) {
+                if ((regs_.sr & kSrFd) != 0) {
+                    (void)EnterGeneralException(pc, cg50::kExpevtFpuDisabled, false, 0);
+                    return true;
+                }
+                std::uint32_t val = 0;
+                if (!Read32(regs_.r[n], val)) return FailMemory(pc, op, regs_.r[n], false);
+                regs_.r[n] += 4u;
+                regs_.fpscr = val & kFpscrWritableMask;
+                stats_.cycles += 1;
+                return true;
+            }
+            if ((regs_.sr & kSrDsp) == 0u) {
+                return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
+            }
+            std::uint32_t val = 0;
+            if (!Read32(regs_.r[n], val)) return FailMemory(pc, op, regs_.r[n], false);
+            regs_.r[n] += 4u;
+            if (lo == 0x66u) dsp_.dsr = val;
+            else if (lo == 0x76u) dsp_.SetA0Low(val);
+            else if (lo == 0x86u) dsp_.x0 = val;
+            else if (lo == 0x96u) dsp_.x1 = val;
+            else if (lo == 0xA6u) dsp_.y0 = val;
+            else dsp_.y1 = val;
+            ++authStats_.dspOpcodesExecuted;
+            stats_.cycles += 1;
+            return true;
+        }
         case 0x7Au: // LDS Rm, A0 (CPU73050.dll 0x10018B68, gated on SR.DSP)
             if ((regs_.sr & kSrDsp) == 0u) {
                 return EnterGeneralException(pc, executingDelaySlot_ ? cg50::kExpevtSlotIllegalInstruction : cg50::kExpevtIllegalInstruction, false, 0);
@@ -6196,14 +6359,15 @@ bool Cg50NativeCore::StepInstruction()
         return HaltFetchOutOfMap(pc);
     }
 
-    // In-Memory Examination Mode Decoupling (Seat #461 / fsP3b3):
-    // Secondary safety guard after boot anti-tamper (> 146M instructions).
-    if (kExamDecouplingEnabled && stats_.instructions > 146000000ull) {
+    // Opt-in ManagerPlusCompat Exam Mode Decoupling (OFF in StrictSilicon default).
+    if (examDecouplingEnabled_ && stats_.instructions > 146000000ull) {
         const std::uint32_t physPc = pc & 0x1FFFFFFFu;
         if (physPc == 0x00382E84u) {
             opcode = 0xA002u; // bra 0x80382E8C
+            ++examModePatchHits_;
         } else if (physPc == 0x00382E86u) {
             opcode = 0x0009u; // nop
+            ++examModePatchHits_;
         }
     }
 
@@ -7556,7 +7720,7 @@ bool Cg50NativeCore::TranslateAddress(const std::uint32_t address,
         }
         if (itlbHit != nullptr) {
             if (itlbHit->protection == 0u || (!privileged && itlbHit->protection < 2u)) {
-                RaiseFault(cg50::kExpevtItlbProtectionViolation, cg50::kTlbMissVectorOffset);
+                RaiseFault(cg50::kExpevtItlbProtectionViolation, cg50::kGeneralExceptionVectorOffset);
                 return false;
             }
             physical = ((itlbHit->physicalPageNumber << 10) & itlbMask) | (address & ~itlbMask);
@@ -7583,15 +7747,17 @@ bool Cg50NativeCore::TranslateAddress(const std::uint32_t address,
         auto& entry = *matchedEntry;
         const auto mask = matchedMask;
 
-        // Protection: PR 0 = no access, 1 = privileged read, 2 = privileged
-        // R/W + user read, 3 = full access.
-        if (entry.protection == 0u ||
-            (!privileged && (entry.protection < 2u ||
-                             (write && entry.protection < 3u)))) {
+        // Protection: PR 0 = privileged RO (no user access, no write), 1 = privileged R/W,
+        // 2 = privileged RO + user RO, 3 = full R/W access.
+        const bool protViolation =
+            (write && (entry.protection == 0u || entry.protection == 2u)) ||
+            (!privileged && entry.protection < 2u);
+        if (protViolation) {
             RaiseFault(isFetch
                            ? cg50::kExpevtItlbProtectionViolation
-                           : cg50::kExpevtDataTlbProtectionViolation,
-                       cg50::kTlbMissVectorOffset);
+                           : (write ? cg50::kExpevtDataTlbProtectionWrite
+                                    : cg50::kExpevtDataTlbProtectionViolation),
+                       cg50::kGeneralExceptionVectorOffset);
             return false;
         }
         physical = ((entry.physicalPageNumber << 10) & mask) | (address & ~mask);
@@ -8169,6 +8335,8 @@ bool Cg50NativeCore::ExportState(std::vector<std::uint8_t>& bytes) const
         bscRefreshPrescaler_, static_cast<std::uint64_t>(bscRefreshCount_)
     };
     StateWriteChunk(bytes, 111u, bscRefreshState.data(), sizeof(bscRefreshState));
+    const auto usbPipeBanks = usb2_.ExportPipeBanks();
+    StateWriteChunk(bytes, 112u, &usbPipeBanks, sizeof(usbPipeBanks));
     return true;
 }
 
@@ -8403,14 +8571,17 @@ bool Cg50NativeCore::ImportState(const std::uint8_t* bytes, const std::size_t si
         return fail();
     }
     std::array<std::uint64_t, 2> bscRefreshState = {0u, 0u};
+    cg50::Usb2Unit::PipeBanksSnapshot usbPipeBanks = usb2_.ExportPipeBanks();
     if (!reader.ReadOptionalChunkFlexible(106u, &hudi_, sizeof(hudi_)) ||
         !reader.ReadOptionalChunkFlexible(107u, &prlck_, sizeof(prlck_)) ||
         !reader.ReadOptionalChunkFlexible(108u, &rtcExt_, sizeof(rtcExt_)) ||
         !reader.ReadOptionalChunkFlexible(109u, &dmacExt_, sizeof(dmacExt_)) ||
         !reader.ReadOptionalChunkFlexible(110u, &extLy755a_, sizeof(extLy755a_)) ||
-        !reader.ReadOptionalChunkFlexible(111u, bscRefreshState.data(), sizeof(bscRefreshState))) {
+        !reader.ReadOptionalChunkFlexible(111u, bscRefreshState.data(), sizeof(bscRefreshState)) ||
+        !reader.ReadOptionalChunkFlexible(112u, &usbPipeBanks, sizeof(usbPipeBanks))) {
         return fail();
     }
+    usb2_.ImportPipeBanks(usbPipeBanks);
     bscRefreshPrescaler_ = bscRefreshState[0];
     bscRefreshCount_ = static_cast<std::uint32_t>(bscRefreshState[1]);
     scif0_.ConnectPeer(savedScifPeer);

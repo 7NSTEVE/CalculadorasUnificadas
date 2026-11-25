@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-11-24T23:24:06.656777+00:00",
+  "git_head": "acb7468b87675fec226fce73eef5ef8f28e1c5eb",
+  "physical_verified": false,
+  "physical_reference_status": "NOT_YET_VERIFIED",
+  "items": [
+    {
+      "id": "UNVER-001",
+      "component": "Physical Casio fx-CG50 Hardware Unit (Renesas SH7305 silicon)",
+      "status": "NOT_YET_VERIFIED",
+      "reason": "No physical fx-CG50 calculator attached to host in this session. All hardware verification was performed against Casio's CPU73050.dll / LCDR61524A.dll / ExtLY755A.dll / CGM.dlm, live fx-CG Manager PLUS, Renesas SH-4A/SH4AL-DSP documentation, and independent 50-digit mpmath/SymPy oracles.",
+      "required_to_close": "Run on-device probe add-in (.g3a) on physical fx-CG50 hardware and compare MMIO/DSP/timing traces."
+    },
+    {
+      "id": "UNVER-002",
+      "component": "4 Hardware-Pin / Power-Reset EXPEVT Slots (0x00000000 POWER_ON_RESET, 0x00000020 MANUAL_RESET, 0x000001C0 NMI, 0x00000F20 HUDI_HUDI)",
+      "status": "NOT_SOFTWARE_TRAP_TRIGGERABLE",
+      "reason": "Power-On Reset (0x000), Manual Reset (0x020), physical H-UDI reset (0x600/reset pin), and external hardware pin NMI timing edge are verified at Reset() / RaiseNmi() API level rather than as mid-instruction CPU software traps.",
+      "slots": [
+        {
+          "code": "0x00000000",
+          "name": "POWER_ON_RESET",
+          "category": "reset",
+          "trigger_mode": "HW_PIN_OR_RESET",
+          "verified": false,
+          "observed_event": "0x00000000",
+          "observed_vector_offset": "0x00000000",
+          "notes": "Hardware reset/pin event (verified at Reset() initialization, not software-trap triggerable mid-instruction)"
+        },
+        {
+          "code": "0x00000020",
+          "name": "MANUAL_RESET",
+          "category": "reset",
+          "trigger_mode": "HW_PIN_OR_RESET",
+          "verified": false,
+          "observed_event": "0x00000000",
+          "observed_vector_offset": "0x00000000",
+          "notes": "Hardware reset/pin event (verified at Reset() initialization, not software-trap triggerable mid-instruction)"
+        },
+        {
+          "code": "0x000001C0",
+          "name": "NMI",
+          "category": "interrupt",
+          "trigger_mode": "HW_PIN_OR_RESET",
+          "verified": false,
+          "observed_event": "0x00000000",
+          "observed_vector_offset": "0x00000000",
+          "notes": "Hardware reset/pin event (verified at Reset() initialization, not software-trap triggerable mid-instruction)"
+        },
+        {
+          "code": "0x00000F20",
+          "name": "HUDI_HUDI",
+          "category": "debug",
+          "trigger_mode": "HW_PIN_OR_RESET",
+          "verified": false,
+          "observed_event": "0x00000000",
+          "observed_vector_offset": "0x00000000",
+          "notes": "Hardware reset/pin event (verified at Reset() initialization, not software-trap triggerable mid-instruction)"
+        }
+      ]
+    },
+    {
+      "id": "UNVER-003",
+      "component": "External Physical Peripherals (EA-200 / C-Lab E-CON4 sensors, physical 3-pin cable, physical projector)",
+      "status": "OUT_OF_SCOPE_PHYSICAL_HARDWARE",
+      "reason": "Physical external hardware transducers are not connected; virtual SCIF0 loopback/TCP-WS peer link, virtual USB2 BOT/Protocol 7.00, and virtual ScreenRecv are implemented and verified."
+    },
+    {
+      "id": "UNVER-004",
+      "component": "Multi-Day Wall-Clock Soak (24h-72h continuous run)",
+      "status": "PENDING",
+      "reason": "15-minute live soak (4.87B ops, 0 fails) and 120,000-sequence 16-thread adversarial stress lab (0 fails) executed; continuous 24h-72h soak remains PENDING (CLI ready via cg50_hw_torture_runner.exe --profile full-cert --hours 24)."
+    }
+  ]
+}

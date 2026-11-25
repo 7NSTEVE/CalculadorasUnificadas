@@ -1,0 +1,266 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-11-24T23:24:06.656777+00:00",
+  "git_head": "acb7468b87675fec226fce73eef5ef8f28e1c5eb",
+  "physical_verified": false,
+  "encoding_space_gaps": {
+    "total_16bit_encodings": 65536,
+    "core_active_sr_dsp0": 56542,
+    "core_illegal_trapped_sr_dsp0": 8994,
+    "core_halted_unassigned": 4338,
+    "explanation": "Unassigned non-DSP/non-F-space 16-bit opcodes (e.g., 0x3001) intentionally transition the core to CG50CORE_MACHINE_FAULTED per tests/core/cg50_core_c_api_contract_test.cpp (section 12 contract) instead of trapping to EXPEVT 0x180; all 0xFxxx F-space opcodes (including 0xFFFF under H-003 strict no-FPU default) and SR.DSP=0 gated DSP opcodes strictly trap to EXPEVT 0x180."
+  },
+  "non_cg50_soc_modules_audit": {
+    "total_non_cg50_registers": 289,
+    "safe_rw_verified": 289,
+    "zero_rom_literal_refs": 276,
+    "system_rom_literal_refs_count": 13,
+    "system_rom_literal_refs": [
+      {
+        "component": "HW-FLCTL",
+        "name": "FLCMNCR",
+        "phys_addr": "0x04CC0000",
+        "rom_literal_refs": 1,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-ECC",
+        "name": "ECCCR",
+        "phys_addr": "0xFD000000",
+        "rom_literal_refs": 5,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SIOF0",
+        "name": "SIRDR2",
+        "phys_addr": "0x04C4005C",
+        "rom_literal_refs": 1,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SPU2-DSP0",
+        "name": "PBANKC0",
+        "phys_addr": "0xFE2FFC00",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SPU2-DSP0",
+        "name": "DSPRST",
+        "phys_addr": "0xFE2FFD00",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SPU2-DSP0",
+        "name": "IMASKC",
+        "phys_addr": "0xFE2FFD1C",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SPU2-DSP1",
+        "name": "DSPRST",
+        "phys_addr": "0xFE3FFD00",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SPU2-DSP1",
+        "name": "IMASKC",
+        "phys_addr": "0xFE3FFD1C",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-SPU2-DSP1",
+        "name": "DAR2",
+        "phys_addr": "0xFE3FFE4C",
+        "rom_literal_refs": 1,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-FSI",
+        "name": "A_DO_FMT",
+        "phys_addr": "0xFE3C0000",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-FSI",
+        "name": "A_CKG1",
+        "phys_addr": "0xFE3C0018",
+        "rom_literal_refs": 1,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-FSI",
+        "name": "INT_ST",
+        "phys_addr": "0xFE3C0200",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      },
+      {
+        "component": "HW-FSI",
+        "name": "CLK_RST",
+        "phys_addr": "0xFE3C0210",
+        "rom_literal_refs": 2,
+        "status": "NOT_WIRED_SAFE_BACKING_ROM_REF"
+      }
+    ],
+    "note": "Casio OS 3.80 startup/standby routines touch 13 addresses in FLCTL/ECC/SIOF0/SPU2/FSI solely to hold unused SoC blocks in reset; all 289 addresses have safe isolated R/W backing."
+  },
+  "code_and_dynamic_coverage_snapshot": {
+    "m01_feature": {
+      "id": "M01_FEATURE",
+      "name": "Feature Coverage (Unique Casio Manual Functions \u2014 Deduplicated PASS-Only Union)",
+      "rom_symbol_confirmed_numerator": 682,
+      "battery_unique_feature_ids": 23,
+      "validation_passed_canonical_feature_ids": 0,
+      "validation_passed_extra_feature_ids": 30,
+      "battery_and_validation_overlap": 0,
+      "deduplicated_passed_union_numerator": 23,
+      "non_pass_receipt_ids_excluded": 0,
+      "denominator": 922,
+      "rom_confirmed_pct": 73.97,
+      "direct_automated_deduplicated_pass_pct": 2.49,
+      "notes": "H-010 fixed: strictly filters status==PASS receipts and computes exact canonical set union (battery_feature_ids | passed_canonical_receipt_ids) with zero double-counting."
+    },
+    "m02_opcode": {
+      "id": "M02_OPCODE",
+      "name": "Opcode Coverage (Runtime Executed vs CPU73050.dll Active Table)",
+      "active_16bit_classes_executed": 227,
+      "active_16bit_classes_total": 227,
+      "active_16bit_classes_pct": 100.0,
+      "exact_16bit_encodings_executed": 59919,
+      "exact_16bit_encodings_active_total": 59919,
+      "exact_16bit_encodings_pct": 100.0,
+      "illegal_16bit_encodings_trapped": 5617,
+      "dsp32_op2_hi8_classes_executed": 140,
+      "dsp32_op2_hi8_classes_active_total": 140,
+      "dsp32_op2_hi8_illegal_trapped": 116,
+      "dsp32_op2_hi8_pct": 100.0,
+      "total_dynamic_instructions_counted": 4305124677
+    },
+    "m03_mmio": {
+      "id": "M03_MMIO",
+      "name": "MMIO Register Coverage (Runtime Exercised vs CG50 Hardware Master)",
+      "cg50_registers_accessed": 413,
+      "cg50_registers_total": 413,
+      "cg50_registers_accessed_pct": 100.0,
+      "cg50_registers_both_read_and_written": 413,
+      "all_cpu73050_registers_accessed": 544,
+      "all_cpu73050_registers_total": 702,
+      "unique_mmio_addresses_observed_runtime": 595
+    },
+    "m04_bitfield": {
+      "id": "M04_BITFIELD",
+      "name": "Bitfield Coverage (Toggled Bits 0<->1 Across CG50 MMIO Registers)",
+      "bits_toggled_write_0_and_1": 7262,
+      "bits_toggled_read_or_write": 7262,
+      "total_cg50_register_bits_denominator": 7266,
+      "bits_toggled_any_pct": 99.94,
+      "registers_with_at_least_one_bit_toggle": 413
+    },
+    "m05_branch_gcov": {
+      "id": "M05_BRANCH",
+      "name": "Branch Coverage (GCC 16.1.0 gcov -b across core/casio_cg50/)",
+      "branches_executed": 6997,
+      "branches_taken_at_least_once": 4973,
+      "branches_total": 9273,
+      "branches_executed_pct": 75.46,
+      "branches_taken_pct": 53.63,
+      "lines_executed": 8350,
+      "lines_total": 12237,
+      "lines_pct": 68.24,
+      "casio_cg50_files_measured": 34
+    },
+    "m06_function_gcov": {
+      "id": "M06_FUNCTION",
+      "name": "Function Coverage (GCC 16.1.0 gcov -f across core/casio_cg50/)",
+      "functions_executed": 443,
+      "functions_total": 619,
+      "functions_pct": 71.57,
+      "calls_executed": 1674,
+      "calls_total": 2718,
+      "calls_pct": 61.59
+    },
+    "m09_error": {
+      "id": "M09_ERROR",
+      "name": "Error & Exception Path Coverage (SH7305 EXPEVT + INTEVT + DMAC/OS Errors)",
+      "expevt_codes_triggered": 13,
+      "expevt_valid_slots_in_cpu73050": 56,
+      "expevt_triggered_list": [
+        "0x040",
+        "0x060",
+        "0x080",
+        "0x0A0",
+        "0x0C0",
+        "0x0E0",
+        "0x100",
+        "0x140",
+        "0x160",
+        "0x180",
+        "0x1A0",
+        "0x1C0",
+        "0x1E0"
+      ],
+      "intevt_codes_triggered": 38,
+      "intevt_triggered_list": [
+        "0x400",
+        "0x420",
+        "0x440",
+        "0x480",
+        "0x4A0",
+        "0x4C0",
+        "0x560",
+        "0x600",
+        "0x620",
+        "0x640",
+        "0x660",
+        "0x680",
+        "0x6A0",
+        "0x6C0",
+        "0x6E0",
+        "0x800",
+        "0x820",
+        "0x840",
+        "0x860",
+        "0x880",
+        "0x8A0",
+        "0x8C0",
+        "0x8E0",
+        "0x900",
+        "0x920",
+        "0x940",
+        "0x960",
+        "0x980",
+        "0x9A0",
+        "0x9C0",
+        "0xA20",
+        "0xBE0",
+        "0xC00",
+        "0xE80",
+        "0xEA0",
+        "0xEC0",
+        "0xEE0",
+        "0xF00"
+      ],
+      "dmac_address_errors_triggered": 65,
+      "delay_slot_exceptions_triggered": 3
+    },
+    "m12_mutation_v47": {
+      "total_mutants": 112,
+      "valid_mutants": 112,
+      "killed": 112,
+      "survived": 0,
+      "build_error": 0,
+      "kill_rate_pct": 100.0
+    }
+  },
+  "remaining_gaps": [
+    "Physical fx-CG50 silicon verification (physical_verified = false).",
+    "Branch/function gcov coverage on rarely executed error/diag paths (~73% branches, ~70% functions in core).",
+    "24h-72h wall-clock soak (15m soak + 120K 16-thread stress verified)."
+  ]
+}

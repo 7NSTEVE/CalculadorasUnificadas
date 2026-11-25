@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "oracle_mode": "LIVE_CPU73050_DLL_AND_INDEPENDENT_SPEC",
+  "physical_verified": false,
+  "elapsed_seconds": 3.62,
+  "encoding_space_16bit": {
+    "total_encodings": 65536,
+    "core_active_sr_dsp0": 56542,
+    "core_illegal_sr_dsp0": 8994,
+    "core_halted": 4338
+  },
+  "live_differential_16bit": {
+    "vectors_tested": 928,
+    "vectors_matched_exact_dll": 923,
+    "vectors_known_cpu73050_dll_quirk": 5,
+    "vectors_core_diverged": 0,
+    "divergence_samples": [
+      "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x7FFFFFFF oracle=0xFFFFFFFF",
+      "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x80000000 oracle=0x00000000",
+      "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x55555555 oracle=0x00000155",
+      "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0xAAAAAAAA oracle=0xFFFFFEAA",
+      "[CPU73050_DLL_QUIRK_RVA_0x18A83] LDS Rn,MACH op=0x400A: reg[29] core=0x12345678 oracle=0xFFFFFE78"
+    ]
+  },
+  "seeded_operand_vectors": {
+    "cpu_alu_mul_logic_checked": 9000000,
+    "cpu_alu_mul_logic_failed": 0,
+    "bcd_alu_vectors_checked": 1000000,
+    "bcd_alu_vectors_failed": 0,
+    "total_vectors_checked": 10000000
+  }
+}

@@ -104,7 +104,68 @@ if(CG50_ENABLE_COVERAGE_COUNTERS)
 endif()
 set_target_properties(casio_cg50 PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# 4. Shared FFI library (libcasio_native.so / casio_native.dll)
+# 4. Portable CuadernU Studio C++17 Engine (shared across Android/iOS/Windows/Linux via casio_native)
+option(CUADERNU_BUILD_STUDIO_FFI "Bundle portable CuadernU Studio C++17 engine into casio_native FFI" ON)
+set(STUDIO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../studio")
+set(ACADEMIC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../academic")
+set(_CUADERNU_STUDIO_ENABLED OFF)
+
+if(CUADERNU_BUILD_STUDIO_FFI AND EXISTS "${STUDIO_ROOT}/c_api/cuadernu_studio_ffi.cpp")
+    find_package(ZLIB QUIET)
+    if(ZLIB_FOUND OR ANDROID OR APPLE)
+        set(_CUADERNU_STUDIO_ENABLED ON)
+        message(STATUS "CuadernU Studio FFI enabled inside casio_native (portable C++17 + tinta_core + CAS + MNA + .cudoc + HorariosTEC)")
+        add_library(cuadernu_studio_portable STATIC
+            "${STUDIO_ROOT}/core/spatial_index.cpp"
+            "${STUDIO_ROOT}/core/page_layout.cpp"
+            "${STUDIO_ROOT}/core/zip_container.cpp"
+            "${STUDIO_ROOT}/core/document_model.cpp"
+            "${STUDIO_ROOT}/core/command_stack.cpp"
+            "${STUDIO_ROOT}/core/cudoc_storage.cpp"
+            "${STUDIO_ROOT}/core/ink_engine.cpp"
+            "${STUDIO_ROOT}/core/knowledge_graph.cpp"
+            "${STUDIO_ROOT}/core/notebook_vault.cpp"
+            "${STUDIO_ROOT}/core/structured_database.cpp"
+            "${STUDIO_ROOT}/math/engineering_cas.cpp"
+            "${STUDIO_ROOT}/math/reactive_math_chemistry.cpp"
+            "${STUDIO_ROOT}/circuit/mna_solver.cpp"
+            "${STUDIO_ROOT}/pdf/pdf_parser.cpp"
+            "${STUDIO_ROOT}/pdf/pdf_writer.cpp"
+            "${STUDIO_ROOT}/pdf/interop_openxml.cpp"
+            "${STUDIO_ROOT}/pdf/table_interop.cpp"
+            "${ACADEMIC_ROOT}/horarios_tec/src/parser.cpp"
+            "${ACADEMIC_ROOT}/horarios_tec/src/solver.cpp"
+            "${ACADEMIC_ROOT}/horarios_tec/src/exporter.cpp"
+            "${STUDIO_ROOT}/c_api/cuadernu_studio_ffi.cpp"
+        )
+        target_include_directories(cuadernu_studio_portable
+            PUBLIC  "${STUDIO_ROOT}/c_api"
+            PRIVATE "${STUDIO_ROOT}"
+                    "${STUDIO_ROOT}/third_party"
+                    "${ACADEMIC_ROOT}/horarios_tec/include"
+        )
+        if(ZLIB_FOUND)
+            target_link_libraries(cuadernu_studio_portable PRIVATE ZLIB::ZLIB)
+        else()
+            target_link_libraries(cuadernu_studio_portable PRIVATE z)
+        endif()
+        if(WIN32)
+            target_compile_definitions(cuadernu_studio_portable PRIVATE
+                _CRT_SECURE_NO_WARNINGS NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE CASIO_NATIVE_SHARED=1)
+            target_link_libraries(cuadernu_studio_portable PRIVATE windowscodecs ole32 dwrite bcrypt)
+        endif()
+        if(MSVC)
+            target_compile_options(cuadernu_studio_portable PRIVATE /O2 /EHsc /utf-8)
+        else()
+            target_compile_options(cuadernu_studio_portable PRIVATE -O3 -fvisibility=hidden)
+        endif()
+        set_target_properties(cuadernu_studio_portable PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    else()
+        message(STATUS "CuadernU Studio FFI skipped: ZLIB not found (pass vcpkg toolchain on Windows to enable)")
+    endif()
+endif()
+
+# 5. Shared FFI library (libcasio_native.so / casio_native.dll)
 add_library(casio_native SHARED
     casio_ffi/casio_ffi.cpp
 )
@@ -112,6 +173,16 @@ target_include_directories(casio_native
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/casio_ffi"
 )
 target_link_libraries(casio_native PRIVATE casio_nx casio_cw2 casio_cg50)
+if(_CUADERNU_STUDIO_ENABLED)
+    target_include_directories(casio_native PUBLIC "${STUDIO_ROOT}/c_api")
+    if(MSVC)
+        target_link_libraries(casio_native PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,cuadernu_studio_portable>)
+    elseif(APPLE)
+        target_link_libraries(casio_native PRIVATE cuadernu_studio_portable "-Wl,-force_load,$<TARGET_FILE:cuadernu_studio_portable>")
+    else()
+        target_link_libraries(casio_native PRIVATE -Wl,--whole-archive cuadernu_studio_portable -Wl,--no-whole-archive)
+    endif()
+endif()
 
 foreach(tgt casio_nx casio_cw2 casio_cg50 casio_native)
     if(WIN32)
@@ -153,6 +224,44 @@ if(BUILD_CORE_TESTS)
         endif()
         add_test(NAME ${test_name} COMMAND ${test_name})
     endforeach()
+
+    if(_CUADERNU_STUDIO_ENABLED)
+        add_executable(cuadernu_studio_ffi_test "${CORE_TEST_DIR}/cuadernu_studio_ffi_test.cpp")
+        target_link_libraries(cuadernu_studio_ffi_test PRIVATE casio_native)
+        target_compile_definitions(cuadernu_studio_ffi_test PRIVATE _CRT_SECURE_NO_WARNINGS)
+        if(MSVC)
+            target_compile_options(cuadernu_studio_ffi_test PRIVATE /O2 /EHsc /utf-8)
+        endif()
+        add_test(NAME cuadernu_studio_ffi_test COMMAND cuadernu_studio_ffi_test)
+
+        if(EXISTS "${STUDIO_ROOT}/tinta_core/api.cpp" AND EXISTS "${CORE_TEST_DIR}/ios_bridge_coexistence_test.cpp")
+            file(GLOB TINTA_CORE_SOURCES "${STUDIO_ROOT}/tinta_core/*.cpp")
+            add_executable(ios_bridge_coexistence_test
+                "${CORE_TEST_DIR}/ios_bridge_coexistence_test.cpp"
+                ${TINTA_CORE_SOURCES}
+            )
+            target_include_directories(ios_bridge_coexistence_test PRIVATE
+                "${CMAKE_CURRENT_SOURCE_DIR}/casio_nx/include"
+                "${CMAKE_CURRENT_SOURCE_DIR}/casio_ffi"
+                "${STUDIO_ROOT}/tinta_core"
+                "${STUDIO_ROOT}/c_api"
+            )
+            target_link_libraries(ios_bridge_coexistence_test PRIVATE casio_native)
+            if(ZLIB_FOUND)
+                target_link_libraries(ios_bridge_coexistence_test PRIVATE ZLIB::ZLIB)
+            else()
+                target_link_libraries(ios_bridge_coexistence_test PRIVATE z)
+            endif()
+            set_target_properties(ios_bridge_coexistence_test PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+            if(WIN32)
+                target_compile_definitions(ios_bridge_coexistence_test PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
+            endif()
+            if(MSVC)
+                target_compile_options(ios_bridge_coexistence_test PRIVATE /O2 /EHsc /utf-8)
+            endif()
+            add_test(NAME ios_bridge_coexistence_test COMMAND ios_bridge_coexistence_test)
+        endif()
+    endif()
 
     add_executable(gen_cg50_warm_state "${CORE_TEST_DIR}/gen_cg50_warm_state.cpp")
     target_link_libraries(gen_cg50_warm_state PRIVATE casio_native)
@@ -244,6 +353,13 @@ if(BUILD_CORE_TESTS)
         target_compile_options(cg50_hw_silicon_100_test PRIVATE /O2 /EHsc /utf-8)
     endif()
     add_test(NAME cg50_hw_silicon_100_test COMMAND cg50_hw_silicon_100_test)
+
+    add_executable(cg50_dynamic_coverage_boost_test "${CMAKE_CURRENT_SOURCE_DIR}/../tests/core/cg50_dynamic_coverage_boost_test.cpp")
+    target_link_libraries(cg50_dynamic_coverage_boost_test PRIVATE casio_cg50)
+    if(MSVC)
+        target_compile_options(cg50_dynamic_coverage_boost_test PRIVATE /O2 /EHsc /utf-8)
+    endif()
+    add_test(NAME cg50_dynamic_coverage_boost_test COMMAND cg50_dynamic_coverage_boost_test)
 endif()
 
 if(BUILD_CG50_BATTERY)
@@ -314,4 +430,45 @@ if(BUILD_CG50_BATTERY)
     if(MSVC)
         target_compile_options(cg50_perf_benchmark PRIVATE /O2 /EHsc /utf-8)
     endif()
+
+    add_executable(cg50_parametric_scale_100k "${CMAKE_CURRENT_SOURCE_DIR}/../tests/cg50_validation/cg50_parametric_scale_100k.cpp")
+    target_link_libraries(cg50_parametric_scale_100k PRIVATE casio_cg50)
+    if(WIN32)
+        target_compile_definitions(cg50_parametric_scale_100k PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+    if(MSVC)
+        target_compile_options(cg50_parametric_scale_100k PRIVATE /O2 /EHsc /utf-8)
+    endif()
+endif()
+
+if(BUILD_CORE_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../tests/cg50_validation/hardware/cg50_cpu_dsp_cert_lab.cpp")
+    add_executable(cg50_cpu_dsp_cert_lab "${CMAKE_CURRENT_SOURCE_DIR}/../tests/cg50_validation/hardware/cg50_cpu_dsp_cert_lab.cpp")
+    target_link_libraries(cg50_cpu_dsp_cert_lab PRIVATE casio_cg50)
+    if(WIN32)
+        target_compile_definitions(cg50_cpu_dsp_cert_lab PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+    if(MSVC)
+        target_compile_options(cg50_cpu_dsp_cert_lab PRIVATE /O2 /EHsc /utf-8)
+    endif()
+    add_test(NAME cg50_cpu_dsp_cert_lab_quick COMMAND cg50_cpu_dsp_cert_lab --quick --out "${CMAKE_CURRENT_BINARY_DIR}/cpu_dsp_quick")
+
+    add_executable(cg50_register_cert_lab "${CMAKE_CURRENT_SOURCE_DIR}/../tests/cg50_validation/hardware/cg50_register_cert_lab.cpp")
+    target_link_libraries(cg50_register_cert_lab PRIVATE casio_cg50)
+    if(WIN32)
+        target_compile_definitions(cg50_register_cert_lab PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+    if(MSVC)
+        target_compile_options(cg50_register_cert_lab PRIVATE /O2 /EHsc /utf-8)
+    endif()
+    add_test(NAME cg50_register_cert_lab COMMAND cg50_register_cert_lab --out "${CMAKE_CURRENT_BINARY_DIR}/reg_cert_out")
+
+    add_executable(cg50_combined_hw_stress "${CMAKE_CURRENT_SOURCE_DIR}/../tests/cg50_validation/hardware/cg50_combined_hw_stress.cpp")
+    target_link_libraries(cg50_combined_hw_stress PRIVATE casio_cg50)
+    if(WIN32)
+        target_compile_definitions(cg50_combined_hw_stress PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+    if(MSVC)
+        target_compile_options(cg50_combined_hw_stress PRIVATE /O2 /EHsc /utf-8)
+    endif()
+    add_test(NAME cg50_combined_hw_stress_ci COMMAND cg50_combined_hw_stress --seqs 16000 --threads 4 --out "${CMAKE_CURRENT_BINARY_DIR}/stress_ci_out")
 endif()

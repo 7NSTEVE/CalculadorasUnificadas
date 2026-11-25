@@ -1,0 +1,8 @@
+{
+  "backend": "native",
+  "steps": [
+    { "keys": "MENU", "settle": 2, "expect_class": "menu" },
+    { "keys": "1", "settle": 2 },
+    { "keys": "1,VK_ADD,2,EXE", "settle": 3, "expect_ocr_contains": "1+2" }
+  ]
+}

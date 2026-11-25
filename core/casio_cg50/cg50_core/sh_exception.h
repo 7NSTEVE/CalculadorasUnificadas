@@ -13,24 +13,27 @@ inline constexpr std::uint32_t kGeneralExceptionVectorOffset = 0x100u;
 inline constexpr std::uint32_t kTlbMissVectorOffset = 0x400u;
 inline constexpr std::uint32_t kInterruptVectorOffset = 0x600u;
 
-// SH-4A event codes. The address-error pair (0x0E0/0x100), the FPU pair
-// (0x120/0x140), the illegal/slot-illegal pair (0x180/0x1A0) and the trapa
-// code match both the SH-4 manual and the handler grouping that the CG50 OS
-// itself registers in ILRAM at 0xFD800FA8 (probe [INT-TABLE] evidence:
-// 0x0E0+0x100 -> one handler, 0x120+0x140 -> one handler, 0x180 -> real
-// handler, 0x040/0x060/0x080 -> shared TLB handler, 0x0A0/0x0C0 -> shared
-// data-TLB handler). SH-4A exposes no separate data-write protection code,
-// so 0x0A0 serves both data protection directions (documented deviation).
+// Official Renesas SH-4A / SH7305 EXPEVT codes (REJ09B0003-0400 Section 5.4):
+//   0x040 = ITLB Miss / Data TLB Miss (Read)           -> VBR + 0x400
+//   0x060 = Data TLB Miss (Write)                      -> VBR + 0x400
+//   0x080 = Initial Page Write                         -> VBR + 0x100
+//   0x0A0 = ITLB / Data TLB Protection Violation (Read)-> VBR + 0x100
+//   0x0C0 = Data TLB Protection Violation (Write)      -> VBR + 0x100
+//   0x0E0/0x100 = Address Error (Read / Write)         -> VBR + 0x100
+//   0x140 = TLB Multi-Hit                              -> VBR + 0x100
+//   0x160 = TRAPA, 0x180 = General Illegal, 0x1A0 = Slot Illegal -> VBR + 0x100
 inline constexpr std::uint32_t kExpevtTrapa = 0x160u;
 inline constexpr std::uint32_t kExpevtIllegalInstruction = 0x180u;
 inline constexpr std::uint32_t kExpevtSlotIllegalInstruction = 0x1A0u;
 inline constexpr std::uint32_t kExpevtItlbMiss = 0x040u;
-inline constexpr std::uint32_t kExpevtItlbProtectionViolation = 0x060u;
-inline constexpr std::uint32_t kExpevtDataTlbMissRead = 0x080u;
+inline constexpr std::uint32_t kExpevtDataTlbMissRead = 0x040u;
+inline constexpr std::uint32_t kExpevtDataTlbMissWrite = 0x060u;
+inline constexpr std::uint32_t kExpevtInitialPageWrite = 0x080u;
+inline constexpr std::uint32_t kExpevtItlbProtectionViolation = 0x0A0u;
 inline constexpr std::uint32_t kExpevtDataTlbProtectionViolation = 0x0A0u;
-inline constexpr std::uint32_t kExpevtDataTlbMissWrite = 0x0C0u;
-inline constexpr std::uint32_t kExpevtFpuDisabled = 0x120u;
-inline constexpr std::uint32_t kExpevtFpuException = 0x140u;
+inline constexpr std::uint32_t kExpevtDataTlbProtectionWrite = 0x0C0u;
+inline constexpr std::uint32_t kExpevtFpuDisabled = 0x800u;
+inline constexpr std::uint32_t kExpevtFpuException = 0x120u;
 inline constexpr std::uint32_t kExpevtTlbMultiHit = 0x140u;
 
 struct ExceptionRequest {

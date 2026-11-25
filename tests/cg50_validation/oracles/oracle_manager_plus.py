@@ -116,60 +116,92 @@ GOLDEN_CASES = [
 
 
 def detect_exact_cg50_lcd_box(img: Image.Image) -> tuple[int, int, int, int]:
-    """Locate the exact bright Casio CG50 LCD inside the dark black bezel in a DPI-aware capture."""
+    """Locate the exact bright Casio CG50 LCD inside the dark black bezel in a DPI-aware capture.
+    Works for BOTH centered skins (Core Oficial) and left-aligned skins (official fx-CG Manager PLUS).
+    """
     rgb = img.convert("RGB")
     w, h = rgb.size
     px = rgb.load()
 
-    # Step 1: Locate the dark CG50 screen bezel (R,G,B < 32) in the upper half of the window
     y_min_scan = int(h * 0.08)
-    y_max_scan = int(h * 0.55)
-    x_min_scan = int(w * 0.15)
-    x_max_scan = int(w * 0.98)
+    y_max_scan = int(h * 0.50)
 
-    row_dark_spans = []
-    for y in range(y_min_scan, y_max_scan, 2):
-        # Find longest dark horizontal run (bezel border / bezel surround)
-        dark_xs = [x for x in range(x_min_scan, x_max_scan, 2)
-                   if px[x, y][0] < 32 and px[x, y][1] < 32 and px[x, y][2] < 32]
-        if len(dark_xs) > 30:
-            row_dark_spans.append((y, min(dark_xs), max(dark_xs)))
+    # Find vertical bezel columns (contiguous dark < 42 run of >= 150px vertically — immune to text/F-keys/graphs)
+    col_dark_ys = {}
+    for x in range(int(w * 0.01), int(w * 0.99)):
+        best_run = 0
+        cur_run = 0
+        best_span = (0, 0)
+        run_start = 0
+        for y in range(y_min_scan, y_max_scan, 2):
+            if px[x, y][0] < 42 and px[x, y][1] < 42 and px[x, y][2] < 42:
+                if cur_run == 0:
+                    run_start = y
+                cur_run += 1
+                if cur_run > best_run:
+                    best_run = cur_run
+                    best_span = (run_start, y)
+            else:
+                cur_run = 0
+        if best_run >= 75:  # >= 150px contiguous dark vertical bezel wall
+            col_dark_ys[x] = best_span
 
-    if not row_dark_spans:
-        return lcd_box_fixed(w, h)
+    if col_dark_ys:
+        # Group consecutive dark columns into vertical walls
+        xs = sorted(col_dark_ys.keys())
+        walls = []
+        ws = we = xs[0]
+        wy0, wy1 = col_dark_ys[xs[0]]
+        for x in xs[1:]:
+            if x <= we + 2:
+                we = x
+                wy0 = min(wy0, col_dark_ys[x][0])
+                wy1 = max(wy1, col_dark_ys[x][1])
+            else:
+                walls.append((ws, we, wy0, wy1))
+                ws = we = x
+                wy0, wy1 = col_dark_ys[x]
+        walls.append((ws, we, wy0, wy1))
 
-    bezel_x0 = min(s[1] for s in row_dark_spans)
-    bezel_x1 = max(s[2] for s in row_dark_spans)
-    bezel_y0 = min(s[0] for s in row_dark_spans)
-    bezel_y1 = max(s[0] for s in row_dark_spans)
+        # Keep only genuine thick bezel walls (>= 4px wide); ignores 1-2px scrollbars or graph axes inside the LCD
+        walls = [wl for wl in walls if (wl[1] - wl[0] + 1) >= 4]
 
-    # Step 2: Inside the dark bezel, find the exact bright LCD active area (white bg or status blue)
-    # Exclude 4px bezel margin on each side
-    ix0, iy0 = bezel_x0 + 4, bezel_y0 + 4
-    ix1, iy1 = bezel_x1 - 4, bezel_y1 - 4
-    bright_xs_min, bright_xs_max = w, 0
-    bright_ys_min, bright_ys_max = h, 0
-    found = 0
-    for y in range(max(0, iy0), min(h, iy1)):
-        row_b = []
-        for x in range(max(0, ix0), min(w, ix1)):
-            r, g, b = px[x, y]
-            if (r > 180 and g > 180 and b > 180) or (b > 170 and r < 90):
-                row_b.append(x)
-        if len(row_b) > 80:
-            found += 1
-            bright_xs_min = min(bright_xs_min, row_b[0])
-            bright_xs_max = max(bright_xs_max, row_b[-1])
-            bright_ys_min = min(bright_ys_min, y)
-            bright_ys_max = max(bright_ys_max, y)
-
-    if found > 50 and (bright_xs_max - bright_xs_min) > 150 and (bright_ys_max - bright_ys_min) > 80:
-        # Clamp height strictly to Casio fx-CG50 exact 384:216 (16:9) LCD aspect ratio so
-        # the black bezel and F1..F6 keys below the LCD are NEVER included in OCR or metrics.
-        lcd_w = (bright_xs_max + 1) - bright_xs_min
-        exact_h = int(round(lcd_w * 216.0 / 384.0))
-        lcd_y1 = min(h, bright_ys_min + exact_h)
-        return (bright_xs_min, bright_ys_min, bright_xs_max + 1, lcd_y1)
+        # Find ADJACENT pair of walls (left_wall, right_wall) whose interior is the bright 16:9 Casio LCD.
+        # Restricting to adjacent walls (j = i + 1) prevents merging across the dark right bezel into
+        # fx-CG Manager PLUS's side KeyLog panel.
+        best_box = None
+        best_score = 0
+        for i in range(len(walls) - 1):
+            j = i + 1
+            lx = walls[i][1] + 1
+            rx = walls[j][0]
+            span_w = rx - lx
+            if span_w < 220 or span_w > int(w * 0.85):
+                continue
+            ty0 = max(walls[i][2], walls[j][2])
+            ty1 = min(walls[i][3], walls[j][3])
+            if ty1 - ty0 < 100:
+                continue
+            # Find exact top/bottom of bright LCD inside [lx, rx)
+            bright_ys = []
+            for y in range(ty0, ty1 + 1):
+                b_cnt = sum(
+                    1 for x in range(lx, rx, 4)
+                    if (px[x, y][0] > 200 and px[x, y][1] > 200 and px[x, y][2] > 200)
+                    or (px[x, y][2] > 170 and px[x, y][0] < 90)
+                )
+                if b_cnt * 4 >= span_w * 0.55:
+                    bright_ys.append(y)
+            if len(bright_ys) >= 80:
+                y0 = min(bright_ys)
+                exact_h = int(round(span_w * 216.0 / 384.0))
+                y1 = min(h, y0 + exact_h)
+                score = len(bright_ys) * span_w
+                if score > best_score:
+                    best_score = score
+                    best_box = (lx, y0, rx, y1)
+        if best_box is not None:
+            return best_box
 
     return lcd_box_fixed(w, h)
 
@@ -242,20 +274,15 @@ class ExactLcdAuditor(CalcVisualAuditor):
         if not img_full:
             raise RuntimeError(f"Fallo al capturar ventana para {step_name}")
 
-        if self.target_type == "unified":
-            if self._cached_lcd_box is None:
-                self._cached_lcd_box = detect_exact_cg50_lcd_box(img_full)
-                print(f"[ORACLE-OFFICIAL] Full canvas={img_full.size}, auto-detected LCD box={self._cached_lcd_box}")
-            x0, y0, x1, y1 = self._cached_lcd_box
-            w, h = img_full.size
-            img_lcd = img_full.crop((max(0, x0), max(0, y0), min(w, x1), min(h, y1)))
-            img_lcd.save(lcd_path)
-        else:
-            if self.official_lcd_hwnd:
-                img_lcd = self._capture_window(self.official_lcd_hwnd, lcd_path)
-            else:
-                img_lcd = self._crop_official_lcd(img_full)
-                img_lcd.save(lcd_path)
+        # Always extract the exact bright LCD from img_full via bezel detection
+        # (direct PrintWindow on official_lcd_hwnd returns black on Manager PLUS).
+        if self._cached_lcd_box is None:
+            self._cached_lcd_box = detect_exact_cg50_lcd_box(img_full)
+            print(f"[ORACLE-OFFICIAL] Full canvas={img_full.size}, auto-detected LCD box={self._cached_lcd_box}")
+        x0, y0, x1, y1 = self._cached_lcd_box
+        w, h = img_full.size
+        img_lcd = img_full.crop((max(0, x0), max(0, y0), min(w, x1), min(h, y1)))
+        img_lcd.save(lcd_path)
 
         ocr_data = self._run_ocr(lcd_path)
         palette_info = self._analyze_palette(img_lcd)

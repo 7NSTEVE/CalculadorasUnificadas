@@ -35,17 +35,17 @@ import time
 from pathlib import Path
 from typing import Any
 
-REPO = Path(r"D:\Proyectos\CalculadorasUnificadas")
+REPO = Path(__file__).resolve().parents[3]
 CORE_SRC = REPO / "core"
 BUILD_COV = REPO / "build-core-cov"
 VAL_DIR = REPO / "tests" / "cg50_validation"
 REPORT_DIR = VAL_DIR / "reports" / "coverage_v46"
 RAW_COV_DIR = REPORT_DIR / "raw_runs"
 
-CMAKE = Path(r"D:\DevTools\CMake\bin\cmake.exe")
+CMAKE = Path(shutil.which("cmake") or r"D:\DevTools\CMake\bin\cmake.exe")
 MSYS_BIN = Path(r"D:\DevTools\msys64\ucrt64\bin")
-GXX = MSYS_BIN / "g++.exe"
-GCOV = MSYS_BIN / "gcov.exe"
+GXX = Path(shutil.which("g++") or str(MSYS_BIN / "g++.exe"))
+GCOV = Path(shutil.which("gcov") or str(MSYS_BIN / "gcov.exe"))
 
 
 def run_cmd(cmd: list[str], cwd: Path, env: dict[str, str], timeout: int = 600) -> tuple[int, str, str, float]:
@@ -110,9 +110,13 @@ def build_coverage_binaries(env: dict[str, str], clean: bool = False) -> None:
         "cg50_sh4a_isa_test",
         "cg50_sh7305_hw_test",
         "cg50_hw_silicon_100_test",
+        "cg50_dynamic_coverage_boost_test",
         "cg50_usb_smem_qr_test",
         "cg50_thread_isolation_test",
         "cg50_c_api_contract_test",
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_register_cert_lab",
+        "cg50_combined_hw_stress",
         "cg50_hw_torture_runner",
         "cg50_battery",
         "cg50_apps_probe",
@@ -149,8 +153,39 @@ def run_instrumented_suite(env: dict[str, str]) -> list[dict[str, Any]]:
         ("cg50_sh4a_isa_test", [str(BUILD_COV / "cg50_sh4a_isa_test.exe")], REPO, 120),
         ("cg50_sh7305_hw_test", [str(BUILD_COV / "cg50_sh7305_hw_test.exe")], REPO, 120),
         ("cg50_hw_silicon_100_test", [str(BUILD_COV / "cg50_hw_silicon_100_test.exe")], REPO, 120),
+        ("cg50_dynamic_coverage_boost_test", [str(BUILD_COV / "cg50_dynamic_coverage_boost_test.exe")], REPO, 120),
         ("cg50_usb_smem_qr_test", [str(BUILD_COV / "cg50_usb_smem_qr_test.exe")], REPO, 180),
         ("cg50_c_api_contract_test", [str(BUILD_COV / "cg50_c_api_contract_test.exe")], REPO, 120),
+        (
+            "cg50_cpu_dsp_cert_lab_quick",
+            [
+                str(BUILD_COV / "cg50_cpu_dsp_cert_lab.exe"),
+                "--quick",
+                "--out", str(BUILD_COV / "cpu_dsp_cov_out"),
+            ],
+            REPO,
+            180,
+        ),
+        (
+            "cg50_register_cert_lab",
+            [
+                str(BUILD_COV / "cg50_register_cert_lab.exe"),
+                "--out", str(BUILD_COV / "reg_cert_cov_out"),
+            ],
+            REPO,
+            120,
+        ),
+        (
+            "cg50_combined_hw_stress",
+            [
+                str(BUILD_COV / "cg50_combined_hw_stress.exe"),
+                "--seqs", "16000",
+                "--threads", "4",
+                "--out", str(BUILD_COV / "stress_cov_out"),
+            ],
+            REPO,
+            120,
+        ),
         (
             "cg50_hw_torture_ci_smoke",
             [
@@ -188,7 +223,7 @@ def run_instrumented_suite(env: dict[str, str]) -> list[dict[str, Any]]:
                 "--out", str(BUILD_COV / "val_cov_graphs_out"),
             ],
             REPO,
-            300,
+            900,
         ),
     ]
 
@@ -437,13 +472,23 @@ def build_12_metrics_report(
     op65k = json.loads((VAL_DIR / "hardware" / "CPU73050_OPCODES_65536.json").read_text(encoding="utf-8"))
     periph_spec = json.loads((VAL_DIR / "hardware" / "cpu73050_periph_spec.json").read_text(encoding="utf-8"))
 
-    # 1. Feature coverage
+    # 1. Feature coverage (H-010 fix: true deduplicated set union of PASS-only feature IDs)
     total_features = int(feat_master["summary"]["total_unique_features"])
     rom_confirmed_features = int(feat_master["summary"]["rom_symbol_confirmed_count"])
-    battery_mapped = int(feat_master["summary"]["existing_battery_cases_mapped"])
-    # Count unique feature_ids from existing validation receipts if present
-    tested_feature_ids: set[str] = set()
+
+    battery_feature_ids: set[str] = set()
+    valid_feature_ids: set[str] = set()
+    for fobj in feat_master.get("features", []):
+        fid = fobj.get("id")
+        if fid:
+            valid_feature_ids.add(fid)
+            if fobj.get("existing_case_ids") or int(fobj.get("test_cases_passed", 0)) > 0:
+                battery_feature_ids.add(fid)
+
+    passed_receipt_feature_ids: set[str] = set()
+    non_pass_receipt_feature_ids: set[str] = set()
     for rpath in [
+        VAL_DIR / "reports" / "math_v46_3k" / "validation_receipts.jsonl",
         VAL_DIR / "reports" / "cert_run_v44" / "validation_receipts.jsonl",
         VAL_DIR / "reports" / "cert_extreme_v44" / "validation_receipts.jsonl",
         BUILD_COV / "val_cov_out" / "validation_receipts.jsonl",
@@ -455,21 +500,35 @@ def build_12_metrics_report(
                 try:
                     obj = json.loads(line)
                     fid = obj.get("feature_id")
-                    if fid:
-                        tested_feature_ids.add(fid)
+                    if not fid:
+                        continue
+                    if str(obj.get("status", "")).upper() == "PASS":
+                        passed_receipt_feature_ids.add(fid)
+                    else:
+                        non_pass_receipt_feature_ids.add(fid)
                 except Exception:
                     pass
-    # Count battery + apps_probe + validation unique features conservatively (no inflation!)
+
+    # Deduplicated set union over canonical manual feature IDs (and separate count for extra non-catalog IDs)
+    canonical_receipt_ids = passed_receipt_feature_ids & valid_feature_ids
+    extra_receipt_ids = passed_receipt_feature_ids - valid_feature_ids
+    dedup_canonical_union = battery_feature_ids | canonical_receipt_ids
+    overlap_count = len(battery_feature_ids & canonical_receipt_ids)
+
     feature_metric = {
         "id": "M01_FEATURE",
-        "name": "Feature Coverage (Unique Casio Manual Functions)",
+        "name": "Feature Coverage (Unique Casio Manual Functions — Deduplicated PASS-Only Union)",
         "rom_symbol_confirmed_numerator": rom_confirmed_features,
-        "battery_cases_mapped": battery_mapped,
-        "validation_receipt_unique_feature_ids": len(tested_feature_ids),
+        "battery_unique_feature_ids": len(battery_feature_ids),
+        "validation_passed_canonical_feature_ids": len(canonical_receipt_ids),
+        "validation_passed_extra_feature_ids": len(extra_receipt_ids),
+        "battery_and_validation_overlap": overlap_count,
+        "deduplicated_passed_union_numerator": len(dedup_canonical_union),
+        "non_pass_receipt_ids_excluded": len(non_pass_receipt_feature_ids - passed_receipt_feature_ids),
         "denominator": total_features,
         "rom_confirmed_pct": round(100.0 * rom_confirmed_features / total_features, 2),
-        "direct_automated_battery_plus_val_pct": round(100.0 * min(total_features, battery_mapped + len(tested_feature_ids)) / total_features, 2),
-        "notes": "Separates static ROM catalog symbol confirmation (682/922) from direct automated runtime cases so static discovery is never conflated with dynamic execution.",
+        "direct_automated_deduplicated_pass_pct": round(100.0 * len(dedup_canonical_union) / total_features, 2),
+        "notes": "H-010 fixed: strictly filters status==PASS receipts and computes exact canonical set union (battery_feature_ids | passed_canonical_receipt_ids) with zero double-counting.",
     }
 
     # 2. Opcode coverage (16-bit encodings + 227 active classes + 140 32-bit DSP ALU classes)
@@ -501,7 +560,15 @@ def build_12_metrics_report(
     active_16_denom = int(isa_proof["architecture_verdict"]["active_16bit_opcodes"])
     classes_denom = len(active_oids)
     dsp_denom = int(isa_proof["architecture_verdict"]["dsp_2nd_word_classes_active"])
-    exec_dsp_classes = sum(1 for k, v in rt["dsp32"].items() if v > 0)
+    census_path = VAL_DIR / "certification_v47" / "cpu73050_live_census.json"
+    if census_path.is_file():
+        census_data = json.loads(census_path.read_text(encoding="utf-8"))
+        active_dsp_set = {int(x) for x in census_data.get("dsp2_active_hi_bytes", [])}
+        exec_dsp_classes = sum(1 for k, v in rt["dsp32"].items() if v > 0 and k in active_dsp_set)
+        exec_dsp_illegal = sum(1 for k, v in rt["dsp32"].items() if v > 0 and k not in active_dsp_set)
+    else:
+        exec_dsp_classes = min(dsp_denom, sum(1 for k, v in rt["dsp32"].items() if v > 0))
+        exec_dsp_illegal = max(0, sum(1 for k, v in rt["dsp32"].items() if v > 0) - dsp_denom)
 
     opcode_metric = {
         "id": "M02_OPCODE",
@@ -515,6 +582,7 @@ def build_12_metrics_report(
         "illegal_16bit_encodings_trapped": exec_illegal_16,
         "dsp32_op2_hi8_classes_executed": exec_dsp_classes,
         "dsp32_op2_hi8_classes_active_total": dsp_denom,
+        "dsp32_op2_hi8_illegal_trapped": exec_dsp_illegal,
         "dsp32_op2_hi8_pct": round(100.0 * exec_dsp_classes / dsp_denom, 2) if dsp_denom else 0.0,
         "total_dynamic_instructions_counted": total_opcode_execs,
     }
@@ -780,7 +848,7 @@ def write_markdown_summary(report: dict[str, Any], out_md: Path) -> None:
         "",
         "| # | Métrica Independiente | Numerador / Denominador Medido | Porcentaje | Notas |",
         "|---|---|---|---|---|",
-        f"| 1 | **Feature** | `{m['01_feature']['rom_symbol_confirmed_numerator']} / {m['01_feature']['denominator']}` ROM-confirmadas; `{m['01_feature']['battery_cases_mapped']}` batería + `{m['01_feature']['validation_receipt_unique_feature_ids']}` receipts | `{m['01_feature']['rom_confirmed_pct']}%` ROM / `{m['01_feature']['direct_automated_battery_plus_val_pct']}%` auto | Separación estricta estático vs dinámico |",
+        f"| 1 | **Feature** | `{m['01_feature']['rom_symbol_confirmed_numerator']} / {m['01_feature']['denominator']}` ROM-confirmadas; unión deduplicada PASS-only `{m['01_feature']['deduplicated_passed_union_numerator']}` (`{m['01_feature']['battery_unique_feature_ids']}` bat ∪ `{m['01_feature']['validation_passed_canonical_feature_ids']}` val, overlap `{m['01_feature']['battery_and_validation_overlap']}`) | `{m['01_feature']['rom_confirmed_pct']}%` ROM / `{m['01_feature']['direct_automated_deduplicated_pass_pct']}%` auto | H-010: unión canónica sin doble conteo y filtro `status==PASS` |",
         f"| 2 | **Opcode** | `{m['02_opcode']['active_16bit_classes_executed']} / {m['02_opcode']['active_16bit_classes_total']}` clases 16-bit (`{m['02_opcode']['exact_16bit_encodings_executed']} / {m['02_opcode']['exact_16bit_encodings_active_total']}` encodings); DSP32 `{m['02_opcode']['dsp32_op2_hi8_classes_executed']} / {m['02_opcode']['dsp32_op2_hi8_classes_active_total']}` | `{m['02_opcode']['active_16bit_classes_pct']}%` clases | `{m['02_opcode']['total_dynamic_instructions_counted']:,}` instrucciones dinámicas medidas |",
         f"| 3 | **MMIO** | `{m['03_mmio']['cg50_registers_accessed']} / {m['03_mmio']['cg50_registers_total']}` registros CG50 (`{m['03_mmio']['cg50_registers_both_read_and_written']}` R+W) | `{m['03_mmio']['cg50_registers_accessed_pct']}%` | `{m['03_mmio']['unique_mmio_addresses_observed_runtime']}` direcciones MMIO únicas |",
         f"| 4 | **Bitfield** | `{m['04_bitfield']['bits_toggled_read_or_write']} / {m['04_bitfield']['total_cg50_register_bits_denominator']}` bits alternados (`0<->1`) | `{m['04_bitfield']['bits_toggled_any_pct']}%` | `{m['04_bitfield']['registers_with_at_least_one_bit_toggle']}` registros con toggle real |",

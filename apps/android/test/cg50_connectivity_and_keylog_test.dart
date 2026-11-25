@@ -283,4 +283,85 @@ void main() {
     expect(bmp[0], 0x42); // 'B'
     expect(bmp[1], 0x4D); // 'M'
   });
+
+  test('H-006: Cg50LocalBridgeServer opt-in readOnly, pairing token, recursive confirm & CORS',
+      () async {
+    final backend = _FakeBridgeBackend();
+    final server = Cg50LocalBridgeServer(
+      backend,
+      readOnlyMode: false,
+      loopbackOnly: true,
+      optionalPairingToken: 'secret-pair-47',
+      requireConfirmForRecursiveDelete: true,
+    );
+    expect(await server.start(port: 0), isTrue);
+    final base = Uri.parse('http://127.0.0.1:${server.port}');
+    final client = HttpClient();
+    try {
+      // Missing token -> 401
+      final unauth = await (await client.getUrl(base.resolve('/api/info'))).close();
+      expect(unauth.statusCode, 401);
+
+      // Untrusted external Origin must NOT receive Access-Control-Allow-Origin
+      final extReq = await client.getUrl(base.resolve('/api/info'));
+      extReq.headers.set('X-CG50-Token', 'secret-pair-47');
+      extReq.headers.set('Origin', 'https://evil.example.com');
+      final extRes = await extReq.close();
+      expect(extRes.statusCode, 200);
+      expect(extRes.headers.value('access-control-allow-origin'), isNull);
+
+      // Trusted localhost Origin receives echoed Origin
+      final locReq = await client.getUrl(base.resolve('/api/info'));
+      locReq.headers.set('X-CG50-Token', 'secret-pair-47');
+      locReq.headers.set('Origin', 'http://127.0.0.1:8750');
+      final locRes = await locReq.close();
+      expect(locRes.statusCode, 200);
+      expect(locRes.headers.value('access-control-allow-origin'), 'http://127.0.0.1:8750');
+
+      // Recursive delete without confirm=1 -> 400
+      final delNoConf = await client.deleteUrl(
+          base.resolve('/api/file?path=/Geometry.g3a&recursive=1&token=secret-pair-47'));
+      final resNoConf = await delNoConf.close();
+      expect(resNoConf.statusCode, 400);
+      expect(backend.files.containsKey('/Geometry.g3a'), isTrue);
+
+      // Read-only mode blocks mutations with 403
+      server.readOnlyMode = true;
+      final roPut = await client.postUrl(base.resolve('/api/file?path=/ro.py&token=secret-pair-47'));
+      roPut.add(utf8.encode('1+1'));
+      final roRes = await roPut.close();
+      expect(roRes.statusCode, 403);
+    } finally {
+      client.close(force: true);
+      await server.stop();
+      backend.dispose();
+    }
+  });
+
+  test('H-007 & H-008: SHA-256 ROM integrity check detects same-size corruption & safe atomic write',
+      () async {
+    // Official FIPS 180-4 test vectors
+    expect(computeSha256Hex(Uint8List(0)),
+        'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855');
+    expect(computeSha256Hex(Uint8List.fromList(utf8.encode('abc'))),
+        'BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD');
+
+    final tmpDir = await Directory.systemTemp.createTemp('cg50_rom_sha_test_');
+    try {
+      // Same-size (16,384 B) corrupted ILRAM file must FAIL verifyRomFile!
+      final badIlram = File('${tmpDir.path}/official-ILRAM-FD800000-4000.bin');
+      await CasioRomStaging.writeAtomic(badIlram, Uint8List(16384));
+      expect(await badIlram.length(), 16384);
+      expect(
+        await CasioRomStaging.verifyRomFile(badIlram, 'official-ILRAM-FD800000-4000.bin'),
+        isFalse,
+      );
+      // Overwriting atomically preserves intact replacement content
+      final second = Uint8List.fromList(List<int>.filled(16384, 0x5A));
+      await CasioRomStaging.writeAtomic(badIlram, second);
+      expect(await badIlram.readAsBytes(), second);
+    } finally {
+      await tmpDir.delete(recursive: true);
+    }
+  });
 }

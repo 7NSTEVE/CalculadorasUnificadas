@@ -1,0 +1,87 @@
+#include "../api.h"
+#include <cassert>
+#include <iostream>
+
+void PruebaMultiplesDocumentos() {
+    std::cout << "Prueba: Multiples Documentos... ";
+    
+    // Abrir dos documentos
+    TintaDocumentoId doc1 = tinta_documento_abrir();
+    TintaDocumentoId doc2 = tinta_documento_abrir();
+    assert(doc1 != 0);
+    assert(doc2 != 0);
+    assert(doc1 != doc2);
+    
+    // Verificar cantidad de abiertos
+    TintaDocumentoId ids[10];
+    size_t cantidad = tinta_documentos_abiertos(ids, 10);
+    assert(cantidad >= 2);
+    
+    bool encontrado1 = false;
+    bool encontrado2 = false;
+    for (size_t i = 0; i < cantidad; ++i) {
+        if (ids[i] == doc1) encontrado1 = true;
+        if (ids[i] == doc2) encontrado2 = true;
+    }
+    assert(encontrado1);
+    assert(encontrado2);
+    
+    // Obtener las sesiones y verificar que no sean nulas
+    TintaSesion* sesion1 = tinta_documento_sesion(doc1);
+    TintaSesion* sesion2 = tinta_documento_sesion(doc2);
+    assert(sesion1 != nullptr);
+    assert(sesion2 != nullptr);
+    assert(sesion1 != sesion2);
+    
+    // Cerrar y verificar
+    tinta_documento_cerrar(doc1);
+    cantidad = tinta_documentos_abiertos(ids, 10);
+    encontrado1 = false;
+    for (size_t i = 0; i < cantidad; ++i) {
+        if (ids[i] == doc1) encontrado1 = true;
+    }
+    assert(!encontrado1); // Ya no debería estar en la lista
+    
+    tinta_documento_cerrar(doc2);
+    
+    std::cout << "OK\n";
+}
+
+void PruebaSplitView() {
+    std::cout << "Prueba: Split View... ";
+    
+    TintaDocumentoId doc1 = tinta_documento_abrir();
+    TintaDocumentoId doc2 = tinta_documento_abrir();
+    
+    // Asignar a viewports
+    tinta_viewport_set_documento(TintaViewportPrincipal, doc1);
+    tinta_viewport_set_documento(TintaViewportSecundario, doc2);
+    
+    assert(tinta_viewport_get_documento(TintaViewportPrincipal) == doc1);
+    assert(tinta_viewport_get_documento(TintaViewportSecundario) == doc2);
+    
+    // Configurar y verificar vistas
+    tinta_viewport_set_vista(TintaViewportPrincipal, 2.0f, 100.0f, -50.0f);
+    tinta_viewport_set_vista(TintaViewportSecundario, 0.5f, 0.0f, 20.0f);
+    
+    float zoom, pan_x, pan_y;
+    
+    tinta_viewport_get_vista(TintaViewportPrincipal, &zoom, &pan_x, &pan_y);
+    assert(zoom == 2.0f);
+    assert(pan_x == 100.0f);
+    assert(pan_y == -50.0f);
+    
+    tinta_viewport_get_vista(TintaViewportSecundario, &zoom, &pan_x, &pan_y);
+    assert(zoom == 0.5f);
+    assert(pan_x == 0.0f);
+    assert(pan_y == 20.0f);
+    
+    // Verificar limpieza al cerrar documento
+    tinta_documento_cerrar(doc1);
+    assert(tinta_viewport_get_documento(TintaViewportPrincipal) == 0); // Debería haberse limpiado
+    
+    tinta_documento_cerrar(doc2);
+    assert(tinta_viewport_get_documento(TintaViewportSecundario) == 0);
+    
+    std::cout << "OK\n";
+}

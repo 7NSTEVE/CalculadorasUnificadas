@@ -1,7 +1,7 @@
 <!-- UI_DESIGN_IPADOS_HIG_POLICY_BEGIN -->
 # Reglas Permanentes de Diseño UI/UX (guías de interfaz + material translúcido + Cero Estética IA)
 
-Al diseñar, rediseñar o auditar cualquier interfaz en este espacio de trabajo (**Calculadora Unificada** y **Document Studio**), priorizar las **guías de diseño de interfaces** (``) y **material translúcido** como referencia de calidad, sin copiar ciegamente macOS ni sacrificar convenciones útiles de Windows.
+Al diseñar, rediseñar o auditar cualquier interfaz en este espacio de trabajo (**Calculadora Unificada** y **Document Studio / CuadernU**), priorizar las **guías de diseño de interfaces** (``) y **material translúcido** como referencia de calidad, sin copiar ciegamente macOS ni sacrificar convenciones útiles de Windows.
 
 ## Filosofía Visual
 - **Minimalismo real**: no significa eliminar funciones; significa eliminar la complejidad innecesaria de su presentación (divulgación progresiva y menús contextuales).
@@ -32,3 +32,21 @@ Al diseñar, rediseñar o auditar cualquier interfaz en este espacio de trabajo 
 ## Tipografía Matemática y Científica
 - Renderizar visualmente en notación matemática natural 2D todas las ecuaciones, fórmulas, unidades físicas y letras griegas, sin LaTeX crudo, sin texto plano monoespaciado y sin textos meta anunciando que está renderizado en LaTeX.
 <!-- UI_DESIGN_IPADOS_HIG_POLICY_END -->
+
+<!-- WORKSPACE_HYGIENE_CONTRACT_BEGIN -->
+# Reglas Permanentes de Orden, Clasificación y Anti-Despiche
+
+Estas 8 reglas son **OBLIGATORIAS** para todo agente IA (Antigravity, Codex, Claude, Copilot, OpenCode) y todo desarrollador que toque este proyecto:
+
+1. **Raíz Única Obligatoria:** TODO lo relacionado con Calculadoras Unificadas, CuadernU y Document Studio vive exclusivamente en `D:\Proyectos\CalculadorasUnificadas\`. **PROHIBIDO** crear clones, copias, carpetas paralelas, backups manuales ni worktrees en `OneDrive\Desktop`, `E:\Descompilados`, `D:\Temp` o `D:\A- Proyectos Antigravity Codex`.
+2. **Lista Blanca Estricta en la Raíz (Cero Archivos Sueltos):** En la raíz de `D:\Proyectos\CalculadorasUnificadas\` solo se permiten:
+   - Archivos de manifiesto: `README.md`, `AGENTS.md`, `LICENSE`, `THIRD_PARTY_NOTICES.md`, `.gitignore`, `.gitattributes`, `.editorconfig`, `CMakeLists.txt`.
+   - Directorios de primer nivel aprobados: `.git/`, `.github/`, `.githooks/`, `core/`, `studio/`, `academic/`, `ui_glass/`, `apps/`, `assets/`, `docs/`, `tests/`, `tools/`, `private_local/` (ignorado por Git), `build/` (ignorado por Git).
+   - **PROHIBIDO** dejar archivos `.obj`, `.png`, `.bmp`, `.log`, `.txt`, `.ps1`, `.py`, `.bak*` o reportes sueltos en la raíz.
+3. **Fuente Única de Motores (Cero Copias Vendored):** Existe **UNA SOLA** copia de cada motor C++ en `core/` (`casio_cg50`, `casio_cw2`, `casio_nx`, `casio_ffi`) y `studio/` (`tinta_core`, `core/`, `interop/`, `pdf/`, `math/`, `circuit/`). Todas las plataformas en `apps/` (`windows`, `android`, `ios_native`, `linux`) enlazan contra esas rutas. Prohibido duplicar código fuente de motores dentro de `apps/`.
+4. **Cero Archivos `.bak` ni Copias con Fecha:** Todo historial y respaldo vive en Git. Prohibido crear `*.bak*`, `*_old*`, `*_copy*` o copias numeradas de fuentes.
+5. **Compilaciones y Salidas Temporales Exclusivamente en `build/`:** Todos los builds (`cmake`, `ninja`, `msbuild`, `flutter`), trazas, capturas de pruebas y logs van bajo `build/<preset>/` (ignorado por Git). Prohibido crear `build-verify/`, `build-native-x64/`, `build-win32/`, `out_test/` o volcar corridas en `D:\Temp\`.
+6. **Separación Clara de Activos Locales Pesados (`private_local/`):** Instaladores originales (`instaladores_casio/`), runtime DLLs oficiales de Casio (`official_casio_runtime/`), manuales PDF (`manuales/`), tipografía personal (`tipografia_personal/`) e investigación histórica (`investigacion/`) viven exclusivamente en `private_local/` (ignorado por Git y verificado con `git check-ignore`). Las ROMs de emulación permanecen en `assets/roms/` según política del dueño.
+7. **Higiene de Ramas Git:** `main` se mantiene siempre compilable y verde; toda tarea nueva usa una rama corta (`feat/<tema>`, `fix/<tema>`, `chore/<tema>`) y se elimina al fusionar. Prohibido acumular ramas `autosync/*` o `agent/*`.
+8. **Puerta de Cierre Obligatoria:** Ninguna tarea puede declararse completada sin ejecutar `D:\DevTools\Python311\python.exe tools/check_workspace_hygiene.py` con código de salida `0`.
+<!-- WORKSPACE_HYGIENE_CONTRACT_END -->

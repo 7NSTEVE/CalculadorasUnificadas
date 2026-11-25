@@ -1,0 +1,47 @@
+#include "../estado_sesion.h"
+
+// Nota: se asume que las macros VERIFICAR, CASO y la variable casiIgual 
+// están disponibles en el contexto de pruebas.cpp.
+// Como esto se fusionará, no las redefino aquí.
+
+void PruebasEstadoSesion() {
+  CASO("EstadoSesion - Serializar y Deserializar");
+  {
+    tinta::EstadoSesion original;
+    original.documento_id = "doc_12345";
+    original.indice_pagina = 3;
+    original.vista_x = 100.5f;
+    original.vista_y = -20.25f;
+    original.vista_zoom = 1.5f;
+    original.herramienta_activa = "resaltador";
+    original.colores_seleccionados = {0xFF000000, 0xFFFF0000, 0xFF00FF00};
+
+    std::string serializado = tinta::SerializarEstadoSesion(original);
+
+    tinta::EstadoSesion restaurado;
+    bool exito = tinta::DeserializarEstadoSesion(serializado, &restaurado);
+
+    VERIFICAR(exito);
+    VERIFICAR(restaurado.documento_id == "doc_12345");
+    VERIFICAR(restaurado.indice_pagina == 3);
+    VERIFICAR(restaurado.vista_x == 100.5f);
+    VERIFICAR(restaurado.vista_y == -20.25f);
+    VERIFICAR(restaurado.vista_zoom == 1.5f);
+    VERIFICAR(restaurado.herramienta_activa == "resaltador");
+    VERIFICAR(restaurado.colores_seleccionados.size() == 3);
+    if (restaurado.colores_seleccionados.size() == 3) {
+      VERIFICAR(restaurado.colores_seleccionados[0] == 0xFF000000);
+      VERIFICAR(restaurado.colores_seleccionados[1] == 0xFFFF0000);
+      VERIFICAR(restaurado.colores_seleccionados[2] == 0xFF00FF00);
+    }
+  }
+
+  CASO("EstadoSesion - Deserializar vacío o inválido");
+  {
+    tinta::EstadoSesion estado;
+    bool exito = tinta::DeserializarEstadoSesion("", &estado);
+    VERIFICAR(exito); // Debería tener éxito pero quedarse con valores por defecto
+    VERIFICAR(estado.documento_id == "");
+    VERIFICAR(estado.indice_pagina == 0);
+  }
+}

@@ -1,20 +1,20 @@
 {
-  "schema": "cg50_mutation_report_v46",
-  "generated_utc": "2026-11-24T16:12:39.665090+00:00",
+  "schema": "cg50_mutation_report_v47",
+  "generated_utc": "2026-11-24T23:24:02.842331+00:00",
   "sandbox_dir": "D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox",
   "live_workspace_modified": false,
-  "total_elapsed_sec": 358.49,
+  "total_elapsed_sec": 1593.72,
   "summary": {
-    "total_mutants": 30,
-    "valid_mutants": 30,
-    "killed": 29,
-    "survived": 1,
+    "total_mutants": 112,
+    "valid_mutants": 112,
+    "killed": 112,
+    "survived": 0,
     "build_error": 0,
-    "kill_rate_pct": 96.67
+    "kill_rate_pct": 100.0
   },
   "mutants": [
     {
-      "id": "MUT-01-CPU-DT-FLAG",
+      "id": "MUT-001-CPU-DT-FLAG",
       "subsystem": "SH-4A CPU",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Inverts DT Rn zero-flag T semantics",
@@ -23,11 +23,11 @@
       ],
       "status": "KILLED",
       "killing_test": "cg50_sh4a_isa_test",
-      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:379): DT Rn decrements to 0 and sets T=1",
-      "elapsed_sec": 10.86
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:386): DT Rn decrements to 0 and sets T=1",
+      "elapsed_sec": 11.296
     },
     {
-      "id": "MUT-02-CPU-SHLL2",
+      "id": "MUT-002-CPU-SHLL2",
       "subsystem": "SH-4A CPU",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Shifts left by 1 instead of 2 on SHLL2",
@@ -36,11 +36,109 @@
       ],
       "status": "KILLED",
       "killing_test": "cg50_sh4a_isa_test",
-      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:380): SHLL2 shifts left by exactly 2 bits (3 << 2 == 12)",
-      "elapsed_sec": 9.471
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:387): SHLL2 shifts left by exactly 2 bits (3 << 2 == 12)",
+      "elapsed_sec": 9.871
     },
     {
-      "id": "MUT-03-CPU-DELAYSLOT-JMP",
+      "id": "MUT-003-CPU-SHLR2",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Shifts right by 1 instead of 2 on SHLR2",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.60s)",
+      "elapsed_sec": 11.923
+    },
+    {
+      "id": "MUT-004-CPU-SHLL8",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Shifts left by 4 instead of 8 on SHLL8",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.05s)",
+      "elapsed_sec": 12.557
+    },
+    {
+      "id": "MUT-005-CPU-SHLR8",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Shifts right by 4 instead of 8 on SHLR8",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.96s)",
+      "elapsed_sec": 13.261
+    },
+    {
+      "id": "MUT-006-CPU-SHLL16",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Shifts left by 15 instead of 16 on SHLL16",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.34s)",
+      "elapsed_sec": 10.886
+    },
+    {
+      "id": "MUT-007-CPU-SHLR16",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Shifts right by 15 instead of 16 on SHLR16",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.12s)",
+      "elapsed_sec": 9.876
+    },
+    {
+      "id": "MUT-008-CPU-CMP-PZ",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Changes CMP/PZ (>=0) to (>0)",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.70s)",
+      "elapsed_sec": 11.236
+    },
+    {
+      "id": "MUT-009-CPU-CMP-PL",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Changes CMP/PL (>0) to (>=0)",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.92s)",
+      "elapsed_sec": 10.941
+    },
+    {
+      "id": "MUT-010-CPU-DELAYSLOT-JMP",
       "subsystem": "SH-4A CPU",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Removes slot-illegal exception (0x1A0) on JMP inside delay slot",
@@ -49,11 +147,25 @@
       ],
       "status": "KILLED",
       "killing_test": "cg50_sh4a_isa_test",
-      "detail": "ST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:377): step DT/SHLL2/delay-slot\n[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:381): JMP inside delay slot raises EXPEVT 0x1A0",
-      "elapsed_sec": 8.87
+      "detail": "-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:384): step DT/SHLL2/delay-slot\n[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:388): JMP inside delay slot raises EXPEVT 0x1A0",
+      "elapsed_sec": 7.703
     },
     {
-      "id": "MUT-04-CPU-NOFPU-STRICT",
+      "id": "MUT-011-CPU-DELAYSLOT-JSR",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Removes slot-illegal exception on JSR inside delay slot",
+      "target_tests": [
+        "cg50_sh4a_isa_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:416): JSR inside delay slot raises EXPEVT 0x1A0",
+      "elapsed_sec": 4.594
+    },
+    {
+      "id": "MUT-012-CPU-NOFPU-STRICT",
       "subsystem": "SH7305 No-FPU Gate",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Disables SH7305 no-FPU illegal exception trap on 0xFxxx",
@@ -63,13 +175,387 @@
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: Strict SH7305 No-FPU traps 0xF19D with EXPEVT 0x180\n[SH7305-HW-TEST] FAIL: Strict SH7305 No-FPU vectored to VBR+0x100\n[SH7305-HW-TEST] FAIL: Zero FPU opcodes executed\n[SH7305-HW-TEST] FAILED count=3",
-      "elapsed_sec": 9.028
+      "elapsed_sec": 11.378
     },
     {
-      "id": "MUT-05-DSP-LDS-SR-GATE",
+      "id": "MUT-013-CPU-CLIPU-B",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Clamps CLIPU.B to 0xFE instead of 0xFF",
+      "target_tests": [
+        "cg50_sh4a_isa_test",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: CLIPU.B clamped 0xFFFFFFFB -> 0xFF\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 10.714
+    },
+    {
+      "id": "MUT-014-CPU-CLIPS-B",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Clamps CLIPS.B negative to -127 instead of -128",
+      "target_tests": [
+        "cg50_sh4a_isa_test",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:421): CLIPS.B -200 clamps to -128 (0xFFFFFF80)",
+      "elapsed_sec": 4.327
+    },
+    {
+      "id": "MUT-015-CPU-NOTT",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Disables T-bit inversion in NOTT",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: NOTT flipped T 0->1\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 12.93
+    },
+    {
+      "id": "MUT-016-CPU-CLRT",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Sets T=1 instead of T=0 on CLRT",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=3.32s)",
+      "elapsed_sec": 12.076
+    },
+    {
+      "id": "MUT-017-CPU-SETT",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Sets T=0 instead of T=1 on SETT",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.10s)",
+      "elapsed_sec": 10.438
+    },
+    {
+      "id": "MUT-018-CPU-DIV0U",
+      "subsystem": "SH-4A CPU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Sets instead of clears M/Q/T in DIV0U",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.08s)",
+      "elapsed_sec": 11.924
+    },
+    {
+      "id": "MUT-019-ALU-ADD-OVF",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Corrupts signed addition overflow detection (ADDV)",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:426): ADDV 0x7FFFFFFF+1 sets T=1",
+      "elapsed_sec": 4.789
+    },
+    {
+      "id": "MUT-020-ALU-SUB-OVF",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Corrupts signed subtraction overflow detection (SUBV)",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:433): SUBV 0x80000000-1 sets T=1",
+      "elapsed_sec": 5.02
+    },
+    {
+      "id": "MUT-021-ALU-ADDC-CARRY",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Drops carry-out bit in ADDC",
+      "target_tests": [
+        "cg50_sh4a_isa_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "ed=200000 failed=41762 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.96s)",
+      "elapsed_sec": 10.301
+    },
+    {
+      "id": "MUT-022-ALU-SUBC-BORROW",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Off-by-one borrow flag in SUBC",
+      "target_tests": [
+        "cg50_sh4a_isa_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:440): SUBC 5-5 (T=0) yields 0 with borrow T=0",
+      "elapsed_sec": 5.911
+    },
+    {
+      "id": "MUT-023-ALU-NEGC-BORROW",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Inverts borrow flag T in NEGC",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "culadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:445): NEGC 5 sets T=1\n[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:447): NEGC 0 keeps T=0",
+      "elapsed_sec": 5.356
+    },
+    {
+      "id": "MUT-024-ALU-SHAD-SAT",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Zeros negative SHAD -32 result instead of 0xFFFFFFFF",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:452): SHAD 0x80000000 by -32 yields 0xFFFFFFFF",
+      "elapsed_sec": 5.778
+    },
+    {
+      "id": "MUT-025-ALU-SHLD-RIGHT",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Returns 0xFFFFFFFF instead of 0 on SHLD -32",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:454): SHLD 0x80000000 by -32 yields 0x00000000",
+      "elapsed_sec": 4.121
+    },
+    {
+      "id": "MUT-026-ALU-ROTL",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Drops wrap-around bit 0 in ROTL",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:459): ROTL wraps bit 31 to bit 0",
+      "elapsed_sec": 4.442
+    },
+    {
+      "id": "MUT-027-ALU-ROTR",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Drops wrap-around bit 31 in ROTR",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:461): ROTR wraps bit 0 to bit 31",
+      "elapsed_sec": 4.252
+    },
+    {
+      "id": "MUT-028-ALU-ROTCL",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Inverts incoming T bit in ROTCL",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:463): ROTCL shifts in T=1 to bit 0",
+      "elapsed_sec": 4.412
+    },
+    {
+      "id": "MUT-029-ALU-ROTCR",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Inverts incoming T bit in ROTCR",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:465): ROTCR shifts in T=1 to bit 31",
+      "elapsed_sec": 4.09
+    },
+    {
+      "id": "MUT-030-ALU-CMPSTR",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Ignores MSB byte match in CMP/STR",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:470): CMP/STR detects matching MSB byte",
+      "elapsed_sec": 3.988
+    },
+    {
+      "id": "MUT-031-ALU-XTRCT",
+      "subsystem": "SH-4A Integer ALU",
+      "file": "core/casio_cg50/cg50_core/sh_integer.h",
+      "rationale": "Corrupts upper 16 bits in XTRCT",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:472): XTRCT combines Rm[15:0]<<16 | Rn[31:16]",
+      "elapsed_sec": 5.897
+    },
+    {
+      "id": "MUT-032-DIV0S-TFLAG",
+      "subsystem": "SH-4A Divide",
+      "file": "core/casio_cg50/cg50_core/sh_divide.h",
+      "rationale": "Inverts DIV0S T-bit initialization",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:478): DIV0S sets Q=1, M=0, T=(Q!=M)=1",
+      "elapsed_sec": 4.675
+    },
+    {
+      "id": "MUT-033-DIV1-TFLAG",
+      "subsystem": "SH-4A Divide",
+      "file": "core/casio_cg50/cg50_core/sh_divide.h",
+      "rationale": "Inverts DIV1 quotient bit T",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:483): DIV1 shifts in oldT=1 and produces exact remainder + T=1",
+      "elapsed_sec": 5.349
+    },
+    {
+      "id": "MUT-034-DIV1-SHIFTIN",
+      "subsystem": "SH-4A Divide",
+      "file": "core/casio_cg50/cg50_core/sh_divide.h",
+      "rationale": "Drops oldT shift-in bit in DIV1",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:483): DIV1 shifts in oldT=1 and produces exact remainder + T=1",
+      "elapsed_sec": 7.084
+    },
+    {
+      "id": "MUT-035-DIV-APPLY-Q",
+      "subsystem": "SH-4A Divide",
+      "file": "core/casio_cg50/cg50_core/sh_divide.h",
+      "rationale": "Never sets SR.Q after DIV0S/DIV1",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:478): DIV0S sets Q=1, M=0, T=(Q!=M)=1",
+      "elapsed_sec": 4.96
+    },
+    {
+      "id": "MUT-036-MUL-LONG",
+      "subsystem": "SH-4A Multiply",
+      "file": "core/casio_cg50/cg50_core/sh_multiply.h",
+      "rationale": "Replaces MUL.L product with addition",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:489): MUL.L 7*9 == 63",
+      "elapsed_sec": 4.952
+    },
+    {
+      "id": "MUT-037-MULU-W",
+      "subsystem": "SH-4A Multiply",
+      "file": "core/casio_cg50/cg50_core/sh_multiply.h",
+      "rationale": "Truncates lhs to 8 bits in MULU.W",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:491): MULU.W preserves upper byte of 16-bit lhs",
+      "elapsed_sec": 6.664
+    },
+    {
+      "id": "MUT-038-MULS-W",
+      "subsystem": "SH-4A Multiply",
+      "file": "core/casio_cg50/cg50_core/sh_multiply.h",
+      "rationale": "Zero-extends instead of sign-extends lhs in MULS.W",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:493): MULS.W sign-extends 16-bit lhs (-2 * 3 == -6)",
+      "elapsed_sec": 9.942
+    },
+    {
+      "id": "MUT-039-DMULU-L",
+      "subsystem": "SH-4A Multiply",
+      "file": "core/casio_cg50/cg50_core/sh_multiply.h",
+      "rationale": "Zeros MACH in DMULU.L",
+      "target_tests": [
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh4a_isa_test",
+      "detail": "[SH4A-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_sh4a_isa_test.cpp:495): DMULU.L computes 64-bit MACH:MACL",
+      "elapsed_sec": 18.93
+    },
+    {
+      "id": "MUT-040-DMULS-L",
+      "subsystem": "SH-4A Multiply",
+      "file": "core/casio_cg50/cg50_core/sh_multiply.h",
+      "rationale": "Corrupts MACH shift in DMULS.L",
+      "target_tests": [
+        "cg50_sh4a_isa_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "ed=200000 failed=24999 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.42s)",
+      "elapsed_sec": 13.291
+    },
+    {
+      "id": "MUT-041-DSP-LDS-SR-GATE",
       "subsystem": "SH4AL-DSP",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Allows LDS Rm, A0 when SR.DSP=0 instead of raising 0x180",
+      "rationale": "Allows LDS Rm, A0 when SR.DSP=0 instead of 0x180",
       "target_tests": [
         "cg50_sh7305_hw_test",
         "cg50_hw_silicon_100_test"
@@ -77,23 +563,10 @@
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: LDS Rm, A0 traps EXPEVT 0x180 when SR.DSP=0\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 8.636
+      "elapsed_sec": 10.211
     },
     {
-      "id": "MUT-06-DSP-SATURATE32",
-      "subsystem": "SH4AL-DSP",
-      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
-      "rationale": "Disables positive 32-bit DSP saturation",
-      "target_tests": [
-        "cg50_sh7305_hw_test"
-      ],
-      "status": "KILLED",
-      "killing_test": "cg50_sh7305_hw_test",
-      "detail": "[SH7305-HW-TEST] FAIL: DSP WriteReg40 saturates positive overflow to 0x7FFFFFFF\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 10.016
-    },
-    {
-      "id": "MUT-07-DSP-SETRC-MASK",
+      "id": "MUT-042-DSP-SETRC-MASK",
       "subsystem": "SH4AL-DSP",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Truncates SETRC repeat counter to 1 bit",
@@ -103,23 +576,274 @@
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: SETRC Rm preserves full 12-bit repeat count (RC == 4)\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 10.942
+      "elapsed_sec": 9.944
     },
     {
-      "id": "MUT-08-BCD-ADD-CARRY",
+      "id": "MUT-043-DSP-SAT-POS",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Disables SR.S 32-bit saturation in FinalizeArith40",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: DSP FinalizeArith40 saturates positive overflow to 0x7FFFFFFF when SR.S=1\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 10.29
+    },
+    {
+      "id": "MUT-044-DSP-SIGNEXT40",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Truncates 40-bit accumulator guard bits in SignExtend40",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.99s)",
+      "elapsed_sec": 9.757
+    },
+    {
+      "id": "MUT-045-DSP-DSR-GT",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Never sets DSR.GT flag on positive DSP result",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.21s)",
+      "elapsed_sec": 10.273
+    },
+    {
+      "id": "MUT-046-DSP-DSR-ZERO",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Inverts DSR.Z zero flag in FinalizeArith40",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.04s)",
+      "elapsed_sec": 12.297
+    },
+    {
+      "id": "MUT-047-DSP-DSR-NEG",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Inverts DSR.N negative flag in FinalizeArith40",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=4.44s)",
+      "elapsed_sec": 20.552
+    },
+    {
+      "id": "MUT-048-DSP-DSR-OVF",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Disables 32-bit overflow detection in DSP ALU",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.94s)",
+      "elapsed_sec": 14.876
+    },
+    {
+      "id": "MUT-049-DSP-PMULS-Q15",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Drops Q15*Q15 left-shift-by-1 fractional scaling in PMULS",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.13s)",
+      "elapsed_sec": 12.348
+    },
+    {
+      "id": "MUT-050-DSP-MODULO-WRAP",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Disables MOD circular buffer wraparound in MOVX/MOVY",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: SH4AL-DSP MOD circular buffer wraps ME -> MS\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 18.954
+    },
+    {
+      "id": "MUT-051-DSP-ILLEGAL-DST",
+      "subsystem": "SH4AL-DSP",
+      "file": "core/casio_cg50/cg50_core/sh_dsp.h",
+      "rationale": "Rejects valid A0 (0x7) destination in DSP ALU",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.57s)",
+      "elapsed_sec": 11.173
+    },
+    {
+      "id": "MUT-052-BCD-ADD-CARRY",
       "subsystem": "SH7305 BCD ALU",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Off-by-one decimal carry threshold in hardware BCD ALU",
+      "rationale": "Off-by-one decimal carry threshold in BCD ADD",
       "target_tests": [
-        "cg50_sh7305_hw_test"
+        "cg50_sh7305_hw_test",
+        "cg50_cpu_dsp_cert_lab"
       ],
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: BCD ALU exact decimal carry threshold 5+5 == 0x10\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 12.418
+      "elapsed_sec": 13.666
     },
     {
-      "id": "MUT-09-CACHE-CCR-OCI",
+      "id": "MUT-053-BCD-SUB-BORROW",
+      "subsystem": "SH7305 BCD ALU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Corrupts decimal borrow base (9 instead of 10) in BCD SUB",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "ed=200000 failed=0 | BCD checked=50000 failed=24799\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.32s)",
+      "elapsed_sec": 12.679
+    },
+    {
+      "id": "MUT-054-BCD-LATCH-STORE",
+      "subsystem": "SH7305 BCD ALU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Clears multi-word BCD carry/borrow latch",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "ked=200000 failed=0 | BCD checked=50000 failed=6922\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.10s)",
+      "elapsed_sec": 12.471
+    },
+    {
+      "id": "MUT-055-BCD-ALIAS-0C",
+      "subsystem": "SH7305 BCD ALU",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Breaks BCD ALU result mirror alias at 0xA4CB000C",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "ed=200000 failed=0 | BCD checked=50000 failed=50000\n[PART-4 EXPEVT/INTEVT] Verified 52 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=2.72s)",
+      "elapsed_sec": 12.222
+    },
+    {
+      "id": "MUT-056-EXPEVT-TLBMISS-RD",
+      "subsystem": "MMU / Exceptions",
+      "file": "core/casio_cg50/cg50_core/sh_exception.h",
+      "rationale": "Swaps Data TLB Miss Read EXPEVT 0x040 -> 0x060",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 51 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=3.13s)",
+      "elapsed_sec": 11.438
+    },
+    {
+      "id": "MUT-057-EXPEVT-TLBMISS-WR",
+      "subsystem": "MMU / Exceptions",
+      "file": "core/casio_cg50/cg50_core/sh_exception.h",
+      "rationale": "Swaps Data TLB Miss Write EXPEVT 0x060 -> 0x040",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 51 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.97s)",
+      "elapsed_sec": 10.457
+    },
+    {
+      "id": "MUT-058-EXPEVT-INITPGWR",
+      "subsystem": "MMU / Exceptions",
+      "file": "core/casio_cg50/cg50_native_core.cpp",
+      "rationale": "Corrupts Initial Page Write EXPEVT 0x080 -> 0x0C0",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 51 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.50s)",
+      "elapsed_sec": 7.596
+    },
+    {
+      "id": "MUT-059-EXPEVT-PROTRD",
+      "subsystem": "MMU / Exceptions",
+      "file": "core/casio_cg50/cg50_core/sh_exception.h",
+      "rationale": "Corrupts Data TLB Protection Read EXPEVT 0x0A0",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 51 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.40s)",
+      "elapsed_sec": 7.472
+    },
+    {
+      "id": "MUT-060-EXPEVT-PROTWR",
+      "subsystem": "MMU / Exceptions",
+      "file": "core/casio_cg50/cg50_core/sh_exception.h",
+      "rationale": "Corrupts Data TLB Protection Write EXPEVT 0x0C0",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab",
+        "cg50_sh4a_isa_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 51 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.58s)",
+      "elapsed_sec": 7.268
+    },
+    {
+      "id": "MUT-061-EXPEVT-MULTIHIT",
+      "subsystem": "MMU / Exceptions",
+      "file": "core/casio_cg50/cg50_core/sh_exception.h",
+      "rationale": "Corrupts TLB Multi-Hit EXPEVT 0x140",
+      "target_tests": [
+        "cg50_cpu_dsp_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_cpu_dsp_cert_lab",
+      "detail": "hecked=200000 failed=0 | BCD checked=50000 failed=0\n[PART-4 EXPEVT/INTEVT] Verified 51 / 56 exception & interrupt event slots\n[CPU-DSP-CERT] Wrote reports to D:\\Proyectos\\CalculadorasUnificadas\\build-mutation-sandbox\\tmp_cpu (elapsed=1.46s)",
+      "elapsed_sec": 7.167
+    },
+    {
+      "id": "MUT-062-CACHE-CCR-OCI",
       "subsystem": "SH-4A Cache",
       "file": "core/casio_cg50/cg50_core/sh_cache.h",
       "rationale": "Disables CCR.OCI operand cache invalidation",
@@ -129,10 +853,62 @@
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: OC line invalidated by CCR.OCI\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 9.228
+      "elapsed_sec": 15.504
     },
     {
-      "id": "MUT-10-RAMCR-MASK",
+      "id": "MUT-063-CACHE-CCR-ICI",
+      "subsystem": "SH-4A Cache",
+      "file": "core/casio_cg50/cg50_core/sh_cache.h",
+      "rationale": "Disables CCR.ICI instruction cache invalidation",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: IC line invalidated by CCR.ICI\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 7.267
+    },
+    {
+      "id": "MUT-064-CACHE-OCRAM-GATE",
+      "subsystem": "SH-4A Cache",
+      "file": "core/casio_cg50/cg50_core/sh_cache.h",
+      "rationale": "Exposes OCRAM even when CCR.ORA=0",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: OCRAM disabled when CCR.ORA=0\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 7.127
+    },
+    {
+      "id": "MUT-065-CACHE-OCBP-WB",
+      "subsystem": "SH-4A Cache",
+      "file": "core/casio_cg50/cg50_core/sh_cache.h",
+      "rationale": "Drops dirty-line writeback counter on OCBP",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: OCBP flushes dirty OC line (+1 writeback)\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 7.954
+    },
+    {
+      "id": "MUT-066-CACHE-OCBWB-CLEAN",
+      "subsystem": "SH-4A Cache",
+      "file": "core/casio_cg50/cg50_core/sh_cache.h",
+      "rationale": "Fails to flush dirty line in OCBWB",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: OCBWB flushes dirty OC line (+1 writeback)\n[SH7305-HW-TEST] FAIL: Second OCBWB sees clean line (dirty cleared to false)\n[SH7305-HW-TEST] FAILED count=2",
+      "elapsed_sec": 8.221
+    },
+    {
+      "id": "MUT-067-RAMCR-MASK",
       "subsystem": "Cache/OCRAM RAMCR",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Removes exact CPU73050.dll 0x3E0 mask on RAMCR",
@@ -143,75 +919,359 @@
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: CPU73050 proof: RAMCR (0xFF000074) masked to 0x3E0\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 9.241
+      "elapsed_sec": 10.663
     },
     {
-      "id": "MUT-11-UBC-FETCH-MATCH",
+      "id": "MUT-068-UBC-FETCH-CH0",
       "subsystem": "UBC Breakpoints",
       "file": "core/casio_cg50/cg50_core/cg50_ubc.h",
-      "rationale": "Disables UBC Channel 0 instruction-fetch breakpoint detection",
+      "rationale": "Disables UBC ch0 instruction-fetch breakpoint detection",
       "target_tests": [
         "cg50_sh7305_hw_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: UBC triggered hardware breakpoint EXPEVT 0x1E0\n[SH7305-HW-TEST] FAIL: UBC CCMFR.MF0 and telemetry incremented\n[SH7305-HW-TEST] FAILED count=2",
-      "elapsed_sec": 17.76
+      "elapsed_sec": 9.355
     },
     {
-      "id": "MUT-12-INTC2-USERIMASK-KEY",
-      "subsystem": "INTC2",
-      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
-      "rationale": "Bypasses 0xA5000000 write-key protection on USERIMASK",
+      "id": "MUT-069-UBC-CCMFR-W0C",
+      "subsystem": "UBC Breakpoints",
+      "file": "core/casio_cg50/cg50_core/cg50_ubc.h",
+      "rationale": "Breaks W0C semantics on UBC CCMFR",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_register_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: UBC CCMFR W0C cannot set bits to 1\n[SH7305-HW-TEST] FAIL: UBC CH1 rejects mismatched data value\n[SH7305-HW-TEST] FAILED count=2",
+      "elapsed_sec": 7.955
+    },
+    {
+      "id": "MUT-070-UBC-CETR1-MASK",
+      "subsystem": "UBC Breakpoints",
+      "file": "core/casio_cg50/cg50_core/cg50_ubc.h",
+      "rationale": "Removes 12-bit mask on UBC CETR1",
+      "target_tests": [
+        "cg50_register_cert_lab",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: UBC CETR1 masked to 12 bits\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 10.459
+    },
+    {
+      "id": "MUT-071-UBC-CBCR-MASK",
+      "subsystem": "UBC Breakpoints",
+      "file": "core/casio_cg50/cg50_core/cg50_ubc.h",
+      "rationale": "Removes bit-0 mask on UBC CBCR",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_register_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: UBC CBCR masked to bit 0\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 9.552
+    },
+    {
+      "id": "MUT-072-UBC-DATA-CH1",
+      "subsystem": "UBC Breakpoints",
+      "file": "core/casio_cg50/cg50_core/cg50_ubc.h",
+      "rationale": "Ignores CDR1/CDMR1 data comparison on UBC ch1 watchpoint",
       "target_tests": [
         "cg50_sh7305_hw_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
-      "detail": "[SH7305-HW-TEST] FAIL: USERIMASK rejected bad key\n[SH7305-HW-TEST] FAILED count=1",
-      "elapsed_sec": 12.576
+      "detail": "[SH7305-HW-TEST] FAIL: UBC CH1 rejects mismatched data value\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 8.702
     },
     {
-      "id": "MUT-13-INTC2-MASK-FILTER",
+      "id": "MUT-073-INTC2-USERIMASK-KEY",
       "subsystem": "INTC2",
       "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
-      "rationale": "Ignores INTMSK00 masking on external IRQ delivery",
+      "rationale": "Bypasses 0xA5000000 write-key protection on USERIMASK",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_combined_hw_stress"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: USERIMASK rejected bad key\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 16.163
+    },
+    {
+      "id": "MUT-074-INTC2-INTREQ-W0C",
+      "subsystem": "INTC2",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Breaks W0C semantics on INTC2 INTREQ00",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_register_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: INTC2 INTREQ00 W0C stays 0\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 8.585
+    },
+    {
+      "id": "MUT-075-INTC2-INTMSKCLR",
+      "subsystem": "INTC2",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Sets instead of clears mask bits on INTC2 INTMSKCLR00",
       "target_tests": [
         "cg50_sh7305_hw_test"
       ],
-      "status": "SURVIVED",
-      "killing_test": null,
-      "detail": "",
-      "elapsed_sec": 11.96
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: INTC2 INTMSK00 == 0xF0\n[SH7305-HW-TEST] FAIL: INTC2 INTMSK00 == 0xF3\n[SH7305-HW-TEST] FAIL: INTC2 delivered External IRQ0 (0x600) to VBR+0x600\n[SH7305-HW-TEST] FAILED count=3",
+      "elapsed_sec": 11.787
     },
     {
-      "id": "MUT-14-HUDI-SDINT-W0C",
+      "id": "MUT-076-INTC2-PRIO-SHIFT",
+      "subsystem": "INTC2",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Reverses IRQ0..7 nibble order in INTPRI00",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: INTC2 delivered External IRQ0 (0x600) to VBR+0x600\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 11.389
+    },
+    {
+      "id": "MUT-077-ETMU-UNF-FLAG",
+      "subsystem": "ETMU",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Never asserts ETMU underflow flag UNF",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: ETMU0 UNF set on underflow\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 11.895
+    },
+    {
+      "id": "MUT-078-ETMU-DECREMENT",
+      "subsystem": "ETMU",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Counts ETMU up instead of down",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: ETMU0 counts strictly down (500 -> 496)\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 7.51
+    },
+    {
+      "id": "MUT-079-ADC-ADST-ADF",
+      "subsystem": "ADC",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Fails to set ADF conversion-complete flag on ADST",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: ADC ADF=1 ADST=0\n[SH7305-HW-TEST] FAIL: ADC ADF|ADIE set at 0x88\n[SH7305-HW-TEST] FAIL: ADC pending IRQ signaled\n[SH7305-HW-TEST] FAILED count=3",
+      "elapsed_sec": 10.964
+    },
+    {
+      "id": "MUT-080-ADC-BAT-SCALE",
+      "subsystem": "ADC",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Zeros battery ADC channel result",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_combined_hw_stress"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_combined_hw_stress",
+      "detail": "[STRESS-FAIL] case 13 fails=100\n[COMBINED-HW-STRESS] threads=2 seqs=1600 faults_ok=410 fails=100 fpu=0 exam_patch=0 (0.10s)",
+      "elapsed_sec": 10.714
+    },
+    {
+      "id": "MUT-081-DD-CLKR0-WRITE",
+      "subsystem": "DD Bus",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Drops writes to DD Bus DDCLKR0",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_register_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: TPU ch0 ticked\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 10.699
+    },
+    {
+      "id": "MUT-082-SDHI-CARD-DETECT",
+      "subsystem": "SDHI",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Forces SD_INFO1 card-detect bit ON with no card",
+      "target_tests": [
+        "cg50_hw_silicon_100_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_hw_silicon_100_test",
+      "detail": "[SILICON-100-TEST] FAIL: SDHI SD_INFO1.CD stays 0 when no card inserted\n[SILICON-100-TEST] FAILED count=1",
+      "elapsed_sec": 11.781
+    },
+    {
+      "id": "MUT-083-SDHI-CMD8-RSP",
+      "subsystem": "SDHI",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Breaks SDHI CMD8 voltage-check response 0x01AA",
+      "target_tests": [
+        "cg50_hw_silicon_100_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_hw_silicon_100_test",
+      "detail": "[SILICON-100-TEST] FAIL: SDHI CMD8 RSP0 == 0x01AA\n[SILICON-100-TEST] FAILED count=1",
+      "elapsed_sec": 12.716
+    },
+    {
+      "id": "MUT-084-SDHI-NOCARD-TO",
+      "subsystem": "SDHI",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Fails to set RSP_TO timeout when SD card is absent",
+      "target_tests": [
+        "cg50_hw_silicon_100_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_hw_silicon_100_test",
+      "detail": "[SILICON-100-TEST] FAIL: SDHI RSP_TO when no card inserted\n[SILICON-100-TEST] FAILED count=1",
+      "elapsed_sec": 12.833
+    },
+    {
+      "id": "MUT-085-HUDI-SDINT-W0C",
       "subsystem": "HUDI",
       "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
       "rationale": "Breaks W0C semantics on HUDI SDINT",
       "target_tests": [
-        "cg50_hw_silicon_100_test"
+        "cg50_hw_silicon_100_test",
+        "cg50_combined_hw_stress"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: HUDI W0C write-1 did not set SDINT\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 9.13
+      "elapsed_sec": 9.949
     },
     {
-      "id": "MUT-15-PRLCK-LOCK-ENFORCE",
+      "id": "MUT-086-PRLCK-LOCK-ENFORCE",
       "subsystem": "PRLCK",
       "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
       "rationale": "Disables PRLCKCR lock enforcement on PRPRICR0..5",
       "target_tests": [
-        "cg50_hw_silicon_100_test"
+        "cg50_hw_silicon_100_test",
+        "cg50_combined_hw_stress"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: PRPRICR0 preserved while locked (negative path)\n[SILICON-100-TEST] FAIL: PRLCK blockedWrites counter == 1\n[SILICON-100-TEST] FAILED count=2",
-      "elapsed_sec": 9.738
+      "elapsed_sec": 13.948
     },
     {
-      "id": "MUT-16-BSC-RTCSR-KEY",
+      "id": "MUT-087-PRLCK-MASK3F",
+      "subsystem": "PRLCK",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Removes 0x3F mask on PRPRICR0..5",
+      "target_tests": [
+        "cg50_hw_silicon_100_test",
+        "cg50_register_cert_lab"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_hw_silicon_100_test",
+      "detail": "[SILICON-100-TEST] FAIL: PRPRICR0 masked to 0x3F (CPU73050 W_CB 0x47AAB)\n[SILICON-100-TEST] FAIL: PRPRICR0 preserved while locked (negative path)\n[SILICON-100-TEST] FAILED count=2",
+      "elapsed_sec": 11.354
+    },
+    {
+      "id": "MUT-088-SCIF0-LOOPBACK",
+      "subsystem": "SCIF0",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Disables SCIF0 SCFCR.LOOP hardware loopback",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: SCIF0 RX count == 2\n[SH7305-HW-TEST] FAIL: SCIF0 TEND|TDFE|RDF|DR\n[SH7305-HW-TEST] FAIL: SCIF0 RX byte 0 == 0x5A\n[SH7305-HW-TEST] FAIL: SCIF0 RX byte 1 == 0xC3\n[SH7305-HW-TEST] FAILED count=4",
+      "elapsed_sec": 11.56
+    },
+    {
+      "id": "MUT-089-SCIF0-OVERRUN",
+      "subsystem": "SCIF0",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Fails to latch ORER overrun flag on 17th RX byte",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: SCIF0 sets SCLSR.ORER on 17th RX byte overrun\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 7.844
+    },
+    {
+      "id": "MUT-090-SCIF0-RDF-FLAG",
+      "subsystem": "SCIF0",
+      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
+      "rationale": "Never sets SCFSR RDF|DR when RX FIFO has data",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: SCIF0 TEND|TDFE|RDF|DR\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 10.18
+    },
+    {
+      "id": "MUT-091-USB2-VBUS-ATTACH",
+      "subsystem": "USB2",
+      "file": "core/casio_cg50/cg50_core/cg50_usb2.h",
+      "rationale": "Fails to set VBSTS/VBINT/DVST on USB VBUS attach",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: USB2 VBUS attach raised IRQ\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 9.676
+    },
+    {
+      "id": "MUT-092-USB2-SETUP-VALID",
+      "subsystem": "USB2",
+      "file": "core/casio_cg50/cg50_core/cg50_usb2.h",
+      "rationale": "Drops VALID/CTRT interrupt bits on USB SETUP packet",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: USB2 InjectSetupPacket latches INTSTS0 VALID|CTRT\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 5.797
+    },
+    {
+      "id": "MUT-093-USB2-PIPE-BANK",
+      "subsystem": "USB2",
+      "file": "core/casio_cg50/cg50_core/cg50_usb2.h",
+      "rationale": "Ignores PIPESEL bank index on PIPECFG read",
+      "target_tests": [
+        "cg50_combined_hw_stress",
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_combined_hw_stress",
+      "detail": "[STRESS-FAIL] case 5 fails=100\n[COMBINED-HW-STRESS] threads=2 seqs=1600 faults_ok=410 fails=100 fpu=0 exam_patch=0 (0.08s)",
+      "elapsed_sec": 10.013
+    },
+    {
+      "id": "MUT-094-BSC-RTCSR-KEY",
       "subsystem": "BSC",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Removes 0xA55A0000 key guard on BSC RTCSR writes",
@@ -221,10 +1281,10 @@
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: RTCSR rejected write without 0xA55A0000 key\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 12.962
+      "elapsed_sec": 9.818
     },
     {
-      "id": "MUT-17-BSC-CSWCR-MASK",
+      "id": "MUT-095-BSC-CSWCR-MASK",
       "subsystem": "BSC",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Removes CPU73050 type-dependent CS*WCR mask",
@@ -234,23 +1294,23 @@
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: CS0WCR type=0 mask 0x171FC3 (CPU73050 0x1006DAA0)\n[SILICON-100-TEST] FAIL: CS0WCR type=1 mask 0x031FC3\n[SILICON-100-TEST] FAILED count=2",
-      "elapsed_sec": 12.969
+      "elapsed_sec": 10.49
     },
     {
-      "id": "MUT-18-BSC-REFRESH-CMF",
+      "id": "MUT-096-BSC-REFRESH-CMF",
       "subsystem": "BSC",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Prevents BSC SDRAM refresh compare-match flag CMF from asserting",
+      "rationale": "Prevents BSC SDRAM refresh compare-match flag CMF",
       "target_tests": [
         "cg50_hw_silicon_100_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: BSC RTCSR.CMF asserted after refresh match\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 13.736
+      "elapsed_sec": 9.749
     },
     {
-      "id": "MUT-19-CPG-MSTPCR0-TMU-GATE",
+      "id": "MUT-097-CPG-MSTPCR0-TMU-GATE",
       "subsystem": "CPG",
       "file": "core/casio_cg50/cg50_native_core.cpp",
       "rationale": "Disables CPG MSTPCR0 clock gating of TMU0/1",
@@ -260,78 +1320,66 @@
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: TMU0 TCNT0 frozen while CPG MSTPCR0 bit 13 is set\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 13.288
+      "elapsed_sec": 9.962
     },
     {
-      "id": "MUT-20-DMAC0-ADDR-ERR",
+      "id": "MUT-098-DMAC0-ADDR-ERR",
       "subsystem": "DMAC0",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Prevents DMAOR.AE assertion on misaligned DMA transfer",
+      "rationale": "Prevents DMAOR.AE assertion on misaligned DMA",
       "target_tests": [
-        "cg50_hw_silicon_100_test"
+        "cg50_hw_silicon_100_test",
+        "cg50_combined_hw_stress"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: DMAC0 DMAOR.AE asserted on misaligned transfer\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 13.594
+      "elapsed_sec": 9.877
     },
     {
-      "id": "MUT-21-DMAC0-CHCR-MASK",
+      "id": "MUT-099-DMAC0-CHCR-MASK",
       "subsystem": "DMAC0",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Removes CPU73050 CHCR0..5 writable bitmask enforcement",
+      "rationale": "Removes CPU73050 CHCR0..5 writable bitmask",
       "target_tests": [
         "cg50_hw_silicon_100_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: DMAC0 CHCR0 enforces exact CPU73050 writable mask 0x4FB7FFFD\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 10.599
+      "elapsed_sec": 10.998
     },
     {
-      "id": "MUT-22-RTC-ALARM-FLAG",
+      "id": "MUT-100-RTC-ALARM-FLAG",
       "subsystem": "RTC",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Prevents RTC Alarm Flag (RCR1.AF) from latching on alarm match",
+      "rationale": "Prevents RTC Alarm Flag (RCR1.AF) from latching",
       "target_tests": [
         "cg50_hw_silicon_100_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: RTC RCR1.AF and RCR1.CF asserted on alarm match + second rollover\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 11.962
+      "elapsed_sec": 9.288
     },
     {
-      "id": "MUT-23-RTC-PERIODIC-FLAG",
+      "id": "MUT-101-RTC-PERIODIC-FLAG",
       "subsystem": "RTC",
       "file": "core/casio_cg50/cg50_native_core.cpp",
-      "rationale": "Prevents RTC Periodic Event Flag (RCR2.PEF) from asserting",
+      "rationale": "Prevents RTC Periodic Event Flag (RCR2.PEF)",
       "target_tests": [
         "cg50_hw_silicon_100_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_hw_silicon_100_test",
       "detail": "[SILICON-100-TEST] FAIL: RTC RCR2.PEF asserted on periodic tick\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 12.759
+      "elapsed_sec": 9.481
     },
     {
-      "id": "MUT-24-SDHI-CARD-DETECT",
-      "subsystem": "SDHI",
-      "file": "core/casio_cg50/cg50_core/cg50_sh7305_periph.h",
-      "rationale": "Forces SD_INFO1 card-detect bit ON even with no card inserted",
-      "target_tests": [
-        "cg50_hw_silicon_100_test"
-      ],
-      "status": "KILLED",
-      "killing_test": "cg50_hw_silicon_100_test",
-      "detail": "[SILICON-100-TEST] FAIL: SDHI SD_INFO1.CD stays 0 when no card inserted\n[SILICON-100-TEST] FAILED count=1",
-      "elapsed_sec": 9.66
-    },
-    {
-      "id": "MUT-25-LCD-GRAM-WRITE",
+      "id": "MUT-102-LCD-GRAM-WRITE",
       "subsystem": "R61524 LCD",
       "file": "core/casio_cg50/cg50_core/r61524.cpp",
-      "rationale": "Corrupts RGB565 pixel values written to R61524 GRAM 0x0202",
+      "rationale": "Corrupts RGB565 pixel values written to R61524 GRAM",
       "target_tests": [
         "cg50_sh7305_hw_test",
         "cg50_usb_smem_qr_test"
@@ -339,23 +1387,50 @@
       "status": "KILLED",
       "killing_test": "cg50_sh7305_hw_test",
       "detail": "[SH7305-HW-TEST] FAIL: R61524 GRAM read pixel 0 red\n[SH7305-HW-TEST] FAIL: R61524 GRAM read pixel 1 green\n[SH7305-HW-TEST] FAIL: R61524 GRAM read pixel 2 blue\n[SH7305-HW-TEST] FAILED count=3",
-      "elapsed_sec": 15.905
+      "elapsed_sec": 12.412
     },
     {
-      "id": "MUT-26-FLASH-CFI-UNLOCK",
+      "id": "MUT-103-LCD-GRAM-DUMMYRD",
+      "subsystem": "R61524 LCD",
+      "file": "core/casio_cg50/cg50_core/r61524.cpp",
+      "rationale": "Skips mandatory R61524 first dummy GRAM read",
+      "target_tests": [
+        "cg50_sh7305_hw_test",
+        "cg50_combined_hw_stress"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "SH7305-HW-TEST] FAIL: R61524 GRAM dummy read == 0\n[SH7305-HW-TEST] FAIL: R61524 GRAM read pixel 0 red\n[SH7305-HW-TEST] FAIL: R61524 GRAM read pixel 1 green\n[SH7305-HW-TEST] FAIL: R61524 GRAM read pixel 2 blue\n[SH7305-HW-TEST] FAILED count=4",
+      "elapsed_sec": 9.303
+    },
+    {
+      "id": "MUT-104-LCD-SCROLL-Y",
+      "subsystem": "R61524 LCD",
+      "file": "core/casio_cg50/cg50_core/r61524.cpp",
+      "rationale": "Disables R61524 hardware vertical scroll rendering",
+      "target_tests": [
+        "cg50_sh7305_hw_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_sh7305_hw_test",
+      "detail": "[SH7305-HW-TEST] FAIL: R61524 vertical scroll shifted row 0\n[SH7305-HW-TEST] FAILED count=1",
+      "elapsed_sec": 4.229
+    },
+    {
+      "id": "MUT-105-FLASH-CFI-UNLOCK",
       "subsystem": "NOR Flash CFI",
       "file": "core/casio_cg50/cg50_core/cg50_flash_cfi.h",
-      "rationale": "Breaks Spansion S29GL256P CFI unlock command sequence",
+      "rationale": "Breaks Spansion S29GL256P CFI unlock sequence",
       "target_tests": [
         "cg50_flash_cfi_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_flash_cfi_test",
-      "detail": "0x227E\n[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:112): Autoselect Dev ID2 0x2222\n[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:113): Autoselect Dev ID3 0x2201",
-      "elapsed_sec": 20.121
+      "detail": "build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:112): Autoselect Dev ID2 0x2222\n[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:113): Autoselect Dev ID3 0x2201",
+      "elapsed_sec": 7.123
     },
     {
-      "id": "MUT-27-FLASH-CFI-QUERY",
+      "id": "MUT-106-FLASH-CFI-QUERY",
       "subsystem": "NOR Flash CFI",
       "file": "core/casio_cg50/cg50_core/cg50_flash_cfi.h",
       "rationale": "Disables CFI Query (0x98@0xAA) QRY identification",
@@ -364,37 +1439,76 @@
       ],
       "status": "KILLED",
       "killing_test": "cg50_flash_cfi_test",
-      "detail": "26): CFI size 32MB (2^25)\n[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:127): CFI 256 sectors\n[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:128): CFI 128KB sector",
-      "elapsed_sec": 12.651
+      "detail": "uladorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:127): CFI 256 sectors\n[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:128): CFI 128KB sector",
+      "elapsed_sec": 7.202
     },
     {
-      "id": "MUT-28-USB-PROTO7-CHK",
+      "id": "MUT-107-FLASH-AUTOSELECT-ID",
+      "subsystem": "NOR Flash CFI",
+      "file": "core/casio_cg50/cg50_core/cg50_flash_cfi.h",
+      "rationale": "Corrupts S29GL256P Autoselect Device ID1 0x227E",
+      "target_tests": [
+        "cg50_flash_cfi_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_flash_cfi_test",
+      "detail": "[CFI-TEST] FAIL (D:/Proyectos/CalculadorasUnificadas/build-mutation-sandbox/src/tests/core/cg50_flash_cfi_test.cpp:111): Autoselect Dev ID1 0x227E",
+      "elapsed_sec": 7.495
+    },
+    {
+      "id": "MUT-108-USB-PROTO7-CHK",
       "subsystem": "USB Protocol 7.00",
       "file": "core/casio_cg50/cg50_core/cg50_usb_host.cpp",
-      "rationale": "Corrupts Casio Protocol 7.00 two's-complement packet checksum",
+      "rationale": "Corrupts Casio Protocol 7.00 packet checksum",
       "target_tests": [
         "cg50_usb_smem_qr_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_usb_smem_qr_test",
       "detail": "[cg50_usb_smem_qr_test] FAIL: Protocol7Codec::ComputeChecksum failed known vector ('000' -> 0x70)",
-      "elapsed_sec": 14.649
+      "elapsed_sec": 8.859
     },
     {
-      "id": "MUT-29-FUGUE-CRC16",
+      "id": "MUT-109-USB-PROTO7-CHK-VERIFY",
+      "subsystem": "USB Protocol 7.00",
+      "file": "core/casio_cg50/cg50_core/cg50_usb_host.cpp",
+      "rationale": "Accepts corrupted Protocol 7.00 packet checksums",
+      "target_tests": [
+        "cg50_usb_smem_qr_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_usb_smem_qr_test",
+      "detail": "[cg50_usb_smem_qr_test] FAIL: Protocol7Codec accepted corrupted checksum",
+      "elapsed_sec": 9.717
+    },
+    {
+      "id": "MUT-110-FUGUE-CRC16",
       "subsystem": "SMEM Fugue FTL",
       "file": "core/casio_cg50/cg50_core/cg50_fugue_ftl.cpp",
-      "rationale": "Uses wrong polynomial (0x8005 instead of CCITT 0x1021) in Fugue FTL CRC16",
+      "rationale": "Uses wrong polynomial in Fugue FTL CRC16",
       "target_tests": [
         "cg50_usb_smem_qr_test"
       ],
       "status": "KILLED",
       "killing_test": "cg50_usb_smem_qr_test",
       "detail": "[cg50_usb_smem_qr_test] FAIL: Cg50FugueFtl::ComputeCrc16Ccitt failed standard CCITT test vector ('123456789' -> 0x29B1)",
-      "elapsed_sec": 13.911
+      "elapsed_sec": 5.863
     },
     {
-      "id": "MUT-30-QR-BCH-FORMAT",
+      "id": "MUT-111-QR-GF256-POLY",
+      "subsystem": "LCD QR Detector",
+      "file": "core/casio_cg50/cg50_core/cg50_lcd_qr.cpp",
+      "rationale": "Uses AES polynomial 0x11B instead of QR GF(256) 0x11D",
+      "target_tests": [
+        "cg50_usb_smem_qr_test"
+      ],
+      "status": "KILLED",
+      "killing_test": "cg50_usb_smem_qr_test (TIMEOUT)",
+      "detail": "Execution timed out (30s) due to mutant",
+      "elapsed_sec": 34.61
+    },
+    {
+      "id": "MUT-112-QR-BCH-FORMAT",
       "subsystem": "LCD QR Detector",
       "file": "core/casio_cg50/cg50_core/cg50_lcd_qr.cpp",
       "rationale": "Corrupts ISO-18004 QR BCH(15,5) format mask 0x5412",
@@ -402,9 +1516,9 @@
         "cg50_usb_smem_qr_test"
       ],
       "status": "KILLED",
-      "killing_test": "cg50_usb_smem_qr_test",
-      "detail": "[cg50_usb_smem_qr_test] FAIL: Failed to decode live Casio OS 3.80 CATALOG->F2(QR) code (expected wes.casio.com URL)",
-      "elapsed_sec": 9.812
+      "killing_test": "cg50_usb_smem_qr_test (TIMEOUT)",
+      "detail": "Execution timed out (30s) due to mutant",
+      "elapsed_sec": 34.906
     }
   ]
 }

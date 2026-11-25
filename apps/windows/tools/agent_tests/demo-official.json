@@ -1,0 +1,7 @@
+{
+  "backend": "official",
+  "steps": [
+    { "keys": "1,+,1,EXE", "settle": 2, "expect_ocr_contains": "1+1" },
+    { "keys": "AC", "settle": 1 }
+  ]
+}

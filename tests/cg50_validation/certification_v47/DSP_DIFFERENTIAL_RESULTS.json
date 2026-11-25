@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "oracle_mode": "LIVE_CPU73050_DLL",
+  "physical_verified": false,
+  "dsp16_movs_vectors_tested": 16,
+  "dsp16_movs_vectors_matched": 16,
+  "dsp16_movs_vectors_diverged": 0,
+  "dsp32_total_op2_classes": 256,
+  "dsp32_active_classes_tested": 140,
+  "dsp32_active_classes_matched_exact_dll": 136,
+  "dsp32_active_classes_renesas_spec_verified": 140,
+  "dsp32_illegal_classes_tested": 116,
+  "dsp32_illegal_classes_matched": 116,
+  "dsp32_vectors_tested": 512,
+  "dsp32_vectors_matched_exact_dll": 506,
+  "dsp32_vectors_known_cpu73050_dll_bug": 6,
+  "dsp32_vectors_core_diverged": 0,
+  "divergence_samples": [
+    "[CPU73050_DLL_BUG_PCOPY_EAX_RVA_0x117FC] DSP2_hi0xD9_op2_0xD907_dc0 op2=0xD907: reg[38] core=0x00000080 oracle=0x00000001",
+    "[CPU73050_DLL_BUG_PCOPY_EAX_RVA_0x117FC] DSP2_hi0xD9_op2_0xD907_dc1 op2=0xD907: reg[38] core=0x00000080 oracle=0x00000001",
+    "[CPU73050_DLL_BUG_PCOPY_EAX_RVA_0x117FC] DSP2_hi0xF9_op2_0xF907_dc0 op2=0xF907: reg[38] core=0x00000080 oracle=0x00000001",
+    "[CPU73050_DLL_BUG_PCOPY_EAX_RVA_0x117FC] DSP2_hi0xF9_op2_0xF907_dc1 op2=0xF907: reg[38] core=0x00000080 oracle=0x00000001",
+    "[CPU73050_DLL_BUG_PCOPY_EAX_RVA_0x117FC] DSP2_hi0xFA_op2_0xFA07_dc1 op2=0xFA07: reg[38] core=0x00000001 oracle=0x00000081",
+    "[CPU73050_DLL_BUG_PCOPY_EAX_RVA_0x117FC] DSP2_hi0xFB_op2_0xFB07_dc0 op2=0xFB07: reg[38] core=0x00000000 oracle=0x00000001"
+  ]
+}

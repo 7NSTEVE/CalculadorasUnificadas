@@ -227,15 +227,15 @@ public:
     Cg50NativeCore& Core() { return *core_; }
     const std::uint32_t* Disp() const { return disp_.data(); }
 
-    void StepChunks(int n)
+    void StepChunks(int n, std::uint64_t budget = kChunkBudget)
     {
         for (int i = 0; i < n; ++i) {
             if (core_->GetState() == Cg50NativeCore::State::Running) {
-                core_->RunInstructions(kChunkBudget);
+                core_->RunInstructions(budget);
             } else if (core_->GetState() == Cg50NativeCore::State::Sleeping) {
-                core_->AdvanceCycles(kChunkBudget);
+                core_->AdvanceCycles(budget);
                 if (core_->GetState() == Cg50NativeCore::State::Running) {
-                    core_->RunInstructions(kChunkBudget);
+                    core_->RunInstructions(budget);
                 }
             }
         }
@@ -263,44 +263,89 @@ public:
         return true;
     }
 
+    std::uint64_t HashRawLcd() const
+    {
+        const auto& lcd = core_->Peripherals().Lcd();
+        if (!lcd.FramebufferAvailable() || lcd.FramebufferPixelCount() < static_cast<std::size_t>(kPixels)) {
+            return 0ull;
+        }
+        const std::uint16_t* src = lcd.FramebufferData();
+        std::uint64_t h = 0xcbf29ce484222325ull;
+        for (int i = 0; i < kPixels; ++i) {
+            h ^= static_cast<std::uint64_t>(src[i]);
+            h *= 0x100000001b3ull;
+        }
+        return h;
+    }
+
     std::uint64_t HashDisp()
     {
         return CaptureDisp() ? Fnv1a32(disp_.data(), kPixels) : 0ull;
     }
 
-    std::uint64_t Stabilize(int stableNeeded = 6, int maxChunks = 60)
+    std::uint64_t Stabilize(int stableNeeded = 6, int maxChunks = 60, std::uint64_t budget = kChunkBudget)
     {
-        std::uint64_t h = HashDisp();
+        std::uint64_t h = HashRawLcd();
         int same = 0;
         for (int i = 0; i < maxChunks && same < stableNeeded; ++i) {
-            StepChunks(1);
-            const std::uint64_t now = HashDisp();
+            StepChunks(1, budget);
+            const std::uint64_t now = HashRawLcd();
             if (now == h && now != 0) ++same;
             else { h = now; same = 0; }
         }
+        CaptureDisp();
         return h;
     }
 
-    bool TapKey(std::uint16_t code, int holdChunks = 4, int waitMaxChunks = 24)
+    bool TapKey(std::uint16_t code, int holdChunks = 4, int waitMaxChunks = 24, std::uint64_t budget = kChunkBudget)
     {
-        const std::uint64_t before = HashDisp();
+        const std::uint64_t before = HashRawLcd();
         if (!core_->KeyDown(code)) return false;
-        StepChunks(holdChunks);
+        StepChunks(holdChunks, budget);
         core_->KeyUp(code);
-        StepChunks(holdChunks);
-        std::uint64_t now = HashDisp();
+        StepChunks(holdChunks, budget);
+        std::uint64_t now = HashRawLcd();
         for (int i = 0; i < waitMaxChunks && now == before; ++i) {
-            StepChunks(1);
-            now = HashDisp();
+            StepChunks(1, budget);
+            now = HashRawLcd();
         }
         return now != before;
     }
 
-    void TapSeq(const std::vector<std::uint16_t>& keys, int holdChunks = 4, int waitMaxChunks = 24)
+    void TapSeq(const std::vector<std::uint16_t>& keys, int holdChunks = 4, int waitMaxChunks = 24, int gapChunks = 1, std::uint64_t budget = kChunkBudget)
     {
         for (std::uint16_t k : keys) {
-            TapKey(k, holdChunks, waitMaxChunks);
-            StepChunks(1);
+            TapKey(k, holdChunks, waitMaxChunks, budget);
+            if (gapChunks > 0) StepChunks(gapChunks, budget);
+        }
+    }
+
+    // Fixed-slice real hardware key tap tuned to Casio OS 3.80's authentic KIU scan interval.
+    // Avoids blinking-cursor false early releases while eliminating wasted multi-million cycle padding.
+    bool TapKeyFast(std::uint16_t code,
+                    std::uint64_t holdBudget = 500000ull,
+                    std::uint64_t releaseBudget = 500000ull,
+                    int maxPostWaitSteps = 0)
+    {
+        const std::uint64_t before = HashRawLcd();
+        if (!core_->KeyDown(code)) return false;
+        StepChunks(1, holdBudget);
+        core_->KeyUp(code);
+        StepChunks(1, releaseBudget);
+        std::uint64_t now = HashRawLcd();
+        for (int i = 0; i < maxPostWaitSteps && now == before; ++i) {
+            StepChunks(1, releaseBudget);
+            now = HashRawLcd();
+        }
+        return now != before;
+    }
+
+    void TapSeqFast(const std::vector<std::uint16_t>& keys,
+                    std::uint64_t holdBudget = 500000ull,
+                    std::uint64_t releaseBudget = 500000ull)
+    {
+        for (std::uint16_t k : keys) {
+            TapKeyFast(k, holdBudget, releaseBudget, 0);
         }
     }
 
@@ -909,7 +954,9 @@ Receipt ExecuteMathCase(Cg50Session& sess,
                         const MathCase& mc,
                         const fs::path& shotDir,
                         const bool strictNoFpu,
-                        bool& needsRestore)
+                        bool& needsRestore,
+                        const std::uint64_t paramBudget = 350000ull,
+                        std::atomic<std::uint64_t>* retryCounter = nullptr)
 {
     const auto t0 = std::chrono::steady_clock::now();
     Receipt r;
@@ -919,9 +966,12 @@ Receipt ExecuteMathCase(Cg50Session& sess,
     r.input = mc.inputDesc;
     r.expected = mc.expected;
 
+    const bool isParametric = (mc.caseId.rfind("PARAM-", 0) == 0);
     if (needsRestore || mc.expectErrorDialog || mc.category == "extreme_integral" || mc.category == "summation") {
         sess.RestoreSnapshot(runMatSnap, strictNoFpu);
         needsRestore = false;
+    } else if (isParametric) {
+        sess.TapKey(kAcOn, 1, 8, paramBudget);
     } else {
         sess.TapKey(kAcOn, 3, 10);
         sess.StepChunks(3);
@@ -931,13 +981,22 @@ Receipt ExecuteMathCase(Cg50Session& sess,
     const auto cyc0  = sess.Core().GetStats().cycles;
     const auto auth0 = sess.Core().GetAuthenticityStats();
 
-    sess.TapSeq(mc.keys, 3, 14);
-    sess.TapKey(kExe, 3, mc.exeWaitMaxChunks);
-    sess.Stabilize(4, 30);
-
-    if (!mc.postKeys.empty() && !sess.HasErrorDialog()) {
-        sess.TapSeq(mc.postKeys, 3, 20);
-        sess.Stabilize(4, 24);
+    if (isParametric) {
+        sess.TapSeq(mc.keys, 1, 10, 0, paramBudget);
+        sess.TapKey(kExe, 3, mc.exeWaitMaxChunks, kChunkBudget);
+        sess.Stabilize(5, 30, kChunkBudget);
+        if (!mc.postKeys.empty() && (sess.CaptureDisp(), !sess.HasErrorDialog())) {
+            sess.TapSeq(mc.postKeys, 2, 16, 0, kChunkBudget);
+            sess.Stabilize(4, 24, kChunkBudget);
+        }
+    } else {
+        sess.TapSeq(mc.keys, 3, 14, 1);
+        sess.TapKey(kExe, 3, mc.exeWaitMaxChunks);
+        sess.Stabilize(4, 30);
+        if (!mc.postKeys.empty() && (sess.CaptureDisp(), !sess.HasErrorDialog())) {
+            sess.TapSeq(mc.postKeys, 3, 20, 1);
+            sess.Stabilize(4, 24);
+        }
     }
 
     const auto inst1 = sess.Core().GetStats().instructions;
@@ -1019,8 +1078,18 @@ Receipt ExecuteMathCase(Cg50Session& sess,
     }
 
     if (!ok) {
+        const auto rnum = retryCounter ? (retryCounter->fetch_add(1u) + 1u) : 0ull;
+        if (rnum <= 8u) {
+            std::fprintf(stderr, "[RETRY-DBG #%llu] %s input='%s' exp='%s' try1_obs='%s' errDlg=%d bcd=%llu inst=%llu\n",
+                         static_cast<unsigned long long>(rnum), mc.caseId.c_str(), mc.inputDesc.c_str(),
+                         mc.expected.c_str(), r.observed.c_str(), errDlg ? 1 : 0,
+                         static_cast<unsigned long long>(r.bcdOps), static_cast<unsigned long long>(r.instructions));
+        }
         // Retry ONCE from a clean snapshot to rule out residual scroll interference
         sess.RestoreSnapshot(runMatSnap, strictNoFpu);
+        const auto rInst0 = sess.Core().GetStats().instructions;
+        const auto rCyc0  = sess.Core().GetStats().cycles;
+        const auto rAuth0 = sess.Core().GetAuthenticityStats();
         sess.TapSeq(mc.keys, 4, 18);
         sess.TapKey(kExe, 4, mc.exeWaitMaxChunks);
         sess.Stabilize(6, 36);
@@ -1028,6 +1097,16 @@ Receipt ExecuteMathCase(Cg50Session& sess,
             sess.TapSeq(mc.postKeys, 4, 24);
             sess.Stabilize(6, 28);
         }
+        const auto rInst1 = sess.Core().GetStats().instructions;
+        const auto rCyc1  = sess.Core().GetStats().cycles;
+        const auto rAuth1 = sess.Core().GetAuthenticityStats();
+        r.instructions += (rInst1 - rInst0);
+        r.cycles += (rCyc1 - rCyc0);
+        r.bcdOps += (rAuth1.bcdAluOpsExecuted - rAuth0.bcdAluOpsExecuted);
+        r.fpuOps += (rAuth1.fpuOpcodesExecuted - rAuth0.fpuOpcodesExecuted);
+        r.dspOps += (rAuth1.dspOpcodesExecuted - rAuth0.dspOpcodesExecuted);
+        r.fbHash = sess.HashDisp();
+        r.elapsedMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
         const auto bands2 = sess.DecodeBands(tbl);
         lastBand = bands2.empty() ? "" : bands2.back();
         fracPair.clear();
@@ -1223,6 +1302,7 @@ int main(int argc, char** argv)
     std::string suite = "all";
     unsigned threads = std::max(1u, std::thread::hardware_concurrency());
     std::size_t paramCount = 3000u;
+    std::uint64_t paramBudget = 1000000ull;
     bool strictNoFpu = true;
     bool coldBootCheck = false;
 
@@ -1233,6 +1313,7 @@ int main(int argc, char** argv)
         else if (std::strcmp(argv[i], "--suite") == 0 && i + 1 < argc) suite = argv[++i];
         else if (std::strcmp(argv[i], "--threads") == 0 && i + 1 < argc) threads = static_cast<unsigned>(std::max(1, std::atoi(argv[++i])));
         else if (std::strcmp(argv[i], "--parametric-count") == 0 && i + 1 < argc) paramCount = static_cast<std::size_t>(std::strtoull(argv[++i], nullptr, 10));
+        else if (std::strcmp(argv[i], "--param-chunk-budget") == 0 && i + 1 < argc) paramBudget = std::max<std::uint64_t>(20000ull, std::strtoull(argv[++i], nullptr, 10));
         else if (std::strcmp(argv[i], "--strict-no-fpu") == 0) strictNoFpu = true;
         else if (std::strcmp(argv[i], "--cold-boot-check") == 0) coldBootCheck = true;
         else if (std::strcmp(argv[i], "--strict-no-hle") == 0) {} // always enforced!
@@ -1301,6 +1382,7 @@ int main(int argc, char** argv)
     std::vector<Receipt> receipts(queue.size());
     std::atomic<std::size_t> nextIdx{0};
     std::atomic<std::size_t> doneCount{0};
+    std::atomic<std::uint64_t> retryCount{0};
 
     auto mathWorker = [&]() {
         Cg50Session sess;
@@ -1310,7 +1392,7 @@ int main(int argc, char** argv)
             const std::size_t idx = nextIdx.fetch_add(1u);
             if (idx >= queue.size()) break;
             receipts[idx] = ExecuteMathCase(sess, runMatSnap, tbl, queue[idx],
-                                            outDir / "screenshots", strictNoFpu, needsRestore);
+                                            outDir / "screenshots", strictNoFpu, needsRestore, paramBudget, &retryCount);
             const std::size_t d = doneCount.fetch_add(1u) + 1u;
             if ((d % 250u) == 0u || d == queue.size()) {
                 std::printf("[VAL-RUNNER] progress %zu / %zu (%.1f%%)\n",
@@ -1419,11 +1501,12 @@ int main(int argc, char** argv)
         << "}\n";
     sum.close();
 
-    std::printf("[VAL-RUNNER] DONE total=%zu PASS=%llu NOTE=%llu FAIL=%llu | BCD_OPS=%llu FPU_OPS=%llu | time=%.2fs (%.1f cases/s)\n",
+    std::printf("[VAL-RUNNER] DONE total=%zu PASS=%llu NOTE=%llu FAIL=%llu RETRIES=%llu | BCD_OPS=%llu FPU_OPS=%llu | time=%.2fs (%.1f cases/s)\n",
                 receipts.size(),
                 static_cast<unsigned long long>(nPass),
                 static_cast<unsigned long long>(nNote),
                 static_cast<unsigned long long>(nFail),
+                static_cast<unsigned long long>(retryCount.load()),
                 static_cast<unsigned long long>(totalBcd),
                 static_cast<unsigned long long>(totalFpu),
                 totalSec,

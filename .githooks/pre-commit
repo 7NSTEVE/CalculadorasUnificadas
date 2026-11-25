@@ -1,0 +1,9 @@
+#!/bin/sh
+# Local pre-commit hook enforcing AGENTS.md workspace hygiene rules
+PYTHON_BIN="python"
+if [ -x "/d/DevTools/Python311/python.exe" ]; then
+  PYTHON_BIN="/d/DevTools/Python311/python.exe"
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="python3"
+fi
+"$PYTHON_BIN" tools/check_workspace_hygiene.py --staged

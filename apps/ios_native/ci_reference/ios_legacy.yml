@@ -1,0 +1,133 @@
+name: Compilar app iOS
+
+# el dueño no tiene Mac: este runner es el unico sitio donde el proyecto Xcode se
+# compila de verdad. Antes de compilar la app se corren las dos baterias que no
+# necesitan macOS, que es lo que garantiza que ni los calculos ni la geometria
+# se rompen sin que nadie se entere.
+#
+# Desde el 2026-08-10 esto compila UNA sola app: el cuaderno de tinta con las
+# Casio dentro como panel. Antes eran dos proyectos en dos repositorios.
+#
+# Orden deliberado: lo gratis primero. El nucleo de tinta corre en Linux, que no
+# consume minutos; la bateria del emulador y la compilacion de Xcode van despues
+# y solo si lo anterior paso.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  nucleo-de-tinta:
+    name: Nucleo de tinta (gratis, en Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sin framework de pruebas ni dependencias: un solo binario. Con -Werror
+      # a proposito, que es como se compila en Windows durante el desarrollo.
+      - name: Compilar y correr el banco
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -I nativo/tinta/nucleo \
+            nativo/tinta/nucleo/*.cpp nativo/tinta/pruebas/pruebas.cpp \
+            -o tinta_pruebas
+          ./tinta_pruebas
+
+  pruebas-del-nucleo:
+    name: Bateria de regresion del emulador
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compilar el nucleo y el banco de pruebas
+        run: |
+          mkdir -p CalcEmuCore/build
+          clang++ -std=c++17 -O2 \
+            -I CalcEmuCore/compat -I CalcEmuCore/src -I CalcEmuCore/include \
+            CalcEmuCore/src/*.cpp CalcEmuCore/src/Chipset/*.cpp \
+            CalcEmuCore/src/Peripheral/*.cpp CalcEmuCore/src/Data/*.cpp \
+            CalcEmuCore/test/harness.cpp \
+            -o CalcEmuCore/build/harness.exe
+          clang++ -std=c++17 -O2 \
+            -I CalcEmuCore/compat -I CalcEmuCore/src -I CalcEmuCore/include \
+            CalcEmuCore/src/*.cpp CalcEmuCore/src/Chipset/*.cpp \
+            CalcEmuCore/src/Peripheral/*.cpp CalcEmuCore/src/Data/*.cpp \
+            CalcEmuCore/test/snapshot_test.cpp \
+            -o CalcEmuCore/build/snapshot_test.exe
+
+      - name: fx-570VN PLUS
+        working-directory: Tools/pruebas
+        run: python3 bateria_core.py vn
+
+      - name: fx-570/991LA X
+        working-directory: Tools/pruebas
+        run: python3 bateria_core.py lax
+
+      # Deshacer y los puntos guardados dependen de que el volcado del chipset sea
+      # EXACTO. Uno al que le falte un campo da una calculadora que parece bien y
+      # calcula mal, asi que esto bloquea la compilacion igual que la bateria.
+      - name: Instantaneas de estado
+        working-directory: Tools/pruebas
+        run: python3 instantaneas.py
+
+      # La app fusionada compila TODO a C++20, porque lo exige el nucleo de
+      # tinta. El emulador esta escrito en C++17 y deberia dar igual; esto lo
+      # comprueba en vez de confiar. Comprobado ya con clang en Windows el
+      # 2026-08-10, pero aqui es con el clang de Xcode, que es el que manda.
+      - name: El emulador tambien compila en C++20
+        run: |
+          clang++ -std=c++20 -fsyntax-only \
+            -I CalcEmuCore/compat -I CalcEmuCore/src -I CalcEmuCore/include \
+            CalcEmuCore/src/Chipset/CPU.cpp CalcEmuCore/src/Peripheral/ROMWindow.cpp
+
+  compilar-app:
+    name: App iOS (TintaEstudio)
+    runs-on: macos-latest
+    needs: [nucleo-de-tinta, pruebas-del-nucleo]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Generar el proyecto Xcode
+        run: xcodegen generate
+
+      - name: Compilar para simulador
+        run: |
+          xcodebuild \
+            -project TintaEstudio.xcodeproj \
+            -scheme TintaEstudio \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Compilar para dispositivo, sin firmar
+        run: |
+          xcodebuild \
+            -project TintaEstudio.xcodeproj \
+            -scheme TintaEstudio \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Empaquetar el .ipa
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' | head -1)
+          if [ -z "$APP" ]; then echo "no se genero ningun .app"; exit 1; fi
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qr TintaEstudio.ipa Payload
+          ls -la TintaEstudio.ipa
+
+      - name: Publicar el .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: TintaEstudio-sin-firmar
+          path: TintaEstudio.ipa
+          retention-days: 30

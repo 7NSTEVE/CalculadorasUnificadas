@@ -1,0 +1,301 @@
+{
+  "schema_version": "1.0.0",
+  "finding_closed": "H-009",
+  "generated_at": "2026-11-24T21:24:00.756268+00:00",
+  "total_benchmarks": 11,
+  "passed_benchmarks": 11,
+  "negative_tests_total": 3,
+  "negative_tests_passed": 3,
+  "overall_status": "PASS",
+  "benchmarks": [
+    {
+      "id": "GFX-MANDELBROT",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-MANDELBROT.bmp",
+      "threshold_fg_pct": 99.0,
+      "passed": true,
+      "roi": [
+        64,
+        39,
+        320,
+        216
+      ],
+      "roi_pixels": 45312,
+      "ref_fg_pixels": 45056,
+      "got_fg_pixels": 45056,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-JULIA",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-JULIA.bmp",
+      "threshold_fg_pct": 99.0,
+      "passed": true,
+      "roi": [
+        64,
+        43,
+        320,
+        216
+      ],
+      "roi_pixels": 44288,
+      "ref_fg_pixels": 44032,
+      "got_fg_pixels": 44032,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-NEWTON-Z3",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-NEWTON-Z3.bmp",
+      "threshold_fg_pct": 98.0,
+      "passed": true,
+      "roi": [
+        72,
+        43,
+        312,
+        216
+      ],
+      "roi_pixels": 41520,
+      "ref_fg_pixels": 41280,
+      "got_fg_pixels": 41280,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-SIERPINSKI",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-SIERPINSKI.bmp",
+      "threshold_fg_pct": 99.5,
+      "passed": true,
+      "roi": [
+        40,
+        43,
+        344,
+        216
+      ],
+      "roi_pixels": 52592,
+      "ref_fg_pixels": 5034,
+      "got_fg_pixels": 5034,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-LORENZ-RK4",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-LORENZ-RK4.bmp",
+      "threshold_fg_pct": 92.0,
+      "passed": true,
+      "roi": [
+        0,
+        39,
+        384,
+        216
+      ],
+      "roi_pixels": 67968,
+      "ref_fg_pixels": 1620,
+      "got_fg_pixels": 1620,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-TORUS-3D",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-TORUS-3D.bmp",
+      "threshold_fg_pct": 98.5,
+      "passed": true,
+      "roi": [
+        0,
+        39,
+        384,
+        216
+      ],
+      "roi_pixels": 67968,
+      "ref_fg_pixels": 4454,
+      "got_fg_pixels": 4454,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-NBODY",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-NBODY.bmp",
+      "threshold_fg_pct": 96.0,
+      "passed": true,
+      "roi": [
+        0,
+        39,
+        384,
+        216
+      ],
+      "roi_pixels": 67968,
+      "ref_fg_pixels": 1191,
+      "got_fg_pixels": 1191,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "GFX-RLC-TRANSIENT",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\GFX-RLC-TRANSIENT.bmp",
+      "threshold_fg_pct": 98.0,
+      "passed": true,
+      "roi": [
+        18,
+        43,
+        372,
+        216
+      ],
+      "roi_pixels": 61242,
+      "ref_fg_pixels": 1396,
+      "got_fg_pixels": 1396,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "COMP-FFT-DFT",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\COMP-FFT-DFT.bmp",
+      "threshold_fg_pct": 99.5,
+      "passed": true,
+      "roi": [
+        20,
+        43,
+        368,
+        216
+      ],
+      "roi_pixels": 60204,
+      "ref_fg_pixels": 2800,
+      "got_fg_pixels": 2800,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "COMP-RK4-ODE",
+      "verification_mode": "INDEPENDENT_PIXEL_BY_PIXEL_RGB565",
+      "bmp": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\graphics_v46\\COMP-RK4-ODE.bmp",
+      "threshold_fg_pct": 98.5,
+      "passed": true,
+      "roi": [
+        18,
+        55,
+        330,
+        216
+      ],
+      "roi_pixels": 50232,
+      "ref_fg_pixels": 300,
+      "got_fg_pixels": 300,
+      "roi_exact_match_pct": 100.0,
+      "fg_exact_match_pct": 100.0,
+      "fg_1px_tolerance_pct": 100.0,
+      "mae_rgb": 0.0,
+      "psnr_db": 99.99
+    },
+    {
+      "id": "COMP-ULTRA-MATH",
+      "verification_mode": "COLOR_BAND_AND_MATH_REFERENCE",
+      "math_reference_float64": {
+        "triple_integral_gl6": 0.59591828,
+        "lu_8x8_max_err": 2.220446049250313e-16,
+        "logistic_10k_float64": 0.08672012
+      },
+      "bands": {
+        "header": {
+          "expected_rgb565": [
+            16,
+            40,
+            164
+          ],
+          "matched_ink_px": 1253,
+          "unexpected_color_px": 0,
+          "passed": true
+        },
+        "logistic_10k": {
+          "expected_rgb565": [
+            180,
+            28,
+            24
+          ],
+          "matched_ink_px": 1188,
+          "unexpected_color_px": 0,
+          "passed": true
+        },
+        "triple_int_gl6": {
+          "expected_rgb565": [
+            16,
+            121,
+            41
+          ],
+          "matched_ink_px": 1147,
+          "unexpected_color_px": 0,
+          "passed": true
+        },
+        "lu_8x8_err": {
+          "expected_rgb565": [
+            24,
+            60,
+            180
+          ],
+          "matched_ink_px": 946,
+          "unexpected_color_px": 0,
+          "passed": true
+        },
+        "exact_ref_line": {
+          "expected_rgb565": [
+            57,
+            60,
+            57
+          ],
+          "matched_ink_px": 446,
+          "unexpected_color_px": 0,
+          "passed": true
+        }
+      },
+      "passed": true
+    }
+  ],
+  "negative_tests": [
+    {
+      "name": "NEG_SWAPPED_JULIA_VS_MANDELBROT",
+      "fg_exact_match_pct": 4.2614,
+      "rejected_as_expected": true
+    },
+    {
+      "name": "NEG_HORIZ_FLIPPED_MANDELBROT",
+      "fg_exact_match_pct": 14.755,
+      "rejected_as_expected": true
+    },
+    {
+      "name": "NEG_BLANK_WHITE_CANVAS",
+      "fg_exact_match_pct": 0.0,
+      "rejected_as_expected": true
+    }
+  ]
+}

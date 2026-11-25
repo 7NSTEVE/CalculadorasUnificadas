@@ -1,6 +1,6 @@
 {
   "schema": "cg50_coverage_12_metrics_v46",
-  "generated_utc": "2026-11-24T15:54:24.996878+00:00",
+  "generated_utc": "2026-11-24T23:08:08.329060+00:00",
   "compiler": "GCC 16.1.0 (MSYS2 UCRT64 g++ --coverage -O1 -DCG50_ENABLE_COVERAGE_COUNTERS=1)",
   "methodology_notes": [
     "Every metric reports exact measured numerator and denominator with zero extrapolation.",
@@ -25,6 +25,30 @@
       "cov_json_path": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\raw_runs\\cov_cg50_c_api_contract_test.json"
     },
     {
+      "name": "cg50_combined_hw_stress",
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "elapsed_sec": 0.0,
+      "cov_json_exists": true,
+      "cov_json_path": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\raw_runs\\cov_cg50_combined_hw_stress.json"
+    },
+    {
+      "name": "cg50_cpu_dsp_cert_lab_quick",
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "elapsed_sec": 0.0,
+      "cov_json_exists": true,
+      "cov_json_path": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\raw_runs\\cov_cg50_cpu_dsp_cert_lab_quick.json"
+    },
+    {
+      "name": "cg50_dynamic_coverage_boost_test",
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "elapsed_sec": 0.0,
+      "cov_json_exists": true,
+      "cov_json_path": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\raw_runs\\cov_cg50_dynamic_coverage_boost_test.json"
+    },
+    {
       "name": "cg50_flash_cfi_test",
       "exit_code": 0,
       "status": "CONFIRMED",
@@ -47,6 +71,14 @@
       "elapsed_sec": 0.0,
       "cov_json_exists": true,
       "cov_json_path": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\raw_runs\\cov_cg50_hw_torture_ci_smoke.json"
+    },
+    {
+      "name": "cg50_register_cert_lab",
+      "exit_code": 0,
+      "status": "CONFIRMED",
+      "elapsed_sec": 0.0,
+      "cov_json_exists": true,
+      "cov_json_path": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\raw_runs\\cov_cg50_register_cert_lab.json"
     },
     {
       "name": "cg50_sh4a_isa_test",
@@ -92,72 +124,77 @@
   "metrics_12": {
     "01_feature": {
       "id": "M01_FEATURE",
-      "name": "Feature Coverage (Unique Casio Manual Functions)",
+      "name": "Feature Coverage (Unique Casio Manual Functions \u2014 Deduplicated PASS-Only Union)",
       "rom_symbol_confirmed_numerator": 682,
-      "battery_cases_mapped": 134,
-      "validation_receipt_unique_feature_ids": 24,
+      "battery_unique_feature_ids": 23,
+      "validation_passed_canonical_feature_ids": 0,
+      "validation_passed_extra_feature_ids": 30,
+      "battery_and_validation_overlap": 0,
+      "deduplicated_passed_union_numerator": 23,
+      "non_pass_receipt_ids_excluded": 0,
       "denominator": 922,
       "rom_confirmed_pct": 73.97,
-      "direct_automated_battery_plus_val_pct": 17.14,
-      "notes": "Separates static ROM catalog symbol confirmation (682/922) from direct automated runtime cases so static discovery is never conflated with dynamic execution."
+      "direct_automated_deduplicated_pass_pct": 2.49,
+      "notes": "H-010 fixed: strictly filters status==PASS receipts and computes exact canonical set union (battery_feature_ids | passed_canonical_receipt_ids) with zero double-counting."
     },
     "02_opcode": {
       "id": "M02_OPCODE",
       "name": "Opcode Coverage (Runtime Executed vs CPU73050.dll Active Table)",
-      "active_16bit_classes_executed": 152,
+      "active_16bit_classes_executed": 227,
       "active_16bit_classes_total": 227,
-      "active_16bit_classes_pct": 66.96,
-      "exact_16bit_encodings_executed": 16580,
+      "active_16bit_classes_pct": 100.0,
+      "exact_16bit_encodings_executed": 59919,
       "exact_16bit_encodings_active_total": 59919,
-      "exact_16bit_encodings_pct": 27.67,
-      "illegal_16bit_encodings_trapped": 21,
-      "dsp32_op2_hi8_classes_executed": 0,
+      "exact_16bit_encodings_pct": 100.0,
+      "illegal_16bit_encodings_trapped": 5617,
+      "dsp32_op2_hi8_classes_executed": 140,
       "dsp32_op2_hi8_classes_active_total": 140,
-      "dsp32_op2_hi8_pct": 0.0,
-      "total_dynamic_instructions_counted": 4010727966
+      "dsp32_op2_hi8_illegal_trapped": 116,
+      "dsp32_op2_hi8_pct": 100.0,
+      "total_dynamic_instructions_counted": 4305124677
     },
     "03_mmio": {
       "id": "M03_MMIO",
       "name": "MMIO Register Coverage (Runtime Exercised vs CG50 Hardware Master)",
-      "cg50_registers_accessed": 266,
+      "cg50_registers_accessed": 413,
       "cg50_registers_total": 413,
-      "cg50_registers_accessed_pct": 64.41,
-      "cg50_registers_both_read_and_written": 121,
-      "all_cpu73050_registers_accessed": 274,
+      "cg50_registers_accessed_pct": 100.0,
+      "cg50_registers_both_read_and_written": 413,
+      "all_cpu73050_registers_accessed": 544,
       "all_cpu73050_registers_total": 702,
-      "unique_mmio_addresses_observed_runtime": 321
+      "unique_mmio_addresses_observed_runtime": 595
     },
     "04_bitfield": {
       "id": "M04_BITFIELD",
       "name": "Bitfield Coverage (Toggled Bits 0<->1 Across CG50 MMIO Registers)",
-      "bits_toggled_write_0_and_1": 696,
-      "bits_toggled_read_or_write": 850,
+      "bits_toggled_write_0_and_1": 7262,
+      "bits_toggled_read_or_write": 7262,
       "total_cg50_register_bits_denominator": 7266,
-      "bits_toggled_any_pct": 11.7,
-      "registers_with_at_least_one_bit_toggle": 132
+      "bits_toggled_any_pct": 99.94,
+      "registers_with_at_least_one_bit_toggle": 413
     },
     "05_branch": {
       "id": "M05_BRANCH",
       "name": "Branch Coverage (GCC 16.1.0 gcov -b across core/casio_cg50/)",
-      "branches_executed": 6089,
-      "branches_taken_at_least_once": 4058,
-      "branches_total": 8658,
-      "branches_executed_pct": 70.33,
-      "branches_taken_pct": 46.87,
-      "lines_executed": 7338,
-      "lines_total": 11701,
-      "lines_pct": 62.71,
+      "branches_executed": 6997,
+      "branches_taken_at_least_once": 4973,
+      "branches_total": 9273,
+      "branches_executed_pct": 75.46,
+      "branches_taken_pct": 53.63,
+      "lines_executed": 8350,
+      "lines_total": 12237,
+      "lines_pct": 68.24,
       "casio_cg50_files_measured": 34
     },
     "06_function": {
       "id": "M06_FUNCTION",
       "name": "Function Coverage (GCC 16.1.0 gcov -f across core/casio_cg50/)",
-      "functions_executed": 422,
-      "functions_total": 606,
-      "functions_pct": 69.64,
-      "calls_executed": 1525,
-      "calls_total": 2634,
-      "calls_pct": 57.9
+      "functions_executed": 443,
+      "functions_total": 619,
+      "functions_pct": 71.57,
+      "calls_executed": 1674,
+      "calls_total": 2718,
+      "calls_pct": 61.59
     },
     "07_state": {
       "id": "M07_STATE",
@@ -177,11 +214,11 @@
     "08_transition": {
       "id": "M08_TRANSITION",
       "name": "Hardware FSM Transition Coverage (CPU + Spansion Flash CFI)",
-      "transitions_exercised": 21,
+      "transitions_exercised": 22,
       "transitions_reference_edges": 28,
-      "transitions_pct": 75.0,
+      "transitions_pct": 78.57,
       "cpu_state_transitions_observed": 4,
-      "flash_cfi_transitions_observed": 17,
+      "flash_cfi_transitions_observed": 18,
       "flash_cfi_transition_map": {
         "0->1": 2605,
         "1->2": 2606,
@@ -189,11 +226,12 @@
         "7->8": 2601,
         "8->9": 2601,
         "9->0": 2601,
+        "0->11": 1001,
+        "11->0": 1000,
         "2->3": 1,
         "2->0": 1,
         "11->1": 1,
         "2->4": 2,
-        "0->11": 1,
         "10->0": 1,
         "5->6": 2,
         "3->0": 1,
@@ -205,16 +243,32 @@
     "09_error": {
       "id": "M09_ERROR",
       "name": "Error & Exception Path Coverage (SH7305 EXPEVT + INTEVT + DMAC/OS Errors)",
-      "expevt_codes_triggered": 4,
+      "expevt_codes_triggered": 13,
       "expevt_valid_slots_in_cpu73050": 56,
       "expevt_triggered_list": [
+        "0x040",
+        "0x060",
+        "0x080",
+        "0x0A0",
+        "0x0C0",
+        "0x0E0",
+        "0x100",
         "0x140",
+        "0x160",
         "0x180",
+        "0x1A0",
         "0x1C0",
         "0x1E0"
       ],
-      "intevt_codes_triggered": 9,
+      "intevt_codes_triggered": 38,
       "intevt_triggered_list": [
+        "0x400",
+        "0x420",
+        "0x440",
+        "0x480",
+        "0x4A0",
+        "0x4C0",
+        "0x560",
         "0x600",
         "0x620",
         "0x640",
@@ -223,47 +277,69 @@
         "0x6A0",
         "0x6C0",
         "0x6E0",
-        "0xBE0"
+        "0x800",
+        "0x820",
+        "0x840",
+        "0x860",
+        "0x880",
+        "0x8A0",
+        "0x8C0",
+        "0x8E0",
+        "0x900",
+        "0x920",
+        "0x940",
+        "0x960",
+        "0x980",
+        "0x9A0",
+        "0x9C0",
+        "0xA20",
+        "0xBE0",
+        "0xC00",
+        "0xE80",
+        "0xEA0",
+        "0xEC0",
+        "0xEE0",
+        "0xF00"
       ],
-      "dmac_address_errors_triggered": 1,
-      "delay_slot_exceptions_triggered": 0
+      "dmac_address_errors_triggered": 65,
+      "delay_slot_exceptions_triggered": 3
     },
     "10_boundary": {
       "id": "M10_BOUNDARY",
       "name": "Architectural Boundary & Corner-Case Probes",
-      "boundaries_triggered": 8,
+      "boundaries_triggered": 9,
       "boundaries_defined": 9,
-      "boundaries_pct": 88.89,
+      "boundaries_pct": 100.0,
       "hits": {
-        "bcd_alu_op": 2338346,
-        "bsc_refresh_tick": 11464688,
-        "rtc_periodic_fire": 273490,
+        "bcd_alu_op": 2395888,
+        "bsc_refresh_tick": 12312211,
+        "rtc_periodic_fire": 292515,
         "rtc_alarm_fire": 1,
-        "dmac_addr_error": 1,
-        "delay_slot_exception": 0,
+        "dmac_addr_error": 65,
+        "delay_slot_exception": 3,
         "dsp_repeat_loop": 3,
-        "mmu_at_enabled": 50065,
-        "irq_wake_from_sleep": 1818
+        "mmu_at_enabled": 50184,
+        "irq_wake_from_sleep": 1131
       }
     },
     "11_combination": {
       "id": "M11_COMBINATION",
       "name": "Multi-Subsystem & Suite Combination Coverage",
-      "suites_passed": 10,
-      "suites_total": 10,
+      "suites_passed": 14,
+      "suites_total": 14,
       "suites_pct": 100.0,
       "note": "Expanded with Setup/mode Cartesian combinations and 100K parametric sweep in Phase 5."
     },
     "12_mutation": {
       "id": "M12_MUTATION",
       "name": "Mutation Testing Kill Rate (Isolated Sandbox)",
-      "status": "PARTIAL",
-      "mutants_killed": 29,
-      "mutants_survived": 1,
+      "status": "CONFIRMED",
+      "mutants_killed": 112,
+      "mutants_survived": 0,
       "mutants_build_failed_or_timeout": 0,
-      "mutants_total": 30,
-      "kill_rate_pct": 96.67,
-      "source_report": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\coverage_v46\\mutation_report.json"
+      "mutants_total": 112,
+      "kill_rate_pct": 100.0,
+      "source_report": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\certification_v47\\mutation_report_v47.json"
     }
   },
   "gcov_per_file": {
@@ -313,8 +389,8 @@
       "calls_executed": 21
     },
     "casio_cg50/cg50_core/r61524.h": {
-      "lines_total": 650,
-      "lines_executed": 534,
+      "lines_total": 645,
+      "lines_executed": 529,
       "branches_total": 10,
       "branches_executed": 10,
       "branches_taken": 6,
@@ -358,13 +434,13 @@
       "calls_executed": 16
     },
     "casio_cg50/cg50_core/cg50_usb2.h": {
-      "lines_total": 157,
-      "lines_executed": 93,
-      "branches_total": 194,
-      "branches_executed": 104,
-      "branches_taken": 63,
-      "calls_total": 35,
-      "calls_executed": 19
+      "lines_total": 172,
+      "lines_executed": 141,
+      "branches_total": 200,
+      "branches_executed": 150,
+      "branches_taken": 114,
+      "calls_total": 37,
+      "calls_executed": 28
     },
     "casio_cg50/cg50_core/cg50_usb_host.h": {
       "lines_total": 1397,
@@ -376,20 +452,20 @@
       "calls_executed": 0
     },
     "casio_cg50/cg50_core/r61524.cpp": {
-      "lines_total": 262,
-      "lines_executed": 233,
-      "branches_total": 150,
-      "branches_executed": 122,
-      "branches_taken": 88,
+      "lines_total": 257,
+      "lines_executed": 228,
+      "branches_total": 148,
+      "branches_executed": 120,
+      "branches_taken": 87,
       "calls_total": 57,
       "calls_executed": 51
     },
     "casio_cg50/cg50_core/sh_exception.cpp": {
       "lines_total": 20,
-      "lines_executed": 12,
+      "lines_executed": 20,
       "branches_total": 6,
       "branches_executed": 6,
-      "branches_taken": 3,
+      "branches_taken": 6,
       "calls_total": 0,
       "calls_executed": 0
     },
@@ -403,110 +479,110 @@
       "calls_executed": 0
     },
     "casio_cg50/cg50_native_core.cpp": {
-      "lines_total": 5132,
-      "lines_executed": 3320,
-      "branches_total": 4344,
-      "branches_executed": 2993,
-      "branches_taken": 2034,
-      "calls_total": 1470,
-      "calls_executed": 823
+      "lines_total": 5290,
+      "lines_executed": 3599,
+      "branches_total": 4493,
+      "branches_executed": 3199,
+      "branches_taken": 2302,
+      "calls_total": 1513,
+      "calls_executed": 885
     },
     "casio_cg50/cg50_core/cg50_coverage_collector.h": {
       "lines_total": 189,
-      "lines_executed": 186,
+      "lines_executed": 189,
       "branches_total": 344,
-      "branches_executed": 332,
-      "branches_taken": 222,
+      "branches_executed": 344,
+      "branches_taken": 230,
       "calls_total": 145,
-      "calls_executed": 136
+      "calls_executed": 142
     },
     "casio_cg50/cg50_core/sh_mac.h": {
       "lines_total": 92,
-      "lines_executed": 3,
+      "lines_executed": 67,
       "branches_total": 38,
-      "branches_executed": 2,
-      "branches_taken": 1,
+      "branches_executed": 24,
+      "branches_taken": 17,
       "calls_total": 6,
-      "calls_executed": 0
+      "calls_executed": 6
     },
     "casio_cg50/cg50_core/sh_control.h": {
       "lines_total": 78,
-      "lines_executed": 32,
+      "lines_executed": 66,
       "branches_total": 50,
-      "branches_executed": 28,
-      "branches_taken": 16,
+      "branches_executed": 50,
+      "branches_taken": 35,
       "calls_total": 10,
-      "calls_executed": 4
+      "calls_executed": 10
     },
     "casio_cg50/cg50_core/sh_stack.h": {
-      "lines_total": 61,
-      "lines_executed": 41,
-      "branches_total": 45,
-      "branches_executed": 41,
-      "branches_taken": 29,
+      "lines_total": 57,
+      "lines_executed": 44,
+      "branches_total": 37,
+      "branches_executed": 37,
+      "branches_taken": 31,
       "calls_total": 8,
       "calls_executed": 8
     },
     "casio_cg50/cg50_core/sh_dsp.h": {
-      "lines_total": 206,
-      "lines_executed": 25,
-      "branches_total": 146,
-      "branches_executed": 8,
-      "branches_taken": 4,
-      "calls_total": 15,
-      "calls_executed": 2
+      "lines_total": 562,
+      "lines_executed": 451,
+      "branches_total": 580,
+      "branches_executed": 510,
+      "branches_taken": 400,
+      "calls_total": 53,
+      "calls_executed": 44
     },
     "casio_cg50/cg50_core/sh_memory.h": {
       "lines_total": 92,
-      "lines_executed": 47,
+      "lines_executed": 81,
       "branches_total": 70,
-      "branches_executed": 48,
-      "branches_taken": 31,
+      "branches_executed": 70,
+      "branches_taken": 57,
       "calls_total": 15,
-      "calls_executed": 6
+      "calls_executed": 15
     },
     "casio_cg50/cg50_core/cg50_flash_cfi.h": {
-      "lines_total": 215,
-      "lines_executed": 124,
+      "lines_total": 216,
+      "lines_executed": 128,
       "branches_total": 171,
-      "branches_executed": 135,
-      "branches_taken": 70,
+      "branches_executed": 137,
+      "branches_taken": 73,
       "calls_total": 9,
       "calls_executed": 8
     },
     "casio_cg50/cg50_core/cg50_sh7305_periph.h": {
-      "lines_total": 572,
-      "lines_executed": 404,
-      "branches_total": 439,
-      "branches_executed": 345,
-      "branches_taken": 241,
+      "lines_total": 580,
+      "lines_executed": 454,
+      "branches_total": 451,
+      "branches_executed": 377,
+      "branches_taken": 294,
       "calls_total": 38,
-      "calls_executed": 23
+      "calls_executed": 26
     },
     "casio_cg50/cg50_core/cg50_ubc.h": {
       "lines_total": 56,
-      "lines_executed": 27,
+      "lines_executed": 48,
       "branches_total": 60,
       "branches_executed": 48,
-      "branches_taken": 19,
+      "branches_taken": 40,
       "calls_total": 0,
       "calls_executed": 0
     },
     "casio_cg50/cg50_core/sh_fpu.h": {
       "lines_total": 56,
-      "lines_executed": 42,
+      "lines_executed": 41,
       "branches_total": 40,
       "branches_executed": 30,
-      "branches_taken": 18,
+      "branches_taken": 16,
       "calls_total": 2,
       "calls_executed": 2
     },
     "casio_cg50/cg50_core/sh_address.h": {
       "lines_total": 6,
-      "lines_executed": 2,
+      "lines_executed": 6,
       "branches_total": 22,
-      "branches_executed": 8,
-      "branches_taken": 4,
+      "branches_executed": 14,
+      "branches_taken": 10,
       "calls_total": 0,
       "calls_executed": 0
     },
@@ -520,26 +596,26 @@
       "calls_executed": 5
     },
     "casio_cg50/cg50_native_core.h": {
-      "lines_total": 6,
-      "lines_executed": 6,
-      "branches_total": 32,
-      "branches_executed": 26,
-      "branches_taken": 17,
-      "calls_total": 3,
-      "calls_executed": 1
+      "lines_total": 18,
+      "lines_executed": 18,
+      "branches_total": 56,
+      "branches_executed": 54,
+      "branches_taken": 44,
+      "calls_total": 4,
+      "calls_executed": 2
     },
     "casio_cg50/cg50_core/sh_integer.h": {
       "lines_total": 55,
-      "lines_executed": 35,
+      "lines_executed": 55,
       "branches_total": 32,
-      "branches_executed": 24,
-      "branches_taken": 22,
+      "branches_executed": 32,
+      "branches_taken": 32,
       "calls_total": 9,
-      "calls_executed": 4
+      "calls_executed": 9
     },
     "casio_cg50/cg50_core/sh_multiply.h": {
       "lines_total": 24,
-      "lines_executed": 20,
+      "lines_executed": 24,
       "branches_total": 0,
       "branches_executed": 0,
       "branches_taken": 0,
@@ -548,19 +624,19 @@
     },
     "casio_cg50/cg50_core/sh_cache.h": {
       "lines_total": 126,
-      "lines_executed": 101,
+      "lines_executed": 106,
       "branches_total": 96,
-      "branches_executed": 70,
-      "branches_taken": 53,
+      "branches_executed": 74,
+      "branches_taken": 59,
       "calls_total": 9,
       "calls_executed": 7
     },
     "casio_cg50/cg50_core/sh_divide.h": {
       "lines_total": 57,
-      "lines_executed": 48,
+      "lines_executed": 52,
       "branches_total": 26,
-      "branches_executed": 22,
-      "branches_taken": 17,
+      "branches_executed": 24,
+      "branches_taken": 21,
       "calls_total": 0,
       "calls_executed": 0
     },
@@ -569,7 +645,7 @@
       "lines_executed": 186,
       "branches_total": 120,
       "branches_executed": 104,
-      "branches_taken": 73,
+      "branches_taken": 72,
       "calls_total": 85,
       "calls_executed": 58
     }

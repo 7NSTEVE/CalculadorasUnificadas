@@ -445,23 +445,24 @@ void TestSh4alDspStrictNoFpuAndClipDiv()
     Check(core.GetRegisters().r[0] == 6u && core.GetRegisters().r[5] == 2u, "DIVS 20/3 == 6 rem 2");
     Check(core.GetAuthenticityStats().dspOpcodesExecuted >= 3u, "DSP telemetry recorded opcodes");
 
-    // 3. Direct SH4AL-DSP parallel ALU (PMULS + PADD + PABS + PDMSB + PSHA)
+    // 3. Direct SH4AL-DSP parallel ALU (verified exact Renesas SH4AL-DSP / CPU73050.dll encodings)
     cg50::ShDspState dsp;
     dsp.Reset();
     dsp.x0 = 0x00030000u; // 3.0 in Q16 high word
     dsp.y0 = 0x00040000u; // 4.0 in Q16 high word
     std::array<std::uint32_t, 16> gpr{};
+    std::uint32_t sr = 0x40001000u, mach = 0u, macl = 0u;
     auto r16 = [](std::uint32_t, std::uint16_t&) { return true; };
     auto w16 = [](std::uint32_t, std::uint16_t) { return true; };
     auto r32 = [](std::uint32_t, std::uint32_t&) { return true; };
     auto w32 = [](std::uint32_t, std::uint32_t) { return true; };
     // Parallel op1 = 0xF800 (no MOVX/MOVY), op2 = 0x4000 (PMULS X0, Y0, M0)
-    Check(dsp.ExecuteParallel32(0xF800u, 0x4000u, gpr, r16, w16, r32, w32), "DSP PMULS executed");
+    Check(dsp.ExecuteParallel32(0xF800u, 0x4000u, gpr, sr, mach, macl, r16, w16, r32, w32), "DSP PMULS executed");
     Check(dsp.m0 == 24u, "DSP PMULS signed 16x16*2 == 24");
     dsp.a0 = 100;
     dsp.y0 = 250;
-    // op2 = (aluOp=0x02 PADD << 8) | (sx=2 A0 << 6) | (sy=0 Y0 << 4) | (dz=2 A0) = 0x0282
-    Check(dsp.ExecuteParallel32(0xF800u, 0x0282u, gpr, r16, w16, r32, w32), "DSP PADD executed");
+    // Official SH4AL-DSP PADD A0, Y0, A0: hi=0xB1, sx=2(A0)->0x80, sy=0(Y0)->0x00, dz=7(A0)->0x07 => 0xB187
+    Check(dsp.ExecuteParallel32(0xF800u, 0xB187u, gpr, sr, mach, macl, r16, w16, r32, w32), "DSP PADD executed");
     Check(dsp.a0 == 350, "DSP PADD A0 + Y0 == 350");
 
     // 4. CPU73050.dll machine-code proof checks (Phase 1):
@@ -788,9 +789,9 @@ void TestDspBcdCacheIntc2CornerCases()
         const std::uint32_t rc = (core.GetRegisters().sr & Cg50NativeCore::kSrRcMask) >> 16;
         Check(rc == 4u, "SETRC Rm preserves full 12-bit repeat count (RC == 4)");
 
-        core.DspMut().dsr = cg50::ShDspState::kDsrS;
-        core.DspMut().WriteReg40(2u, 0x123456789ll); // > 0x7FFFFFFF -> must saturate to 0x7FFFFFFF!
-        Check(core.Dsp().a0 == 0x7FFFFFFFll, "DSP WriteReg40 saturates positive overflow to 0x7FFFFFFF");
+        std::uint32_t satSr = 0x40001002u; // SR.MD=1, SR.DSP=1, SR.S=1 (official SH4AL-DSP saturation bit!)
+        const std::int64_t satOut = core.DspMut().FinalizeArith40(0x123456789ll, false, false, satSr, true);
+        Check(satOut == 0x7FFFFFFFll, "DSP FinalizeArith40 saturates positive overflow to 0x7FFFFFFF when SR.S=1");
     }
 
     // 3. Hardware BCD ALU exact decimal carry boundary: 5 + 5 = 10 (s == 10 > 9!)
@@ -829,6 +830,106 @@ void TestDspBcdCacheIntc2CornerCases()
         std::uint32_t ev = 0; std::uint8_t pr = 0; std::size_t idx = 0;
         Check(!core.Intc2().HighestPendingExternalIrq(ev, pr, idx),
               "INTC2 INTMSK00 blocks masked IRQ1 from HighestPendingExternalIrq");
+    }
+
+    // 6. Mutation-hardened corner cases (MOD wrap, Cache ICI/OCRAM/OCBP/OCBWB, UBC masks+CH1 data, INTC2 W0C, ETMU dir, SCIF0 ORER, USB2 SETUP)
+    {
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        SetupMinimalCore(core, {0x0009u});
+
+        // MUT-050: SH4AL-DSP MOD circular buffer wraparound
+        core.DspMut().mod = (0x1002u << 16) | 0x1000u; // MS=0x1000, ME=0x1002
+        Check(core.Dsp().StepModuloAddress(0x88001002u, 2) == 0x88001000u,
+              "SH4AL-DSP MOD circular buffer wraps ME -> MS");
+
+        // MUT-063: Cache CCR.ICI invalidates populated IC line
+        Check(core.Write32(0xF0000000u, 0x08002001u), "Seed valid IC line (V=bit0)");
+        std::uint32_t icBefore = 0, icAfter = 0xFFFFFFFFu;
+        Check(core.Read32(0xF0000000u, icBefore) && (icBefore & 1u) != 0u, "IC line valid before CCR.ICI");
+        Check(core.Write32(Cg50NativeCore::kCacheControlRegister, cg50::ShCacheUnit::kCcrIci), "Write CCR.ICI");
+        Check(core.Read32(0xF0000000u, icAfter) && (icAfter & 1u) == 0u, "IC line invalidated by CCR.ICI");
+
+        // MUT-064: OCRAM strictly gated by CCR.ORA=1
+        Check(core.Write32(Cg50NativeCore::kCacheControlRegister, 0u), "CCR.ORA=0");
+        Check(!core.Cache().OcramEnabled(), "OCRAM disabled when CCR.ORA=0");
+        Check(core.Write32(Cg50NativeCore::kCacheControlRegister, cg50::ShCacheUnit::kCcrOra), "CCR.ORA=1");
+        Check(core.Cache().OcramEnabled(), "OCRAM enabled when CCR.ORA=1");
+
+        // MUT-065 & MUT-066: OCBP dirty writeback + invalidate & OCBWB dirty writeback + clean
+        cg50::ShCacheUnit cache;
+        cache.Reset();
+        cache.ApplyCcrWrite(cg50::ShCacheUnit::kCcrOce | cg50::ShCacheUnit::kCcrCb);
+        cache.ObserveOcAccess(0x08001000u, true, true, nullptr); // populates dirty OC line
+        const std::uint64_t wb0 = cache.GetStats().ocWritebacks;
+        cache.Ocbp(0x08001000u);
+        Check(cache.GetStats().ocWritebacks == wb0 + 1u, "OCBP flushes dirty OC line (+1 writeback)");
+        cache.ObserveOcAccess(0x08001020u, true, true, nullptr); // populates another dirty OC line
+        const std::uint64_t wb1 = cache.GetStats().ocWritebacks;
+        cache.Ocbwb(0x08001020u);
+        Check(cache.GetStats().ocWritebacks == wb1 + 1u, "OCBWB flushes dirty OC line (+1 writeback)");
+        cache.Ocbwb(0x08001020u);
+        Check(cache.GetStats().ocWritebacks == wb1 + 1u, "Second OCBWB sees clean line (dirty cleared to false)");
+
+        // MUT-069, MUT-070, MUT-071, MUT-072: UBC CCMFR W0C, CETR1 12-bit mask, CBCR bit-0 mask, CH1 data match
+        cg50::UbcUnit ubc;
+        ubc.Reset();
+        Check(ubc.Write32(0xFF200038u, 0xFFFFFFFFu), "UBC write CETR1=0xFFFFFFFF");
+        std::uint32_t ubcVal = 0;
+        Check(ubc.Read32(0xFF200038u, ubcVal) && ubcVal == 0x00000FFFu, "UBC CETR1 masked to 12 bits");
+        Check(ubc.Write32(0xFF200620u, 0xFFFFFFFFu), "UBC write CBCR=0xFFFFFFFF");
+        Check(ubc.Read32(0xFF200620u, ubcVal) && ubcVal == 0x00000001u, "UBC CBCR masked to bit 0");
+        // CCMFR W0C: writing 0xFFFFFFFF when 0 must NOT set bits!
+        Check(ubc.Write32(0xFF200600u, 0xFFFFFFFFu), "UBC write CCMFR=0xFFFFFFFF");
+        Check(ubc.Read32(0xFF200600u, ubcVal) && ubcVal == 0u, "UBC CCMFR W0C cannot set bits to 1");
+        // CH1 data match (CBR1: CE=1, RW=10 write, ID=10 operand, DBE=bit6 => 0x65)
+        Check(ubc.Write32(0xFF200028u, 0x88002000u), "UBC CAR1");
+        Check(ubc.Write32(0xFF20002Cu, 0x00000000u), "UBC CAMR1");
+        Check(ubc.Write32(0xFF200030u, 0x12345678u), "UBC CDR1");
+        Check(ubc.Write32(0xFF200034u, 0x00000000u), "UBC CDMR1");
+        Check(ubc.Write32(0xFF200024u, 0x00000001u), "UBC CRR1 BIE=1");
+        Check(ubc.Write32(0xFF200020u, 0x00000065u), "UBC CBR1 CE=1,RW=write,ID=operand,DBE=1");
+        Check(!ubc.CheckDataMatch(0x88002000u, 0xDEADBEEFu, true) && (ubc.Ccmfr() & 2u) == 0u,
+              "UBC CH1 rejects mismatched data value");
+        Check(ubc.CheckDataMatch(0x88002000u, 0x12345678u, true) && (ubc.Ccmfr() & 2u) != 0u,
+              "UBC CH1 triggers on matching data value");
+
+        // MUT-074: INTC2 INTREQ00 W0C (writing 0xFF when 0 cannot set bits!)
+        Check(core.Write8(0xA4140024u, 0xFFu), "INTC2 write INTREQ00=0xFF");
+        std::uint8_t req8 = 0xFFu;
+        Check(core.Read8(0xA4140024u, req8) && req8 == 0x00u, "INTC2 INTREQ00 W0C stays 0");
+
+        // MUT-078: ETMU0 strictly decrements TCNT (never increments!)
+        {
+            auto ePtr = std::make_unique<Cg50NativeCore>();
+            auto& eCore = *ePtr;
+            SetupMinimalCore(eCore, {0x001Bu}); // SLEEP so AdvanceCycles ticks peripherals
+            Check(eCore.Write32(0xA44D0034u, 500u), "ETMU0 TCOR=500");
+            Check(eCore.Write32(0xA44D0038u, 500u), "ETMU0 TCNT=500");
+            Check(eCore.Write8(0xA44D0030u, 0x01u), "ETMU0 TSTR=1");
+            eCore.RunInstructions(1); // enter SLEEP
+            eCore.AdvanceCycles(4096u); // 4 ticks @ 1024 cycles/tick -> 500 - 4 == 496
+            std::uint32_t etmuCnt = 0;
+            Check(eCore.Read32(0xA44D0038u, etmuCnt) && etmuCnt == 496u, "ETMU0 counts strictly down (500 -> 496)");
+        }
+
+        // MUT-089: SCIF0 ORER overrun flag on 17th RX byte
+        cg50::Scif0Unit scif;
+        scif.Reset();
+        for (int i = 0; i < 17; ++i) scif.PushRx(static_cast<std::uint8_t>(i));
+        std::uint16_t sclsr = 0;
+        Check(scif.Read16(0x04410024u, sclsr) && (sclsr & 0x0001u) != 0u,
+              "SCIF0 sets SCLSR.ORER on 17th RX byte overrun");
+
+        // MUT-092: USB2 InjectSetupPacket sets INTSTS0 VALID (0x0008) & CTRT (0x0800)
+        cg50::Usb2Unit usb;
+        usb.Reset();
+        usb.InjectSetupPacket(0x0680u, 0x0100u, 0x0000u, 0x0012u);
+        std::uint16_t intsts0 = 0;
+        Check(usb.Read16(0x04D80040u, intsts0) &&
+                  (intsts0 & (cg50::Usb2Unit::kIntValid | cg50::Usb2Unit::kIntCtrt)) ==
+                      (cg50::Usb2Unit::kIntValid | cg50::Usb2Unit::kIntCtrt),
+              "USB2 InjectSetupPacket latches INTSTS0 VALID|CTRT");
     }
 }
 

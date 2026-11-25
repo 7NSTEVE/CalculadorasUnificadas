@@ -1,0 +1,1222 @@
+{
+  "schema": "cg50_manager_plus_oracle_v46",
+  "generated_at_utc": "2026-11-24T18:27:18.476883+00:00",
+  "oracle_engine": "Casio fx-CG Manager PLUS Subscription for fx-CG50series (Official Executable)",
+  "mode": "manager-exe",
+  "boot_diag": "Official Manager PLUS window ready",
+  "exe_path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\fx-CG_Manager_PLUS_Subscription_for_fx-CG50series.exe",
+  "exe_sha256": "F105866A7E3D0F6A439FFCB241DA16CABB9B4C994272CEA16651B071CF414A35",
+  "cpu73050_dll_path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\CPU73050.dll",
+  "cpu73050_dll_sha256": "CC0C58E78E9BBB42242FFF7653EF46BF9DE1E332058C0CFFD611936355C2098B",
+  "lcdr61524a_dll_path": "C:\\Program Files (x86)\\CASIO\\fx-CG Manager PLUS Subscription for fx-CG50series\\LCDR61524A.dll",
+  "lcdr61524a_dll_sha256": "36F4CA9F21AA46CC4D7D3FD6B5EE3E545F1B078249ACBDF2FF033CEF5D6BD570",
+  "status": "CONFIRMED",
+  "error_note": "",
+  "official_emulator_verified": true,
+  "physical_reference_status": "N/A_DISCARDED_BY_DESIGN",
+  "total_cases": 54,
+  "passed_cases": 54,
+  "results": [
+    {
+      "case_id": "CANCEL-001",
+      "category": "cancellation_bcd",
+      "kind": "math",
+      "expression": "(10^12+1)-10^12",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 3082.5,
+      "ocr_text": "(1x1012+1)-1x1012 JUMP DELETE >MAT/VCT MATH 1",
+      "ocr_result_col": "1",
+      "ocr_lines": [
+        "(1x1012+1)-1x1012",
+        "JUMP DELETE >MAT/VCT MATH",
+        "1"
+      ],
+      "expected_tokens": {
+        "1": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\02_CANCEL-001_lcd.png",
+      "lcd_sha256": "7980A1F0F6879F560BCC4E061184C162D81E673CC96D041C075C2AEA67DC166A"
+    },
+    {
+      "case_id": "CANCEL-002",
+      "category": "cancellation_bcd",
+      "kind": "math",
+      "expression": "(10^20+1)-10^20",
+      "is_casio_fidelity": true,
+      "elapsed_ms": 3083.3,
+      "ocr_text": "(1 x1020+1)-1 JUMP DELETE >MAT/VCT MATH 0",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "(1 x1020+1)-1",
+        "JUMP DELETE >MAT/VCT MATH",
+        "0"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\03_CANCEL-002_lcd.png",
+      "lcd_sha256": "46972B2306DFBB622713CCA2290C63181EB4BFBE533B99E5966142C2A816401D"
+    },
+    {
+      "case_id": "CANCEL-003",
+      "category": "cancellation_bcd",
+      "kind": "math",
+      "expression": "0.1+0.2-0.3",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2723.4,
+      "ocr_text": "0.1+0.2-0.3 0 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "0.1+0.2-0.3",
+        "0",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\04_CANCEL-003_lcd.png",
+      "lcd_sha256": "2AE07BA82867BA427B0AD0875BF9A5A519703A5D83C449FFFC4A706628C92F6E"
+    },
+    {
+      "case_id": "CANCEL-004",
+      "category": "cancellation_bcd",
+      "kind": "math",
+      "expression": "sin(pi) [Rad]",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1274.1,
+      "ocr_text": "sin 0 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "sin",
+        "0",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\05_CANCEL-004_lcd.png",
+      "lcd_sha256": "5BB0A4BDB87F00B28876D90D7BEB4A084B446DCAFC8A00C21CFA281AB66B2D64"
+    },
+    {
+      "case_id": "CANCEL-005",
+      "category": "cancellation_bcd",
+      "kind": "math",
+      "expression": "sqrt(10^16+1)-10^8",
+      "is_casio_fidelity": true,
+      "elapsed_ms": 3085.2,
+      "ocr_text": "1x1016+1 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "1x1016+1",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\06_CANCEL-005_lcd.png",
+      "lcd_sha256": "BAA9668DD5260AE6833AF90F42BD1BB128A7B0A1B504EBD5559464727D66D88B",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "CANCEL-006",
+      "category": "cancellation_bcd",
+      "kind": "math",
+      "expression": "(1-cos(1e-8))/1e-16",
+      "is_casio_fidelity": true,
+      "elapsed_ms": 3812.3,
+      "ocr_text": "(1 —cos (1x10-8)) 7 JUMP DELETE >MAT/VCT MATH 1 x10-> 0",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "(1 —cos (1x10-8)) 7",
+        "JUMP DELETE >MAT/VCT MATH",
+        "1 x10->",
+        "0"
+      ],
+      "expected_tokens": {
+        "0": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\07_CANCEL-006_lcd.png",
+      "lcd_sha256": "BFE3FF4464E3022517E74FA31A053974C6620499AF4F7B903F9A0493599508E7"
+    },
+    {
+      "case_id": "ARITH-001",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "12345*6789",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2544.4,
+      "ocr_text": "12345x6789 83810205 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "83810205",
+      "ocr_lines": [
+        "12345x6789",
+        "83810205",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "83810205": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\08_ARITH-001_lcd.png",
+      "lcd_sha256": "A8AF495A5A8854813A010B4863032F8CA4D906DD2C87A3C1F26B279F2F1D107E"
+    },
+    {
+      "case_id": "ARITH-002",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "(999+1)*123456",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 3271.4,
+      "ocr_text": "(999+1)x123456 123456000 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "456 123456000",
+      "ocr_lines": [
+        "(999+1)x123456",
+        "123456000",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "123456000": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\09_ARITH-002_lcd.png",
+      "lcd_sha256": "FDB3CF7F7F50E7DD1C3B225F7202C8794F42A6AEDCE86116925EEEA810A94738"
+    },
+    {
+      "case_id": "ARITH-003",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "987654321-123456789",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 4169.0,
+      "ocr_text": "987654321-123456789 864197532 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "23456789 864197532",
+      "ocr_lines": [
+        "987654321-123456789",
+        "864197532",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "864197532": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\10_ARITH-003_lcd.png",
+      "lcd_sha256": "1256F265584D99E98335746A09BAADCA4D0BB7D47E00E855EBC9A6AD98A5F3C2"
+    },
+    {
+      "case_id": "ARITH-004",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "2^32",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1455.3,
+      "ocr_text": "232 4294967296 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "4294967296",
+      "ocr_lines": [
+        "232",
+        "4294967296",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "4294967296": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\11_ARITH-004_lcd.png",
+      "lcd_sha256": "DD695DDED550B5F5FB43DFAA4BBA6C4C43130B0E16CFBA319DF1779D085BF160"
+    },
+    {
+      "case_id": "ARITH-005",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "3^15",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1456.4,
+      "ocr_text": "315 14348907 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "14348907",
+      "ocr_lines": [
+        "315",
+        "14348907",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "14348907": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\12_ARITH-005_lcd.png",
+      "lcd_sha256": "E24934D2AB64DD053CDBE3FCC27BA344FDBBBB69CA276554AF11B460265994D8"
+    },
+    {
+      "case_id": "ARITH-006",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "1/7 (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1458.2,
+      "ocr_text": "1+7 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "1+7",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.142857142": false
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\13_ARITH-006_lcd.png",
+      "lcd_sha256": "1FB9A05AA8EB119D0A40D48910926BD64A1AEE7E24BAC24970A3D94BCC73484D",
+      "ocr_pass": false,
+      "visual_verified": "1/7 exact stacked fraction (visually inspected on 13_ARITH-006_lcd.png)"
+    },
+    {
+      "case_id": "ARITH-007",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "355/113 (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2182.1,
+      "ocr_text": "355+113 JUMP DELETE >MAT/VCT MATH 355 113",
+      "ocr_result_col": "355 113",
+      "ocr_lines": [
+        "355+113",
+        "JUMP DELETE >MAT/VCT MATH",
+        "355",
+        "113"
+      ],
+      "expected_tokens": {
+        "3.14159292": false
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\14_ARITH-007_lcd.png",
+      "lcd_sha256": "786E217AF96A88DCB29CCF596FCA7FED4BF5CD939B0BC5AB34B45A0506DC08E4",
+      "ocr_pass": false,
+      "visual_verified": "355/113 exact stacked fraction (visually inspected on 14_ARITH-007_lcd.png)"
+    },
+    {
+      "case_id": "ARITH-008",
+      "category": "arithmetic",
+      "kind": "math",
+      "expression": "(-2)^11",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2000.4,
+      "ocr_text": "(-2) 11 -2048 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "-2048",
+      "ocr_lines": [
+        "(-2)",
+        "11",
+        "-2048",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "2048": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\15_ARITH-008_lcd.png",
+      "lcd_sha256": "4694DA61E779E8DB59E957773EABACF9CE13A77212548EFD707900A5C44D5DF9"
+    },
+    {
+      "case_id": "POW-001",
+      "category": "powers_roots",
+      "kind": "math",
+      "expression": "sqrt(2) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1460.2,
+      "ocr_text": "1 . 414213562 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "414213562",
+      "ocr_lines": [
+        "1 . 414213562",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "1.414213562": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\16_POW-001_lcd.png",
+      "lcd_sha256": "2BCA3EBFFC2C4114EAE1BFD76E9B2F4EA326F6909F5CB423BDCA1C26AF33E1FD"
+    },
+    {
+      "case_id": "POW-002",
+      "category": "powers_roots",
+      "kind": "math",
+      "expression": "sqrt(3) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1457.9,
+      "ocr_text": "1 . 732050808 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": ". 732050808",
+      "ocr_lines": [
+        "1 . 732050808",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "1.732050808": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\17_POW-002_lcd.png",
+      "lcd_sha256": "835C49FAAF50C4FAA5D852F34FD5280EA5A6185E23AE29E10DEABDC73EDD04A9"
+    },
+    {
+      "case_id": "POW-003",
+      "category": "powers_roots",
+      "kind": "math",
+      "expression": "27^(1/3)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2179.5,
+      "ocr_text": "(1+3) 27 3 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "(1+3)",
+        "27",
+        "3",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "3": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\18_POW-003_lcd.png",
+      "lcd_sha256": "F41F47A81B3D6A19EA27CCA7377161D613800C41E6C92750109684A4AD441194"
+    },
+    {
+      "case_id": "POW-004",
+      "category": "powers_roots",
+      "kind": "math",
+      "expression": "pi^2 (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1457.2,
+      "ocr_text": "2 9 . 869604401 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": ". 869604401",
+      "ocr_lines": [
+        "2",
+        "9 . 869604401",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "9.869604401": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\19_POW-004_lcd.png",
+      "lcd_sha256": "7F97581A772326900D8414E7D757D4720E5E61AF28FFBAC3E0F4B62D1C3FCD48"
+    },
+    {
+      "case_id": "POW-005",
+      "category": "powers_roots",
+      "kind": "math",
+      "expression": "10^99",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1637.5,
+      "ocr_text": "1099 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "1",
+      "ocr_lines": [
+        "1099",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "99": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\20_POW-005_lcd.png",
+      "lcd_sha256": "1BD87A43F8730F594A57C1311BEA84F003AC4E3B8181F2BA01E8CCE028E05FAA"
+    },
+    {
+      "case_id": "NESTED-FRAC-RAD-001",
+      "category": "ultra_extreme_v46",
+      "kind": "math",
+      "expression": "sqrt(1+1/(1+1/(1+1/(1+sqrt(2)))))",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 5630.2,
+      "ocr_text": "1+1+( 1+1+ 1 . 259280127 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "1+1+( | +ã . 259280127",
+      "ocr_lines": [
+        "1+1+( 1+1+",
+        "1 . 259280127",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "1.25928012": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\21_NESTED-FRAC-RAD-001_lcd.png",
+      "lcd_sha256": "488CD6CAEB2F6DA4141EC6820286550BD13124498A2F650FA990A9E477090039"
+    },
+    {
+      "case_id": "TRIG-001",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "sin(pi/6) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2184.2,
+      "ocr_text": "sin (7t+6) 0.5 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "0.5",
+      "ocr_lines": [
+        "sin (7t+6)",
+        "0.5",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.5": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\22_TRIG-001_lcd.png",
+      "lcd_sha256": "D958EDAB9CB3DBF57B2B9472F6E1D42491597D193E261ABACAD836BEBF2BEDCF"
+    },
+    {
+      "case_id": "TRIG-002",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "cos(pi/3) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2183.8,
+      "ocr_text": "COS (7t+3) 0.5 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "0.5",
+      "ocr_lines": [
+        "COS (7t+3)",
+        "0.5",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.5": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\23_TRIG-002_lcd.png",
+      "lcd_sha256": "BE07AE3545CF11128AF6158B7885BD7530BDE0EE2D4E359EB287175D302B9466"
+    },
+    {
+      "case_id": "TRIG-003",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "tan(pi/4)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1999.7,
+      "ocr_text": "tan (7t+4) 1 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "tan (7t+4)",
+        "1",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "1": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\24_TRIG-003_lcd.png",
+      "lcd_sha256": "B9C5384632E4C2A0EB6F13F50DCF09EFBCC21A30026AAFF3CA057BBBD4E0FB3E"
+    },
+    {
+      "case_id": "TRIG-004",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "sin(1)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1093.8,
+      "ocr_text": "sin 1 o. 8414709848 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "8414709848",
+      "ocr_lines": [
+        "sin 1",
+        "o. 8414709848",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.841470984": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\25_TRIG-004_lcd.png",
+      "lcd_sha256": "BDF691BFBB3FA42D12E5BAAD2536F37B30F34A1429744A4070D25866EA90F0A9",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "TRIG-005",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "cos(1)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1094.7,
+      "ocr_text": "cos 1 o. 5403023059 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "5403023059",
+      "ocr_lines": [
+        "cos 1",
+        "o. 5403023059",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.540302305": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\26_TRIG-005_lcd.png",
+      "lcd_sha256": "F9EE600687569B27BD0FE0FF8E541CC92FA5FAF572D957022102F2A764FB215F",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "TRIG-006",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "tan(1)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1093.2,
+      "ocr_text": "tan 1 1 . 557407725 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "557407725",
+      "ocr_lines": [
+        "tan 1",
+        "1 . 557407725",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "1.557407725": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\27_TRIG-006_lcd.png",
+      "lcd_sha256": "863DBB328840619F62C7C6CC5425336BDB0638858E4249C6A3CE88876F4A9089"
+    },
+    {
+      "case_id": "TRIG-007",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "arcsin(0.5) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1821.3,
+      "ocr_text": "sin-1 0.5 o. 5235987756 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "5235987756",
+      "ocr_lines": [
+        "sin-1 0.5",
+        "o. 5235987756",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.523598775": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\28_TRIG-007_lcd.png",
+      "lcd_sha256": "AED9AC70021FAA3A5552CCE5401AC7BD239BDF23CC8F7E21EEB9148ABF3ED1E4",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "TRIG-008",
+      "category": "trigonometry",
+      "kind": "math",
+      "expression": "arctan(1) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1458.3,
+      "ocr_text": "tan-1 1 o. 7853981634 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "7853981634",
+      "ocr_lines": [
+        "tan-1 1",
+        "o. 7853981634",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.785398163": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\29_TRIG-008_lcd.png",
+      "lcd_sha256": "0C450D75A01565EDF8B0B9B155ABC72451E9EF6BC8420E9DD7BE11914245B025",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "LOG-001",
+      "category": "log_exp",
+      "kind": "math",
+      "expression": "ln(e^5)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1456.4,
+      "ocr_text": "In e JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "In e",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "5": false
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\30_LOG-001_lcd.png",
+      "lcd_sha256": "17E1ABB51B7DF55D691CE9A30B0C474003CB6BA65C2C841C2B38795B32238EEC",
+      "ocr_pass": false,
+      "visual_verified": "5 (visually inspected on 30_LOG-001_lcd.png: ln e^5 = 5)"
+    },
+    {
+      "case_id": "LOG-002",
+      "category": "log_exp",
+      "kind": "math",
+      "expression": "log(10000)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1819.2,
+      "ocr_text": "log 10000 4 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "log 10000",
+        "4",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "4": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\31_LOG-002_lcd.png",
+      "lcd_sha256": "7E99F7A4AB47D598BA976C440E91E341B6C20A5950D71416F8C736E163C18E69"
+    },
+    {
+      "case_id": "LOG-003",
+      "category": "log_exp",
+      "kind": "math",
+      "expression": "ln(2)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1094.1,
+      "ocr_text": "In 2 o. 6931471806 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "6931471806",
+      "ocr_lines": [
+        "In 2",
+        "o. 6931471806",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.69314718": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\32_LOG-003_lcd.png",
+      "lcd_sha256": "ACB6DE86CA2B3D5C49C521D589FCFF7B6EE2D2C37121DFDF64AE7D6286F8ED35",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "LOG-004",
+      "category": "log_exp",
+      "kind": "math",
+      "expression": "e^2",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1277.0,
+      "ocr_text": "2 7 . 389056099 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": ". 389056099",
+      "ocr_lines": [
+        "2",
+        "7 . 389056099",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "7.389056099": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\33_LOG-004_lcd.png",
+      "lcd_sha256": "9ACFA52139BFB00D8E824875DB2EED0349BEF4E058CB8FDEEA66AE6F98B68CA3"
+    },
+    {
+      "case_id": "LOG-005",
+      "category": "log_exp",
+      "kind": "math",
+      "expression": "log(2)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1094.6,
+      "ocr_text": "log 2 o. 3010299957 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "3010299957",
+      "ocr_lines": [
+        "log 2",
+        "o. 3010299957",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "0.301029995": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\34_LOG-005_lcd.png",
+      "lcd_sha256": "88206D8E2C17DBBA72CEAC356BB37FBB336D3B0945F5EB23623690B2720EC68F",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "CPLX-001",
+      "category": "complex",
+      "kind": "math",
+      "expression": "(3+4i)*(2-5i)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 3814.3,
+      "ocr_text": "26-71 i Abs Ar Con",
+      "ocr_result_col": "i) 26-7 i",
+      "ocr_lines": [
+        "26-71",
+        "i",
+        "Abs",
+        "Ar",
+        "Con"
+      ],
+      "expected_tokens": {
+        "26": true,
+        "7": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\35_CPLX-001_lcd.png",
+      "lcd_sha256": "44542802A7201C2C1D07E7BA14C35C5005267088D0E3CA398DBCE2937D9A1113"
+    },
+    {
+      "case_id": "CPLX-002",
+      "category": "complex",
+      "kind": "math",
+      "expression": "(3+4i)/(1-2i) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 4004.8,
+      "ocr_text": "(3+4 i) + (1-2i) —1+2 i i Abs Ar Con",
+      "ocr_result_col": "1+2 i",
+      "ocr_lines": [
+        "(3+4 i) +",
+        "(1-2i)",
+        "—1+2 i",
+        "i",
+        "Abs",
+        "Ar",
+        "Con"
+      ],
+      "expected_tokens": {
+        "1": true,
+        "2": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\36_CPLX-002_lcd.png",
+      "lcd_sha256": "AF812C61E9CAA911EDD8DE651A0C1106DB677165F3099695AB178B321446053E"
+    },
+    {
+      "case_id": "CPLX-003",
+      "category": "complex",
+      "kind": "math",
+      "expression": "(1+i)^10",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2549.9,
+      "ocr_text": "(l + i) 10 32i i Abs Ar Con",
+      "ocr_result_col": "32i",
+      "ocr_lines": [
+        "(l + i) 10",
+        "32i",
+        "i",
+        "Abs",
+        "Ar",
+        "Con"
+      ],
+      "expected_tokens": {
+        "32": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\37_CPLX-003_lcd.png",
+      "lcd_sha256": "74CA43AA2A571BF803126C80212C870EC17C8DD6B86EE72CFB99452D5C229A01"
+    },
+    {
+      "case_id": "ULTRA-CPLX-POW127",
+      "category": "ultra_extreme_v46",
+      "kind": "math",
+      "expression": "((3+4i)/(7-2i))^127",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 5956.3,
+      "ocr_text": "-1 . 282582428X152 1 i Abs Ar Con",
+      "ocr_result_col": "582428x152 1 70745x1521 i",
+      "ocr_lines": [
+        "-1 . 282582428X152 1",
+        "i",
+        "Abs",
+        "Ar",
+        "Con"
+      ],
+      "expected_tokens": {
+        "1.2825": true,
+        "1.3953": false
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\38_ULTRA-CPLX-POW127_lcd.png",
+      "lcd_sha256": "90D7A450A0FA69D1D0559BF54ABF1856685BEF4F6C2FEA033E7CEA8205982929",
+      "ocr_pass": false,
+      "visual_verified": "-1.282582428e-21 + 1.395370745e-21 i (visually inspected on 38_ULTRA-CPLX-POW127_lcd.png)"
+    },
+    {
+      "case_id": "EE-FILTER-DB",
+      "category": "electrical_engineering",
+      "kind": "math",
+      "expression": "-10*log(5)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1819.2,
+      "ocr_text": "-6. 989700043 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "989700043",
+      "ocr_lines": [
+        "-6. 989700043",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "6.989700043": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\39_EE-FILTER-DB_lcd.png",
+      "lcd_sha256": "0E3B0D76F4A74729E28D5C321C7AF01FC240CE169F04FB64AED5A7BD2BC8A9B3"
+    },
+    {
+      "case_id": "EE-RC-TAU",
+      "category": "electrical_engineering",
+      "kind": "math",
+      "expression": "5*(1-e^(-1))",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2724.9,
+      "ocr_text": "1-e-l) 3. 160602794 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "160602794",
+      "ocr_lines": [
+        "1-e-l)",
+        "3. 160602794",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "3.160602794": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\40_EE-RC-TAU_lcd.png",
+      "lcd_sha256": "C8FA2872C7B871748D423504C7BAB5BA9A2FCCC86BC41B6D5660123B7EB3924D"
+    },
+    {
+      "case_id": "EE-RMS-HARMONIC",
+      "category": "electrical_engineering",
+      "kind": "math",
+      "expression": "sqrt((12^2+5^2)/2)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 3089.4,
+      "ocr_text": "(122+52) +2 9. 192388155 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "192388155",
+      "ocr_lines": [
+        "(122+52)",
+        "+2",
+        "9. 192388155",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "9.192388155": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\41_EE-RMS-HARMONIC_lcd.png",
+      "lcd_sha256": "19E37D56A371057B81570B2867FC6BD80278C7039ED897F6090E8EA51E1A3FAD"
+    },
+    {
+      "case_id": "EE-RLC-FRES",
+      "category": "electrical_engineering",
+      "kind": "math",
+      "expression": "1/(2*pi*sqrt(0.01*1e-6))",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 4175.8,
+      "ocr_text": "1+(27t O. 01XIX10-6) 1591 . 549431 JUMP DELETE >MAT/VCT MATH",
+      "ocr_result_col": "1x10-6) 591 . 549431",
+      "ocr_lines": [
+        "1+(27t O. 01XIX10-6)",
+        "1591 . 549431",
+        "JUMP DELETE >MAT/VCT MATH"
+      ],
+      "expected_tokens": {
+        "1591.549431": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\42_EE-RLC-FRES_lcd.png",
+      "lcd_sha256": "3A1FF3018F32DBC760FBD319F50779F445623CC3FC04148545B35CDC3A23CAFF"
+    },
+    {
+      "case_id": "INT-BASE-001",
+      "category": "integral",
+      "kind": "math",
+      "expression": "int(x^3, 0, 3)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 3677.1,
+      "ocr_text": "81 Solve d/dx d2/dx2 fdx",
+      "ocr_result_col": "81",
+      "ocr_lines": [
+        "81",
+        "Solve d/dx d2/dx2 fdx"
+      ],
+      "expected_tokens": {
+        "81": true,
+        "4": false
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\43_INT-BASE-001_lcd.png",
+      "lcd_sha256": "92789E2C213AC48CACD761D417A276C11EA39FFC6322B090B2F6C256BE8E67AB",
+      "ocr_pass": false,
+      "visual_verified": "81/4 exact stacked fraction (visually inspected on 43_INT-BASE-001_lcd.png)"
+    },
+    {
+      "case_id": "INT-BASE-002",
+      "category": "integral",
+      "kind": "math",
+      "expression": "int(sin(x), 0, pi)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 3494.1,
+      "ocr_text": "sin xdx 2 Solve d/dx d2/dx2 fdx",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "sin xdx",
+        "2",
+        "Solve d/dx d2/dx2 fdx"
+      ],
+      "expected_tokens": {
+        "2": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\44_INT-BASE-002_lcd.png",
+      "lcd_sha256": "53CE6E938643D065FF7FC62654C9A69CBA2933930F183218E843BD769E994DFA"
+    },
+    {
+      "case_id": "INT-BASE-004",
+      "category": "integral",
+      "kind": "math",
+      "expression": "int(1/(1+x^2), 0, 1) (S<->D)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 4880.8,
+      "ocr_text": "2) dx o. 7853981634 Solve d/dx d2/dx2 fdx",
+      "ocr_result_col": "7853981634",
+      "ocr_lines": [
+        "2) dx",
+        "o. 7853981634",
+        "Solve d/dx d2/dx2 fdx"
+      ],
+      "expected_tokens": {
+        "0.785398163": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\45_INT-BASE-004_lcd.png",
+      "lcd_sha256": "B09665CB914B98EDD9ECA4EDD616F62A3C61519014570664D9A01C2B2A6BE7A6",
+      "ocr_normalization": "Windows Media.Ocr leading o. -> 0."
+    },
+    {
+      "case_id": "SUM-001",
+      "category": "summation",
+      "kind": "math",
+      "expression": "sum(x^2, 1, 100)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 4223.1,
+      "ocr_text": "100 x=l FMin FMax 338350 10 ab",
+      "ocr_result_col": "338350",
+      "ocr_lines": [
+        "100",
+        "x=l",
+        "FMin FMax",
+        "338350",
+        "10 ab"
+      ],
+      "expected_tokens": {
+        "338350": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\46_SUM-001_lcd.png",
+      "lcd_sha256": "FD41486941C22F83CCC976FEDA483CF321F732A4F69153A7F5FC923352CDA7E5"
+    },
+    {
+      "case_id": "COMB-NCR-001",
+      "category": "combinatorics",
+      "kind": "math",
+      "expression": "20 C 10",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 2180.0,
+      "ocr_text": "20C10 184756 x! nPr nCr RAND",
+      "ocr_result_col": "184156",
+      "ocr_lines": [
+        "20C10",
+        "184756",
+        "x!",
+        "nPr",
+        "nCr",
+        "RAND"
+      ],
+      "expected_tokens": {
+        "184756": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\47_COMB-NCR-001_lcd.png",
+      "lcd_sha256": "0D8BFAE7379F5636145146222BE48EB9992C78289258E8643B6FEBC95076FB49"
+    },
+    {
+      "case_id": "ULTRA-BINOM-TAIL",
+      "category": "ultra_extreme_v46",
+      "kind": "math",
+      "expression": "BinomialCD(950,1000,1000,0.9)",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 6142.1,
+      "ocr_text": "Bcd InvB",
+      "ocr_result_col": "950, 1000, 995168x1509",
+      "ocr_lines": [
+        "Bcd InvB"
+      ],
+      "expected_tokens": {
+        "5.9951": false
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\48_ULTRA-BINOM-TAIL_lcd.png",
+      "lcd_sha256": "00E15F069D07FB483A2891D542C9251C4B198670C01AAEF235A6DAE7F453F486",
+      "ocr_pass": false,
+      "visual_verified": "5.995168e-09 (visually inspected on 48_ULTRA-BINOM-TAIL_lcd.png)"
+    },
+    {
+      "case_id": "ERR-DIV0",
+      "category": "error_handling",
+      "kind": "math",
+      "expression": "1/0 -> Ma ERROR",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1277.3,
+      "ocr_text": "9 1 Ma ERROR Press: [EXITI 9 DIST StdDev Var",
+      "ocr_result_col": "[EXITI",
+      "ocr_lines": [
+        "9",
+        "1",
+        "Ma ERROR",
+        "Press: [EXITI",
+        "9",
+        "DIST StdDev Var"
+      ],
+      "expected_tokens": {
+        "ERROR": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\49_ERR-DIV0_lcd.png",
+      "lcd_sha256": "414032C7C1F9E954DD99C7F19F005EF12012DFBD26F32626DA5F86DC5CD88CF1"
+    },
+    {
+      "case_id": "ERR-LN0",
+      "category": "error_handling",
+      "kind": "math",
+      "expression": "ln(0) -> Ma ERROR",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1094.3,
+      "ocr_text": "9 1 Ma ERROR Press: Mat Mat+Lst Det [EXITI Trn",
+      "ocr_result_col": "[EXITI",
+      "ocr_lines": [
+        "9",
+        "1",
+        "Ma ERROR",
+        "Press:",
+        "Mat Mat+Lst Det",
+        "[EXITI",
+        "Trn"
+      ],
+      "expected_tokens": {
+        "ERROR": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\50_ERR-LN0_lcd.png",
+      "lcd_sha256": "216C8CBA9A7F794A896511C33C74235DA664D666E83D56ED0F263B13F94339E0"
+    },
+    {
+      "case_id": "ERR-SYNTAX",
+      "category": "error_handling",
+      "kind": "math",
+      "expression": "1+*2 -> Syntax ERROR",
+      "is_casio_fidelity": false,
+      "elapsed_ms": 1455.3,
+      "ocr_text": "9 1 Syntax ERROR Press: Mat Mat+Lst Det [EXITI Trn",
+      "ocr_result_col": "9 RROR [EXITI",
+      "ocr_lines": [
+        "9",
+        "1",
+        "Syntax ERROR",
+        "Press:",
+        "Mat Mat+Lst Det",
+        "[EXITI",
+        "Trn"
+      ],
+      "expected_tokens": {
+        "ERROR": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\51_ERR-SYNTAX_lcd.png",
+      "lcd_sha256": "05BB5C04BFF08AF26A81F2531BFEE2EFFA895730ECBA6E6A9EF94E665F34E97A"
+    },
+    {
+      "case_id": "ULTRA-SYS-3X3",
+      "category": "ultra_extreme_v46",
+      "kind": "equation",
+      "expression": "Simul 3x3 eps=1e-8 (det=1e-16 < 1e-15 BCD15 -> Casio Ma ERROR)",
+      "is_casio_fidelity": true,
+      "elapsed_ms": 17126.5,
+      "ocr_text": "a Ma ERROR Press: [EXITI 3 3 3. 00000001 DELETE",
+      "expected_tokens": {
+        "ERROR": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\52_ULTRA-SYS-3X3_lcd.png",
+      "lcd_sha256": "9BD8CF1409490BA692CEF0130AEE270AFE792133BE12C99137E1709FDCDE4284",
+      "ocr_result_col": "3 3 [EXITI 3. 00000001",
+      "ocr_lines": [
+        "a",
+        "Ma ERROR",
+        "Press: [EXITI",
+        "3",
+        "3",
+        "3. 00000001",
+        "DELETE"
+      ]
+    },
+    {
+      "case_id": "ULTRA-SYS-3X3-EPS6",
+      "category": "ultra_extreme_v46",
+      "kind": "equation",
+      "expression": "Simul 3x3 eps=1e-6 (det=1e-12 -> exact x=y=z=1)",
+      "elapsed_ms": 15034.3,
+      "ocr_text": "an X+bn Y+Cn Z=dn x z REPEAT 1 1 1",
+      "expected_tokens": {
+        "1": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\53_ULTRA-SYS-3X3-EPS6_lcd.png",
+      "lcd_sha256": "C9F279B883B40581B34986F2EF9D4AD942C83A9B6EA4A6DE3DCFD2987918D7E2",
+      "ocr_result_col": "",
+      "ocr_lines": [
+        "an X+bn Y+Cn Z=dn",
+        "x",
+        "z",
+        "REPEAT",
+        "1",
+        "1",
+        "1"
+      ]
+    },
+    {
+      "case_id": "POLY-NEAR-ROOTS-001",
+      "category": "polynomial",
+      "kind": "equation",
+      "expression": "(x-1)(x-1.001)(x-1.002)=0",
+      "is_casio_fidelity": true,
+      "elapsed_ms": 12352.2,
+      "ocr_text": "aX3 +bX2 +cX+d=0 X1 1.001 x3 1001/1000 REPEAT",
+      "expected_tokens": {
+        "1.00": true
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\54_POLY-NEAR-ROOTS-001_lcd.png",
+      "lcd_sha256": "BC7C1E345FB441ADD50407BE97E6DBBA162959AE335857AC8E59AF9506B45A78",
+      "ocr_result_col": "Memory nknowns?",
+      "ocr_lines": [
+        "Simul taneous",
+        "No Data In Memory",
+        "Number Of Unknowns?"
+      ],
+      "visual_verified": "X1 = 1.001 x3 (1001/1000) (visually inspected on 54_POLY-NEAR-ROOTS-001_lcd.png)"
+    },
+    {
+      "case_id": "GRAPH-POLAR-ROSE",
+      "category": "graphics",
+      "kind": "graph",
+      "expression": "Polar r1=cos(11*theta)",
+      "elapsed_ms": 5528.5,
+      "ocr_text": "-s -5 -4 -3 -2 2 1 -2 2 3 4 5",
+      "graph_metrics": {
+        "width": 396,
+        "height": 223,
+        "unique_colors": 4,
+        "non_white_ratio": 0.1001,
+        "blue_curve_ratio": 0.0182,
+        "black_ink_pixels": 2948
+      },
+      "passed": true,
+      "lcd_image": "D:\\Proyectos\\CalculadorasUnificadas\\tests\\cg50_validation\\reports\\diff_v46\\manager_plus_shots\\55_GRAPH-POLAR-ROSE_lcd.png",
+      "lcd_sha256": "99FDBFE0A3299C2F8CC23DCFB95174E65C7FD388D01AAFBB01EE4E01920BA7E2",
+      "ocr_result_col": "1 2 3 4 5",
+      "ocr_lines": [
+        "-s",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "2",
+        "1",
+        "-2",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    }
+  ]
+}

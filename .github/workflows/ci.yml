@@ -1,0 +1,81 @@
+name: CalculadorasUnificadas CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  native-core-windows:
+    name: Native C++ Core & SH7305 Hardware Tests (Windows MSVC)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake (ROM-free deterministic suite)
+        run: |
+          cmake -S core -B build-ci -DBUILD_CORE_TESTS=ON -DBUILD_CG50_BATTERY=OFF
+
+      - name: Build Core & Hardware Certification Targets
+        run: |
+          cmake --build build-ci --config Release --parallel
+
+      - name: Run Deterministic Hardware, ISA, CFI, USB, Contract & Stress Tests
+        env:
+          CG50_CERT_STRICT_NO_HLE: "1"
+          CG50_MMIO_AUDIT: "1"
+        run: |
+          ctest --test-dir build-ci -C Release --output-on-failure -E "cg50_android_smoke|cg50_thread_isolation|cw2_headless|nx_regression"
+          ./build-ci/Release/cg50_register_cert_lab.exe --out build-ci/reg_cert
+          ./build-ci/Release/cg50_combined_hw_stress.exe --seqs 25000 --threads 8 --out build-ci/stress_cert
+
+      - name: Run Taxonomic Oracle Comparator Unit Tests
+        run: |
+          python tests/cg50_validation/oracles/test_diff_comparator.py
+
+  native-core-linux:
+    name: Native C++ Core & SH7305 Hardware Tests (Linux GCC)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure & Build CMake (Release)
+        run: |
+          cmake -S core -B build-ci -DCMAKE_BUILD_TYPE=Release -DBUILD_CORE_TESTS=ON -DBUILD_CG50_BATTERY=OFF
+          cmake --build build-ci --parallel
+
+      - name: Run Deterministic Hardware & ISA Tests
+        env:
+          CG50_CERT_STRICT_NO_HLE: "1"
+          CG50_MMIO_AUDIT: "1"
+        run: |
+          ctest --test-dir build-ci --output-on-failure -E "cg50_android_smoke|cg50_thread_isolation|cw2_headless|nx_regression"
+          ./build-ci/cg50_register_cert_lab --out build-ci/reg_cert
+          ./build-ci/cg50_combined_hw_stress --seqs 25000 --threads 8 --out build-ci/stress_cert
+
+      - name: Run Taxonomic Oracle Comparator Unit Tests
+        run: |
+          python3 tests/cg50_validation/oracles/test_diff_comparator.py
+
+  flutter-android-app:
+    name: Flutter Static Analysis & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Run flutter pub get, analyze & test
+        working-directory: apps/android
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test

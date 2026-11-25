@@ -1,0 +1,11 @@
+#include <windows.h>
+#include "resource_ids.h"
+
+1 RT_MANIFEST "app.manifest"
+
+// Firmware RCDATA is generated at configure time into generated_roms.rc
+// (ROMS_DIR / roms / sibling paths).
+
+IDB_SKIN_CW BITMAP "extracted_white/bitmap_103.bmp"
+IDB_SKIN_ES BITMAP "extracted_gray/bitmap_3001.bmp"
+IDB_SKIN_CG BITMAP "extracted_cg50/full_cg50_skin.bmp"

@@ -7,9 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'connectivity/cg50_local_bridge_server.dart';
+import 'cuadernu/cuadernu_editor_view.dart';
+import 'cuadernu/cuadernu_knowledge_study_view.dart';
+import 'cuadernu/cuadernu_models.dart';
+import 'cuadernu/cuadernu_stem_lab_view.dart';
 import 'keylog/cg50_keylog.dart';
 import 'native/calc_models.dart';
 import 'native/casio_ffi_bindings.dart';
+import 'native/cuadernu_studio_bindings.dart';
 import 'theme/tema_interfaz.dart';
 import 'ui/cg50_capture_and_lcd_sheets.dart';
 import 'ui/cg50_connectivity_sheet.dart';
@@ -18,17 +23,30 @@ import 'ui/native_calculator_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const CalculadorasUnificadasApp());
+  runApp(const CuadernUApp());
+}
+
+/// Primary unified CuadernU application (Notebooks + Infinite Canvas + STEM Lab
+/// + Knowledge/SM-2 Study + 4 native Casio v47 calculators).
+class CuadernUApp extends CalculadorasUnificadasApp {
+  const CuadernUApp({
+    super.key,
+    super.disableNativeBoot = false,
+    super.initialTheme = AppThemePreset.porcelainLight,
+    super.initialTab = CuadernuWorkspaceTab.notebook,
+  });
 }
 
 class CalculadorasUnificadasApp extends StatefulWidget {
   final bool disableNativeBoot;
   final AppThemePreset initialTheme;
+  final CuadernuWorkspaceTab initialTab;
 
   const CalculadorasUnificadasApp({
     super.key,
     this.disableNativeBoot = false,
     this.initialTheme = AppThemePreset.porcelainLight,
+    this.initialTab = CuadernuWorkspaceTab.calculators,
   });
 
   @override
@@ -50,11 +68,12 @@ class _CalculadorasUnificadasAppState extends State<CalculadorasUnificadasApp> {
   Widget build(BuildContext context) {
     final tokens = TokensInterfaz.of(_themePreset);
     return MaterialApp(
-      title: 'Calculadoras',
+      title: 'CuadernU',
       debugShowCheckedModeBanner: false,
       theme: tokens.toThemeData(),
       home: CalculadorasHomeScreen(
         disableNativeBoot: widget.disableNativeBoot,
+        initialTab: widget.initialTab,
         tokens: tokens,
         themePreset: _themePreset,
         reduceTransparency: _reduceTransparency,
@@ -68,6 +87,7 @@ class _CalculadorasUnificadasAppState extends State<CalculadorasUnificadasApp> {
 
 class CalculadorasHomeScreen extends StatefulWidget {
   final bool disableNativeBoot;
+  final CuadernuWorkspaceTab initialTab;
   final TokensInterfaz tokens;
   final AppThemePreset themePreset;
   final bool reduceTransparency;
@@ -82,6 +102,7 @@ class CalculadorasHomeScreen extends StatefulWidget {
     required this.reduceTransparency,
     required this.onThemeChanged,
     required this.onReduceTransparencyChanged,
+    this.initialTab = CuadernuWorkspaceTab.notebook,
   });
 
   @override
@@ -90,6 +111,9 @@ class CalculadorasHomeScreen extends StatefulWidget {
 
 class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     with WidgetsBindingObserver {
+  late CuadernuWorkspaceTab _activeTab;
+  bool _dockedCalcOnNotebook = false;
+
   CasioCalcKind _activeKind = CasioCalcKind.cg50;
   CasioCalcKind _secondaryKind = CasioCalcKind.cw2;
   bool _sideBySide = false;
@@ -98,6 +122,9 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
   String? _stageError;
   String? _runtimeDir;
   String? _libraryPath;
+
+  CuadernuStudioBindings? _studio;
+  final CuadernuEditorController _editorCtrl = CuadernuEditorController();
 
   final Map<CasioCalcKind, CasioEngineController> _engines = {};
   final Set<CasioCalcKind> _booting = {};
@@ -112,6 +139,7 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
   @override
   void initState() {
     super.initState();
+    _activeTab = widget.initialTab;
     WidgetsBinding.instance.addObserver(this);
     if (!widget.disableNativeBoot) {
       unawaited(_initRuntime());
@@ -129,9 +157,7 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     _savingEngines.add(kind);
     try {
       final ok = await engine.savePersistentState();
-      if (!ok) {
-        _dirtyEngines.add(kind);
-      }
+      if (!ok) _dirtyEngines.add(kind);
       return ok;
     } finally {
       _savingEngines.remove(kind);
@@ -144,6 +170,7 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
+      _editorCtrl.saveCudoc();
       for (final entry in _engines.entries) {
         entry.value.setPaused(true);
         if (_dirtyEngines.contains(entry.key)) {
@@ -159,10 +186,15 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     try {
       final dir = await CasioRomStaging.ensureStaged();
       final bindings = CasioNativeBindings.open();
+      final studio = CuadernuStudioBindings.fromCasio(bindings);
+      if (studio.isAvailable) {
+        await _editorCtrl.initialize(studio);
+      }
       if (!mounted) return;
       setState(() {
         _runtimeDir = dir;
         _libraryPath = bindings.libraryPath;
+        _studio = studio;
         _staging = false;
       });
       await _ensureEngineStarted(_activeKind);
@@ -233,17 +265,21 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
       engine.dispose();
       return;
     }
-    setState(() {
-      _engines[kind] = engine;
-    });
+    setState(() => _engines[kind] = engine);
     _syncEnginePauseStates();
   }
 
   Set<CasioCalcKind> _visibleKinds(double width) {
-    if (_sideBySide && width >= 720) {
-      return {_activeKind, _secondaryKind};
+    if (_activeTab == CuadernuWorkspaceTab.calculators) {
+      if (_sideBySide && width >= 720) return {_activeKind, _secondaryKind};
+      return {_activeKind};
     }
-    return {_activeKind};
+    if (_activeTab == CuadernuWorkspaceTab.notebook &&
+        _dockedCalcOnNotebook &&
+        width >= 720) {
+      return {_activeKind};
+    }
+    return const {};
   }
 
   void _syncEnginePauseStates([double? width]) {
@@ -256,6 +292,15 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
         unawaited(_persistEngine(entry.key));
       }
     }
+  }
+
+  void _selectTab(CuadernuWorkspaceTab tab) {
+    if (tab == _activeTab) return;
+    setState(() => _activeTab = tab);
+    if (tab == CuadernuWorkspaceTab.calculators) {
+      unawaited(_ensureEngineStarted(_activeKind));
+    }
+    _syncEnginePauseStates();
   }
 
   void _selectCalculator(CasioCalcKind kind) {
@@ -285,6 +330,50 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     _syncEnginePauseStates();
   }
 
+  void _toggleDockedCalculator() {
+    setState(() => _dockedCalcOnNotebook = !_dockedCalcOnNotebook);
+    if (_dockedCalcOnNotebook) {
+      unawaited(_ensureEngineStarted(_activeKind));
+    }
+    _syncEnginePauseStates();
+  }
+
+  void _sendActiveCalcToCuadernu() {
+    if (!_editorCtrl.isReady) {
+      _showStatusSnack('Cuaderno aún preparándose');
+      return;
+    }
+    final engine = _engines[_activeKind];
+    final skin = skinForKind(_activeKind);
+    Uint8List? png;
+    if (engine != null &&
+        engine.lastRgbaBytes != null &&
+        engine.frameWidth > 0 &&
+        engine.frameHeight > 0) {
+      final composed = composeScaledCapture(
+        srcRgba: engine.lastRgbaBytes!,
+        srcW: engine.frameWidth,
+        srcH: engine.frameHeight,
+        scale: 2,
+        includeFrame: true,
+      );
+      png = encodeRgbaToPng(composed.rgba, composed.width, composed.height);
+    }
+    final recentKeys = _history
+        .where((h) => h.kind == _activeKind)
+        .take(12)
+        .map((h) => h.keyLabel)
+        .join(' ');
+    _editorCtrl.insertCasioCaptureCard(
+      calcModel: skin.title,
+      expr: recentKeys.isNotEmpty ? recentKeys : 'Captura de pantalla',
+      result: '',
+      keySeq: recentKeys,
+      pngBytes: png,
+    );
+    _showStatusSnack('Pantalla de ${skin.title} insertada en ${_editorCtrl.title}');
+  }
+
   void _onKeyLogged(CasioKeyDef key, CasioEngineController engine) {
     _dirtyEngines.add(engine.kind);
     if (engine.kind == CasioCalcKind.cg50 && _keyLog.isRecording) {
@@ -311,9 +400,7 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
           lcdFg: skin.lcdForeground,
         ),
       );
-      if (_history.length > 60) {
-        _history.removeAt(0);
-      }
+      if (_history.length > 60) _history.removeAt(0);
     });
   }
 
@@ -323,17 +410,15 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return CasioHistorySheet(
-            entries: _history,
-            tokens: widget.tokens,
-            reduceTransparency: widget.reduceTransparency,
-            onClear: () {
-              setState(() => _history.clear());
-              setSheetState(() {});
-            },
-          );
-        },
+        builder: (ctx, setSheetState) => CasioHistorySheet(
+          entries: _history,
+          tokens: widget.tokens,
+          reduceTransparency: widget.reduceTransparency,
+          onClear: () {
+            setState(() => _history.clear());
+            setSheetState(() {});
+          },
+        ),
       ),
     );
   }
@@ -615,13 +700,9 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
         mimeType: 'application/octet-stream',
         sourcePath: tmpFile.path,
       );
-      if (saved) {
-        _showStatusSnack('Respaldo de memoria guardado');
-      }
+      if (saved) _showStatusSnack('Respaldo de memoria guardado');
     } finally {
-      if (await tmpFile.exists()) {
-        await tmpFile.delete();
-      }
+      if (await tmpFile.exists()) await tmpFile.delete();
     }
   }
 
@@ -646,17 +727,14 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
       }
     } finally {
       final f = File(picked);
-      if (await f.exists()) {
-        await f.delete();
-      }
+      if (await f.exists()) await f.delete();
     }
   }
 
   Future<void> _saveActiveState() async {
     final ok = await _persistEngine(_activeKind, force: true);
     _showStatusSnack(
-      ok ? 'Estado guardado' : 'No se pudo guardar el estado',
-    );
+        ok ? 'Estado guardado' : 'No se pudo guardar el estado');
   }
 
   void _resetActive({required bool cold}) {
@@ -709,19 +787,17 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
     if (kind == CasioCalcKind.cg50) {
       return AnimatedBuilder(
         animation: _keyLog,
-        builder: (context, _) {
-          return NativeCalculatorFaceplate(
-            key: ValueKey(kind),
-            skin: skin,
-            engine: engine,
-            tokens: widget.tokens,
-            onKeyLogged: _onKeyLogged,
-            enableHardwareKeyboard: primary,
-            highlightedCurrentKeyCode: _keyLog.highlightedCurrentKeyCode,
-            highlightedNextKeyCode: _keyLog.highlightedNextKeyCode,
-            onLcdTap: () => unawaited(_scanAndOpenQr(silentWhenAbsent: true)),
-          );
-        },
+        builder: (context, _) => NativeCalculatorFaceplate(
+          key: ValueKey(kind),
+          skin: skin,
+          engine: engine,
+          tokens: widget.tokens,
+          onKeyLogged: _onKeyLogged,
+          enableHardwareKeyboard: primary,
+          highlightedCurrentKeyCode: _keyLog.highlightedCurrentKeyCode,
+          highlightedNextKeyCode: _keyLog.highlightedNextKeyCode,
+          onLcdTap: () => unawaited(_scanAndOpenQr(silentWhenAbsent: true)),
+        ),
       );
     }
     return NativeCalculatorFaceplate(
@@ -765,10 +841,9 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
             child: Text(
               statusText,
               style: TextStyle(
-                color: t.textPrimary,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-              ),
+                  color: t.textPrimary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500),
             ),
           ),
           if (_keyLog.isPlaying) ...[
@@ -780,33 +855,265 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
                   unawaited(_keyLog.startAutoPlay(cg));
                 }
               },
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              child: Text(
-                _keyLog.mode == KeyLogMode.playingAuto ? 'Pausa' : 'Reanudar',
-                style: const TextStyle(fontSize: 12.5),
-              ),
+              child: Text(_keyLog.mode == KeyLogMode.playingAuto
+                  ? 'Pausa'
+                  : 'Reanudar'),
             ),
             TextButton(
               onPressed: () => unawaited(_keyLog.stepNext(cg)),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              child: const Text('Paso', style: TextStyle(fontSize: 12.5)),
+              child: const Text('Paso'),
             ),
           ],
           TextButton(
             onPressed: _keyLog.stop,
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              foregroundColor: t.destructive,
-            ),
-            child: const Text('Detener', style: TextStyle(fontSize: 12.5)),
+            style: TextButton.styleFrom(foregroundColor: t.destructive),
+            child: const Text('Detener'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverflowMenu(TokensInterfaz t, {required bool includeCalcItems}) {
+    return PopupMenuButton<String>(
+      tooltip: 'Opciones',
+      padding: EdgeInsets.zero,
+      icon: Icon(
+        CupertinoIcons.ellipsis_circle,
+        size: 21,
+        color: t.textPrimary,
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'theme_light':
+            widget.onThemeChanged(AppThemePreset.porcelainLight);
+            break;
+          case 'theme_dark':
+            widget.onThemeChanged(AppThemePreset.calibratedDark);
+            break;
+          case 'theme_hc':
+            widget.onThemeChanged(AppThemePreset.highContrast);
+            break;
+          case 'toggle_trans':
+            widget.onReduceTransparencyChanged(!widget.reduceTransparency);
+            break;
+          case 'send_to_notebook':
+            _sendActiveCalcToCuadernu();
+            break;
+          case 'connect_files':
+            _openConnectivitySheet();
+            break;
+          case 'keylog':
+            _openKeyLogSheet();
+            break;
+          case 'enlarged_lcd':
+            _openEnlargedLcdSheet();
+            break;
+          case 'capture_lcd':
+            _openCaptureSheet();
+            break;
+          case 'scan_qr':
+            unawaited(_scanAndOpenQr(silentWhenAbsent: false));
+            break;
+          case 'save':
+            unawaited(_saveActiveState());
+            break;
+          case 'warm_reset':
+            _resetActive(cold: false);
+            break;
+          case 'cold_reset':
+            _resetActive(cold: true);
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        CheckedPopupMenuItem<String>(
+          value: 'theme_light',
+          checked: widget.themePreset == AppThemePreset.porcelainLight,
+          child: const Text('Porcelana Claro'),
+        ),
+        CheckedPopupMenuItem<String>(
+          value: 'theme_dark',
+          checked: widget.themePreset == AppThemePreset.calibratedDark,
+          child: const Text('Oscuro Calibrado'),
+        ),
+        CheckedPopupMenuItem<String>(
+          value: 'theme_hc',
+          checked: widget.themePreset == AppThemePreset.highContrast,
+          child: const Text('Alto Contraste'),
+        ),
+        CheckedPopupMenuItem<String>(
+          value: 'toggle_trans',
+          checked: widget.reduceTransparency,
+          child: const Text('Reducir transparencia'),
+        ),
+        if (includeCalcItems) ...[
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'send_to_notebook',
+            child: Text('Enviar pantalla al cuaderno'),
+          ),
+          if (_activeKind == CasioCalcKind.cg50) ...[
+            const PopupMenuItem<String>(
+              value: 'connect_files',
+              child: Text('Conectar y archivos…'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'keylog',
+              child: Text('Key-Log…'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'scan_qr',
+              child: Text('Leer QR en pantalla'),
+            ),
+          ],
+          const PopupMenuItem<String>(
+            value: 'enlarged_lcd',
+            child: Text('Pantalla ampliada…'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'capture_lcd',
+            child: Text('Capturar pantalla…'),
+          ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'save',
+            child: Text('Guardar estado'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'warm_reset',
+            child: Text('Reiniciar calculadora'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'cold_reset',
+            child: Text('Reinicio frío'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCalculatorBar(TokensInterfaz t, bool canSideBySide, bool showSplit) {
+    return TranslucentSurface(
+      tokens: t,
+      reduceTransparency: widget.reduceTransparency,
+      bottomBorderOnly: true,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SelectorSegmentado<CasioCalcKind>(
+                tokens: t,
+                value: _activeKind,
+                segments: const [
+                  (CasioCalcKind.cg50, 'CG50'),
+                  (CasioCalcKind.cw2, '991CW'),
+                  (CasioCalcKind.classwiz, '570LA X'),
+                  (CasioCalcKind.naturalEs, '570VN+'),
+                ],
+                onChanged: _selectCalculator,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          if (_editorCtrl.isReady)
+            IconButton(
+              tooltip: 'Enviar pantalla a CuadernU',
+              visualDensity: VisualDensity.compact,
+              onPressed: _sendActiveCalcToCuadernu,
+              icon: Icon(CupertinoIcons.doc_append, size: 19, color: t.accent),
+            ),
+          if (canSideBySide)
+            IconButton(
+              tooltip: 'Vista lado a lado',
+              visualDensity: VisualDensity.compact,
+              onPressed: _toggleSideBySide,
+              icon: Icon(
+                showSplit
+                    ? CupertinoIcons.rectangle_split_3x1_fill
+                    : CupertinoIcons.rectangle_split_3x1,
+                size: 20,
+                color: showSplit ? t.accent : t.textSecondary,
+              ),
+            ),
+          if (_activeKind == CasioCalcKind.cg50)
+            AnimatedBuilder(
+              animation: Listenable.merge([?_bridgeServer, ?_linkClient]),
+              builder: (context, _) {
+                final activeConn = (_bridgeServer?.isRunning ?? false) ||
+                    (_linkClient?.isConnected ?? false);
+                return IconButton(
+                  tooltip: 'Conectar y archivos',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _openConnectivitySheet,
+                  icon: Badge(
+                    isLabelVisible: activeConn,
+                    smallSize: 7,
+                    backgroundColor: const Color(0xFF34C759),
+                    child: Icon(
+                      CupertinoIcons.folder,
+                      size: 20,
+                      color: activeConn ? t.accent : t.textPrimary,
+                    ),
+                  ),
+                );
+              },
+            ),
+          IconButton(
+            tooltip: 'Historial',
+            visualDensity: VisualDensity.compact,
+            onPressed: _openHistorySheet,
+            icon: Badge(
+              isLabelVisible: _history.isNotEmpty,
+              backgroundColor: t.accent,
+              label: Text('${_history.length}'),
+              child: Icon(CupertinoIcons.clock, size: 20, color: t.textPrimary),
+            ),
+          ),
+          _buildOverflowMenu(t, includeCalcItems: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCuadernuHeader(TokensInterfaz t, bool canSplitNotebookCalc) {
+    return TranslucentSurface(
+      tokens: t,
+      reduceTransparency: widget.reduceTransparency,
+      bottomBorderOnly: true,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      child: Row(
+        children: [
+          Text(
+            'CuadernU',
+            style: TextStyle(
+              color: t.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const Spacer(),
+          if (_activeTab == CuadernuWorkspaceTab.notebook &&
+              canSplitNotebookCalc)
+            TextButton.icon(
+              onPressed: _toggleDockedCalculator,
+              icon: Icon(
+                CupertinoIcons.square_split_2x1,
+                size: 17,
+                color: _dockedCalcOnNotebook ? t.accent : t.textSecondary,
+              ),
+              label: Text(
+                _dockedCalcOnNotebook ? 'Ocultar Casio' : 'Casio acoplada',
+                style: TextStyle(
+                  color: _dockedCalcOnNotebook ? t.accent : t.textSecondary,
+                  fontSize: 12.5,
+                ),
+              ),
+            ),
+          _buildOverflowMenu(t, includeCalcItems: false),
         ],
       ),
     );
@@ -815,6 +1122,8 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _editorCtrl.saveCudoc();
+    _editorCtrl.dispose();
     _bridgeServer?.dispose();
     _linkClient?.dispose();
     _keyLog.dispose();
@@ -834,265 +1143,225 @@ class _CalculadorasHomeScreenState extends State<CalculadorasHomeScreen>
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool canSideBySide = constraints.maxWidth >= 720;
-            final bool showSplit = _sideBySide && canSideBySide;
+            final bool showSplitCalc = _sideBySide && canSideBySide;
+            final bool showDockedCalc = _activeTab == CuadernuWorkspaceTab.notebook &&
+                _dockedCalcOnNotebook &&
+                canSideBySide;
+
+            Widget bodyContent;
+            if (_staging) {
+              bodyContent = Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(strokeWidth: 2.2, color: t.accent),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Preparando CuadernU…',
+                      style: TextStyle(color: t.textSecondary, fontSize: 13.5),
+                    ),
+                  ],
+                ),
+              );
+            } else if (_stageError != null) {
+              bodyContent = Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    _stageError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: t.destructive),
+                  ),
+                ),
+              );
+            } else {
+              switch (_activeTab) {
+                case CuadernuWorkspaceTab.notebook:
+                  final editor = CuadernuEditorView(
+                    controller: _editorCtrl,
+                    tokens: t,
+                    reduceTransparency: widget.reduceTransparency,
+                    onInsertActiveCasio: _sendActiveCalcToCuadernu,
+                    onSaveFile: _saveViaSystemDialog,
+                    onPickFile: _pickFileWithMeta,
+                    onNotify: _showStatusSnack,
+                  );
+                  bodyContent = showDockedCalc
+                      ? Row(
+                          children: [
+                            Expanded(flex: 3, child: editor),
+                            Container(width: 1, color: t.border),
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 6),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: SelectorSegmentado<CasioCalcKind>(
+                                        tokens: t,
+                                        value: _activeKind,
+                                        segments: const [
+                                          (CasioCalcKind.cg50, 'CG50'),
+                                          (CasioCalcKind.cw2, '991CW'),
+                                          (CasioCalcKind.classwiz, '570LA X'),
+                                          (CasioCalcKind.naturalEs, '570VN+'),
+                                        ],
+                                        onChanged: _selectCalculator,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: _buildPane(_activeKind,
+                                          primary: true),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : editor;
+                  break;
+
+                case CuadernuWorkspaceTab.calculators:
+                  bodyContent = Column(
+                    children: [
+                      AnimatedBuilder(
+                        animation: _keyLog,
+                        builder: (context, _) => _buildKeyLogBanner(t),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                          child: showSplitCalc
+                              ? Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildPane(_activeKind,
+                                          primary: true),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildPane(_secondaryKind,
+                                          primary: false),
+                                    ),
+                                  ],
+                                )
+                              : _buildPane(_activeKind, primary: true),
+                        ),
+                      ),
+                    ],
+                  );
+                  break;
+
+                case CuadernuWorkspaceTab.stem:
+                  bodyContent = CuadernuStemLabView(
+                    studio: _studio,
+                    tokens: t,
+                    reduceTransparency: widget.reduceTransparency,
+                    onInsertToNotebook: (title, content, {mathExpr}) {
+                      _editorCtrl.insertFromStem(
+                        title: title,
+                        content: content,
+                        mathExpr: mathExpr,
+                      );
+                      _showStatusSnack('Insertado en ${_editorCtrl.title}');
+                    },
+                    onNotify: _showStatusSnack,
+                  );
+                  break;
+
+                case CuadernuWorkspaceTab.study:
+                  bodyContent = CuadernuKnowledgeStudyView(
+                    studio: _studio,
+                    tokens: t,
+                    reduceTransparency: widget.reduceTransparency,
+                    onHarvestDocFlashcards: _editorCtrl.harvestFlashcards,
+                    onNotify: _showStatusSnack,
+                  );
+                  break;
+              }
+            }
 
             return Column(
               children: [
-                TranslucentSurface(
-                  tokens: t,
-                  reduceTransparency: widget.reduceTransparency,
-                  bottomBorderOnly: true,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                if (_activeTab == CuadernuWorkspaceTab.calculators)
+                  _buildCalculatorBar(t, canSideBySide, showSplitCalc)
+                else
+                  _buildCuadernuHeader(t, canSideBySide),
+                Expanded(child: bodyContent),
+                // Unified guías de interfaz bottom navigation bar (Cupertino vector icons, zero emojis)
+                Container(
+                  decoration: BoxDecoration(
+                    color: t.surface,
+                    border: Border(
+                      top: BorderSide(color: t.border, width: t.borderWidth),
+                    ),
+                  ),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SelectorSegmentado<CasioCalcKind>(
-                            tokens: t,
-                            value: _activeKind,
-                            segments: const [
-                              (CasioCalcKind.cg50, 'CG50'),
-                              (CasioCalcKind.cw2, '991CW'),
-                              (CasioCalcKind.classwiz, '570LA X'),
-                              (CasioCalcKind.naturalEs, '570VN+'),
-                            ],
-                            onChanged: _selectCalculator,
-                          ),
+                      for (final item in const [
+                        (
+                          CuadernuWorkspaceTab.notebook,
+                          CupertinoIcons.doc_text,
+                          'Cuaderno'
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      if (canSideBySide)
-                        IconButton(
-                          tooltip: 'Vista lado a lado',
-                          visualDensity: VisualDensity.compact,
-                          onPressed: _toggleSideBySide,
-                          icon: Icon(
-                            showSplit
-                                ? CupertinoIcons.rectangle_split_3x1_fill
-                                : CupertinoIcons.rectangle_split_3x1,
-                            size: 20,
-                            color: showSplit ? t.accent : t.textSecondary,
-                          ),
+                        (
+                          CuadernuWorkspaceTab.calculators,
+                          CupertinoIcons.square_grid_2x2,
+                          'Calculadoras'
                         ),
-                      if (_activeKind == CasioCalcKind.cg50)
-                        AnimatedBuilder(
-                          animation: Listenable.merge([
-                            ?_bridgeServer,
-                            ?_linkClient,
-                          ]),
-                          builder: (context, _) {
-                            final activeConn =
-                                (_bridgeServer?.isRunning ?? false) ||
-                                    (_linkClient?.isConnected ?? false);
-                            return IconButton(
-                              tooltip: 'Conectar y archivos',
-                              visualDensity: VisualDensity.compact,
-                              onPressed: _openConnectivitySheet,
-                              icon: Badge(
-                                isLabelVisible: activeConn,
-                                smallSize: 7,
-                                backgroundColor: const Color(0xFF34C759),
-                                child: Icon(
-                                  CupertinoIcons.folder,
-                                  size: 20,
-                                  color: activeConn ? t.accent : t.textPrimary,
-                                ),
+                        (
+                          CuadernuWorkspaceTab.stem,
+                          CupertinoIcons.function,
+                          'STEM'
+                        ),
+                        (
+                          CuadernuWorkspaceTab.study,
+                          CupertinoIcons.layers_alt,
+                          'Estudio'
+                        ),
+                      ])
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectTab(item.$1),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    item.$2,
+                                    size: 20,
+                                    color: _activeTab == item.$1
+                                        ? t.accent
+                                        : t.textSecondary,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.$3,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: _activeTab == item.$1
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: _activeTab == item.$1
+                                          ? t.accent
+                                          : t.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
-                      IconButton(
-                        tooltip: 'Historial',
-                        visualDensity: VisualDensity.compact,
-                        onPressed: _openHistorySheet,
-                        icon: Badge(
-                          isLabelVisible: _history.isNotEmpty,
-                          backgroundColor: t.accent,
-                          label: Text('${_history.length}'),
-                          child: Icon(
-                            CupertinoIcons.clock,
-                            size: 20,
-                            color: t.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      PopupMenuButton<String>(
-                        tooltip: 'Opciones',
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
-                          CupertinoIcons.ellipsis_circle,
-                          size: 21,
-                          color: t.textPrimary,
-                        ),
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'theme_light':
-                              widget.onThemeChanged(
-                                  AppThemePreset.porcelainLight);
-                              break;
-                            case 'theme_dark':
-                              widget.onThemeChanged(
-                                  AppThemePreset.calibratedDark);
-                              break;
-                            case 'theme_hc':
-                              widget
-                                  .onThemeChanged(AppThemePreset.highContrast);
-                              break;
-                            case 'toggle_trans':
-                              widget.onReduceTransparencyChanged(
-                                  !widget.reduceTransparency);
-                              break;
-                            case 'connect_files':
-                              _openConnectivitySheet();
-                              break;
-                            case 'keylog':
-                              _openKeyLogSheet();
-                              break;
-                            case 'enlarged_lcd':
-                              _openEnlargedLcdSheet();
-                              break;
-                            case 'capture_lcd':
-                              _openCaptureSheet();
-                              break;
-                            case 'scan_qr':
-                              unawaited(_scanAndOpenQr(silentWhenAbsent: false));
-                              break;
-                            case 'save':
-                              unawaited(_saveActiveState());
-                              break;
-                            case 'warm_reset':
-                              _resetActive(cold: false);
-                              break;
-                            case 'cold_reset':
-                              _resetActive(cold: true);
-                              break;
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          CheckedPopupMenuItem<String>(
-                            value: 'theme_light',
-                            checked: widget.themePreset ==
-                                AppThemePreset.porcelainLight,
-                            child: const Text('Porcelana Claro'),
-                          ),
-                          CheckedPopupMenuItem<String>(
-                            value: 'theme_dark',
-                            checked: widget.themePreset ==
-                                AppThemePreset.calibratedDark,
-                            child: const Text('Oscuro Calibrado'),
-                          ),
-                          CheckedPopupMenuItem<String>(
-                            value: 'theme_hc',
-                            checked: widget.themePreset ==
-                                AppThemePreset.highContrast,
-                            child: const Text('Alto Contraste'),
-                          ),
-                          CheckedPopupMenuItem<String>(
-                            value: 'toggle_trans',
-                            checked: widget.reduceTransparency,
-                            child: const Text('Reducir transparencia'),
-                          ),
-                          const PopupMenuDivider(),
-                          if (_activeKind == CasioCalcKind.cg50) ...[
-                            const PopupMenuItem<String>(
-                              value: 'connect_files',
-                              child: Text('Conectar y archivos…'),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: 'keylog',
-                              child: Text('Key-Log…'),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: 'scan_qr',
-                              child: Text('Leer QR en pantalla'),
-                            ),
-                          ],
-                          const PopupMenuItem<String>(
-                            value: 'enlarged_lcd',
-                            child: Text('Pantalla ampliada…'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'capture_lcd',
-                            child: Text('Capturar pantalla…'),
-                          ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem<String>(
-                            value: 'save',
-                            child: Text('Guardar estado'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'warm_reset',
-                            child: Text('Reiniciar calculadora'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'cold_reset',
-                            child: Text('Reinicio frío'),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
-                ),
-                AnimatedBuilder(
-                  animation: _keyLog,
-                  builder: (context, _) => _buildKeyLogBanner(t),
-                ),
-                Expanded(
-                  child: _staging
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: t.accent,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Preparando calculadoras...',
-                                style: TextStyle(
-                                  color: t.textSecondary,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : _stageError != null
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Text(
-                                  _stageError!,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: t.destructive),
-                                ),
-                              ),
-                            )
-                          : Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-                              child: showSplit
-                                  ? Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildPane(
-                                            _activeKind,
-                                            primary: true,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: _buildPane(
-                                            _secondaryKind,
-                                            primary: false,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : _buildPane(_activeKind, primary: true),
-                            ),
                 ),
               ],
             );

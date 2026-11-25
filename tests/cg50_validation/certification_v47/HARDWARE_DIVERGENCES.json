@@ -1,0 +1,216 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-11-24T23:24:06.656777+00:00",
+  "git_head": "acb7468b87675fec226fce73eef5ef8f28e1c5eb",
+  "physical_verified": false,
+  "physical_reference_status": "NOT_YET_VERIFIED",
+  "core_divergences_found_and_fixed": [
+    {
+      "id": "HW-DIV-001",
+      "severity": "HIGH",
+      "component": "HW-USB2",
+      "symptom": "4 pipe-banked USB2 registers (PIPECFG 0x04D80068, PIPEBUF 0x04D8006A, PIPEMAXP 0x04D8006C, PIPEPERI 0x04D8006E) lost state across ExportState/ImportState snapshot roundtrip (409/413 -> 413/413).",
+      "root_cause": "ExportState chunk 94 serialized Usb2Unit::RawRegs() only, omitting per-pipe banked arrays pipeCfg_/pipeBuf_/pipeMaxp_/pipePeri_.",
+      "fix": "Added Usb2Unit::PipeBanksSnapshot + ExportPipeBanks()/ImportPipeBanks() in core/casio_cg50/cg50_core/cg50_usb2.h and optional snapshot chunk 112 in core/casio_cg50/cg50_native_core.cpp.",
+      "status": "CONFIRMED_FIXED",
+      "verification": "cg50_register_cert_lab.exe -> save_restore_ok = 413/413 (100.0%)."
+    },
+    {
+      "id": "HW-DIV-002",
+      "severity": "CRITICAL",
+      "component": "HW-CPU-SH4AL-DSP",
+      "symptom": "Prior sh_dsp.h used simplified/invented opcode & register codes and did not match Casio CPU73050.dll's 16 MOVS encodings or 256 DSP2 parallel ALU/MAC classes (140 active + 116 illegal).",
+      "root_cause": "Early prototype implemented only a subset of DSP opcodes without live differential verification against Renesas SH4AL-DSP ISA and CPU73050.dll.",
+      "fix": "Full rewrite of core/casio_cg50/cg50_core/sh_dsp.h implementing exact 4-bit register codes (5=A1,7=A0,8=X0,9=X1,A=Y0,B=Y1,C=M0,D=A1G,E=M1,F=A0G), exact DSR flags (GT/Z/N/V/CS/DC/SE), SR.S saturation, 16/16 MOVS, all 140 active DSP2 classes (PADD/PSUB/PMULS/PSHL/PSHA/PAND/PXOR/POR/PABS/PDEC/PRND/PINC/PDMSB/PSWAP/PNEG/PCOPY/PLDS/PSTS + DCT/DCF) and raising EXPEVT 0x180 on all 116 illegal DSP2 classes.",
+      "status": "CONFIRMED_FIXED",
+      "verification": "cg50_cpu_dsp_cert_lab.exe vs live CPU73050.dll: 16/16 MOVS exact, 116/116 illegal exact, 136/140 active exact + 4/4 proven CPU73050.dll PCOPY bug = 140/140 Renesas-spec verified."
+    },
+    {
+      "id": "HW-DIV-003",
+      "severity": "CRITICAL",
+      "component": "HW-CPU-SH4AL-DSP",
+      "symptom": "sh_stack.h mapped 0x4n56/0x4n66 to STS.L FPUL/FPSCR and 0x4n57/0x4n67 to LDS.L FPUL/FPSCR (wrong opcodes colliding with LDS.L and LDC.L MOD/RS!), and 0x4n53/63/73, 0x4n57/67/77, 0x4n62..B2, 0x4n66..B6, 0x4n34/36/3A were missing.",
+      "root_cause": "Incorrect low-byte table in legacy sh_stack.h and missing SH4AL-DSP stack transfer opcodes in core/casio_cg50/cg50_native_core.cpp.",
+      "fix": "Cleaned sh_stack.h to handle MACH/MACL/PR/SR/GBR/VBR/SSR/SPC only; added full SH4AL-DSP stack ops (STC.L/LDC.L MOD/RS/RE, STS.L/LDS.L DSR/A0/X0/X1/Y0/Y1 gated on SR.DSP, LDC/LDC.L SGR, SETRC 0x4n34) and strict SH7305 no-FPU 0x180 trapping on 0x4n52/0x4n56 in cg50_native_core.cpp.",
+      "status": "CONFIRMED_FIXED",
+      "verification": "cg50_cpu_dsp_cert_lab.exe + cg50_sh4a_isa_test + cg50_sh7305_hw_test PASS."
+    },
+    {
+      "id": "HW-DIV-004",
+      "severity": "CRITICAL",
+      "component": "HW-CPU-MMU",
+      "symptom": "SH-4A TLB EXPEVT codes in sh_exception.h were swapped (0x0A0/0x0C0/0x040/0x060) and TLB Protection Violation routed to VBR+0x400 instead of VBR+0x100.",
+      "root_cause": "Historic constant transposition in core/casio_cg50/cg50_core/sh_exception.h and vector offset routing in TranslateAddress().",
+      "fix": "Aligned all TLB EXPEVT constants to Renesas SH-4A REJ09B0003-0400 Section 5.4 (0x040 Miss Read -> +0x400, 0x060 Miss Write -> +0x400, 0x080 Initial Page Write -> +0x100, 0x0A0 Prot Read -> +0x100, 0x0C0 Prot Write -> +0x100, 0x140 Multi-Hit -> +0x100).",
+      "status": "CONFIRMED_FIXED",
+      "verification": "cg50_cpu_dsp_cert_lab.exe Part 4: 52/56 EXPEVT/INTEVT slots verified (all 6 MMU exception vectors verified)."
+    }
+  ],
+  "oracle_cpu73050_dll_proven_quirks_and_bugs": [
+    {
+      "id": "ORACLE-DLL-001",
+      "opcode": "0x4n0A (LDS Rn, MACH) & 0x4n06 (LDS.L @Rm+, MACH)",
+      "cpu73050_rva": "0x18A83 & 0x18CAD",
+      "observation": "CPU73050.dll executes `and eax, 0x3FF; sign-extend bit 9` on LDS to MACH (legacy SH-2 10-bit MAC.W behavior), whereas DMULS.L at RVA 0x17042 writes all 32 bits to MACH.",
+      "core_behavior": "Core stores full 32-bit Rn into MACH per Renesas SH-4A / SH4AL-DSP architecture manual (all 5 differential mismatches are exclusively this 10-bit truncation).",
+      "action": "Preserved Renesas SH-4A spec in core; documented transparently without copying DLL quirk."
+    },
+    {
+      "id": "ORACLE-DLL-002",
+      "opcode": "DSP2 hi in {0xD9, 0xF9, 0xFA, 0xFB} (PCOPY Sx/Sy, Dz & DCT/DCF PCOPY Sy, Dz)",
+      "cpu73050_rva": "0x117FC, 0x11842, 0x118F9, 0x11956 -> epilogue 0x12227",
+      "observation": "Disassembly of CPU73050.dll proves 0xD9/0xF9 jump to DSR epilogue 0x12227 without clearing eax (leaving op2 in ax so ah[0] injects spurious overflow V=1), and conditional 0xFA/0xFB jump to unconditional epilogue 0x11831->0x12227 instead of no-DSR epilogue 0x12327 (unlike 0xDA/0xDB).",
+      "core_behavior": "All non-DSR data registers match 100%; DSR follows Renesas SH4AL-DSP spec (zero overflow on PCOPY; conditional DCT/DCF never alters DSR).",
+      "action": "Preserved Renesas SH4AL-DSP spec in core; classified explicitly as ORACLE_DLL_BUG_PROVEN_BY_DISASM."
+    },
+    {
+      "id": "ORACLE-DLL-003",
+      "subject": "60 CG50 registers with static descriptor reset_word=0x00000000 in CPU73050.dll table",
+      "observation": "In CPU73050.dll's 124-byte register descriptor table, w[4] is 0x00000000 for 60 registers whose architectural non-zero reset values (e.g., PACR=0xAAAA, PLLCR=0x5000, CMNCR=0x00000010, ETMU TCOR/TCNT=0xFFFFFFFF, SCBRR=0xFF, SCFSR=0x0060, SD_SIZE=512, CFIFOCTR=0x2000) are initialized dynamically in Reset().",
+      "core_behavior": "Core initializes exact Renesas SH7305 datasheet reset values; 353/413 match w[4] statically and 60/413 hold documented non-zero architectural defaults.",
+      "sample_registers": [
+        {
+          "component": "HW-CPUOPM",
+          "name": "CPUOPM",
+          "phys_addr": "0xFF2F0000",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x00000320"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PACR",
+          "phys_addr": "0x04050100",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PBCR",
+          "phys_addr": "0x04050102",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PCCR",
+          "phys_addr": "0x04050104",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PDCR",
+          "phys_addr": "0x04050106",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PECR",
+          "phys_addr": "0x04050108",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PFCR",
+          "phys_addr": "0x0405010A",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PGCR",
+          "phys_addr": "0x0405010C",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PHCR",
+          "phys_addr": "0x0405010E",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PJCR",
+          "phys_addr": "0x04050110",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PKCR",
+          "phys_addr": "0x04050112",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PLCR",
+          "phys_addr": "0x04050114",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PMCR",
+          "phys_addr": "0x04050116",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x00000AAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PNCR",
+          "phys_addr": "0x04050118",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x00000AAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PPCR",
+          "phys_addr": "0x0405014C",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PQCR",
+          "phys_addr": "0x0405011A",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PRCR",
+          "phys_addr": "0x0405011C",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PSCR",
+          "phys_addr": "0x0405011E",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PTCR",
+          "phys_addr": "0x04050140",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        },
+        {
+          "component": "HW-PFC",
+          "name": "PUCR",
+          "phys_addr": "0x04050142",
+          "cpu73050_table_reset": "0x00000000",
+          "core_measured_reset": "0x0000AAAA"
+        }
+      ],
+      "total_registers": 60
+    }
+  ]
+}

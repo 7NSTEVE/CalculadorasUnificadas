@@ -1,0 +1,53 @@
+{
+  "status": "CONFIRMED",
+  "certification_release": "v46",
+  "device_serial": "emulator-5554",
+  "avd_name": "Pixel_Phone_Android16_PlayStore",
+  "android_release": "16",
+  "android_sdk": 36,
+  "abi": "x86_64",
+  "resolution": "1080x2400",
+  "package": "com.calculadorasunificadas.app",
+  "apk_path": "D:\\Proyectos\\CalculadorasUnificadas\\apps\\android\\build\\app\\outputs\\flutter-apk\\app-release.apk",
+  "apk_bytes": 86922281,
+  "apk_sha256": "E6658C71C134C9DAB95704B88AD4CFA3A0BC02E608B3A4A0787AC54B7EF73C94",
+  "apksigner_cert_sha256": "b968ffdfc6c8ea5cdccbde0707d7db33674a0c67d1133d25166d04e6a1f9c8ca",
+  "zipalign_16kb_exit": 0,
+  "apksigner_verify_exit": 0,
+  "elf_load_align_arm64_v8a": {
+    "libcasio_native.so": "0x4000",
+    "libdartjni.so": "0x4000",
+    "libflutter.so": "0x10000",
+    "libapp.so": "0x10000"
+  },
+  "elf_load_align_x86_64": {
+    "libcasio_native.so": "0x4000",
+    "libdartjni.so": "0x4000",
+    "libflutter.so": "0x10000",
+    "libapp.so": "0x10000"
+  },
+  "warm_state_stamp": "cg50_warm_v46.stamp",
+  "flutter_analyze_issues": 0,
+  "flutter_test_passed": 7,
+  "flutter_test_total": 7,
+  "cold_launch_total_time_ms": 2623,
+  "relaunch_total_time_ms": 2666,
+  "alive_pid_initial": "2087",
+  "alive_pid_after_relaunch": "4962",
+  "meminfo_initial_pss_kb": 157862,
+  "meminfo_initial_rss_kb": 248996,
+  "meminfo_active_pss_kb": 147645,
+  "meminfo_active_rss_kb": 238616,
+  "meminfo_active_native_heap_kb": 93183,
+  "gfxinfo_gpu_p50_ms": 10,
+  "gfxinfo_hwui_note": "Flutter Impeller renders calculator viewport directly on SurfaceView; Android HWUI gfxinfo reflects root activity frame (38ms cold, 10ms GPU).",
+  "logcat_bad_lines": 0,
+  "screenshots_visually_verified": {
+    "01_main_menu": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v46_01_main_menu.png",
+    "02_run_matrix_symbolic_pi_over_6": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v46_02_run_matrix_symbolic.png",
+    "03_run_matrix_sd_decimal": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v46_03_run_matrix_sd.png",
+    "04_smem_conectar_y_archivos": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v46_04_smem_sheet.png",
+    "05_after_force_stop_relaunch": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v46_05_after_relaunch.png",
+    "06_live_calc_123x456_56088": "C:\\Users\\usuario\\.gemini\\antigravity\\brain\\81b79d06-4831-439e-a337-f19444bcf81e\\walkthrough_media\\android16_v46_06_live_calc_56088.png"
+  }
+}

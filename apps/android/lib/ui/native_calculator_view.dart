@@ -301,6 +301,43 @@ class _NativeCalculatorFaceplateState extends State<NativeCalculatorFaceplate> {
     if (key == LogicalKeyboardKey.arrowRight) {
       return _findKeyByName(['DERECHA']);
     }
+    // Extended physical keyboard mapping (Windows / iPad / Bluetooth / USB)
+    if (key == LogicalKeyboardKey.shiftLeft ||
+        key == LogicalKeyboardKey.shiftRight) {
+      return _findKeyByName(['SHIFT']);
+    }
+    if (key == LogicalKeyboardKey.altLeft ||
+        key == LogicalKeyboardKey.altRight) {
+      return _findKeyByName(['ALPHA', 'CATALOG', 'TOOLS']);
+    }
+    if (key == LogicalKeyboardKey.f1) return _findKeyByName(['F1']);
+    if (key == LogicalKeyboardKey.f2) return _findKeyByName(['F2']);
+    if (key == LogicalKeyboardKey.f3) return _findKeyByName(['F3']);
+    if (key == LogicalKeyboardKey.f4) return _findKeyByName(['F4']);
+    if (key == LogicalKeyboardKey.f5) return _findKeyByName(['F5']);
+    if (key == LogicalKeyboardKey.f6) return _findKeyByName(['F6']);
+    if (key == LogicalKeyboardKey.f7) return _findKeyByName(['OPTN', 'TOOLS']);
+    if (key == LogicalKeyboardKey.f8) return _findKeyByName(['VARS', 'VARIABLE']);
+    if (key == LogicalKeyboardKey.f9 || key == LogicalKeyboardKey.home) {
+      return _findKeyByName(['MENU', 'HOME', 'MODE']);
+    }
+    if (key == LogicalKeyboardKey.tab) {
+      return _findKeyByName(['SD', 'FORMAT']);
+    }
+    if (key == LogicalKeyboardKey.keyS) return _findKeyByName(['SIN']);
+    if (key == LogicalKeyboardKey.keyC) return _findKeyByName(['COS']);
+    if (key == LogicalKeyboardKey.keyT) return _findKeyByName(['TAN']);
+    if (key == LogicalKeyboardKey.keyL) return _findKeyByName(['LOG']);
+    if (key == LogicalKeyboardKey.keyN) return _findKeyByName(['LN']);
+    if (key == LogicalKeyboardKey.keyR) return _findKeyByName(['RAIZ']);
+    if (key == LogicalKeyboardKey.keyQ) return _findKeyByName(['X^2', 'CUADRADO']);
+    if (key == LogicalKeyboardKey.keyF) return _findKeyByName(['FRAC', 'FRACCION']);
+    if (key == LogicalKeyboardKey.keyX) return _findKeyByName(['X_THETA', 'X']);
+    if (key == LogicalKeyboardKey.keyA) return _findKeyByName(['ANS']);
+    if (key == LogicalKeyboardKey.keyE) return _findKeyByName(['EXP']);
+    if (key == LogicalKeyboardKey.underscore) {
+      return _findKeyByName(['NEGATIVO', 'ANS']);
+    }
     return null;
   }
 

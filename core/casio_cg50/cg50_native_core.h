@@ -593,6 +593,13 @@ public:
 
     State GetState() const noexcept { return state_; }
     const Registers& GetRegisters() const noexcept { return regs_; }
+    Registers& RegistersMut() noexcept { return regs_; }
+    void ClearPendingBranch() noexcept
+    {
+        pendingBranchValid_ = false;
+        executingDelaySlot_ = false;
+        rteDelaySlotPrivilegedFetch_ = false;
+    }
     const Stats& GetStats() const noexcept { return stats_; }
     const std::wstring& Diagnostic() const noexcept { return diagnostic_; }
     bool HasSystemRom() const noexcept { return rom_.size() == kRomSize; }
@@ -688,9 +695,41 @@ public:
     const cg50::ShCacheUnit& Cache() const noexcept { return cache_; }
     cg50::ShCacheUnit& CacheMut() noexcept { return cache_; }
     const cg50::UbcUnit& Ubc() const noexcept { return ubc_; }
+    enum class HardwareProfile : std::uint8_t {
+        StrictSilicon = 0,     // Exact SH7305 (no IEEE-754 FPU, zero opcode patching)
+        ManagerPlusCompat = 1, // Permits opt-in legacy Exam Mode opcode decoupling
+    };
+
+    struct ActiveInterventions {
+        bool strictSh7305NoFpu = true;
+        bool examModeOpcodePatch = false;
+        bool cmtSynchronousWriteCommit = true;
+        bool wdtSynchronousWriteCommit = true;
+        std::uint64_t examModePatchHits = 0;
+    };
+
     const AuthenticityStats& GetAuthenticityStats() const noexcept { return authStats_; }
     void SetStrictSh7305NoFpu(bool enabled) noexcept { strictSh7305NoFpu_ = enabled; }
     bool StrictSh7305NoFpu() const noexcept { return strictSh7305NoFpu_; }
+    void SetHardwareProfile(HardwareProfile profile) noexcept
+    {
+        hardwareProfile_ = profile;
+        strictSh7305NoFpu_ = true;
+        examDecouplingEnabled_ = (profile == HardwareProfile::ManagerPlusCompat);
+    }
+    HardwareProfile GetHardwareProfile() const noexcept { return hardwareProfile_; }
+    void SetExamDecouplingEnabled(bool enabled) noexcept { examDecouplingEnabled_ = enabled; }
+    bool ExamDecouplingEnabled() const noexcept { return examDecouplingEnabled_; }
+    ActiveInterventions GetActiveInterventions() const noexcept
+    {
+        ActiveInterventions ai{};
+        ai.strictSh7305NoFpu = strictSh7305NoFpu_;
+        ai.examModeOpcodePatch = examDecouplingEnabled_;
+        ai.cmtSynchronousWriteCommit = true;
+        ai.wdtSynchronousWriteCommit = true;
+        ai.examModePatchHits = examModePatchHits_;
+        return ai;
+    }
     void SetWatchdogResetEnabled(bool enabled) noexcept { watchdogResetEnabled_ = enabled; }
     void SetBatteryPercent(int percent) noexcept { adc_.SetBatteryPercent(percent); }
     static std::size_t AuditForbiddenEnvOverrides(std::vector<std::string>& activeOut);
@@ -761,7 +800,10 @@ private:
     std::uint32_t irmcr_ = 0;
     std::array<std::uint32_t, 8> xyDspCtrl_{}; // XSA, YSA, XDA, YDA, XPR, YPR, XEA, YEA
     std::size_t itlbNextVictim_ = 0;
-    bool strictSh7305NoFpu_ = false;
+    bool strictSh7305NoFpu_ = true;
+    HardwareProfile hardwareProfile_ = HardwareProfile::StrictSilicon;
+    bool examDecouplingEnabled_ = false;
+    std::uint64_t examModePatchHits_ = 0;
     bool watchdogResetEnabled_ = false;
     AuthenticityStats authStats_{};
     std::vector<std::uint8_t> dsp0Space_;

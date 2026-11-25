@@ -378,6 +378,104 @@ Actualizado 2026-11-06 post-v22 (97 APROBADAS, `c52dc62`):
   - **APK Release 16 KB `v45`:** `apps/android/build/app/outputs/flutter-apk/app-release.apk` (`82.9 MB`, SHA-256 `8C083013E19188C781592E04466491F4D8B0E865653FBFE1841E5AF4D0455318`), `zipalign -c -P 16 -v 4` OK, `apksigner verify` OK (Scheme v2), `llvm-readelf -l` `Align 0x4000` en todos los segmentos `LOAD` (`arm64-v8a` y `x86_64`).
   - **Verificación en vivo sobre Android 16 (`Pixel_Phone_Android16_PlayStore`, SDK 36):** `tools/cg50_pc_bridge.py --adb` subió `demo_pc.py` y sincronizó `tabla_prueba.csv` con verificación SHA-256 bit-a-bit (`6c3d6505623f86c7e383feb88c3bc239eae17f8982b9ffe89b5a5d7455d6c08c`), **Casio OS 3.80 MicroPython v1.9.4** listó y ejecutó `demo_pc.py` produciendo **`PC->CG50: 42`** en pantalla, `ScreenRecv` capturó el LCD vivo en Windows, tocar el QR en pantalla abrió el diálogo nativo con la URL oficial `wes.casio.com`, y el cierre dejó **`FINAL_LOGCAT_BAD_LINES=0`**.
 
+---
+
+## Certificación v46 — Plan Maestro v46: Silicio 100 % `FULL_SILICON`, Desensamblado Forense, 12 Métricas de Cobertura, Escala 100K, Contraste Vivo `fx-CG Manager PLUS`, Soak 15 min y Android 16 (2026-11-24)
+
+- **Libro Maestro de Evidencia (`schema 2.0.0`):** `tests/cg50_validation/CG50_VALIDATION_MASTER.json` (`35,332 B`, SHA-256 `7D1E838E0D17DCF1FBC164DB2EEAE528EFE60A68B4B522A28B043321247F7CC9`).
+- **Política de Referencia Física:** `physical_reference_status = "N/A_DISCARDED_BY_DESIGN"` (unidad física descartada permanentemente; verificación mediante desensamblado de código máquina de DLLs Casio + contraste en vivo contra `fx-CG Manager PLUS` + oráculos independientes `mpmath`/`SymPy` a 50 dígitos).
+- **Fase 0 — CI, Sanitizers y Aislamiento de Hilos:** **`CONFIRMED`**
+  - `tests/core/cg50_thread_isolation_test.cpp`: **`16/16` hilos bit-a-bit idénticos** (`0` estado mutable compartido).
+  - **Clang 23 ASan + UBSan:** **`7/7` suites en `PASS`** (`cg50_flash_cfi_test`, `cg50_sh4a_isa_test`, `cg50_sh7305_hw_test`, `cg50_hw_silicon_100_test`, `cg50_dynamic_coverage_boost_test`, `cg50_c_api_contract_test`, `cg50_usb_smem_qr_test` — **`0` errores ASan/UBSan**).
+- **Fase 1 — Desensamblado Forense (`CPU73050.dll`, `LCDR61524A.dll`, `ExtLY755A.dll`):** **`CONFIRMED`**
+  - `reports/CPU73050_ISA_DECODER_PROOF.json` y `CPU73050_OPCODES_65536.json`: tabla completa de `65,536` opcodes 16-bit (`59,919` activos en `227` clases, `5,617` ilegales, **`0` opcodes FPU IEEE-754**), `256` clases 2.ª palabra DSP (`140` activas / `116` ilegales) y `64/64` ranuras `EXPEVT` (`56` activas / `8` vacías).
+- **Fase 2 — Cierre de Silicio 100 % `FULL_SILICON` (`CG50_HARDWARE_MASTER.json`):** **`CONFIRMED`**
+  - **`413 / 413` registros aplicables a placa fx-CG50 (`28 / 28` componentes) en `FULL_SILICON`** (`0` parciales, `0` pasivos, `0` sin mapear); `11` módulos del SoC SH7305 no cableados en fx-CG50 (`289` registros) marcados `NOT_PRESENT_ON_CG50` con respaldo seguro R/W.
+  - Subsistemas elevados a `FULL_SILICON` en `v46`: `PFC` + `ExtLY755A` (batería/VBUS/RXD/LED/pin-mux), `RTC` completo (BCD calendario/alarma/periódica `RCR1.AF/CF`, `RCR2.PEF`), `CPG` (`MSTPCR0..2` clock-gating real), `DMAC0` 6-ch (`DMAOR.AE`, máscaras `CHCR` de `CPU73050.dll`), `BSC` (`0xA55A0000` `RTCSR`/`CMF`, `CS*WCR` por tipo), `SDHI`, `HUDI` (`SDINT` W0C) y `PRLCK` (`PRLCKCR` bloqueo real de `PRPRICR0..5`).
+- **Fase 3 — Inventario Técnico Ampliado y Diffs Regionales (`CG50_TECHNICAL_INVENTORY_MASTER.json`):** **`CONFIRMED`**
+  - `8,040` entradas de syscalls OS 3.80 (`8,030` handlers únicos), `141` mensajes de error, `34` diagnósticos, `922` funciones del manual (`682` confirmadas en ROM), diff `OS 3.70` vs `3.80`, `CG50` vs `CG50 AU` (`0` bytes de diferencia) y `CG50` vs `GRAPH90+ E` (`26,885,729` bytes).
+- **Fase 4 — 12 Métricas de Cobertura (`GCC 16.1.0 --coverage`) y Mutation Testing:** **`CONFIRMED`**
+  - `reports/coverage_v46/coverage_12_metrics_report.json` (`11` ejecuciones instrumentadas, `4,164,277,595` instrucciones):
+    - **M01 Feature:** `682/922` (`73.97%`) confirmadas en ROM; `134` batería + `24` recibos (`17.14%` automatizadas directas).
+    - **M02 Opcode:** **`166/227` (`73.13%`)** clases 16-bit (`16,735/59,919` codificaciones) + `38/140` clases DSP32.
+    - **M03 MMIO:** **`413 / 413` (`100.0%`)** registros CG50 ejercitados dinámicamente (`412` R+W, `472` direcciones MMIO).
+    - **M04 Bitfield:** **`7,134 / 7,266` (`98.18%`)** bits conmutados `0↔1` en `409` registros.
+    - **M05 Branch (`gcov -b`):** **`6,354 / 8,710` (`72.95%`)** ramas ejecutadas (`4,407` tomadas); líneas `7,718 / 11,727` (`65.81%`) en `34` archivos.
+    - **M06 Function (`gcov -f`):** **`430 / 610` (`70.49%`)** funciones ejecutadas.
+    - **M07 State / M08 Transition / M09 Error / M10 Boundary / M11 Combination:** `20/25` (`80.0%`), `21/28` (`75.0%`), `13/56 EXPEVT` + `26 INTEVT`, `9/9` (`100%`), `11/11` (`100%`).
+    - **M12 Mutation Testing (`build-mutation-sandbox/`, `reports/coverage_v46/mutation_report.json`):** **`29 / 30` mutantes eliminados (`96.67%` bruto; `29/29 = 100.0%` no equivalentes; `MUT-13-INTC2-MASK-FILTER` demostrado equivalente)**.
+- **Fase 5 — Matemática Extrema (`3K` + `30K` + `100K BCD15` + `100K MicroPython`) y 11 Benchmarks Gráficos/Cómputo:** **`CONFIRMED`**
+  - **11 Benchmarks Gráficos y Cómputo (`reports/graphics_v46/graphics_compute_benchmarks_v46.json`):** **`11/11` PASS**, `11/11` hashes distintos, `10,713,404,648` inst, **`0` FPU**, `11/11` PNGs verificados visualmente (`Mandelbrot`, `Julia`, `Newton z³-1`, `Sierpinski`, `Lorenz RK4`, `Toro 3D (3,5)`, `3-Cuerpos Verlet`, `Transitorio RLC`, `DFT 32-pt`, `ODE RK4` error `2.97e-8`, `LU 8×8` error `2.22e-16` + Logística `n=10,000` + Integral Triple GL6).
+  - **Etapa 1 GUI 1-a-1 (`reports/math_v46_3k/validation_summary.json`):** **`3,044 / 3,044`** (`3,043 PASS` + `1 CASIO_FIDELITY_NOTE` [`ULTRA-SYS-3X3` `Ma ERROR` idéntico a Manager PLUS], **`0` FAIL**, `108,130,382,733` inst, `9,097,170` ops BCD ALU, **`0` FPU**, `901.12 s`), incluyendo `3,000` casos GUI + `30` extremos/ultra-extremos + `11` apps visuales + `3` arranques fríos sin warm-state.
+  - **Etapa 2 Escala `30K` BCD15 (`reports/math_v46_30k/validation_summary.json`):** **`30,000 / 30,000`** evaluaciones `Run-Matrix Σ BCD15` (`120/120` lotes × `250`, **`0` FAIL**, `15,682,543,821` inst, `42,164,775` ops BCD ALU, `0` FPU, `131.16 s`).
+  - **Etapa 3A Escala `100K` BCD15 (`reports/math_v46_100k/validation_summary.json`):** **`100,000 / 100,000`** evaluaciones `Run-Matrix Σ BCD15` (`400/400` lotes × `250`, **`0` FAIL**, `52,162,293,216` inst, `140,862,835` ops BCD ALU, `0` FPU, `402.14 s`, `248.67 evals/s`).
+  - **Etapa 3B Escala `100K` MicroPython SH7305 (`reports/math_v46_100k_mpy/micropython_scale_summary.json`):** **`100,000 / 100,000`** evaluaciones en Casio OS 3.80 MicroPython (`10/10` shards × `10,000`, **`0` FAIL**, `5,479,748,431` inst, `0` FPU, `60.04 s`, `1,665.62 evals/s`).
+- **Fase 6 — Contraste Vivo `54/54` contra `fx-CG Manager PLUS` y Comparador Taxonómico (`reports/diff_v46/`):** **`CONFIRMED`**
+  - `manager_plus_oracle_v46.json`: **`54 / 54` CONFIRMED** (`official_emulator_verified = true`, `7` capturas críticas comparadas visualmente 1:1 contra el núcleo nativo).
+  - `diff_certification_report_v46.json`: **`3,074` casos combinados auditados** (`MATCH_BOTH = 3,064`, `MATCH_CASIO_FIDELITY = 10`, **`CORE_BUG = 0`**, `ORACLE_BUG = 0`, `NON_DETERMINISTIC = 0`, `DECODER_BUG = 0`).
+- **Fase 7 — Escalamiento `1..16` Hilos, Optimización Cero-HLE y Soak 15 min (`reports/perf_v46/` & `reports/torture_soak_v46/`):** **`CONFIRMED` (soak 15 min) / `PENDING` (soak 24–72 h)**
+  - `perf_before_vs_after_v46.json`: `bit_exact_instruction_counts_identical = true`, CTest `-17.71%`, `cg50_usb_smem_qr_test` `-29.61%`, `cg50_thread_isolation_test` `-18.81%`, pico `107.99 MIPS` en 16T, `~56 MB` RSS marginal/instancia.
+  - `hw_torture_report.json` (`--profile full-cert --hours 0.25`): **`4,872,220,000` operaciones** en `16` hilos (`2,209` rondas de soak, `943.23 s`), **`0` fallos**, delta RSS `+25.7 MB`, `9/9` suites `PASS`. Soak multi-día `24h–72h` marcado **`PENDING`** con CLI listo.
+- **Fase 8 — Regresión Total, Warm-State `v46`, APK Release 16 KB y Verificación en Vivo Android 16:** **`CONFIRMED`**
+  - **Warm-state `v46`:** `assets/roms/cg50_warm_state.bin.gz` (`12,383,433 B`, SHA-256 `D27831E7BB0130214D5A064A6CED87D557FA6ED55CDD2A30BF8C0C044B7028A0`, sello `cg50_warm_v46.stamp`).
+  - **CTest (`build-core-host`, Release):** **`12 / 12` PASS** (`0` fallos, `58.23 s`).
+  - **Batería legada (`CG50_CERT_STRICT_NO_HLE=1`):** **`133 / 133` PASO** (`0` divergencias, `2/2` determinista; recibo `recibos/v46-monorepo-133_battery_result.txt`, SHA-256 `3ACEF76DE4B9266ABFFC26122356F63B393C6F5C74182BF3C945E11985C3FAC2`, idéntico bit a bit a `v43`).
+  - **Sonda apps + add-ins (`cg50_apps_probe`):** **`24 / 24` PASS** (`failures=0`, `unsup=0`, `mflt=0`, roundtrip `52,965,599 B` exacto).
+  - **Flutter:** `flutter analyze --no-pub` → **`0 issues`**; `flutter test --no-pub` → **`7 / 7` PASS**.
+  - **APK Release 16 KB `v46`:** `apps/android/build/app/outputs/flutter-apk/app-release.apk` (`86,922,281 B` / `82.9 MB`, SHA-256 `E6658C71C134C9DAB95704B88AD4CFA3A0BC02E608B3A4A0787AC54B7EF73C94`), `zipalign -c -v -P 16 4` OK, `apksigner verify` OK (Cert SHA-256 `b968ffdfc6c8ea5cdccbde0707d7db33674a0c67d1133d25166d04e6a1f9c8ca`), y todos los segmentos `LOAD` de `libcasio_native.so`/`libdartjni.so` (`0x4000`) y `libflutter.so`/`libapp.so` (`0x10000`) alineados para páginas de 16 KB en `arm64-v8a` y `x86_64`.
+  - **Android 16 en vivo (`Pixel_Phone_Android16_PlayStore`, SDK 36, `1080×2400`, `reports/android_v46_evidence.json`):** arranque frío `2,623 ms`, relanzamiento tras `force-stop` `2,666 ms`, **`6/6` capturas verificadas visualmente** (`MAIN MENU v46`, `sin⁻¹(0.5)=(1/6)π`, `S↔D → 0.5235987756`, hoja guías de interfaz Porcelana Claro `Conectar y archivos` con los `5` `.g3a` de SMEM Fugue FTL, relanzamiento limpio y `123×456=56088`), `TOTAL PSS=147,645 KB`, `TOTAL RSS=238,616 KB`, **`LOGCAT_BAD_LINES=0`**.
+
+---
+
+## Certificación v47 — Remediación Integral Auditoría Externa (`H-001`..`H-011`) + Certificación Exhaustiva de Silicio Renesas SH7305 (`12` Entregables, `10M` Vectores, `112/112` Mutación y Android 16, 2026-11-24)
+
+- **Libro Maestro de Evidencia (`schema 3.0.0`):** `tests/cg50_validation/CG50_VALIDATION_MASTER.json` + **12 entregables obligatorios (`0` faltantes)** en `tests/cg50_validation/certification_v47/`:
+  1. `HARDWARE_CERTIFICATION_MASTER.json`
+  2. `HARDWARE_CERTIFICATION_REPORT.md`
+  3. `REGISTER_BY_REGISTER_MATRIX.csv` (`702` registros SH7305: `413` CG50 + `289` no-CG50)
+  4. `BITFIELD_CERTIFICATION_MATRIX.csv` (`8,016` bits CG50 clasificados empíricamente)
+  5. `CPU_OPCODE_DIFFERENTIAL_RESULTS.json` (`65,536` codificaciones + diff vivo `CPU73050.dll` + `10,000,000` vectores CPU/BCD)
+  6. `DSP_DIFFERENTIAL_RESULTS.json` (`16/16` `MOVS` + `256` clases `DSP2` en vivo vs `CPU73050.dll`)
+  7. `EXCEPTION_CERTIFICATION_MATRIX.json` (`52/56` ranuras `EXPEVT`/`INTEVT` verificadas; `4` HW-pin/reset declaradas)
+  8. `HARDWARE_DIVERGENCES.json` (`4` bugs reales de núcleo corregidos + `2` bugs demostrados en `CPU73050.dll`)
+  9. `UNVERIFIED_COMPONENTS.json`
+  10. `COVERAGE_GAPS.json`
+  11. `TIMING_DIVERGENCES.json`
+  12. `KNOWN_LIMITATIONS.md`
+- **Política de Referencia Física (corregida en `v47`):** `physical_reference_status = "NOT_YET_VERIFIED"`, `physical_verified = false` (eliminado definitivamente `N/A_DISCARDED_BY_DESIGN` de todos los artefactos `v47`).
+- **Remediación Completa de Hallazgos Externos (`H-001`..`H-011`):** **`11 / 11 CONFIRMED`**
+  - `H-001`: `build_hardware_inventory.py` 100 % guiado por artefactos empíricos (`VERIFY: PASS`, cero heurísticas `.exists()` ni grep).
+  - `H-002`: `diff_comparator.py` con 12 etiquetas taxonómicas, compuerta `fpu_opcodes != 0` previa a `VERSION_DIFF`, `10/10` pruebas unitarias PASS (`test_diff_comparator.py`).
+  - `H-003`: `strictSh7305NoFpu_ = true` por defecto en `Cg50NativeCore`.
+  - `H-004`: `HardwareProfile::StrictSilicon` por defecto (`examDecouplingEnabled_ = false`, `examModePatchHits == 0`).
+  - `H-005`: `MmioAuditTable` thread-safe con `std::mutex` + `std::once_flag`, probado bajo 16 hilos concurrentes con `CG50_MMIO_AUDIT=1` y Clang ASan+UBSan.
+  - `H-006`: Verificación SHA-256 FIPS 180-4 en `casio_ffi_bindings.dart` sobre las 8 ROMs staged.
+  - `H-007`: Persistencia atómica sin borrado previo del original (`MoveFileExA`/`rename` en `casio_ffi.cpp` y `writeAtomic()` en Dart, probada en vivo tras `force-stop` en Android 16).
+  - `H-008`: Endurecimiento opt-in en `cg50_local_bridge_server.dart` (`readOnlyMode`, `loopbackOnly`, `optionalPairingToken`, confirmación de borrado recursivo, CORS restringido a LAN, manteniendo el flujo directo sin PIN por defecto).
+  - `H-009`: `verify_graphics_references.py` validó **`10/10`** benchmarks gráficos píxel-a-píxel contra renderizador matemático independiente RGB565 (`100.000%`, `MAE=0.00`, `PSNR=99.99 dB`) + `COMP-ULTRA-MATH` + **`3/3` controles negativos rechazados**.
+  - `H-010`: Deduplicación canónica y filtro `status == "PASS"` en `run_coverage_12_metrics.py` + filtro exacto de las `140` clases DSP32 activas.
+  - `H-011`: `cw2_headless_test`, `nx_regression_test` (`fx-570LA X` y `fx-570VN PLUS`) y `cg50_android_smoke` con verificación numérica estricta por glifos calibrados y pruebas negativas en directorios temporales aislados.
+- **Divergencias Reales de Silicio Encontradas y Corregidas (`4` en núcleo + `2` quirks probados en `CPU73050.dll`):** **`CONFIRMED`**
+  - `HW-DIV-001`: Serialización de bancos por pipe de `Usb2Unit` vía chunk opcional `112` (`409/413 → 413/413` save/restore).
+  - `HW-DIV-002`: Reescritura integral de `sh_dsp.h` a la ISA Renesas SH4AL-DSP real (`16/16` `MOVS`, `140/140` clases DSP2 activas, `116/116` ilegales -> `EXPEVT 0x180`).
+  - `HW-DIV-003`: Corrección de `sh_stack.h` (`0x4n56/66/57/67`) y soporte completo de transferencias de pila SH4AL-DSP (`MOD/RS/RE/DSR/A0/X0/X1/Y0/Y1/SGR`, `SETRC 0x4n34`) + trampa `0x180` sin FPU en `0x4n52/0x4n56`.
+  - `HW-DIV-004`: Corrección de códigos `EXPEVT` TLB invertidos en `sh_exception.h` (`0x040/0x060/0x080/0x0A0/0x0C0`) y enrutamiento de `TLB Protection` a `VBR+0x100`.
+  - `ORACLE-DLL-001` / `ORACLE-DLL-002`: Desensamblado x86 de `CPU73050.dll` demostró truncación a 10 bits en `LDS Rn, MACH` (`RVA 0x18A83`) y `eax` sin limpiar en `PCOPY 0xD9/F9/FA/FB` (`RVA 0x117FC..0x11956`); el núcleo mantiene la especificación oficial Renesas SH4AL-DSP.
+- **Pruebas, Cobertura, Mutación y Regresión Total (`v47`):** **`CONFIRMED`**
+  - **Oráculo vivo x86 `CPU73050.dll` + `10,000,000` vectores sembrados (`cg50_cpu_dsp_cert_lab`):** CPU16 `923/928` + `5` quirk DLL (`0` bugs core), DSP16 `16/16`, DSP32 `136/140` exactos (`140/140` spec Renesas) + `116/116` ilegales, **`9,000,000/9,000,000`** ALU/Mul/Logic + **`1,000,000/1,000,000`** BCD ALU (`0` fallos), **`52/56`** `EXPEVT`/`INTEVT`.
+  - **Registros y bits (`cg50_register_cert_lab`):** **`413/413`** CG50 ejercitados y save/restore OK, **`8,016/8,016`** bits clasificados (`RW=5710, RO0=2109, RO1=60, SPECIAL=137`), **`289/289`** no-CG50 seguros.
+  - **Estrés multi-periférico + inyección de fallos (`cg50_combined_hw_stress`, 16 hilos, `CG50_MMIO_AUDIT=1`):** **`120,000`** secuencias, **`30,624`** fallos inyectados OK, **`0`** fallos, **`0`** FPU, **`0`** `exam_patch`.
+  - **CTest (`build-core-host`, Release, `CG50_CERT_STRICT_NO_HLE=1`):** **`15 / 15` PASS** (`41.49 s`).
+  - **Clang 23 ASan + UBSan (`build-core-asan`):** **`9 / 9` PASS** (`0` errores ASan/UBSan incluyendo estrés concurrente 8 hilos).
+  - **GCC 16.1.0 `--coverage` 12 métricas (`run_coverage_12_metrics.py`, `14/14` corridas, `4,305,124,677` inst):** **`227/227` (`100.0%`)** clases 16-bit (`59,919/59,919` encodings), **`140/140` (`100.0%`)** clases DSP32 activas, **`413/413` (`100.0%`)** MMIO R+W, **`7,262/7,266` (`99.94%`)** bitfields, **`75.46%`** ramas (`gcov -b`), **`71.57%`** funciones (`gcov -f`), **`68.24%`** líneas.
+  - **Campaña de Mutación en Sandbox Aislado (`tools/cg50_mutation_tester.py`):** **`112 / 112` mutantes no equivalentes eliminados (`100.0%`, `survived=0`, `build_error=0`)**.
+  - **Sonda 24 apps + add-ins (`cg50_apps_probe`, `StrictSilicon`):** **`24 / 24` PASS** (`failures=0`, `unsup=0`, `mflt=0`, roundtrip `52,965,695 B` exacto).
+  - **Batería estricta (`cg50_battery`, `CG50_CERT_STRICT_NO_HLE=1`):** **`133 / 133` PASO** (`divergencias=0`, `decodificables=0`, `determinismo=SI 2/2`; recibo `recibos/v47-monorepo-133_battery_result.txt`, SHA-256 `3ACEF76DE4B9266ABFFC26122356F63B393C6F5C74182BF3C945E11985C3FAC2`, idéntico bit a bit a `v43` y `v46`).
+  - **Flutter + APK Release 16 KB `v47` + Android 16 en vivo (`reports/android_v47_evidence.json`):** `flutter analyze --no-pub` → **`0 issues`**; `flutter test --no-pub` → **`9 / 9` PASS**; `app-release.apk` (`87,053,369 B` / `83.0 MB`, SHA-256 `D7159AF428A58903BFDD258CD4E0D625A4ED8A14552821D7DEB41D8D2B2FB566`), `zipalign -c -v -P 16 4` OK, `apksigner verify` OK, ELF `LOAD` `0x4000`/`0x10000` en `arm64-v8a` y `x86_64`; verificado en vivo en `Pixel_Phone_Android16_PlayStore` (`SDK 36`, `1080×2400`) con **`6/6` capturas inspeccionadas visualmente** (incluyendo persistencia atómica `H-007` tras `force-stop`), `TOTAL PSS=142,584 KB`, **`LOGCAT_BAD_LINES=0`**.
+  - **CI & Portable Staging (`tools/publish_portable.ps1`):** `30` archivos empaquetados en staging local con `PORTABLE_MANIFEST.json`, `includes_roms = false`, `git_push_performed = false`.
+
+
+
 
 
 

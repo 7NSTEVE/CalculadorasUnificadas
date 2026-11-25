@@ -1,14 +1,20 @@
+# Private local assets (installers, official Casio DLL runtime, PDF manuals, personal fonts, research)
+# Note: assets/roms/ remains tracked in Git per explicit owner policy.
+private_local/
+
 # Uncompressed warm-state duplicate (cg50_warm_state.bin.gz is tracked instead) and ad-hoc dumps
 assets/roms/cg50_warm_state.bin
+tests/**/warm_state.bin
 *.g3a
 *.g3m
 *.mem
 *Manager PLUS*
 
-# Build directories & artifacts
+# Build directories & artifacts (ALL builds must live under build/)
 build/
 build-*/
 cmake-build-*/
+out_test/
 *.exe
 *.dll
 *.so
@@ -18,6 +24,17 @@ cmake-build-*/
 *.obj
 *.pdb
 *.ilk
+*.tlog
+*.exp
+
+# Prohibited manual backups & stray captures
+*.bak
+*.bak_*
+*.orig
+*.tmp
+*.bmp
+dma_frame_*.raw
+vram*.bmp
 
 # Flutter / Android staging & build outputs
 apps/android/assets_staged/
@@ -29,8 +46,16 @@ apps/android/android/.gradle/
 apps/android/android/app/build/
 apps/android/android/local.properties
 apps/android/android/key.properties
+apps/flutter/assets_staged/
+apps/flutter/build/
+apps/flutter/.dart_tool/
 *.jks
 *.keystore
+
+# Windows runtime staging & local INI
+apps/windows/runtime/
+apps/windows/config_unificada.ini
+config_unificada.ini
 
 # Diagnostic logs
 key_diag.log
@@ -39,14 +64,12 @@ queue_diag.log
 calc_debug.log
 *.log
 
-# Official CASIO manuals (PDF) and extracted page text: kept local only
+# Official CASIO manuals (PDF) and extracted page text: kept in private_local/manuales/
 assets/manuals/
-
 
 # Python bytecode & heavy binary test captures
 __pycache__/
 *.pyc
-*.bmp
 tests/cg50_validation/reports/coverage_v46/raw_runs/
 tests/cg50_validation/reports/math_v46_3k/
 tests/cg50_validation/reports/math_v46_30k/

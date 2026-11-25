@@ -1,7 +1,7 @@
 name: calculadoras_unificadas
-description: "Suite unificada de calculadoras científicas y gráficas con motores nativos."
+description: "CuadernU: Cuadernos inteligentes, Lienzo Infinito, Laboratorio STEM y 4 Calculadoras Casio nativas v47."
 publish_to: 'none'
-version: 2.0.0+1
+version: 2.1.0+47
 
 environment:
   sdk: ^3.12.2

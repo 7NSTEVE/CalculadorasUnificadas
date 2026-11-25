@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "threads": 16,
+  "sequences_executed": 120000,
+  "fault_injections_passed": 30624,
+  "failures": 0,
+  "fpu_opcodes_executed": 0,
+  "exam_mode_patch_hits": 0,
+  "elapsed_seconds": 1.424,
+  "status": "CONFIRMED"
+}

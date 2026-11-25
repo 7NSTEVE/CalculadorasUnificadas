@@ -74,39 +74,35 @@ StackOpcodeResult ExecuteSystemStackOpcode(
     const std::uint32_t n = (opcode >> 8) & 0x0Fu;
     const std::uint16_t low = opcode & 0x00FFu;
 
-    // STS.L MACH/MACL/PR/FPUL/FPSCR,@-Rn
+    // STS.L MACH/MACL/PR,@-Rn (FPUL/FPSCR are handled in Cg50NativeCore with
+    // strictSh7305NoFpu_ / SR.DSP / SR.FD gating at their true SH-4A encodings
+    // 0x4n52 / 0x4n62; prior 0x4n56/0x4n66 here collided with LDS.L!).
     if ((opcode & 0xF0FFu) == 0x4002u ||
         (opcode & 0xF0FFu) == 0x4012u ||
-        (opcode & 0xF0FFu) == 0x4022u ||
-        (opcode & 0xF0FFu) == 0x4056u ||
-        (opcode & 0xF0FFu) == 0x4066u) {
+        (opcode & 0xF0FFu) == 0x4022u) {
         const std::uint32_t value = low == 0x02u ? mach :
-                                    low == 0x12u ? macl :
-                                    low == 0x22u ? pr :
-                                    low == 0x56u ? fpul : fpscr;
+                                    low == 0x12u ? macl : pr;
         const std::uint32_t address = r[n] - 4u;
         if (!write32(address, value)) return detail::StackFault(address, true);
         r[n] = address;
         return detail::StackOk();
     }
 
-    // LDS.L @Rn+,MACH/MACL/PR/FPUL/FPSCR
+    // LDS.L @Rn+,MACH/MACL/PR (FPUL/FPSCR/DSR/MOD/RS/RE handled in core).
     if ((opcode & 0xF0FFu) == 0x4006u ||
         (opcode & 0xF0FFu) == 0x4016u ||
-        (opcode & 0xF0FFu) == 0x4026u ||
-        (opcode & 0xF0FFu) == 0x4057u ||
-        (opcode & 0xF0FFu) == 0x4067u) {
+        (opcode & 0xF0FFu) == 0x4026u) {
         const std::uint32_t address = r[n];
         std::uint32_t value = 0;
         if (!read32(address, value)) return detail::StackFault(address, false);
         r[n] += 4u;
         if (low == 0x06u) mach = value;
         else if (low == 0x16u) macl = value;
-        else if (low == 0x26u) pr = value;
-        else if (low == 0x57u) fpul = value;
-        else fpscr = value;
+        else pr = value;
         return detail::StackOk();
     }
+    (void)fpul;
+    (void)fpscr;
 
     // STC.L SR/GBR/VBR/SSR/SPC,@-Rn. Only GBR is legal in user mode.
     if ((opcode & 0xF0FFu) == 0x4003u ||

@@ -316,6 +316,34 @@ public:
     const std::array<std::uint16_t, 128>& RawRegs() const noexcept { return regs_; }
     std::array<std::uint16_t, 128>& RawRegs() noexcept { return regs_; }
 
+    // Extended POD snapshot for pipe-banked registers (PIPECFG/PIPEBUF/PIPEMAXP/PIPEPERI) + VBUS
+    struct PipeBanksSnapshot {
+        std::array<std::uint16_t, kNumPipes> pipeCfg{};
+        std::array<std::uint16_t, kNumPipes> pipeBuf{};
+        std::array<std::uint16_t, kNumPipes> pipeMaxp{};
+        std::array<std::uint16_t, kNumPipes> pipePeri{};
+        std::uint8_t vbusAttached = 0;
+        std::uint8_t reserved[3]{};
+    };
+    PipeBanksSnapshot ExportPipeBanks() const noexcept
+    {
+        PipeBanksSnapshot s{};
+        s.pipeCfg = pipeCfg_;
+        s.pipeBuf = pipeBuf_;
+        s.pipeMaxp = pipeMaxp_;
+        s.pipePeri = pipePeri_;
+        s.vbusAttached = vbusAttached_ ? 1u : 0u;
+        return s;
+    }
+    void ImportPipeBanks(const PipeBanksSnapshot& s) noexcept
+    {
+        pipeCfg_ = s.pipeCfg;
+        pipeBuf_ = s.pipeBuf;
+        pipeMaxp_ = s.pipeMaxp;
+        pipePeri_ = s.pipePeri;
+        vbusAttached_ = (s.vbusAttached != 0u);
+    }
+
 private:
     std::size_t SelectedPipe() const noexcept
     {

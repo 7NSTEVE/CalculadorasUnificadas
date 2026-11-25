@@ -1,0 +1,57 @@
+#include "../circuitos.h"
+#include <iostream>
+
+using namespace tinta;
+
+void ProbarReconocimientoCable() {
+  Trazo t;
+  // Simular una línea recta
+  for (int i = 0; i < 10; ++i) {
+    Muestra m;
+    m.posicion = {float(i * 10), float(i * 10)};
+    t.muestras.push_back(m);
+  }
+  std::vector<Trazo> trazos = {t};
+  
+  ReconocimientoCircuito rec = ReconocerComponente(trazos);
+  if (rec.tipo != TipoComponenteCircuito::Cable) {
+    std::cerr << "Fallo: Debería ser un Cable\n";
+  }
+  if (rec.confianza < 0.8f) {
+    std::cerr << "Fallo: Confianza demasiado baja para el Cable\n";
+  }
+}
+
+void ProbarGeneracionSpice() {
+  Circuito c;
+  
+  NodoCircuito n0{0, {0.0f, 0.0f}};
+  NodoCircuito n1{1, {100.0f, 0.0f}};
+  c.nodos = {n0, n1};
+  
+  ComponenteCircuito r1;
+  r1.tipo = TipoComponenteCircuito::Resistor;
+  r1.id_texto = "R1";
+  r1.nodos = {1, 0};
+  
+  ComponenteCircuito v1;
+  v1.tipo = TipoComponenteCircuito::FuenteVoltaje;
+  v1.id_texto = "V1";
+  v1.nodos = {1, 0};
+  
+  c.componentes = {v1, r1};
+  
+  std::string spice = GenerarSpice(c);
+  if (spice.find("V1 1 0 5V") == std::string::npos) {
+    std::cerr << "Fallo: No se generó correctamente la fuente de voltaje\n";
+  }
+  if (spice.find("R1 1 0 1K") == std::string::npos) {
+    std::cerr << "Fallo: No se generó correctamente el resistor\n";
+  }
+}
+
+void EjecutarPruebasCircuitos() {
+  ProbarReconocimientoCable();
+  ProbarGeneracionSpice();
+  std::cout << "Pruebas de circuitos finalizadas.\n";
+}

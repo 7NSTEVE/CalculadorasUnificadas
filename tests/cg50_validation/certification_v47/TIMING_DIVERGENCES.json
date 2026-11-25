@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-11-24T23:24:06.656777+00:00",
+  "git_head": "acb7468b87675fec226fce73eef5ef8f28e1c5eb",
+  "model_class": "INSTRUCTION_ACCURATE_FUNCTIONAL_CORE (NOT CYCLE-ACCURATE ELECTRICAL BUS SIMULATOR)",
+  "physical_verified": false,
+  "documented_timing_boundaries": [
+    {
+      "id": "TIME-001",
+      "subsystem": "BSC / SDRAM Wait-States & Refresh",
+      "silicon_behavior": "Per-area CS*WCR wait-states stall external bus reads/writes cycle-by-cycle; SDRAM refresh steals bus cycles.",
+      "core_behavior": "CS*WCR/CS*BCR/SDCR/RTCSR/RTCNT/RTCOR registers enforce exact CPU73050.dll masks, 0xA55A write-keys, and refresh CMF counter ticks, but memory accesses complete atomically within the instruction step without bus stall cycles.",
+      "impact": "Zero impact on Casio OS 3.80 / MicroPython / standard .g3a add-ins; only observable by homebrew overclocking/memory-timing microbenchmarks."
+    },
+    {
+      "id": "TIME-002",
+      "subsystem": "CPG / PLL / Dynamic Clock Scaling",
+      "silicon_behavior": "FRQCR KICK triggers hardware PLL relock delay (~hundreds of us) and changes bus/peripheral divider ratios dynamically.",
+      "core_behavior": "FRQCR KICK self-clears immediately, EffectiveCpuClockHz() computes exact IFC/SFC/BFC/PFC ratios, and MSTPCR0..2 actively gates module clocks (e.g., TMU freeze proven), without analog PLL lock transient delay.",
+      "impact": "Fully compatible with OS 3.80 clock-scaling & Ptune-style probing; analog PLL lock transient is idealized."
+    },
+    {
+      "id": "TIME-003",
+      "subsystem": "DMAC0 6-Channel Transfers",
+      "silicon_behavior": "DMA channels transfer bursts across multiple bus cycles interleaved with CPU execution.",
+      "core_behavior": "DMAC0 executes channel transfers synchronously on CHCR.DE write (with exact alignment checks -> DMAOR.AE, round-robin arbitration, CHCR bitmasks, and TC/DEI IRQs).",
+      "impact": "Zero impact on LCD/RAM DMA transfers; mid-DMA partial transfer observation is atomic."
+    },
+    {
+      "id": "TIME-004",
+      "subsystem": "TMU / ETMU / CMT / WDT / RTC Timer Granularity",
+      "silicon_behavior": "Hardware timers tick continuously on Pphi / 32.768 kHz RTCCLK asynchronously to CPU pipeline stages.",
+      "core_behavior": "Timers advance deterministically from retired instruction cycle counts on each StepInstruction() and AdvanceCycles() call; guarantees 100% bit-exact determinism across runs and threads.",
+      "impact": "Deterministic and reproducible; sub-instruction asynchronous race timing is quantized to instruction boundaries."
+    },
+    {
+      "id": "TIME-005",
+      "subsystem": "SH-4A 4-Way IC/OC Cache Pipeline Stalls",
+      "silicon_behavior": "Cache misses incur multi-cycle SDRAM line-fill stalls; IC/OC tags serve data directly.",
+      "core_behavior": "ShCacheUnit tracks authentic 4-way tags/valid/dirty bits, LRU eviction, ICBI/OCBI/OCBP/OCBWB stats, and 16 KB OCRAM (0x7C000000), while fetches execute with constant architectural cycle accounting.",
+      "impact": "Functional cache/OCRAM semantics are exact; cycle-level cache-miss latency profiling is not modeled."
+    },
+    {
+      "id": "TIME-006",
+      "subsystem": "R61524 LCD VSync / FMARK & Spansion NOR Busy Windows",
+      "silicon_behavior": "R61524 scans 216 lines at ~60 Hz with FMARK tearing-effect pulse; Spansion S29GL256P holds DQ6/DQ7 busy for ms during erase/program.",
+      "core_behavior": "R61524 TickFrameMark() models periodic FMARK pulses; SpansionNorFlashCfi models configurable DQ6/DQ7 busy windows (default immediate completion for fast OS responsiveness, configurable via SetBusyWindowCycles()).",
+      "impact": "Matches Casio OS 3.80 and Manager PLUS display/storage behavior; physical flash erase duration is accelerated by default."
+    }
+  ]
+}

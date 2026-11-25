@@ -225,7 +225,19 @@ class Cg50LocalBridgeServer extends ChangeNotifier {
   int _linkTxBytes = 0;
   int _linkRxBytes = 0;
 
-  Cg50LocalBridgeServer(this.backend);
+  // H-006 opt-in security controls (preserve direct no-PIN default for local UX)
+  bool readOnlyMode = false;
+  bool loopbackOnly = false;
+  String? optionalPairingToken;
+  bool requireConfirmForRecursiveDelete = false;
+
+  Cg50LocalBridgeServer(
+    this.backend, {
+    this.readOnlyMode = false,
+    this.loopbackOnly = false,
+    this.optionalPairingToken,
+    this.requireConfirmForRecursiveDelete = false,
+  });
 
   bool get isRunning => _server != null;
   int get port => _boundPort;
@@ -239,9 +251,11 @@ class Cg50LocalBridgeServer extends ChangeNotifier {
     if (_server != null) return true;
     _lastError = null;
     try {
-      _server = await HttpServer.bind(InternetAddress.anyIPv4, port, shared: true);
+      final bindAddr =
+          loopbackOnly ? InternetAddress.loopbackIPv4 : InternetAddress.anyIPv4;
+      _server = await HttpServer.bind(bindAddr, port, shared: true);
       _boundPort = _server!.port;
-      _addresses = await _discoverLanAddresses();
+      _addresses = loopbackOnly ? const ['127.0.0.1'] : await _discoverLanAddresses();
       _server!.listen(_handleRequest, onError: (_) {});
       _txSub = backend.onLinkTx.listen(_broadcastLinkTx);
       notifyListeners();
@@ -300,12 +314,43 @@ class Cg50LocalBridgeServer extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _applyCors(HttpResponse res) {
-    res.headers.set('Access-Control-Allow-Origin', '*');
+  static bool _isTrustedLocalOrigin(String origin) {
+    final uri = Uri.tryParse(origin);
+    if (uri == null) return false;
+    final host = uri.host.toLowerCase();
+    if (host == 'localhost' || host == '127.0.0.1' || host == '::1') return true;
+    if (host.startsWith('192.168.') || host.startsWith('10.')) return true;
+    if (host.startsWith('172.')) {
+      final parts = host.split('.');
+      if (parts.length == 4) {
+        final second = int.tryParse(parts[1]) ?? -1;
+        if (second >= 16 && second <= 31) return true;
+      }
+    }
+    return false;
+  }
+
+  void _applyCors(HttpRequest req, HttpResponse res) {
+    final origin = req.headers.value('origin');
+    if (origin != null && _isTrustedLocalOrigin(origin)) {
+      res.headers.set('Access-Control-Allow-Origin', origin);
+      res.headers.set('Vary', 'Origin');
+    }
     res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-CG50-Token');
     res.headers.set('Cache-Control', 'no-store');
   }
+
+  bool _isAuthorized(HttpRequest req) {
+    final expected = optionalPairingToken;
+    if (expected == null || expected.isEmpty) return true;
+    final fromHeader = req.headers.value('x-cg50-token');
+    final fromQuery = req.uri.queryParameters['token'];
+    return fromHeader == expected || fromQuery == expected;
+  }
+
+  static bool _isMutatingMethod(String method) =>
+      method == 'POST' || method == 'PUT' || method == 'DELETE';
 
   Future<void> _sendJson(HttpResponse res, int status, Object body) async {
     res.statusCode = status;
@@ -329,7 +374,7 @@ class Cg50LocalBridgeServer extends ChangeNotifier {
 
   Future<void> _handleRequest(HttpRequest req) async {
     final res = req.response;
-    _applyCors(res);
+    _applyCors(req, res);
 
     if (req.method == 'OPTIONS') {
       res.statusCode = HttpStatus.noContent;
@@ -339,6 +384,24 @@ class Cg50LocalBridgeServer extends ChangeNotifier {
 
     final uri = req.uri;
     final path = uri.path;
+
+    // Enforce optional pairing token on API and WebSocket endpoints (H-006)
+    if ((path.startsWith('/api/') || path == '/ws/link') && !_isAuthorized(req)) {
+      await _sendJson(res, HttpStatus.unauthorized, {
+        'ok': false,
+        'error': 'Token de emparejamiento requerido o invalido',
+      });
+      return;
+    }
+
+    // Enforce optional read-only protection on mutating endpoints (H-006)
+    if (readOnlyMode && path.startsWith('/api/') && _isMutatingMethod(req.method)) {
+      await _sendJson(res, HttpStatus.forbidden, {
+        'ok': false,
+        'error': 'Servidor local en modo solo lectura',
+      });
+      return;
+    }
 
     try {
       // WebSocket Calc <-> Calc SCIF0 Link tunnel
@@ -473,6 +536,14 @@ class Cg50LocalBridgeServer extends ChangeNotifier {
         }
         if (req.method == 'DELETE') {
           final recursive = (uri.queryParameters['recursive'] ?? '0') == '1';
+          final confirmed = (uri.queryParameters['confirm'] ?? '0') == '1';
+          if (recursive && requireConfirmForRecursiveDelete && !confirmed) {
+            await _sendJson(res, HttpStatus.badRequest, {
+              'ok': false,
+              'error': 'Confirmacion explicita (confirm=1) requerida para eliminacion recursiva',
+            });
+            return;
+          }
           final remount = (uri.queryParameters['remount'] ?? '0') == '1';
           final ok = await backend.deleteSmemPath(
             remotePath,

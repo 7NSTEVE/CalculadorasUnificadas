@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>es</string>
+    <key>CFBundleDisplayName</key>
+    <string>CuadernU</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+
+    <!-- Permisos. Sin estas cadenas iOS no pregunta: mata la app en el acto la
+         primera vez que se toca el micrófono o el dictado. -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Para grabar tu voz y la de la clase mientras grabás la pantalla o dictás una nota.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Para pasar a texto lo que dictás. El reconocimiento va dentro del iPad siempre que el idioma esté descargado.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Para importar fotos y videos a tus apuntes.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Para guardar en Fotos las paginas y grabaciones que exportes.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Para fotografiar pizarras, diapositivas y tareas desde el iPhone o el iPad.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Para importar únicamente los calendarios académicos que selecciones y crear eventos con enlaces a tus apuntes.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Para recibir fotos y comandos directamente desde un teléfono, incluido Android, durante la clase sin subirlos a Internet.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_tinta-colab._tcp</string>
+        <string>_tinta-web._tcp</string>
+    </array>
+
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>com.calculadorasunificadas.tinta.enlaces</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>CuadernU</string>
+                <string>tinta</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- OneNote: tipos importados por extensión. Se mantienen separados para que
+         CuadernU no se anuncie como editor genérico de public.data. -->
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.calculadorasunificadas.cuadernu.cudoc</string>
+            <key>UTTypeDescription</key>
+            <string>Documento CuadernU (.cudoc)</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.zip-archive</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>cudoc</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.calculadorasunificadas.tinta.import.onenote.one</string>
+            <key>UTTypeDescription</key>
+            <string>Sección de Microsoft OneNote</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>one</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.calculadorasunificadas.tinta.import.onenote.onepkg</string>
+            <key>UTTypeDescription</key>
+            <string>Paquete de bloc de Microsoft OneNote</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>onepkg</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.calculadorasunificadas.tinta.import.onenote.onetoc2</string>
+            <key>UTTypeDescription</key>
+            <string>Tabla de contenidos de Microsoft OneNote</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>onetoc2</string></array>
+            </dict>
+        </dict>
+    </array>
+
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Documento CuadernU</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.calculadorasunificadas.cuadernu.cudoc</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Microsoft OneNote</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.calculadorasunificadas.tinta.import.onenote.one</string>
+                <string>com.calculadorasunificadas.tinta.import.onenote.onepkg</string>
+                <string>com.calculadorasunificadas.tinta.import.onenote.onetoc2</string>
+            </array>
+        </dict>
+    </array>
+
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.calculadorasunificadas.tinta.seleccion</string>
+            <key>UTTypeDescription</key>
+            <string>Selección de Tinta</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string></array>
+        </dict>
+    </array>
+
+    <!-- PiP de vídeo autorizado necesita que la sesión de reproducción pueda
+         continuar cuando la ventana flotante sale de la app. -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+    </array>
+    <key>NSUserActivityTypes</key>
+    <array>
+        <string>com.calculadorasunificadas.tinta.continuarNota</string>
+        <string>com.calculadorasunificadas.tinta.continuarClase</string>
+    </array>
+
+    <!-- Los apuntes y las grabaciones se ven desde la app Archivos, para poder
+         sacarlos del iPad sin depender de nada. -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+
+    <!-- Sin esta clave, iPadOS limita la app a 60 Hz aunque el panel sea
+         ProMotion: la mitad de los frames y el doble de latencia de
+         presentación. Es el ajuste más barato de todo el proyecto. -->
+    <key>CADisableMinimumFrameDuration</key>
+    <true/>
+
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <true/>
+    </dict>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>metal</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+</dict>
+</plist>

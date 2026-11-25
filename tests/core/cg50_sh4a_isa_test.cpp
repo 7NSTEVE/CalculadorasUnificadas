@@ -123,6 +123,12 @@ void TestFpuEncodingAndFmov32()
 
     auto corePtr = std::make_unique<Cg50NativeCore>();
     Cg50NativeCore& core = *corePtr;
+    CHECK(core.StrictSh7305NoFpu(), "H-003: SH7305 strict no-FPU mode MUST be enabled by default");
+    CHECK(core.GetHardwareProfile() == Cg50NativeCore::HardwareProfile::StrictSilicon,
+          "H-004: StrictSilicon hardware profile MUST be default");
+    CHECK(!core.ExamDecouplingEnabled(), "H-004: exam opcode patching MUST be OFF by default");
+    // Explicitly opt into experimental SH-4A FPU mode solely for legacy sh_fpu.h tests
+    core.SetStrictSh7305NoFpu(false);
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load FPU test ROM");
     for (int i = 0; i < 27; ++i) {
         CHECK(core.StepInstruction(), "step FPU instruction");
@@ -183,6 +189,7 @@ void TestFtrvColumnMajorAndFipr()
 
     auto corePtr = std::make_unique<Cg50NativeCore>();
     Cg50NativeCore& core = *corePtr;
+    core.SetStrictSh7305NoFpu(false);
     CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load FTRV/FIPR ROM");
     for (int i = 0; i < 23; ++i) CHECK(core.StepInstruction(), "step FTRV");
     const auto& rAfterFtrv = core.GetRegisters();
@@ -321,8 +328,8 @@ void TestClrmacVsLdtlbAndUtlbMultiHit()
 
     for (int i = 0; i < 7; ++i) CHECK(core.StepInstruction(), "step to UTLB multi-hit");
     CHECK(core.GetRegisters().pc == 0xA0001100u, "UTLB multi-hit vectored to VBR+0x100");
-    CHECK(core.GetRegisters().expevt == cg50::kExpevtTlbMultiHit,
-          "UTLB multi-hit set EXPEVT=0x140");
+    CHECK(core.GetRegisters().expevt == 0x140u,
+          "UTLB multi-hit set EXPEVT=0x140 (literal Renesas REJ09B0003-0400)");
 }
 
 void TestRtcRealTimeEpoch()
@@ -381,6 +388,114 @@ void TestDtShll2AndDelaySlotJmp()
     CHECK(r.expevt == 0x1A0u && r.pc == 0xA0001100u, "JMP inside delay slot raises EXPEVT 0x1A0");
 }
 
+void TestSh4aIntegerAluMulDivAndJsrSlot()
+{
+    auto RunSeq = [](const std::vector<std::uint16_t>& ops,
+                     const std::uint32_t initR1,
+                     const std::uint32_t initR2,
+                     const bool initT = false,
+                     const bool setDsp = false) {
+        std::vector<std::uint8_t> rom(Cg50NativeCore::kRomSize, 0x00u);
+        for (std::size_t i = 0; i < ops.size(); ++i) PutOp(rom, i * 2u, ops[i]);
+        auto corePtr = std::make_unique<Cg50NativeCore>();
+        auto& core = *corePtr;
+        CHECK(core.LoadFirmwareParts(rom.data(), rom.size(), nullptr, 0), "load ALU/Mul/Div ROM");
+        core.RegistersMut().vbr = 0xA0001000u;
+        core.RegistersMut().sr = 0x40000000u | (initT ? 1u : 0u) | (setDsp ? 0x1000u : 0u);
+        core.RegistersMut().r[1] = initR1;
+        core.RegistersMut().r[2] = initR2;
+        for (std::size_t i = 0; i < ops.size(); ++i) {
+            (void)core.StepInstruction();
+        }
+        return core.GetRegisters();
+    };
+
+    // 1. JSR @R1 inside BRA delay slot -> EXPEVT 0x1A0 (MUT-011)
+    {
+        auto r = RunSeq({0xA000u, 0x410Bu}, 0xA0000200u, 0u);
+        CHECK(r.expevt == 0x1A0u && r.pc == 0xA0001100u, "JSR inside delay slot raises EXPEVT 0x1A0");
+    }
+    // 2. CLIPS.B negative saturation (-200 -> -128 = 0xFFFFFF80, T=1) (MUT-014)
+    {
+        auto r = RunSeq({0x4191u}, static_cast<std::uint32_t>(-200), 0u, false, true);
+        CHECK(r.r[1] == 0xFFFFFF80u && (r.sr & 1u) == 1u, "CLIPS.B -200 clamps to -128 (0xFFFFFF80)");
+    }
+    // 3. ADDV overflow & non-overflow (MUT-019)
+    {
+        auto rOvf = RunSeq({0x312Fu}, 0x7FFFFFFFu, 1u);
+        CHECK(rOvf.r[1] == 0x80000000u && (rOvf.sr & 1u) == 1u, "ADDV 0x7FFFFFFF+1 sets T=1");
+        auto rOk = RunSeq({0x312Fu}, 1u, 1u);
+        CHECK(rOk.r[1] == 2u && (rOk.sr & 1u) == 0u, "ADDV 1+1 keeps T=0");
+    }
+    // 4. SUBV overflow & non-overflow (MUT-020)
+    {
+        auto rOvf = RunSeq({0x312Bu}, 0x80000000u, 1u);
+        CHECK(rOvf.r[1] == 0x7FFFFFFFu && (rOvf.sr & 1u) == 1u, "SUBV 0x80000000-1 sets T=1");
+        auto rOk = RunSeq({0x312Bu}, 5u, 3u);
+        CHECK(rOk.r[1] == 2u && (rOk.sr & 1u) == 0u, "SUBV 5-3 keeps T=0");
+    }
+    // 5. SUBC equal boundary 5-5 with T=0 -> R1=0, T=0 (MUT-022)
+    {
+        auto r = RunSeq({0x312Au}, 5u, 5u, false);
+        CHECK(r.r[1] == 0u && (r.sr & 1u) == 0u, "SUBC 5-5 (T=0) yields 0 with borrow T=0");
+    }
+    // 6. NEGC non-zero & zero (MUT-023)
+    {
+        auto r1 = RunSeq({0x612Au}, 0u, 5u, false);
+        CHECK(r1.r[1] == static_cast<std::uint32_t>(-5) && (r1.sr & 1u) == 1u, "NEGC 5 sets T=1");
+        auto r0 = RunSeq({0x612Au}, 0u, 0u, false);
+        CHECK(r0.r[1] == 0u && (r0.sr & 1u) == 0u, "NEGC 0 keeps T=0");
+    }
+    // 7. SHAD -32 negative saturation & SHLD -32 zero (MUT-024, MUT-025)
+    {
+        auto rShad = RunSeq({0x412Cu}, 0x80000000u, static_cast<std::uint32_t>(-32));
+        CHECK(rShad.r[1] == 0xFFFFFFFFu, "SHAD 0x80000000 by -32 yields 0xFFFFFFFF");
+        auto rShld = RunSeq({0x412Du}, 0x80000000u, static_cast<std::uint32_t>(-32));
+        CHECK(rShld.r[1] == 0x00000000u, "SHLD 0x80000000 by -32 yields 0x00000000");
+    }
+    // 8. ROTL, ROTR, ROTCL, ROTCR (MUT-026..029)
+    {
+        auto rL = RunSeq({0x4104u}, 0x80000000u, 0u);
+        CHECK(rL.r[1] == 0x00000001u && (rL.sr & 1u) == 1u, "ROTL wraps bit 31 to bit 0");
+        auto rR = RunSeq({0x4105u}, 0x00000001u, 0u);
+        CHECK(rR.r[1] == 0x80000000u && (rR.sr & 1u) == 1u, "ROTR wraps bit 0 to bit 31");
+        auto rCL = RunSeq({0x4124u}, 0x00000000u, 0u, true);
+        CHECK(rCL.r[1] == 0x00000001u && (rCL.sr & 1u) == 0u, "ROTCL shifts in T=1 to bit 0");
+        auto rCR = RunSeq({0x4125u}, 0x00000000u, 0u, true);
+        CHECK(rCR.r[1] == 0x80000000u && (rCR.sr & 1u) == 0u, "ROTCR shifts in T=1 to bit 31");
+    }
+    // 9. CMP/STR MSB byte match & XTRCT (MUT-030, MUT-031)
+    {
+        auto rCmp = RunSeq({0x212Cu}, 0xAA112233u, 0xAA445566u);
+        CHECK((rCmp.sr & 1u) == 1u, "CMP/STR detects matching MSB byte");
+        auto rX = RunSeq({0x212Du}, 0x12345678u, 0x9ABCDEF0u);
+        CHECK(rX.r[1] == 0xDEF01234u, "XTRCT combines Rm[15:0]<<16 | Rn[31:16]");
+    }
+    // 10. DIV0S + DIV1 (MUT-032..035)
+    {
+        // DIV0S R2, R1 with R1=-10 (Q=1), R2=+3 (M=0) -> Q=1, M=0, T=1
+        auto rD0 = RunSeq({0x2127u}, static_cast<std::uint32_t>(-10), 3u);
+        CHECK(((rD0.sr >> 8) & 1u) == 1u && ((rD0.sr >> 9) & 1u) == 0u && (rD0.sr & 1u) == 1u,
+              "DIV0S sets Q=1, M=0, T=(Q!=M)=1");
+        // DIV1 R2, R1 starting with DIV0U (Q=0,M=0,T=0) -> SETT (T=1) -> R1=0x40000000, R2=0x40000000:
+        // shift-in T=1 -> 0x80000001; sub 0x40000000 -> 0x40000001 (no borrow -> Q=0 -> T=(Q==M)=1)
+        auto rD1 = RunSeq({0x0019u, 0x0018u, 0x3124u}, 0x40000000u, 0x40000000u);
+        CHECK(rD1.r[1] == 0x40000001u && (rD1.sr & 1u) == 1u && ((rD1.sr >> 8) & 1u) == 0u,
+              "DIV1 shifts in oldT=1 and produces exact remainder + T=1");
+    }
+    // 11. MUL.L, MULU.W, MULS.W, DMULU.L (MUT-036..039)
+    {
+        auto rMul = RunSeq({0x0127u}, 7u, 9u);
+        CHECK(rMul.macl == 63u, "MUL.L 7*9 == 63");
+        auto rMulu = RunSeq({0x212Eu}, 0x0200u, 3u);
+        CHECK(rMulu.macl == 0x0600u, "MULU.W preserves upper byte of 16-bit lhs");
+        auto rMuls = RunSeq({0x212Fu}, 0xFFFEu, 3u);
+        CHECK(rMuls.macl == 0xFFFFFFFAu, "MULS.W sign-extends 16-bit lhs (-2 * 3 == -6)");
+        auto rDmulu = RunSeq({0x3125u}, 0x10000000u, 0x100u);
+        CHECK(rDmulu.mach == 0x10u && rDmulu.macl == 0u, "DMULU.L computes 64-bit MACH:MACL");
+    }
+}
+
 } // namespace
 
 int main()
@@ -391,6 +506,7 @@ int main()
     TestClrmacVsLdtlbAndUtlbMultiHit();
     TestRtcRealTimeEpoch();
     TestDtShll2AndDelaySlotJmp();
+    TestSh4aIntegerAluMulDivAndJsrSlot();
 
     std::printf("[SH4A-TEST] finished failures=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;

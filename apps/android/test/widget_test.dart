@@ -14,8 +14,11 @@ String resolveCasioNativeDll() {
   final envPath = Platform.environment['CASIO_NATIVE_LIB'];
   final candidates = <String>[
     if (envPath != null && envPath.isNotEmpty) envPath,
-    '../../build-core-host/Release/casio_native.dll',
-    r'D:\Proyectos\CalculadorasUnificadas\build-core-host\Release\casio_native.dll',
+    '../../build/core-v47/Release/casio_native.dll',
+    '../../build/core-host/Release/casio_native.dll',
+    '../../build/windows-x64/core_build/Release/casio_native.dll',
+    r'D:\Proyectos\CalculadorasUnificadas\build\core-v47\Release\casio_native.dll',
+    r'D:\Proyectos\CalculadorasUnificadas\build\windows-x64\core_build\Release\casio_native.dll',
   ];
   for (final c in candidates) {
     final f = File(c);

@@ -1,0 +1,44 @@
+#include "../perspectiva.h"
+#include <cmath>
+#include <cassert>
+#include <iostream>
+
+using namespace tinta;
+
+void ProbarHomografiaIdentidad() {
+  std::array<Punto, 4> origen = {{{0,0}, {100,0}, {100,100}, {0,100}}};
+  auto matriz = CalcularMatrizPerspectiva(origen, origen);
+  Punto p = AplicarPerspectiva(matriz, {50, 50});
+  
+  assert(std::abs(p.x - 50.0f) < 1e-4f);
+  assert(std::abs(p.y - 50.0f) < 1e-4f);
+}
+
+void ProbarHomografiaEscalaYTraslacion() {
+  std::array<Punto, 4> origen = {{{0,0}, {100,0}, {100,100}, {0,100}}};
+  std::array<Punto, 4> destino = {{{10,10}, {210,10}, {210,210}, {10,210}}};
+  auto matriz = CalcularMatrizPerspectiva(origen, destino);
+  Punto p = AplicarPerspectiva(matriz, {50, 50});
+  
+  // (50, 50) debería mapearse a (110, 110)
+  assert(std::abs(p.x - 110.0f) < 1e-4f);
+  assert(std::abs(p.y - 110.0f) < 1e-4f);
+}
+
+void ProbarCorreccionContraste() {
+  CorreccionContraste corr = {0.2f, 0.8f};
+  
+  assert(std::abs(AplicarCorreccionContraste(0.2f, corr) - 0.0f) < 1e-4f);
+  assert(std::abs(AplicarCorreccionContraste(0.8f, corr) - 1.0f) < 1e-4f);
+  assert(std::abs(AplicarCorreccionContraste(0.5f, corr) - 0.5f) < 1e-4f);
+  assert(std::abs(AplicarCorreccionContraste(0.0f, corr) - 0.0f) < 1e-4f);
+  assert(std::abs(AplicarCorreccionContraste(1.0f, corr) - 1.0f) < 1e-4f);
+}
+
+// Llama a esto desde pruebas.cpp
+void EjecutarPruebasPerspectiva() {
+  ProbarHomografiaIdentidad();
+  ProbarHomografiaEscalaYTraslacion();
+  ProbarCorreccionContraste();
+  std::cout << "Pruebas de perspectiva pasaron correctamente." << std::endl;
+}

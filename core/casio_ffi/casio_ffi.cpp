@@ -8,12 +8,24 @@
 #include "cg50_core/cg50_usb_host.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
+
+#if defined(_WIN32)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h>
+#  include <io.h>
+#  include <process.h>
+#else
+#  include <unistd.h>
+#endif
 
 namespace {
 
@@ -43,23 +55,45 @@ bool ReadBinaryFile(const std::string& path, std::vector<uint8_t>& out)
 bool WriteBinaryFileAtomic(const std::string& path, const uint8_t* data, size_t size)
 {
     if (path.empty() || !data || size == 0) return false;
-    const std::string tmpPath = path + ".tmp";
+    static std::atomic<uint64_t> s_tmpSeq{0};
+    const uint64_t seq = s_tmpSeq.fetch_add(1, std::memory_order_relaxed);
+#if defined(_WIN32)
+    const unsigned long pid = static_cast<unsigned long>(_getpid());
+#else
+    const unsigned long pid = static_cast<unsigned long>(getpid());
+#endif
+    const std::string tmpPath = path + ".tmp." + std::to_string(pid) + "." + std::to_string(seq);
+
     FILE* fp = std::fopen(tmpPath.c_str(), "wb");
     if (!fp) return false;
     const size_t written = std::fwrite(data, 1, size, fp);
     const int flushOk = std::fflush(fp);
+    int syncOk = 0;
+#if defined(_WIN32)
+    syncOk = _commit(_fileno(fp));
+#else
+    syncOk = fsync(fileno(fp));
+#endif
     const int closeOk = std::fclose(fp);
-    if (written != size || flushOk != 0 || closeOk != 0) {
+    if (written != size || flushOk != 0 || syncOk != 0 || closeOk != 0) {
         std::remove(tmpPath.c_str());
         return false;
     }
+
 #if defined(_WIN32)
-    std::remove(path.c_str());
-#endif
+    // True atomic replacement on Windows: NEVER delete the existing target before replacing it.
+    if (!MoveFileExA(tmpPath.c_str(), path.c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        std::remove(tmpPath.c_str());
+        return false;
+    }
+#else
+    // POSIX rename() atomically replaces target without ever removing the old file first.
     if (std::rename(tmpPath.c_str(), path.c_str()) != 0) {
         std::remove(tmpPath.c_str());
         return false;
     }
+#endif
     return true;
 }
 

@@ -1,0 +1,65 @@
+#include "../matematicas.h"
+#include <iostream>
+#include <cassert>
+#include <string>
+
+using namespace tinta;
+
+void ProbarDisenoFraccion() {
+    std::vector<SimboloReconocido> simbolos;
+    
+    SimboloReconocido num;
+    num.texto = "1";
+    num.caja = {0.0f, 0.0f, 10.0f, 10.0f};
+    simbolos.push_back(num);
+
+    SimboloReconocido linea;
+    linea.texto = "-";
+    linea.caja = {-5.0f, 12.0f, 15.0f, 14.0f}; 
+    simbolos.push_back(linea);
+
+    SimboloReconocido den;
+    den.texto = "2";
+    den.caja = {0.0f, 16.0f, 10.0f, 26.0f};
+    simbolos.push_back(den);
+
+    auto arbol = AnalizarDisenoMatematico(simbolos);
+    std::string latex = GenerarLaTeX(arbol.get());
+    assert(latex == "\\frac{1}{2}");
+}
+
+void ProbarDisenoSuperindice() {
+    std::vector<SimboloReconocido> simbolos;
+    
+    SimboloReconocido base;
+    base.texto = "x";
+    base.caja = {0.0f, 10.0f, 10.0f, 20.0f};
+    simbolos.push_back(base);
+
+    SimboloReconocido exp;
+    exp.texto = "2";
+    exp.caja = {12.0f, 2.0f, 18.0f, 8.0f}; 
+    simbolos.push_back(exp);
+
+    auto arbol = AnalizarDisenoMatematico(simbolos);
+    std::string latex = GenerarLaTeX(arbol.get());
+    assert(latex == "x^{2}");
+}
+
+void ProbarUnidadesMultiplicacion() {
+    ValorConUnidad r = { 10.0, PrefijoSI::Kilo, UnidadSI::Ohmio }; 
+    ValorConUnidad i = { 2.0, PrefijoSI::Mili, UnidadSI::Amperio }; 
+    
+    ValorConUnidad v = MultiplicarValores(r, i);
+    
+    assert(v.valor == 20.0);
+    assert(v.unidad == UnidadSI::Voltio);
+    assert(v.prefijo == PrefijoSI::Ninguno);
+}
+
+void EjecutarPruebasMatematicas() {
+    ProbarDisenoFraccion();
+    ProbarDisenoSuperindice();
+    ProbarUnidadesMultiplicacion();
+    std::cout << "Pruebas de matemáticas superadas." << std::endl;
+}
