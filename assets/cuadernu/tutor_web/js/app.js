@@ -106,7 +106,7 @@ const acciones = {
     ['gemini-3.1-pro-preview', 'Profunda (Gemini 3.1 Pro)'],
   ],
   reportar: () => asistente.reportar('Marcado por la persona'),
-  guardarCuaderno: () => guardarEnCuaderno(rep),
+  guardarCuaderno: () => guardarEnCuaderno(rep, asistente.viva),
   enCuaderno,
   aviso,
 };

@@ -449,7 +449,7 @@ def limpiar_voz_latex(texto: str, preservar_cues: bool = False) -> str:
         def _guarda_cue(m: re.Match[str]) -> str:
             idx = len(cues)
             cues.append(m.group(0))
-            return f" __CUE_{idx}__ "
+            return f" XCUEMARK{idx}X "
         s = re.sub(r"<cue\s+id=['\"][^'\"]+['\"]\s*/?>", _guarda_cue, s)
     else:
         s = re.sub(r"<[^>]+>", " ", s)
@@ -465,6 +465,6 @@ def limpiar_voz_latex(texto: str, preservar_cues: bool = False) -> str:
     s = re.sub(r"\s+", " ", s).strip()
     if preservar_cues:
         for idx, cue_tag in enumerate(cues):
-            s = s.replace(f"__CUE_{idx}__", cue_tag)
+            s = s.replace(f"XCUEMARK{idx}X", cue_tag)
         s = re.sub(r"\s+", " ", s).strip()
     return s

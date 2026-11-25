@@ -28,6 +28,14 @@ struct SidecarEndpointInfo {
     std::string lastErrorUtf8;
 };
 
+struct SidecarVaultSnapshot {
+    std::string geminiApiKeyUtf8;
+    std::string ollamaEndpointUtf8;
+    std::string ollamaModelUtf8;
+
+    static SidecarVaultSnapshot Capture(const AiProviderVault* optionalVault);
+};
+
 // Manages the local decoupled Python Tutor Runtime safely:
 // - Win32 JobObject with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE (zero orphan processes).
 // - Ephemeral 192-bit token & optional DPAPI-decrypted vault info delivered strictly
@@ -46,6 +54,12 @@ public:
     bool Start(
         const SidecarLaunchConfig& cfg,
         const AiProviderVault* optionalVault = nullptr,
+        std::string* outErr = nullptr);
+
+    bool StartWithSnapshot(
+        const SidecarLaunchConfig& cfg,
+        const SidecarVaultSnapshot& vaultSnapshot,
+        std::atomic<bool>* cancelFlag = nullptr,
         std::string* outErr = nullptr);
 
     void Stop();

@@ -7,9 +7,12 @@ checks without ever calling Python eval().
 
 from __future__ import annotations
 
+import ast
+import io
 import re
+import tokenize
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import sympy as sp
 from sympy.integrals.manualintegrate import (
@@ -25,20 +28,33 @@ from sympy.integrals.manualintegrate import (
     URule,
     integral_steps,
 )
-from sympy.parsing.sympy_parser import (
-    convert_xor,
-    implicit_multiplication_application,
-    parse_expr,
-    standard_transformations,
-)
 
-_TRANSFORMS = standard_transformations + (
-    implicit_multiplication_application,
-    convert_xor,
-)
+_ALLOWED_FUNCS: Dict[str, Callable[..., sp.Expr]] = {
+    "sin": sp.sin,
+    "cos": sp.cos,
+    "tan": sp.tan,
+    "asin": sp.asin,
+    "acos": sp.acos,
+    "atan": sp.atan,
+    "sinh": sp.sinh,
+    "cosh": sp.cosh,
+    "tanh": sp.tanh,
+    "exp": sp.exp,
+    "log": sp.log,
+    "ln": sp.log,
+    "sqrt": sp.sqrt,
+    "Abs": sp.Abs,
+    "abs": sp.Abs,
+}
+
+_ALLOWED_CONSTS: Dict[str, sp.Expr] = {
+    "pi": sp.pi,
+    "E": sp.E,
+    "e": sp.E,
+}
 
 _FORBIDDEN_RE = re.compile(
-    r"(__|import|exec|eval|open|os\.|sys\.|subprocess|lambda|class|globals|locals)",
+    r"(__|import|exec|eval|open|os\.|sys\.|subprocess|lambda|class|globals|locals|builtins|getattr|setattr)",
     re.IGNORECASE,
 )
 
@@ -95,34 +111,129 @@ def _preprocess_latex_to_sympy_str(raw: str) -> str:
     return s.strip()
 
 
+def _insert_implicit_multiplication(expr: str) -> str:
+    """Insert explicit '*' where standard math notation omits it (2x, 2(x+1), (a)(b)) safely."""
+    s = expr.replace("^", "**")
+    try:
+        toks = list(tokenize.generate_tokens(io.StringIO(s).readline))
+    except tokenize.TokenError as exc:
+        raise ValueError("Sintaxis matemática incompleta o inválida.") from exc
+
+    out: List[str] = []
+    prev_type: Optional[int] = None
+    prev_str: str = ""
+    for tok in toks:
+        ttype, tstr = tok.type, tok.string
+        if ttype in (tokenize.ENDMARKER, tokenize.NEWLINE, tokenize.NL, tokenize.INDENT, tokenize.DEDENT):
+            continue
+        if prev_type is not None:
+            need_mul = False
+            if prev_type == tokenize.NUMBER and (ttype == tokenize.NAME or tstr == "("):
+                need_mul = True
+            elif prev_str == ")" and (ttype in (tokenize.NUMBER, tokenize.NAME) or tstr == "("):
+                need_mul = True
+            elif prev_type == tokenize.NAME and prev_str not in _ALLOWED_FUNCS and tstr == "(":
+                need_mul = True
+            if need_mul:
+                out.append("*")
+        out.append(tstr)
+        prev_type, prev_str = ttype, tstr
+    return "".join(out)
+
+
+def _ast_to_sympy(node: ast.AST, symbols_env: Dict[str, sp.Expr], depth: int = 0) -> sp.Expr:
+    """Strictly whitelisted AST -> SymPy converter. Never calls eval() or parse_expr()."""
+    if depth > 48:
+        raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (profundidad excesiva).")
+    if isinstance(node, ast.Expression):
+        return _ast_to_sympy(node.body, symbols_env, depth + 1)
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, bool) or not isinstance(node.value, (int, float)):
+            raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (constante inválida).")
+        if isinstance(node.value, int):
+            return sp.Integer(node.value)
+        return sp.Float(node.value)
+    if isinstance(node, ast.Name):
+        name = node.id
+        if name.startswith("_"):
+            raise ValueError("Expresión rechazada por el filtro de seguridad simbólica.")
+        if name in _ALLOWED_CONSTS:
+            return _ALLOWED_CONSTS[name]
+        if name in symbols_env:
+            return symbols_env[name]
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,16}", name):
+            raise ValueError("Expresión rechazada por el filtro de seguridad simbólica.")
+        sym = sp.Symbol(name, real=True)
+        symbols_env[name] = sym
+        return sym
+    if isinstance(node, ast.UnaryOp):
+        operand = _ast_to_sympy(node.operand, symbols_env, depth + 1)
+        if isinstance(node.op, ast.UAdd):
+            return operand
+        if isinstance(node.op, ast.USub):
+            return -operand
+        raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (operador unario).")
+    if isinstance(node, ast.BinOp):
+        left = _ast_to_sympy(node.left, symbols_env, depth + 1)
+        right = _ast_to_sympy(node.right, symbols_env, depth + 1)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        if isinstance(node.op, ast.Div):
+            return left / right
+        if isinstance(node.op, ast.Pow):
+            if right.is_number:
+                try:
+                    if abs(complex(right)) > 200:
+                        raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (exponente extremo).")
+                except TypeError:
+                    pass
+            return left**right
+        raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (operador binario).")
+    if isinstance(node, ast.Call):
+        if not isinstance(node.func, ast.Name) or node.keywords:
+            raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (llamada no permitida).")
+        fn = _ALLOWED_FUNCS.get(node.func.id)
+        if fn is None:
+            raise ValueError(f"Expresión rechazada por el filtro de seguridad simbólica (función '{node.func.id}').")
+        if not (1 <= len(node.args) <= 2):
+            raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (argumentos inválidos).")
+        args = [_ast_to_sympy(a, symbols_env, depth + 1) for a in node.args]
+        return fn(*args)
+    raise ValueError(f"Expresión rechazada por el filtro de seguridad simbólica ({type(node).__name__}).")
+
+
 def safe_parse_math(expr_text: str, extra_symbols: Optional[List[str]] = None) -> sp.Expr:
-    """Parse math/LaTeX string into a SymPy Expr safely without eval()."""
+    """Parse math/LaTeX string into a SymPy Expr via a strict AST whitelist (zero eval())."""
+    if len(expr_text or "") > 450:
+        raise ValueError("Expresión rechazada por el filtro de seguridad simbólica (demasiado larga).")
     cleaned = _preprocess_latex_to_sympy_str(expr_text)
     if not cleaned:
         raise ValueError("La expresión matemática está vacía.")
 
-    local_dict: Dict[str, Any] = {
-        "sin": sp.sin,
-        "cos": sp.cos,
-        "tan": sp.tan,
-        "exp": sp.exp,
-        "log": sp.log,
-        "ln": sp.log,
-        "sqrt": sp.sqrt,
-        "Abs": sp.Abs,
-        "pi": sp.pi,
-        "E": sp.E,
-        "e": sp.E,
-    }
+    normalized = _insert_implicit_multiplication(cleaned)
+    try:
+        tree = ast.parse(normalized, mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"Sintaxis matemática inválida: {exc.msg}") from exc
+
+    symbols_env: Dict[str, sp.Expr] = {}
     common_syms = [
         "x", "t", "u", "v", "V", "P", "r", "R", "T", "n", "k", "L", "H", "A", "W",
         "Q", "C", "a", "b", "c", "m", "gamma", "V_i", "V_f", "r_1", "r_2", "T_1", "T_2",
         "P_0", "V_0",
     ]
     for name in common_syms + (extra_symbols or []):
-        local_dict[name] = sp.Symbol(name, positive=True) if name in ("V", "r", "T", "n", "R", "k", "L") else sp.Symbol(name, real=True)
+        symbols_env[name] = (
+            sp.Symbol(name, positive=True)
+            if name in ("V", "r", "T", "n", "R", "k", "L")
+            else sp.Symbol(name, real=True)
+        )
 
-    return parse_expr(cleaned, local_dict=local_dict, transformations=_TRANSFORMS, evaluate=True)
+    return _ast_to_sympy(tree, symbols_env)
 
 
 def _describe_rule_es(rule: Any, steps_out: List[Dict[str, str]]) -> None:

@@ -84,9 +84,32 @@ SidecarLaunchConfig TutorSidecarBridge::DiscoverDefaultConfig() {
     return cfg;
 }
 
+SidecarVaultSnapshot SidecarVaultSnapshot::Capture(const AiProviderVault* optionalVault) {
+    SidecarVaultSnapshot snap;
+    if (optionalVault) {
+        if (const auto* gp = optionalVault->FindProviderByKind(AiProviderKind::GoogleGemini); gp && !gp->apiKeyUtf8.empty()) {
+            snap.geminiApiKeyUtf8 = gp->apiKeyUtf8;
+        }
+        if (const auto* ol = optionalVault->FindProviderByKind(AiProviderKind::OllamaLocal); ol) {
+            snap.ollamaEndpointUtf8 = ol->endpointUrlUtf8;
+            snap.ollamaModelUtf8 = ol->modelNameUtf8;
+        }
+    }
+    return snap;
+}
+
 bool TutorSidecarBridge::Start(
     const SidecarLaunchConfig& cfg,
     const AiProviderVault* optionalVault,
+    std::string* outErr)
+{
+    return StartWithSnapshot(cfg, SidecarVaultSnapshot::Capture(optionalVault), nullptr, outErr);
+}
+
+bool TutorSidecarBridge::StartWithSnapshot(
+    const SidecarLaunchConfig& cfg,
+    const SidecarVaultSnapshot& vaultSnapshot,
+    std::atomic<bool>* cancelFlag,
     std::string* outErr)
 {
     Stop();
@@ -110,14 +133,12 @@ bool TutorSidecarBridge::Start(
     boot["bind_host"] = cfg.bindLan ? "0.0.0.0" : "127.0.0.1";
     boot["repo_root"] = WideToUtf8(cfg.repoRootDir);
     boot["assets_web_dir"] = WideToUtf8(cfg.assetsWebDir);
-    if (optionalVault) {
-        if (const auto* gp = optionalVault->FindProviderByKind(AiProviderKind::GoogleGemini); gp && !gp->apiKeyUtf8.empty()) {
-            boot["vault_gemini_key"] = gp->apiKeyUtf8;
-        }
-        if (const auto* ol = optionalVault->FindProviderByKind(AiProviderKind::OllamaLocal); ol) {
-            boot["ollama_endpoint"] = ol->endpointUrlUtf8;
-            boot["ollama_model"] = ol->modelNameUtf8;
-        }
+    if (!vaultSnapshot.geminiApiKeyUtf8.empty()) {
+        boot["vault_gemini_key"] = vaultSnapshot.geminiApiKeyUtf8;
+    }
+    if (!vaultSnapshot.ollamaEndpointUtf8.empty() || !vaultSnapshot.ollamaModelUtf8.empty()) {
+        boot["ollama_endpoint"] = vaultSnapshot.ollamaEndpointUtf8;
+        boot["ollama_model"] = vaultSnapshot.ollamaModelUtf8;
     }
     const std::string bootPayload = boot.dump() + "\n";
 
@@ -202,6 +223,10 @@ bool TutorSidecarBridge::Start(
     std::string readyErr;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(2000, cfg.startupTimeoutMs));
     while (std::chrono::steady_clock::now() < deadline) {
+        if (cancelFlag && cancelFlag->load(std::memory_order_relaxed)) {
+            readyErr = "Arranque del Tutor Runtime cancelado.";
+            break;
+        }
         DWORD avail = 0;
         if (PeekNamedPipe(hStdoutRead, nullptr, 0, nullptr, &avail, nullptr) && avail > 0) {
             char tmp[1024];
@@ -264,7 +289,7 @@ bool TutorSidecarBridge::Start(
     }
     return true;
 #else
-    (void)cfg; (void)optionalVault;
+    (void)cfg; (void)vaultSnapshot; (void)cancelFlag;
     if (outErr) *outErr = "TutorSidecarBridge Win32 solo est\xC3\xA1 habilitado en Windows.";
     return false;
 #endif

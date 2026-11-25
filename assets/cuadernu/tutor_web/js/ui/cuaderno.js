@@ -50,9 +50,65 @@ export function leccionABeats(lec, hasta) {
   return beats;
 }
 
-export function guardarEnCuaderno(rep) {
-  if (!rep.lec) { aviso('Abre una lección primero.'); return; }
+/** Registro de conversación hablada en vivo -> beats del protocolo v1.1. */
+export function vozVivaABeats(registro, inicio = 0, sesion = 'sesion_voz_viva') {
+  if (!Array.isArray(registro) || !registro.length) return [];
+  const beats = [];
+  let n = inicio;
+  let acc = [];
+  let voz = [];
+  const volcar = (titulo = 'Explicación en vivo') => {
+    if (!acc.length && !voz.length) return;
+    const acciones = acc.length ? acc : [accionCuaderno({ a: 'texto', txt: voz.join('\n') }, n, 0)].filter(Boolean);
+    for (let i = 0; i < acciones.length; i += 8) {
+      beats.push({
+        protocol: CUADERNO,
+        session_id: sesion,
+        turn_id: `vivo_${n + 1}`,
+        beat_id: `beat_${String(n + 1).padStart(4, '0')}`,
+        step_index: n,
+        checkpoint_id: `cp_vivo_${n + 1}`,
+        branch_id: null,
+        speech_markup: i ? '' : voz.join(' ').slice(0, 600),
+        speech_rate: 1,
+        actions: acciones.slice(i, i + 8),
+        provenance: [],
+        verification: { status: 'conceptual' },
+        pedagogy: { micro_goal: titulo, concept_tag: 'voz_en_vivo', wait_for_student: false },
+      });
+      n += 1;
+    }
+    acc = [];
+    voz = [];
+  };
+
+  for (const item of registro) {
+    if (!item) continue;
+    if (item.tipo === 'accion' && item.acc) {
+      const c = accionCuaderno(item.acc, n, acc.length);
+      if (c) acc.push(c);
+      if (acc.length >= 8) volcar();
+    } else if (item.tipo === 'habla' && item.texto) {
+      if (item.quien === 'Tú' && (acc.length || voz.length)) volcar();
+      const linea = `${item.quien}: ${item.texto}`;
+      voz.push(linea);
+      const c = accionCuaderno({ a: 'texto', txt: linea, color: item.quien === 'Tú' ? 'azul' : '' }, n, acc.length);
+      if (c) acc.push(c);
+    }
+  }
+  volcar();
+  return beats;
+}
+
+export function guardarEnCuaderno(rep, viva = null) {
+  const beats = [];
+  if (rep && rep.lec) beats.push(...leccionABeats(rep.lec, rep.i));
+  if (viva && Array.isArray(viva.registro) && viva.registro.length) {
+    const ses = rep && rep.lec ? `leccion_${rep.lec.id}` : 'sesion_voz_viva';
+    beats.push(...vozVivaABeats(viva.registro, beats.length, ses));
+  }
+  if (!beats.length) { aviso('Abre una lección o explica algo en voz en vivo antes de guardar.'); return; }
   if (!(window.chrome && window.chrome.webview)) { aviso('Guardar está disponible al abrir la pizarra dentro de CuadernU.'); return; }
-  window.chrome.webview.postMessage({ type: 'WEB_BAKE_SESSION', beats: leccionABeats(rep.lec, rep.i) });
+  window.chrome.webview.postMessage({ type: 'WEB_BAKE_SESSION', beats });
   aviso('Guardando en el cuaderno…');
 }

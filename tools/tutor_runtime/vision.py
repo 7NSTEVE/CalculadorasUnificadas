@@ -79,7 +79,7 @@ def dhash_imagen(img_bytes: bytes) -> Optional[int]:
     """Calcula un dHash perceptual de 64 bits (9x8 en escala de grises)."""
     try:
         im = Image.open(io.BytesIO(img_bytes)).convert("L").resize((9, 8), Image.Resampling.BILINEAR)
-        px = list(im.getdata())
+        px = list(im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata())
         bits = 0
         for fila in range(8):
             base = fila * 9

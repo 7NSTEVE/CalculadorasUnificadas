@@ -4,7 +4,10 @@
 
 #include <nlohmann/json.hpp>
 
+#include <atomic>
 #include <filesystem>
+#include <mutex>
+#include <thread>
 
 namespace DocStudio::Tutor {
 
@@ -15,6 +18,7 @@ namespace {
 
 constexpr wchar_t kTutorWndClass[] = L"CuadernU_AudiovisualTutorWnd";
 constexpr std::uint64_t kTutorHostId = 990001ull;
+constexpr UINT kWmTutorSidecarReady = WM_APP + 101;
 
 std::string RgbaHex(UiGlass::Rgba8 c) {
     char buf[16]{};
@@ -63,6 +67,93 @@ struct StudioTutorPanel::Impl {
     BakeCallbackFn onBake;
     StatusCallbackFn onStatus;
     bool webReady = false;
+    SidecarLaunchConfig pendingCfg{};
+    std::thread startupThread;
+    std::atomic<bool> startupCancel{false};
+    std::atomic<bool> starting{false};
+    std::mutex startupMtx;
+    std::string statusBannerUtf8 = "Iniciando Pizarra Tutor Audiovisual...";
+
+    void JoinStartupThread() {
+        startupCancel.store(true, std::memory_order_relaxed);
+        if (startupThread.joinable()) {
+            startupThread.join();
+        }
+        starting.store(false, std::memory_order_relaxed);
+    }
+
+    void PaintLoadingBanner(HWND wnd) {
+        PAINTSTRUCT ps{};
+        HDC hdc = BeginPaint(wnd, &ps);
+        RECT rc{};
+        GetClientRect(wnd, &rc);
+        const auto pal = UiGlass::GetPalette(glass);
+        HBRUSH br = CreateSolidBrush(RGB(pal.contentPaper.r, pal.contentPaper.g, pal.contentPaper.b));
+        FillRect(hdc, &rc, br);
+        DeleteObject(br);
+
+        std::string msgUtf8;
+        {
+            std::lock_guard<std::mutex> lk(startupMtx);
+            msgUtf8 = statusBannerUtf8;
+        }
+        std::wstring msgW = Utf8ToWide(msgUtf8);
+        HFONT font = CreateFontW(
+            -18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+            DEFAULT_PITCH | FF_SWISS, L"Segoe UI");
+        HFONT oldFont = font ? static_cast<HFONT>(SelectObject(hdc, font)) : nullptr;
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, RGB(pal.labelSecondary.r, pal.labelSecondary.g, pal.labelSecondary.b));
+        DrawTextW(hdc, msgW.c_str(), -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        if (oldFont) SelectObject(hdc, oldFont);
+        if (font) DeleteObject(font);
+        EndPaint(wnd, &ps);
+    }
+
+    void ActivateWebAfterSidecarReady(bool ok) {
+        if (startupThread.joinable()) {
+            startupThread.join();
+        }
+        starting.store(false, std::memory_order_relaxed);
+        if (!hwnd || !IsWindow(hwnd)) return;
+
+        if (!ok) {
+            std::string errMsg;
+            {
+                std::lock_guard<std::mutex> lk(startupMtx);
+                errMsg = statusBannerUtf8;
+            }
+            InvalidateRect(hwnd, nullptr, TRUE);
+            if (onStatus) onStatus(errMsg);
+            return;
+        }
+
+        RECT rc{};
+        GetClientRect(hwnd, &rc);
+        const auto ep = sidecar.Endpoint();
+        const std::string query =
+            "port=" + std::to_string(ep.port) +
+            "&token=" + ep.sessionTokenHex +
+            "&host=cuadernu_win32";
+
+        webHost.ActivateTutorHost(
+            hwnd,
+            kTutorHostId,
+            rc,
+            pendingCfg.assetsWebDir,
+            query,
+            [this](const std::string& jsonMsg) { HandleWebMessage(jsonMsg); },
+            [this](std::uint64_t, bool readyOk) {
+                webReady = readyOk;
+                if (readyOk) {
+                    webHost.PostMessageJson(kTutorHostId, BuildThemeMessageJson(glass));
+                    if (onStatus) {
+                        onStatus("Pizarra Tutor Audiovisual lista");
+                    }
+                }
+            });
+    }
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         Impl* self = reinterpret_cast<Impl*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
@@ -75,6 +166,15 @@ struct StudioTutorPanel::Impl {
         if (!self) return DefWindowProcW(hwnd, msg, wp, lp);
 
         switch (msg) {
+            case WM_PAINT:
+                if (!self->webReady) {
+                    self->PaintLoadingBanner(hwnd);
+                    return 0;
+                }
+                break;
+            case kWmTutorSidecarReady:
+                self->ActivateWebAfterSidecarReady(wp != 0);
+                return 0;
             case WM_SIZE: {
                 RECT rc{};
                 GetClientRect(hwnd, &rc);
@@ -82,6 +182,7 @@ struct StudioTutorPanel::Impl {
                     self->webHost.SuspendAll();
                 } else {
                     self->webHost.SyncBlockBounds(kTutorHostId, rc, true);
+                    if (!self->webReady) InvalidateRect(hwnd, nullptr, TRUE);
                 }
                 return 0;
             }
@@ -90,6 +191,7 @@ struct StudioTutorPanel::Impl {
                 return 0;
             case WM_DESTROY:
                 self->webReady = false;
+                self->JoinStartupThread();
                 self->webHost.Shutdown();
                 self->sidecar.Stop();
                 self->hwnd = nullptr;
@@ -165,10 +267,14 @@ bool StudioTutorPanel::OpenOrFocus(
         return false;
     }
 
-    std::string sidecarErr;
-    if (!impl_->sidecar.Start(cfg, optionalVault, &sidecarErr)) {
-        if (outErr) *outErr = sidecarErr;
-        return false;
+    const SidecarVaultSnapshot vaultSnap = SidecarVaultSnapshot::Capture(optionalVault);
+    impl_->JoinStartupThread();
+    impl_->pendingCfg = cfg;
+    impl_->startupCancel.store(false, std::memory_order_relaxed);
+    impl_->starting.store(true, std::memory_order_relaxed);
+    {
+        std::lock_guard<std::mutex> lk(impl_->startupMtx);
+        impl_->statusBannerUtf8 = "Iniciando Pizarra Tutor Audiovisual...";
     }
 
     HINSTANCE hInst = GetModuleHandleW(nullptr);
@@ -201,7 +307,7 @@ bool StudioTutorPanel::OpenOrFocus(
         impl_);
 
     if (!impl_->hwnd) {
-        impl_->sidecar.Stop();
+        impl_->starting.store(false, std::memory_order_relaxed);
         if (outErr) *outErr = "No se pudo crear la ventana del Tutor Audiovisual.";
         return false;
     }
@@ -210,30 +316,26 @@ bool StudioTutorPanel::OpenOrFocus(
     ShowWindow(impl_->hwnd, SW_SHOW);
     UpdateWindow(impl_->hwnd);
 
-    RECT rc{};
-    GetClientRect(impl_->hwnd, &rc);
-    const auto ep = impl_->sidecar.Endpoint();
-    const std::string query =
-        "port=" + std::to_string(ep.port) +
-        "&token=" + ep.sessionTokenHex +
-        "&host=cuadernu_win32";
+    if (impl_->onStatus) {
+        impl_->onStatus("Iniciando motor del Tutor Audiovisual...");
+    }
 
-    impl_->webHost.ActivateTutorHost(
-        impl_->hwnd,
-        kTutorHostId,
-        rc,
-        cfg.assetsWebDir,
-        query,
-        [this](const std::string& jsonMsg) { impl_->HandleWebMessage(jsonMsg); },
-        [this](std::uint64_t, bool ok) {
-            impl_->webReady = ok;
-            if (ok) {
-                impl_->webHost.PostMessageJson(kTutorHostId, BuildThemeMessageJson(impl_->glass));
-                if (impl_->onStatus) {
-                    impl_->onStatus("Pizarra Tutor Audiovisual lista");
-                }
-            }
-        });
+    // Arrancar Python en un hilo de fondo para no congelar nunca el hilo UI de CuadernU.
+    HWND targetHwnd = impl_->hwnd;
+    Impl* self = impl_;
+    impl_->startupThread = std::thread([self, targetHwnd, cfg, vaultSnap]() {
+        std::string sidecarErr;
+        const bool ok = self->sidecar.StartWithSnapshot(cfg, vaultSnap, &self->startupCancel, &sidecarErr);
+        if (!ok) {
+            std::lock_guard<std::mutex> lk(self->startupMtx);
+            self->statusBannerUtf8 = sidecarErr.empty()
+                ? "No se pudo iniciar el motor local del Tutor Audiovisual."
+                : sidecarErr;
+        }
+        if (!self->startupCancel.load(std::memory_order_relaxed) && IsWindow(targetHwnd)) {
+            PostMessageW(targetHwnd, kWmTutorSidecarReady, ok ? 1 : 0, 0);
+        }
+    });
 
     return true;
 }
@@ -263,6 +365,7 @@ void StudioTutorPanel::Close() {
     if (impl_->hwnd && IsWindow(impl_->hwnd)) {
         DestroyWindow(impl_->hwnd);
     } else {
+        impl_->JoinStartupThread();
         impl_->webHost.Shutdown();
         impl_->sidecar.Stop();
     }

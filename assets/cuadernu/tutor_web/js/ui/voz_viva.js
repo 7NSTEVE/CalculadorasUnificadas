@@ -17,6 +17,7 @@ export class VozViva {
     this.rep = rep;
     this.activa = false;
     this.cola = [];
+    this.registro = [];
     this.vista = null;
     this.quien = '';
     this.buf = '';
@@ -38,6 +39,7 @@ export class VozViva {
     bus.on('ws:CONTROL_HARD_STOP', () => this.audio.hardStopPlayback());
     bus.on('ws:MIC_STREAM_CONFIRMED', () => bus.emit('estado', { texto: 'Te escucho', clase: 'vivo' }));
     bus.on('ws:STATE_CHANGE', (m) => { if (m.state === 'WAITING_FOR_STUDENT') { this.quien = ''; this.vista = null; this._apurar(); } });
+    bus.on('ws:BOARD_RESET', () => { this.registro = []; this.vista = null; this.quien = ''; this.buf = ''; });
     bus.on('conexion', ({ estado }) => { if (estado !== 'conectado' && this.activa) this._cortar('Se cortó la voz en vivo.'); });
   }
 
@@ -93,8 +95,15 @@ export class VozViva {
 
   _transcribe(quien, txt) {
     if (!txt) return;
-    if (this.quien !== quien) { this.quien = quien; this.buf = ''; }
+    if (this.quien !== quien) {
+      this.quien = quien;
+      this.buf = '';
+      this.registro.push({ tipo: 'habla', quien, texto: '' });
+    }
     this.buf += txt;
+    const ult = this.registro[this.registro.length - 1];
+    if (ult && ult.tipo === 'habla' && ult.quien === quien) ult.texto = this.buf.trim();
+    else this.registro.push({ tipo: 'habla', quien, texto: this.buf.trim() });
     $('subtitulo-quien').textContent = quien;
     const pal = this.buf.trim().split(/\s+/).slice(-34);
     bus.emit('subtitulo', { palabras: pal.map((p) => [p, 0, 0]), actual: pal.length - 1, clave: `viva:${quien}:${this.buf.length}` });
@@ -106,6 +115,7 @@ export class VozViva {
   _accion(m) {
     const accs = accionA(m.action || m);
     if (!accs.length) return;
+    for (const a of accs) this.registro.push({ tipo: 'accion', acc: a });
     const espera = Math.max(0, this.audio.getLivePlaybackLeadMs() - 250);
     setTimeout(() => { this.cola.push(...accs); this._seguir(); }, Math.min(4000, espera));
   }

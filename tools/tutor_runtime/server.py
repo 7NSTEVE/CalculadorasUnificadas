@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
@@ -198,6 +198,32 @@ class TutorRuntimeContext:
         self.voz = ServicioVoz(audio_key, (privada / "voz_cache") if hay_privada else None, voz=str(bootstrap.get("tts_voice") or "Kore"))
         self.progreso = Progreso((privada / "tutor_progreso.json") if hay_privada else None)
         self.documentos = Documentos(self.repo_root, cache=(privada / "tutor_recortes") if hay_privada else None)
+        self.sessions: Dict[str, Dict[str, Any]] = {}
+
+
+_ALLOWED_ORIGIN_RE = re.compile(
+    r"^(?:https://tutor\.cuadernu\.local|https?://(?:127\.0\.0\.1|localhost|\[::1\])(?::\d{1,5})?)$",
+    re.IGNORECASE,
+)
+_ALLOWED_HOST_RE = re.compile(
+    r"^(?:127\.0\.0\.1|localhost|\[::1\]|testserver|tutor\.cuadernu\.local)(?::\d{1,5})?$",
+    re.IGNORECASE,
+)
+_SESSION_ID_RE = re.compile(r"^[A-Za-z0-9_-]{6,48}$")
+_SESSION_TTL_SEC = 7200.0
+_MAX_SESSIONS = 32
+
+
+def _is_allowed_origin(origin: str) -> bool:
+    if not origin:
+        return True
+    return bool(_ALLOWED_ORIGIN_RE.match(origin.strip()))
+
+
+def _is_allowed_host(host: str) -> bool:
+    if not host:
+        return True
+    return bool(_ALLOWED_HOST_RE.match(host.strip()))
 
 
 def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
@@ -207,16 +233,20 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "https://tutor.cuadernu.local",
-            "http://127.0.0.1",
-            "http://localhost",
-            "*",
-        ],
+        allow_origins=["https://tutor.cuadernu.local"],
+        allow_origin_regex=r"^https?://(127\.0\.0\.1|localhost|\[::1\])(:\d{1,5})?$",
         allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "X-CuadernU-Token"],
     )
+
+    @app.middleware("http")
+    async def _enforce_loopback_origin_and_host(request: Request, call_next):
+        host = request.headers.get("host", "")
+        origin = request.headers.get("origin", "")
+        if not _is_allowed_host(host) or not _is_allowed_origin(origin):
+            return JSONResponse(status_code=403, content={"detail": "Origen o host no permitido"})
+        return await call_next(request)
 
     def _check_token(token_q: Optional[str], req: Optional[Request] = None) -> None:
         if not ctx.session_token:
@@ -408,26 +438,66 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
         return ctx.telemetry.get_summary()
 
     @app.websocket("/ws/tutor")
-    async def ws_tutor(ws: WebSocket, token: Optional[str] = Query(default=None)) -> None:
-        if ctx.session_token and token != ctx.session_token:
+    async def ws_tutor(
+        ws: WebSocket,
+        token: Optional[str] = Query(default=None),
+        sesion: Optional[str] = Query(default=None),
+        session_id_q: Optional[str] = Query(default=None, alias="session_id"),
+    ) -> None:
+        origin = ws.headers.get("origin", "")
+        host = ws.headers.get("host", "")
+        if not _is_allowed_origin(origin) or not _is_allowed_host(host):
+            await ws.close(code=4403)
+            return
+        hdr_tok = ws.headers.get("x-cuadernu-token", "")
+        if ctx.session_token and token != ctx.session_token and hdr_tok != ctx.session_token:
             await ws.close(code=4401)
             return
         await ws.accept()
 
-        session_id = f"ses_{uuid.uuid4().hex[:10]}"
-        beat_counter = 0
-        lesson_beats: List[Dict[str, Any]] = []
-        lesson_cursor = -1
-        scene_history: List[Dict[str, Any]] = []
-        provenance_edges: List[Dict[str, Any]] = []
-        active_problem: Optional[Dict[str, Any]] = None
-        speech_enabled = True
-        speech_rate = 0.96
-        tts_voice = ctx.tts.voice
+        now = time.time()
+        # Evict expired sessions
+        for k in [sid for sid, st in ctx.sessions.items() if now - float(st.get("updated_at", 0.0)) > _SESSION_TTL_SEC]:
+            ctx.sessions.pop(k, None)
+
+        requested_sid = (sesion or session_id_q or "").strip()
+        if requested_sid and _SESSION_ID_RE.match(requested_sid):
+            session_id = requested_sid
+        else:
+            session_id = f"ses_{uuid.uuid4().hex[:10]}"
+
+        saved_state = ctx.sessions.get(session_id)
+        resumed = saved_state is not None
+        beat_counter = int(saved_state["beat_counter"]) if saved_state else 0
+        lesson_beats: List[Dict[str, Any]] = list(saved_state["lesson_beats"]) if saved_state else []
+        lesson_cursor = int(saved_state["lesson_cursor"]) if saved_state else -1
+        scene_history: List[Dict[str, Any]] = list(saved_state["scene_history"]) if saved_state else []
+        provenance_edges: List[Dict[str, Any]] = list(saved_state["provenance_edges"]) if saved_state else []
+        active_problem: Optional[Dict[str, Any]] = dict(saved_state["active_problem"]) if (saved_state and saved_state.get("active_problem")) else None
+        speech_enabled = bool(saved_state["speech_enabled"]) if saved_state else True
+        speech_rate = float(saved_state["speech_rate"]) if saved_state else 0.96
+        tts_voice = str(saved_state["tts_voice"]) if saved_state else ctx.tts.voice
         active_task: Optional[asyncio.Task[Any]] = None
         out_seq = 0
         mic_frames_received = 0
         ws_lock = asyncio.Lock()
+
+        def _persist_session_state() -> None:
+            if len(ctx.sessions) >= _MAX_SESSIONS and session_id not in ctx.sessions:
+                oldest = min(ctx.sessions.items(), key=lambda kv: float(kv[1].get("updated_at", 0.0)))[0]
+                ctx.sessions.pop(oldest, None)
+            ctx.sessions[session_id] = {
+                "beat_counter": beat_counter,
+                "lesson_beats": lesson_beats[-24:],
+                "lesson_cursor": lesson_cursor,
+                "scene_history": scene_history[-60:],
+                "provenance_edges": provenance_edges[-40:],
+                "active_problem": dict(active_problem) if active_problem else None,
+                "speech_enabled": speech_enabled,
+                "speech_rate": speech_rate,
+                "tts_voice": tts_voice,
+                "updated_at": time.time(),
+            }
 
         async def send_json_safe(payload: Dict[str, Any]) -> None:
             async with ws_lock:
@@ -1426,6 +1496,10 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
         await send_json_safe({
             "type": "SESSION_READY",
             "session_id": session_id,
+            "resumed": resumed,
+            "scene_count": len(scene_history),
+            "lesson_cursor": lesson_cursor,
+            "active_problem_id": (active_problem or {}).get("problem_id", ""),
             "lessons": get_seed_lessons_catalog(),
             "visual_cloud_ready": ctx.visual_director.configured,
             "visual_model": ctx.visual_director.primary_model,
@@ -2157,6 +2231,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
         except WebSocketDisconnect:
             pass
         finally:
+            _persist_session_state()
             cancel_active_generation()
             await live_bridge.stop()
 
