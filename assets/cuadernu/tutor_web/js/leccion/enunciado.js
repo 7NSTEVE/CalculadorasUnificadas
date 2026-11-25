@@ -42,7 +42,6 @@ export class Enunciado {
     this.paso = tablero.nuevoPaso({ n: 0, titulo: lec.recorte ? `${lec.recorte.etiqueta || 'Enunciado'}` : 'Enunciado', clase: 'enunciado' });
     this.paso.cab.classList.add('cab-enunciado');
     this.palabras = [];
-    this.opciones = new Map();
     this.lista = Promise.resolve();
     if (lec.recorte && lec.recorte.url) this._recorte(lec.recorte);
     else this._texto();
@@ -52,7 +51,11 @@ export class Enunciado {
       p.textContent = lec.aviso;
       this.paso.cuerpo.appendChild(p);
     }
-    if (lec.tipo === 'seleccion' && lec.opciones && Object.keys(lec.opciones).length) this._opciones();
+    // Con recorte las opciones ya se ven en la imagen: la lista se escribe al revisarlas
+    this.listas = [];
+    if (lec.tipo === 'seleccion' && lec.opciones && Object.keys(lec.opciones).length && !lec.recorte) {
+      this.paso.cuerpo.appendChild(this._opciones());
+    }
   }
 
   _recorte(r) {
@@ -88,6 +91,7 @@ export class Enunciado {
   _opciones() {
     const ul = document.createElement('ul');
     ul.className = 'opciones';
+    const mapa = new Map();
     for (const [letra, txt] of Object.entries(this.lec.opciones)) {
       const li = document.createElement('li');
       li.className = 'opcion';
@@ -106,22 +110,40 @@ export class Enunciado {
       c.appendChild(m);
       li.append(b, c);
       ul.appendChild(li);
-      this.opciones.set(letra, { li, m });
+      mapa.set(letra, { li, m });
     }
-    this.paso.cuerpo.appendChild(ul);
+    this.listas.push({ ul, mapa });
+    return ul;
+  }
+
+  /** Escribe la lista de opciones dentro de un paso (una sola vez por paso). */
+  opcionesEn(vista) {
+    if (!vista || vista.el.querySelector('.opciones')) return null;
+    const ul = this._opciones();
+    vista.cuerpo.appendChild(ul);
+    return ul;
   }
 
   opcion(letra, estado, motivo) {
-    const o = this.opciones.get(letra);
-    if (!o) return;
-    o.li.classList.remove('correcta', 'descartada');
-    if (estado) o.li.classList.add(estado);
-    if (motivo) { o.m.textContent = motivo; o.m.hidden = false; }
+    this.listas = this.listas.filter((x) => x.ul.isConnected);
+    for (const { mapa } of this.listas) {
+      const o = mapa.get(letra);
+      if (!o) continue;
+      o.li.classList.remove('correcta', 'descartada');
+      if (estado) o.li.classList.add(estado);
+      if (motivo) {
+        const t = new TintaTexto(motivo, { etiqueta: 'span', px: this.tablero.px * 0.52 });
+        t.progreso(1);
+        o.m.replaceChildren(t.el);
+        o.m.hidden = false;
+      }
+      this.ultimaOpcion = o.li;
+    }
     this.tablero.programarRecolocar();
   }
 
   reiniciarOpciones() {
-    for (const { li, m } of this.opciones.values()) { li.classList.remove('correcta', 'descartada'); m.hidden = true; }
+    for (const { mapa } of this.listas) for (const { li, m } of mapa.values()) { li.classList.remove('correcta', 'descartada'); m.hidden = true; }
   }
 
   /** Marca de un dato sobre el recorte (o sobre el texto si no hay imagen). */

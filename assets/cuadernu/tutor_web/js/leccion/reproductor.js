@@ -55,7 +55,12 @@ class Obra {
       return;
     }
     if (acc.a === 'opcion') {
-      if (rep.enun) rep.enun.opcion(acc.letra, acc.estado, acc.motivo);
+      if (rep.enun) {
+        rep.enun.opcionesEn(this.vista);
+        rep.enun.opcion(acc.letra, acc.estado, acc.motivo);
+        const li = this.vista && this.vista.el.querySelector(`.opcion[data-letra="${acc.letra}"]`);
+        if (li) rep.tablero.seguir(li);
+      }
       this.terminar();
       return;
     }

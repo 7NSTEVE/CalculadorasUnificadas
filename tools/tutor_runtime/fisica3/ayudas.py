@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, Leccion, Paso, R, T, TABLA, V
+from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, OPCION, Leccion, Paso, R, T, TABLA, V
 from .formato import dice, n, nu, tex
 
 # ---------------------------------------------------------------- constantes (formulario II-2026)
@@ -187,3 +187,15 @@ def tabla_quw(res: Sequence[Tuple[str, Dict[str, float]]], *, cifras: int = 4, u
 
 def valores_visual(res: Sequence[Tuple[str, Dict[str, float]]]) -> Dict[str, Dict[str, float]]:
     return {k.replace("→", "").replace(" ", ""): {"Q": r["Q"], "W": r["W"], "U": r["U"]} for k, r in res}
+
+
+def revisar_opciones(L: Leccion, motivos: Dict[str, Tuple[str, str]], titulo: str = "Revisar las opciones") -> Paso:
+    """Último paso de una selección única: se descarta cada opción con su motivo y al final se marca la buena.
+
+    motivos: letra -> (lo que se dice, lo que se escribe).
+    """
+    p = L.paso(titulo)
+    for letra in sorted(L.opciones, key=lambda k: (k == L.correcta, k)):
+        voz_, txt = motivos[letra]
+        p.di(voz_, OPCION(letra, "correcta" if letra == L.correcta else "descartada", txt))
+    return p

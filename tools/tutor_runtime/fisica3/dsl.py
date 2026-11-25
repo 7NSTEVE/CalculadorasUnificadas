@@ -181,6 +181,7 @@ class Leccion:
         self.respuestas: List[Dict[str, Any]] = []
         self.practica: Optional[Dict[str, Any]] = None
         self.formulas: List[str] = []
+        self._oficial: Optional[Tuple[str, Tuple[Any, ...], float, str]] = None
 
     def paso(self, titulo: str) -> Paso:
         p = Paso(titulo)
@@ -199,6 +200,30 @@ class Leccion:
         """Mini ejercicio para que la persona lo haga sola."""
         self.practica = {"texto": texto, "valor": valor, "unidad": unidad, "tol": tol, "pista": pista, "solucion": solucion}
         return self
+
+    def oficial(self, de: str, *valores: Any, tol: float = 0.015, nota: str = "") -> "Leccion":
+        """Respuesta publicada por la cátedra: una letra, o los números en el mismo orden de responde()."""
+        self._oficial = (de, valores, tol, nota)
+        return self
+
+    def cotejo(self) -> Optional[Dict[str, Any]]:
+        if not self._oficial:
+            return None
+        de, vals, tol, nota = self._oficial
+        fallas: List[str] = []
+        if vals and isinstance(vals[0], str):
+            if self.tipo == "seleccion" and vals[0] != self.correcta:
+                fallas.append(f"la oficial marca {vals[0]}")
+        else:
+            mios = [r["valor"] for r in self.respuestas if r["valor"] is not None]
+            for a, b in zip(mios, vals):
+                if b is None:
+                    continue
+                if abs(a - b) > tol * max(abs(b), 1e-12):
+                    fallas.append(f"{a:.5g} frente a {b:.5g}")
+        if fallas:
+            return {"estado": "difiere", "texto": f"Difiere de la solución publicada ({de}): {'; '.join(fallas)}. {nota}".strip(), "de": de}
+        return {"estado": "coincide", "texto": f"Coincide con la solución publicada ({de}). {nota}".strip(), "de": de}
 
     # ------------------------------------------------------------ exportar
 
@@ -240,6 +265,7 @@ class Leccion:
             "fuente": self.fuente, "enunciado": self.enunciado, "opciones": self.opciones, "correcta": self.correcta,
             "visual": self.visual, "aviso": self.aviso, "claves": self.claves, "alias": self.alias,
             "pasos": pasos, "respuestas": self.respuestas, "practica": self.practica, "formulas": self.formulas,
+            "cotejo": self.cotejo(),
         }
 
 
