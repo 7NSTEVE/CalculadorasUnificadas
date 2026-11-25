@@ -123,7 +123,7 @@ def q038() -> Leccion:
         .di("La razón entre el flujo original y el nuevo es un tercio en los dos casos.",
             R(r"\frac{H_2}{H'_2} = \frac{1}{3} \approx 0{,}333 \qquad \frac{H_1}{H'_1} = \frac{1}{3} \approx 0{,}333", "rcd"))
     L.responde("C", r"\frac{1}{3}", 1.0 / 3.0, "").responde("D", r"\frac{1}{3}", 1.0 / 3.0, "")
-    return L.usa(r"H=kA\frac{\Delta T}{L}")
+    return L.oficial("III Parcial extraordinario I-2024", 1.0 / 3.0, 1.0 / 3.0, nota="A) menor y B) mayor, igual que la respuesta publicada.").usa(r"H=kA\frac{\Delta T}{L}")
 
 
 # ============================================================================ Q039
@@ -542,38 +542,50 @@ def q049() -> Leccion:
 @leccion("Q050")
 def q050() -> Leccion:
     A, d, t1, t2 = 4.00, 0.0200, 300.0, 100.0
-    # k(y) = 200 + 1000y -> int_0^d dy/(200+1000y) = (1/1000)*ln(220/200)
     I_tot = math.log(220.0 / 200.0) / 1000.0
     H = A * (t1 - t2) / I_tot
     Q = H * (5.0 * 60.0)
-    tm = t1 - (t1 - t2) * math.log(210.0 / 200.0) / math.log(220.0 / 200.0)
+    I_mid = math.log(210.0 / 200.0) / 1000.0
+    tm = t1 - H * I_mid / A
     pts = [[round(d * i / 40, 5), round(t1 - (t1 - t2) * math.log((200.0 + 1000.0 * d * i / 40) / 200.0) / math.log(1.1), 2)] for i in range(41)]
     L = _des("Q050", "Lámina con conductividad variable k(y) = 200 + 1000y",
-             "Una lámina ($A=4{,}00\\ \\text{m}^2$, grosor $d=2{,}00$ cm) conduce calor entre $T_1=300\\ ^\\circ$C (abajo) y $T_2=100\\ ^\\circ$C (arriba), con $k(y)=200+1000y$ (W/m·K). A) Flujo $H$. B) Energía en $5$ min. C) Temperatura en $y=d/2$.",
-             aviso="Ojo: el solucionario oficial de 25-II-R omitió el factor 1/1000 al sustituir du = 1000 dy (obtuvo kW en vez de MW). Aquí resolvemos con la integral exacta; T(d/2) = 197,6 °C coincide en ambos.",
-             claves=["conductividad variable", "cambio de variable", "integral"],
+             "Una lámina de $4{,}00\\ \\text{m}^2$ y $2{,}00$ cm de grosor conduce calor entre $T_1=300\\ ^\\circ\\text{C}$ (cara inferior, $y=0$) y $T_2=100\\ ^\\circ\\text{C}$ (cara superior, $y=d$). La conductividad cambia con la altura: $k(y)=200+1000y$ en W/(m·K) con $y$ en metros. A) Flujo de calor. B) Energía en 5 minutos. C) Temperatura en $y=d/2$.",
+             aviso="El solucionario oficial de la Reposición II-2025 olvidó dividir entre 1000 al cambiar de variable y dio el flujo mil veces más pequeño. La temperatura del inciso C sí coincide, porque ese factor se cancela.",
+             claves=["conductividad variable", "cambio de variable", "integral", "logaritmo"],
              visual={"tipo": "conduccion", "geo": "pared", "L": d, "T1": t1, "T2": t2, "eje": "y", "uT": "°C", "pts": pts, "xm": d / 2})
-    L.paso("A) Integrar dy / k(y) sin olvidar el factor 1000")\
-        .di("Separamos variables dejando la conductividad con de ye.", V(foco="dx"), DATO("k(y) = 200 + 1000 y"),
-            F(r"\frac{H}{A}\int_0^{0{,}020}\frac{dy}{200+1000y} = -\int_{300}^{100}dT"))\
-        .di("Con u igual a doscientos más mil ye, de u es mil de ye: hay que dividir entre mil.", V(foco="barrido"),
-            M(r"\int_0^{0{,}020}\frac{dy}{200+1000y} = \frac{1}{1000}\ln\left(\frac{220}{200}\right) = \frac{\ln(1{,}1)}{1000}"),
-            OJO("No olvides el factor $\\frac{1}{1000}$ de $dy=du/1000$."))\
-        .di(f"Despejamos el flujo: da {nu(H / 1e6, 'MW', 4)}.",
-            M(rf"H = \frac{{1000\,A\,(T_1-T_2)}}{{\ln(1{{,}}1)}} = \frac{{1000(4{{,}}00)(200)}}{{\ln(1{{,}}1)}}"),
-            R(rf"H = {tex(H / 1e6, 4, u='MW')}", "ra"))
-    L.paso("B) Energía en 5 minutos")\
-        .di(f"Multiplicamos por trescientos segundos: da {nu(Q / 1e9, 'GJ', 4)}.",
-            M(rf"Q = H\,\Delta t = ({tex(H, 4, sci='si')})(300)"),
-            R(rf"Q = {tex(Q, 4, u='J', sci='si')} = {tex(Q / 1e9, 4, u='GJ')}", "rb"))
-    L.paso("C) Temperatura a la mitad del grosor (y = 0,010 m)")\
-        .di("Al dividir las dos integrales, el factor mil se cancela.", V(foco="punto"),
-            M(r"T(d/2) = T_1 - (T_1-T_2)\frac{\ln(210/200)}{\ln(220/200)} = 300 - 200\,\frac{\ln(1{,}05)}{\ln(1{,}10)}"))\
-        .di(f"Resultan {nu(tm, '°C', dec=1)}.", R(rf"T(d/2) = {tex(tm, dec=1, u='°C')}", "rc"))
-    L.responde("A", rf"H={tex(H / 1e6, 4)}\ \text{{MW}}", H, "W").responde("B", rf"Q={tex(Q / 1e9, 4)}\ \text{{GJ}}", Q, "J").responde("C", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
+    L.paso("Qué nos dan y qué piden")\
+        .di("Una lámina caliente abajo y fría arriba. Lo raro es que conduce mejor mientras más arriba.", DATO("k(y) = 200 + 1000 y"),
+            LISTA(["$A=4{,}00\\ \\text{m}^2$", "$d=2{,}00\\ \\text{cm}=0{,}0200$ m", "$T_1=300\\ ^\\circ\\text{C}$ en $y=0$, $T_2=100\\ ^\\circ\\text{C}$ en $y=d$", "$k(y)=200+1000y$"]))\
+        .di("Como ka cambia, la fórmula con delta te entre ele no sirve: hay que integrar.".replace("ka cambia", dice("k", "ka") + " cambia").replace("delta te entre ele", dice("ΔT/L", "delta te entre ele")),
+            OJO("$H=kA\\frac{\\Delta T}{L}$ solo vale si $k$ es constante."))
+    L.paso("A) Fourier en una rebanada delgadita")\
+        .di("Tomamos una capa de grosor de ye. El área no cambia: es la de la lámina.".replace("de ye", dice("dy", "de ye")), V(foco="dx"), F(r"H=-kA\frac{dT}{dy}"))\
+        .di("Ponemos la conductividad de esa altura.", M(r"H=-(200+1000y)\,A\,\frac{dT}{dy}"))\
+        .por_que("En estado estacionario el mismo flujo $H$ cruza todas las capas; lo que cambia de capa en capa es la caída de temperatura.")
+    L.paso("A) Separar variables")\
+        .di("Todo lo que tiene ye a la izquierda y la temperatura a la derecha.".replace("ye", s("y")), M(r"\frac{H}{A}\cdot\frac{dy}{200+1000y}=-dT"))\
+        .di("Integramos de cero a de, y de trescientos a cien grados.".replace("a de,", "a " + dice("d", "de") + ","), M(r"\frac{H}{A}\int_0^{0{,}0200}\frac{dy}{200+1000y}=-\int_{300}^{100}dT", "int", "azul"))\
+        .di("La de la derecha es fácil: menos cien menos trescientos, con el signo de afuera da doscientos.", M(r"-\int_{300}^{100}dT=-(100-300)=200"))
+    L.paso("A) La integral de la izquierda: cambio de variable")\
+        .di("Llamamos u a lo de abajo.", M(r"u=200+1000y\qquad du=1000\,dy\;\Rightarrow\;dy=\frac{du}{1000}"))\
+        .di("Los límites también cambian.", M(r"y=0\Rightarrow u=200\qquad y=0{,}0200\Rightarrow u=220"))\
+        .di("Queda un logaritmo, dividido entre mil.", M(r"\int_0^{0{,}0200}\frac{dy}{200+1000y}=\frac{1}{1000}\int_{200}^{220}\frac{du}{u}=\frac{1}{1000}\ln\frac{220}{200}"))\
+        .di("Ese uno entre mil es justo lo que se le olvidó al solucionario.", OJO("No se olvide el $\\frac{1}{1000}$ que sale de $dy=\\frac{du}{1000}$."))
+    L.paso("A) Despejar el flujo")\
+        .di("Juntamos las dos integrales.", M(r"\frac{H}{A}\cdot\frac{\ln(1{,}1)}{1000}=200"))\
+        .di("Despejamos.", M(r"H=\frac{1000\,A\,(200)}{\ln(1{,}1)}=\frac{1000(4{,}00)(200)}{0{,}09531}"))\
+        .di(f"Son {nu(H / 1e6, 'MW', 3)}: muchísimo, porque la lámina es delgada y conduce muy bien.", R(rf"H={tex(H, 3, u='W')}={tex(H / 1e6, 3, u='MW')}", "ra"))
+    L.paso("B) Energía en cinco minutos")\
+        .di("Flujo es energía por segundo: se multiplica por el tiempo en segundos.", F(r"H=\frac{dQ}{dt}\;\Rightarrow\;Q=H\,\Delta t"), M(r"\Delta t=5\ \text{min}=300\ \text{s}"))\
+        .di("Multiplicamos.", M(rf"Q=({tex(H, 4)})(300)"), R(rf"Q={tex(Q, 3, u='J')}={tex(Q / 1e9, 3, u='GJ')}", "rb"))
+    L.paso("C) Temperatura a la mitad del grosor")\
+        .di("Integramos solo hasta la mitad, y igual a cero coma cero cien.".replace("y igual a", dice("y =", "ye igual a")), V(foco="punto"), M(r"\frac{H}{A}\int_0^{0{,}0100}\frac{dy}{200+1000y}=-\int_{300}^{T}dT"))\
+        .di("A la mitad, u llega a doscientos diez.", M(r"\frac{H}{A}\cdot\frac{1}{1000}\ln\frac{210}{200}=300-T"))\
+        .di("Despejamos la temperatura.", M(rf"T=300-\frac{{H\ln(1{{,}}05)}}{{1000\,A}}=300-\frac{{({tex(H, 4)})(0{{,}}04879)}}{{4000}}"))\
+        .di(f"Queda en {nu(tm, '°C', dec=1)}: un poco más abajo del promedio, porque arriba conduce mejor.", R(rf"T(d/2)={tex(tm, dec=1)}\ ^\circ\text{{C}}", "rc"))
+    L.responde("A", rf"H={tex(H / 1e6, 3)}\ \text{{MW}}", H, "W").responde("B", rf"Q={tex(Q / 1e9, 3)}\ \text{{GJ}}", Q, "J").responde("C", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
     return L.oficial("Reposición II-2025", 8394.0, 2.518e6, 197.6,
-                     nota="El solucionario oficial omitió el factor 1/1000 de du = 1000 dy (obtuvo kW en vez de MW); T(d/2) = 197,6 °C sí coincide porque el factor se cancela.").usa(r"H=-kA\frac{dT}{dx}")
-
+                     nota="El solucionario oficial omitió el factor 1/1000 de du = 1000 dy (obtuvo kW en vez de MW); T(d/2) = 197,6 °C sí coincide porque el factor se cancela.").usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}")
 
 # ============================================================================ Q051
 @leccion("Q051")
@@ -711,38 +723,44 @@ def q056() -> Leccion:
 # ============================================================================ Q057 y Q060
 def _esfera_kr(q: str, aviso: str = "") -> Leccion:
     r1, r2, k0, t1, t2, rm = 0.150, 0.600, 1.50, 20.0, 100.0, 0.300
-    # Calor fluye de afuera (100°C) hacia adentro (20°C): |H| = 8*pi*k0*(t2-t1)/(1/r1^2 - 1/r2^2)
     denom = 1.0 / r1 ** 2 - 1.0 / r2 ** 2
     H = 8.0 * math.pi * k0 * (t2 - t1) / denom
-    tm = t2 - H * (1.0 / rm ** 2 - 1.0 / r2 ** 2) / (8.0 * math.pi * k0)
-    pts = [[round(r1 + (r2 - r1) * i / 40, 4), round(t2 - (t2 - t1) * (1.0 / (r1 + (r2 - r1) * i / 40) ** 2 - 1.0 / r2 ** 2) / denom, 2)] for i in range(41)]
+    tm = t1 + H * (1.0 / r1 ** 2 - 1.0 / rm ** 2) / (8.0 * math.pi * k0)
+    pts = [[round(r1 + (r2 - r1) * i / 40, 4), round(t1 + (t2 - t1) * (1.0 / r1 ** 2 - 1.0 / (r1 + (r2 - r1) * i / 40) ** 2) / denom, 2)] for i in range(41)]
     L = _des(q, "Esfera hueca con conductividad k = k₀r",
-             "Esfera hueca ($r_1=0{,}150$ m a $20\\ ^\\circ$C, $r_2=0{,}600$ m a $100\\ ^\\circ$C) con $k(r)=k_0 r$ y $k_0=1{,}50\\ \\text{W/(m}^2\\cdot\\text{K)}$. (a) Flujo calórico radial $H$. (b) Temperatura a $r=30$ cm.",
+             "Esfera hueca de radio interno $0{,}150$ m (a $20\\ ^\\circ\\text{C}$) y externo $0{,}600$ m (a $100\\ ^\\circ\\text{C}$). Su conductividad es $k=k_0r$ con $k_0=1{,}50\\ \\text{W/(m}^2\\cdot\\text{K)}$. (a) Flujo calórico radial. (b) Temperatura a $30$ cm del centro.",
              aviso=aviso, claves=["esfera", "k variable", "integral"],
-             visual={"tipo": "conduccion", "geo": "esfera", "r1": r1, "r2": r2, "T1": t1, "T2": t2, "k": "k0 r", "r": rm, "pts": pts, "uT": "°C"})
-    L.paso("(a) Integrar Fourier con k = k₀r en esfera")\
-        .di("Sustituimos la conductividad y el área esférica cuatro pi erre cuadrado.", V(foco="dr"), DATO("k = k0r"),
-            F(r"H = -k(r)A(r)\frac{dT}{dr} = -(k_0 r)(4\pi r^2)\frac{dT}{dr} = -4\pi k_0 r^3\frac{dT}{dr}"))\
-        .di("La integral de uno entre erre al cubo trae un factor de un medio.", V(foco="barrido"),
-            M(r"\int_{r_1}^{r_2}\frac{dr}{r^3} = \left[-\frac{1}{2r^2}\right]_{r_1}^{r_2} = \frac{1}{2}\left(\frac{1}{r_1^2}-\frac{1}{r_2^2}\right)"),
-            OJO("El factor $\\frac{1}{2}$ sube multiplicando el $4\\pi$ y lo convierte en **$8\\pi$**."))\
-        .di(f"Despejamos la magnitud del flujo hacia adentro: da {nu(H, 'W', 3)}.",
-            M(r"|H| = \frac{8\pi k_0\,(T_2-T_1)}{\frac{1}{r_1^2}-\frac{1}{r_2^2}} = \frac{8\pi(1{,}50)(100-20)}{\frac{1}{0{,}150^2}-\frac{1}{0{,}600^2}}"),
-            R(rf"|H| = {tex(H, 3, u='W')}\ \ (\text{{hacia adentro}})", "ra"))
-    L.paso("(b) Temperatura a r = 30 cm")\
-        .di("Integramos desde treinta centímetros hasta la cara externa de sesenta centímetros.", V(foco="punto"),
-            M(r"T(r) = T_2 - \frac{|H|}{8\pi k_0}\left(\frac{1}{r^2}-\frac{1}{r_2^2}\right)"))\
-        .di(f"Sustituimos y sale exactamente {nu(tm, '°C', dec=1)}, es decir trescientos cincuenta y siete coma quince kelvin.",
-            M(rf"T(0{{,}}300) = 100 - \frac{{{tex(H, 4)}}}{{8\pi(1{{,}}50)}}\left(\frac{{1}}{{0{{,}}300^2}}-\frac{{1}}{{0{{,}}600^2}}\right)"),
-            R(rf"T(0{{,}}300\ \text{{m}}) = {tex(tm, dec=1, u='°C')} = {tex(tm + 273.15, dec=2, u='K')}", "rb"))
-    L.responde("a", rf"H={tex(H, 3)}\ \text{{W}}", H, "W").responde("b", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
+             visual={"tipo": "conduccion", "geo": "esfera", "r1": r1, "r2": r2, "T1": t1, "T2": t2, "k": "k₀ r", "r": rm, "pts": pts, "uT": "°C"})
+    L.paso("Qué nos dan y qué piden")\
+        .di("Una esfera hueca: adentro está a veinte grados y afuera a cien. El calor entra, de afuera hacia el centro.", DATO("k = k0r"),
+            LISTA(["$a=0{,}150$ m a $20\\ ^\\circ\\text{C}$ (adentro)", "$b=0{,}600$ m a $100\\ ^\\circ\\text{C}$ (afuera)", "$k=k_0r$ con $k_0=1{,}50$"]))\
+        .di("Dos cosas cambian con el radio: el área de cada capa y la conductividad. Hay que integrar.", OJO("La fórmula de pared plana no sirve: aquí cambian $A$ y $k$."))
+    L.paso("(a) Fourier en un cascarón delgadito")\
+        .di("Tomamos un cascarón de radio erre y grosor de erre.".replace("radio erre", "radio " + dice("r", "erre")).replace("grosor de erre", "grosor " + dice("dr", "de erre")), V(foco="dr"), F(r"H=-kA\frac{dT}{dr}"))\
+        .di("El área de una esfera es cuatro pi erre cuadrado.", M(r"A=4\pi r^2"))\
+        .di("Ponemos el área y la conductividad.", M(r"H=-(k_0r)(4\pi r^2)\frac{dT}{dr}"), M(r"H=-4\pi k_0\,r^3\,\frac{dT}{dr}", "f", "azul"))
+    L.paso("(a) Separar variables e integrar")\
+        .di("Pasamos el erre al cubo con de erre, y la temperatura al otro lado.".replace("de erre", dice("dr", "de erre")), M(r"H\,\frac{dr}{r^3}=-4\pi k_0\,dT"))\
+        .di("Integramos de adentro hacia afuera.", M(r"H\int_{0{,}150}^{0{,}600}\frac{dr}{r^3}=-4\pi k_0\int_{20}^{100}dT"))\
+        .di("La integral de erre a la menos tres es menos uno entre dos erre cuadrado.", M(r"\int\frac{dr}{r^3}=\int r^{-3}\,dr=\frac{r^{-2}}{-2}=-\frac{1}{2r^2}"))\
+        .despacio((r"\int r^{-3}\,dr", "se suma 1 al exponente: $-3+1=-2$"), (r"=\frac{r^{-2}}{-2}", "y se divide entre el exponente nuevo"), (r"=-\frac{1}{2r^2}", "se escribe con el exponente positivo"))
+    L.paso("(a) Evaluar y despejar H")\
+        .di("Evaluamos entre los dos radios.", M(r"\left[-\frac{1}{2r^2}\right]_{0{,}150}^{0{,}600}=\frac{1}{2}\left(\frac{1}{0{,}150^2}-\frac{1}{0{,}600^2}\right)"), M(rf"=\frac{{1}}{{2}}(44{{,}}44-2{{,}}78)={tex(denom / 2, 4)}\ \text{{m}}^{{-2}}"))\
+        .di("Del otro lado, ochenta grados.", M(r"-4\pi k_0(100-20)=-4\pi(1{,}50)(80)"))\
+        .di("Despejamos.", M(rf"H=\frac{{-4\pi(1{{,}}50)(80)}}{{{tex(denom / 2, 4)}}}"), R(rf"H={tex(-H, 3)}\ \text{{W}}\quad(|H|={tex(H, 3, u='W')})", "ra"))\
+        .di("Sale negativo porque el calor va hacia el centro, contra el sentido de erre.", NOTA("El signo menos solo dice la dirección: el calor entra."))
+    L.paso("(b) Temperatura a 30 cm")\
+        .di("Integramos desde adentro hasta treinta centímetros.", V(foco="punto"), M(r"H\int_{0{,}150}^{0{,}300}\frac{dr}{r^3}=-4\pi k_0\,(T-20)"))\
+        .di("La integral.", M(r"\frac{1}{2}\left(\frac{1}{0{,}150^2}-\frac{1}{0{,}300^2}\right)=\frac{1}{2}(44{,}44-11{,}11)=16{,}67"))\
+        .di("Despejamos te.".replace("te", s("T")), M(rf"T=20-\frac{{H(16{{,}}67)}}{{4\pi(1{{,}}50)}}=20-\frac{{({tex(-H, 3)})(16{{,}}67)}}{{18{{,}}85}}"))\
+        .di(f"Da {nu(tm, '°C', dec=1)}.", R(rf"T(0{{,}}300\ \text{{m}})={tex(tm, dec=1)}\ ^\circ\text{{C}}={tex(tm + 273.15, dec=2)}\ \text{{K}}", "rb"))
+    L.responde("a", rf"|H|={tex(H, 3)}\ \text{{W}}", H, "W").responde("b", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
     return L.usa(r"H=-kA\frac{dT}{dx}")
 
 
 @leccion("Q057")
 def q057() -> Leccion:
     return _esfera_kr("Q057").oficial("Folleto resuelto 3.3-6", 72.4, 84.0)
-
 
 # ============================================================================ Q058
 @leccion("Q058")

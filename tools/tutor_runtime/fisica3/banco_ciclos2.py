@@ -200,9 +200,11 @@ def q111() -> Leccion:
     g.pone("2", p=3.00 * ATM, v=3.50e-3)
     g.pone("3", p=2.00 * ATM, t=g.t("2"))
     g.pone("4", p=2.00 * ATM, t=256.0)
-    # 4->5 isotermico (T5=256) y 5->1 adiabatico: T5 V5^(g-1) = T1 V1^(g-1)
     v5 = g.v("1") * (g.t("1") / 256.0) ** (1.0 / (g.g - 1.0))
     g.pone("5", v=v5, t=256.0)
+    T1, T2, T4 = g.t("1"), g.t("2"), 256.0
+    V3, V4, V5 = g.v("3") * 1e3, g.v("4") * 1e3, v5 * 1e3
+    p5 = g.p("5")
     r12 = g.proceso("1", "2", "isocorico")
     r23 = g.proceso("2", "3", "isotermico")
     r34 = g.proceso("3", "4", "isobarico")
@@ -210,24 +212,45 @@ def q111() -> Leccion:
     r51 = g.proceso("5", "1", "adiabatico")
     res = [("1→2", r12), ("2→3", r23), ("3→4", r34), ("4→5", r45), ("5→1", r51)]
     L = _des("Q111", "Ciclo de cinco etapas (1 mol diatómico)",
-             "Un mol de gas diatómico parte en $1$ ($1{,}50$ atm, $3{,}50$ L): $1\\to 2$ isocórico a $3{,}00$ atm; $2\\to 3$ isotérmico a $2{,}00$ atm; $3\\to 4$ isobárico a $256$ K; $4\\to 5$ isotérmico; $5\\to 1$ adiabático. (a) Estados $(p,V,T)$. (b) $\\Delta U, W, Q$ por etapa.",
-             claves=["cinco etapas", "adiabático", "folleto"],
+             "Un mol de gas ideal diatómico parte de $1$: $1{,}50$ atm y $3{,}50$ L. $1\\to2$ isocórico hasta $3{,}00$ atm; $2\\to3$ expansión isotérmica hasta $2{,}00$ atm; $3\\to4$ expansión isobárica hasta $256$ K; $4\\to5$ compresión isotérmica; $5\\to1$ expansión adiabática. (a) $p$, $V$, $T$ de cada estado. (b) $\\Delta U$, $W$ y $Q$ de cada proceso.",
+             claves=["cinco etapas", "adiabático", "folleto", "isotérmico"],
              visual=visual_pv(g, [("1", "2", "isocorico"), ("2", "3", "isotermico"), ("3", "4", "isobarico"), ("4", "5", "isotermico"), ("5", "1", "adiabatico")],
                               uv="L", up="atm", fv=1e3, fp=1.0 / ATM, valores=valores_visual(res)))
-    L.paso("(a) Estados del ciclo de cinco puntos")\
-        .di("Hallamos los cuatro primeros estados con la ley de gases ideales y el quinto enlazando la isoterma de cuatro con la adiabática hacia uno.", DATO("3.50 L"),
-            M(rf"V_5 = V_1\left(\frac{{T_1}}{{T_5}}\right)^{{1/(\gamma-1)}} = 3{{,}}50\left(\frac{{64}}{{256}}\right)^{{2{{,}}5}} = {tex(v5 * 1e3, 3, u='L')}"),
-            tabla_estados(g, ["1", "2", "3", "4", "5"], up="×10⁵ Pa", uv="L", fp=1e-5, fv=1e3, cp=4, cv=3, dt=0))
-    L.paso("(b) Energía interna, trabajo y calor de cada proceso")\
-        .di("Calculamos las tres cantidades en cada etapa y comprobamos que la suma de delta U cierra en cero.", V(foco="ciclo"),
-            tabla_quw(res))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Cinco procesos seguidos que vuelven al inicio. Lo primero es conocer los cinco estados.", DATO("3.50 L"),
+            LISTA(["$n=1{,}00$ mol, diatómico: $\\gamma=1{,}40$", "$1$: $1{,}50$ atm y $3{,}50$ L", "$2$: $3{,}00$ atm (mismo volumen)", "$3$: $2{,}00$ atm (misma temperatura que 2)", "$4$: $2{,}00$ atm y $256$ K", "$5$: en la isoterma de 256 K y en la adiabática que llega a 1"]))\
+        .di("Las presiones en pascales.", M(r"1{,}50\ \text{atm}=1{,}520\times10^5\ \text{Pa}\quad 3{,}00\ \text{atm}=3{,}040\times10^5\ \text{Pa}\quad 2{,}00\ \text{atm}=2{,}027\times10^5\ \text{Pa}"))
+    L.paso("(a) Estados 1 y 2")\
+        .di("Temperatura de 1 con el gas ideal.", F(r"pV=nRT"), M(rf"T_1=\frac{{p_1V_1}}{{nR}}=\frac{{(1{{,}}520\times10^5)(3{{,}}50\times10^{{-3}})}}{{(1)(8{{,}}314)}}={tex(T1, 3, u='K')}"))\
+        .di("De 1 a 2 el volumen no cambia y la presión se duplica: la temperatura también se duplica.", M(r"V_2=V_1=3{,}50\ \text{L}"), M(rf"T_2=T_1\,\frac{{p_2}}{{p_1}}=2T_1={tex(T2, 3, u='K')}"))
+    L.paso("(a) Estado 3: expansión isotérmica")\
+        .di("La temperatura se queda igual que en 2.", V(foco="23"), M(rf"T_3=T_2={tex(T2, 3, u='K')}"))\
+        .di("A temperatura constante, pe por ve no cambia.".replace("pe por ve", dice("pV", "pe ve")), M(r"p_2V_2=p_3V_3\;\Rightarrow\;V_3=V_2\,\frac{p_2}{p_3}"), M(rf"V_3=(3{{,}}50)\left(\frac{{3{{,}}00}}{{2{{,}}00}}\right)={tex(V3, 3, u='L')}"))
+    L.paso("(a) Estado 4: expansión isobárica")\
+        .di("La presión se queda en dos atmósferas y la temperatura llega a doscientos cincuenta y seis.", V(foco="34"), M(r"p_4=p_3=2{,}00\ \text{atm}\qquad T_4=256\ \text{K}"))\
+        .di("A presión constante, volumen y temperatura van juntos.", M(r"\frac{V_4}{T_4}=\frac{V_3}{T_3}\;\Rightarrow\;V_4=V_3\,\frac{T_4}{T_3}"), M(rf"V_4=({tex(V3, 3)})\left(\frac{{256}}{{{tex(T2, 3)}}}\right)={tex(V4, 3, u='L')}"))
+    L.paso("(a) Estado 5: el cruce de una isoterma y una adiabática")\
+        .di("El cinco está en la isoterma de doscientos cincuenta y seis kelvin.", V(foco="45"), M(r"T_5=T_4=256\ \text{K}"))\
+        .di("Y en la adiabática que llega al estado uno.", F(r"TV^{\gamma-1}=\text{cte}"), M(r"T_5V_5^{\gamma-1}=T_1V_1^{\gamma-1}\;\Rightarrow\;V_5=V_1\left(\frac{T_1}{T_5}\right)^{\frac{1}{\gamma-1}}"))\
+        .di("El exponente es dos coma cinco.", M(rf"V_5=(3{{,}}50)\left(\frac{{{tex(T1, 3)}}}{{256}}\right)^{{2{{,}}5}}={tex(V5, 3, u='L')}"))\
+        .di("Y su presión, con el gas ideal: enorme, porque el volumen es pequeñísimo.", M(rf"p_5=\frac{{nRT_5}}{{V_5}}=\frac{{(1)(8{{,}}314)(256)}}{{{tex(v5, 3)}}}={tex(p5, 3, u='Pa')}"))
+    L.paso("(a) Los cinco estados")\
+        .di("Juntamos todo en la tabla.", tabla_estados(g, ["1", "2", "3", "4", "5"], up="×10⁵ Pa", uv="L", fp=1e-5, fv=1e3, cp=4, cv=3, dt=0), V(foco="ciclo"))\
+        .di("Coincide con la tabla del folleto.", NOTA("Folleto: $V_5=0{,}109$ L y $p_5=195\\times10^5$ Pa."))
+    explica_proceso(L.paso("(b) Proceso 1→2 (isocórico)"), g, "1", "2", "isocorico", foco="12")
+    explica_proceso(L.paso("(b) Proceso 2→3 (isotérmico)"), g, "2", "3", "isotermico", foco="23")
+    explica_proceso(L.paso("(b) Proceso 3→4 (isobárico)"), g, "3", "4", "isobarico", foco="34")
+    explica_proceso(L.paso("(b) Proceso 4→5 (isotérmico)"), g, "4", "5", "isotermico", foco="45")
+    explica_proceso(L.paso("(b) Proceso 5→1 (adiabático)"), g, "5", "1", "adiabatico", foco="51")
+    L.paso("(b) Resumen y revisión")\
+        .di("Ponemos los tres valores de cada proceso. Los cambios de energía interna deben sumar cero: es la revisión.", tabla_quw(res), V(foco="ciclo"))\
+        .di("Suman cero: el gas volvió al estado uno.", NOTA("Si $\\sum\\Delta U\\neq0$, hay una temperatura mal calculada."))
     L.responde("Q12", rf"Q_{{12}}={tex(r12['Q'], 4)}\ \text{{J}}", r12["Q"], "J")\
      .responde("W23", rf"W_{{23}}={tex(r23['W'], 4)}\ \text{{J}}", r23["W"], "J")\
      .responde("Q34", rf"Q_{{34}}={tex(r34['Q'], 4)}\ \text{{J}}", r34["Q"], "J")\
      .responde("W45", rf"W_{{45}}={tex(r45['W'], 4)}\ \text{{J}}", r45["W"], "J")\
      .responde("W51", rf"W_{{51}}={tex(r51['W'], 4)}\ \text{{J}}", r51["W"], "J")
-    return L.oficial("Folleto resuelto 4.1-1", 1330.0, 431.5, 3724.0, -9722.0, 3990.0).usa(r"pV=nRT", r"TV^{\gamma-1}=\text{cte}")
-
+    return L.oficial("Folleto resuelto 4.1-1", 1330.0, 431.5, 3724.0, -9722.0, 3990.0).usa(r"pV=nRT", r"TV^{\gamma-1}=\text{cte}", r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"\Delta U=nC_V\Delta T")
 
 # ============================================================================ Q112
 @leccion("Q112")
