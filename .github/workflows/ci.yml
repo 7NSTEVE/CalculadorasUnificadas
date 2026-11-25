@@ -53,6 +53,7 @@ jobs:
           CG50_CERT_STRICT_NO_HLE: "1"
           CG50_MMIO_AUDIT: "1"
         run: |
+          gunzip -k -f assets/roms/cg50_warm_state.bin.gz
           ctest --test-dir build-ci --output-on-failure -E "cg50_android_smoke|cg50_thread_isolation|cw2_headless|nx_regression"
           ./build-ci/cg50_register_cert_lab --out build-ci/reg_cert
           ./build-ci/cg50_combined_hw_stress --seqs 25000 --threads 8 --out build-ci/stress_cert

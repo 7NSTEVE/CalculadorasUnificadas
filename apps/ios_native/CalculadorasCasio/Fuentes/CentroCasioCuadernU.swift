@@ -79,7 +79,7 @@ final class EmuladorCasioV47: ObservableObject {
             let path = dir.path
             handle = path.withCString { casio_cg50_create_from_dir($0) }
             guard let h = handle else { return }
-            if let warm = Paquete.url("cg50_warm_state", extension: "bin") {
+            if let warm = Self.resolverRutaWarmStateCg50() {
                 _ = warm.path.withCString { casio_cg50_import_state_file(h, $0) }
             }
             _ = casio_cg50_set_rtc_epoch(h, Int64(Date().timeIntervalSince1970))
@@ -87,6 +87,7 @@ final class EmuladorCasioV47: ObservableObject {
             alto = 216
             bufferRgba = [UInt8](repeating: 255, count: ancho * alto * 4)
             cargada = true
+            _ = casio_cg50_step(h, 250_000, 40_000)
             renderizar(forzar: true)
 
         case .cw2:
@@ -184,6 +185,88 @@ final class EmuladorCasioV47: ObservableObject {
         renderizar(forzar: true)
         guard let cg = imagenLCD else { return nil }
         return UIImage(cgImage: cg)
+    }
+
+    /// Avanza de forma determinista el motor sin depender de CADisplayLink (pruebas y capturas).
+    func avanzarDeterminista(pasos: Int = 3) {
+        guard let h = handle else { return }
+        for _ in 0..<max(1, pasos) {
+            switch modelo.motor {
+            case .cg50:
+                _ = casio_cg50_step(h, 250_000, 40_000)
+            case .cw2:
+                casio_cw2_advance(h, 80)
+            case .nx:
+                break
+            }
+        }
+        renderizar(forzar: true)
+    }
+
+    func contarPixelesNoUniformes() -> Int {
+        guard bufferRgba.count >= 4 else { return 0 }
+        let r0 = bufferRgba[0], g0 = bufferRgba[1], b0 = bufferRgba[2]
+        var distintos = 0
+        var i = 0
+        while i + 3 < bufferRgba.count {
+            if bufferRgba[i] != r0 || bufferRgba[i + 1] != g0 || bufferRgba[i + 2] != b0 {
+                distintos += 1
+            }
+            i += 4
+        }
+        return distintos
+    }
+
+    private static func resolverRutaWarmStateCg50() -> URL? {
+        if let plano = Paquete.url("cg50_warm_state", extension: "bin") {
+            return plano
+        }
+        guard let gzUrl = Paquete.url("cg50_warm_state.bin", extension: "gz") else {
+            return nil
+        }
+        let fm = FileManager.default
+        let caches = fm.urls(for: .cachesDirectory, in: .userDomainMask).first ?? fm.temporaryDirectory
+        let destino = caches.appendingPathComponent("cg50_warm_state_v47.bin")
+        if let attrs = try? fm.attributesOfItem(atPath: destino.path),
+           let tam = attrs[.size] as? Int, tam > 1_000_000 {
+            return destino
+        }
+        let tmp = caches.appendingPathComponent("cg50_warm_state_v47.bin.tmp")
+        try? fm.removeItem(at: tmp)
+        guard let gz = gzUrl.path.withCString({ gzopen($0, "rb") }) else {
+            return nil
+        }
+        defer { gzclose(gz) }
+        fm.createFile(atPath: tmp.path, contents: nil)
+        guard let fh = try? FileHandle(forWritingTo: tmp) else {
+            return nil
+        }
+        var buf = [UInt8](repeating: 0, count: 65536)
+        var total = 0
+        var ok = true
+        while true {
+            let n = buf.withUnsafeMutableBytes { raw -> Int32 in
+                guard let base = raw.baseAddress else { return -1 }
+                return gzread(gz, base, UInt32(raw.count))
+            }
+            if n < 0 { ok = false; break }
+            if n == 0 { break }
+            fh.write(Data(bytes: buf, count: Int(n)))
+            total += Int(n)
+        }
+        try? fh.close()
+        guard ok, total > 1_000_000 else {
+            try? fm.removeItem(at: tmp)
+            return nil
+        }
+        try? fm.removeItem(at: destino)
+        do {
+            try fm.moveItem(at: tmp, to: destino)
+            return destino
+        } catch {
+            try? fm.removeItem(at: tmp)
+            return nil
+        }
     }
 
     private func renderizar(forzar: Bool) {

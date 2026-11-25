@@ -623,7 +623,8 @@ bool ImportFromCsvFile(
         }
     }
 
-    const std::string title = std::filesystem::u8path(inPathUtf8).stem().u8string();
+    const auto stemU8 = std::filesystem::u8path(inPathUtf8).stem().u8string();
+    const std::string title(reinterpret_cast<const char*>(stemU8.data()), stemU8.size());
     PopulateModelFromTable(outDoc, title.empty() ? "CSV Importado" : title, { { "CSV", rows } });
     return true;
 }
@@ -757,7 +758,8 @@ bool ImportFromXlsxFile(
         return false;
     }
 
-    const std::string title = std::filesystem::u8path(inPathUtf8).stem().u8string();
+    const auto stemU8 = std::filesystem::u8path(inPathUtf8).stem().u8string();
+    const std::string title(reinterpret_cast<const char*>(stemU8.data()), stemU8.size());
     PopulateModelFromTable(outDoc, title.empty() ? "Excel Importado" : title, parsedSheets);
     return true;
 }
@@ -770,7 +772,9 @@ bool ImportFromMarkdownFile(
     std::vector<std::uint8_t> bytes;
     if (!ReadFileBytes(inPathUtf8, bytes, outErr)) return false;
     const std::string md(bytes.begin(), bytes.end());
-    return ImportFromMarkdownText(md, std::filesystem::u8path(inPathUtf8).stem().u8string(), outDoc);
+    const auto stemU8 = std::filesystem::u8path(inPathUtf8).stem().u8string();
+    const std::string stemTitle(reinterpret_cast<const char*>(stemU8.data()), stemU8.size());
+    return ImportFromMarkdownText(md, stemTitle, outDoc);
 }
 
 bool ImportFromMarkdownText(const std::string& md, const std::string& title, DocumentModel& outDoc) {

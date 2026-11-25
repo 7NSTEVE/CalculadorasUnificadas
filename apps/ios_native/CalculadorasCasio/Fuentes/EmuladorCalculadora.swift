@@ -289,6 +289,13 @@ final class EmuladorCalculadora: ObservableObject {
         if let instantanea = capturar() { aplicar(instantanea) }
     }
 
+    /// Avanza la emulación de forma determinista y actualiza el framebuffer publicado.
+    func avanzarDeterminista(ms: UInt32 = 400) {
+        guard let emulador else { return }
+        calcemu_advance(emulador, ms)
+        leerPantalla()
+    }
+
     // MARK: - Teclado
 
     func pulsar(_ codigo: UInt8) {

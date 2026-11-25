@@ -154,3 +154,27 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
         OTHER_LDFLAGS: "-lz"
+
+  CuadernUTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: CuadernU
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.calculadorasunificadas.tinta.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+schemes:
+  CuadernU:
+    build:
+      targets:
+        CuadernU: all
+        CuadernUTests: [test]
+    test:
+      config: Debug
+      targets:
+        - name: CuadernUTests

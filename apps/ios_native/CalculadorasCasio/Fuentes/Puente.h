@@ -11,6 +11,9 @@
 //
 // Verificado en Windows (MSVC x64 / C++20) que las 5 cabeceras conviven en un
 // mismo binario sin colision de simbolos ni dependencias de Objective-C++.
+#if defined(__APPLE__)
+#include <zlib.h>
+#endif
 #include "calcemu.h"
 #include "casio_ffi.h"
 #include "api.h"

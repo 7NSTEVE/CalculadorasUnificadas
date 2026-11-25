@@ -17,6 +17,12 @@
 #include <string>
 #include <vector>
 
+#if defined(__APPLE__) && defined(__clang__)
+#define CG50_NOINLINE_DARWIN __attribute__((noinline))
+#else
+#define CG50_NOINLINE_DARWIN
+#endif
+
 // Independent fx-CG50 execution core.
 //
 // This class never loads or calls CASIO GCal/DLSim DLLs. It consumes a decrypted
@@ -563,12 +569,12 @@ public:
     // true si la CPU desperto (state != Sleeping) o ya estaba despierta.
     bool AdvanceCycles(std::uint64_t cycles);
 
-    bool Read8(std::uint32_t address, std::uint8_t& value) const;
-    bool Read16(std::uint32_t address, std::uint16_t& value) const;
-    bool Read32(std::uint32_t address, std::uint32_t& value) const;
-    bool Write8(std::uint32_t address, std::uint8_t value);
-    bool Write16(std::uint32_t address, std::uint16_t value);
-    bool Write32(std::uint32_t address, std::uint32_t value);
+    CG50_NOINLINE_DARWIN bool Read8(std::uint32_t address, std::uint8_t& value) const;
+    CG50_NOINLINE_DARWIN bool Read16(std::uint32_t address, std::uint16_t& value) const;
+    CG50_NOINLINE_DARWIN bool Read32(std::uint32_t address, std::uint32_t& value) const;
+    CG50_NOINLINE_DARWIN bool Write8(std::uint32_t address, std::uint8_t value);
+    CG50_NOINLINE_DARWIN bool Write16(std::uint32_t address, std::uint16_t value);
+    CG50_NOINLINE_DARWIN bool Write32(std::uint32_t address, std::uint32_t value);
 
     bool KeyDown(std::uint16_t matrixCode);
     void KeyUp(std::uint16_t matrixCode);
@@ -986,10 +992,10 @@ private:
     // because authentic SH7305 DMAC increments SAR to SAR+totalBytes on finish.
     std::uint32_t lastLcdDmaSar_ = 0x08000000u;
 
-    const std::uint8_t* ReadPointer(std::uint32_t address, std::size_t bytes) const;
-    std::uint8_t* WritePointer(std::uint32_t address, std::size_t bytes);
-    bool ExecuteOpcode(std::uint32_t pc, std::uint16_t opcode);
-    bool ExecuteFpuOpcode(std::uint32_t pc, std::uint16_t opcode);
+    CG50_NOINLINE_DARWIN const std::uint8_t* ReadPointer(std::uint32_t address, std::size_t bytes) const;
+    CG50_NOINLINE_DARWIN std::uint8_t* WritePointer(std::uint32_t address, std::size_t bytes);
+    CG50_NOINLINE_DARWIN bool ExecuteOpcode(std::uint32_t pc, std::uint16_t opcode);
+    CG50_NOINLINE_DARWIN bool ExecuteFpuOpcode(std::uint32_t pc, std::uint16_t opcode);
     bool EnterGeneralException(std::uint32_t pc, std::uint32_t eventCode,
                                bool trapa, std::uint8_t trapaImmediate,
                                std::uint32_t vectorOffset = 0x100u);
