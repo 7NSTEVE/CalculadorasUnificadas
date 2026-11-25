@@ -196,7 +196,7 @@ def q122() -> Leccion:
     L.paso("C) Coeficiente de rendimiento del ciclo")\
         .di("El calor que entra ocurre en el tramo isocórico y el que sale en el isobárico.",
             M(rf"Q_C = Q_{{CA}} = nC_V(T_A-T_C) = (0{{,}}300)({tex(cv, 4)})(400-267{{,}}2) = {tex(qc, 4, u='J')}"),
-            M(rf"Q_H = Q_{{AB}} = nC_p(T_B-T_A) = (0{{,}}300)({tex(cp, 3)})(300-400) = {tex(qh, 4, u='J')}"))\
+            M(rf"Q_H = Q_{{AB}} = nC_p(T_B-T_A) = (0{{,}}300)({tex(cp, 4)})(300-400) = {tex(qh, 4, u='J')}"))\
         .di(f"Calculamos el rendimiento: da {n(K, 4)}.",
             F(r"K = \frac{|Q_C|}{|Q_H|-|Q_C|}"),
             R(rf"K = \frac{{{tex(qc, 4)}}}{{{tex(abs(qh), 4)}-{tex(qc, 4)}}} = {tex(K, 4)}", "rc"))
@@ -204,7 +204,7 @@ def q122() -> Leccion:
         .di(f"Para un refrigerador de Carnot entre las temperaturas extremas, el máximo es {n(K_carnot, 3)}.",
             F(r"K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}"),
             R(rf"K_{{\text{{Carnot}}}} = {tex(K_carnot, 3)}", "rd"))\
-        .di("Como dieciocho coma cuatro supera el límite de Carnot, este ciclo no puede operar entre dos focos fijos a esas temperaturas.",
+        .di(f"Como {n(K, 4)} supera el límite de Carnot, este ciclo no puede operar entre dos focos fijos a esas temperaturas.",
             R(r"K > K_{\text{Carnot}} \;\Rightarrow\; \text{no es posible (viola la 2.ª ley)}"))
     L.responde("A", rf"\gamma={tex(gamma, 3)}", gamma, "")\
      .responde("B", rf"C_p={tex(cp, 3)}\ \text{{J/(mol}}\cdot\text{{K)}}", cp, "J/(mol·K)")\

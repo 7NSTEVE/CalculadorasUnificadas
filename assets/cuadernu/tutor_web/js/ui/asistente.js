@@ -111,15 +111,15 @@ export class Asistente {
     if (!conectado()) { aviso('El motor se está reconectando; la imagen quedó en la hoja.', { mal: true }); return; }
     this.rep.interrumpir();
     this._pensar('Leyendo la imagen');
-    enviar({ type: 'RESOLVER_IMAGEN', imagen: b64, tipo, nota, texto, nombre, modelo: ajustes.modelo });
+    enviar({ type: 'RESOLVER_IMAGEN', imagen: b64, tipo, nota, texto, nombre, modelo: ajustes.modelo, sin_saltos: true });
   }
 
-  /** Problema de un PDF que no está en el banco: recorte + solución oficial como guía. */
+  /** Problema de un PDF que no está en el banco: recorte + solución oficial expandida sin saltos. */
   documento(r) {
     if (!conectado()) { aviso('El motor se está reconectando; el recorte quedó en la hoja.', { mal: true }); return; }
     this.rep.interrumpir();
-    this._pensar(`Resolviendo ${r.etiqueta || 'el problema'}`);
-    enviar({ type: 'RESOLVER_DOCUMENTO', doc: r.doc, clave: r.clave, modelo: ajustes.modelo });
+    this._pensar(`Resolviendo ${r.etiqueta || 'el problema'} sin saltos`);
+    enviar({ type: 'RESOLVER_DOCUMENTO', doc: r.doc, clave: r.clave, modelo: ajustes.modelo, sin_saltos: true });
   }
 
   _pensar(q) {

@@ -18,7 +18,10 @@
 | Verificador numérico sin `eval()` (`verificador_numerico.py`) | **CONFIRMED** | Detecta discrepancias con tolerancia ULP (ej. atrapa `120 + 1.6 = 121.4` → calcula `121.6`) y bloquea inyecciones. |
 | Seguridad (`sympy_verifier.py`, `server.py`) | **CONFIRMED** | AST whitelist estricta sin `eval()` ni `parse_expr()`; CORS sin `"*"`; middleware HTTP y WS rechazan `Origin`/`Host` externos con `403`/`4403`; persistencia de sesión WS tras reconexión; `0` dependencias CDN. |
 | Integración C++ (`CuadernU.exe` + `TutorWhiteboardTest`) | **CONFIRMED** | Arranque asíncrono del sidecar en hilo de fondo (`WM_APP + 101`, cancelación segura en `WM_DESTROY`); compilación Release limpia y `TutorWhiteboardTest` `1/1 PASSED` (`0.10 s`). |
-| Pruebas automatizadas Python (`pytest`) | **CONFIRMED** | `39 passed, 0 failed` (`24` pruebas heredadas + `15` pruebas nuevas en `test_banco_158.py`). |
+| Pruebas automatizadas Python (`pytest`) | **CONFIRMED** | `42 passed, 0 failed` (`24` pruebas heredadas + `18` pruebas nuevas en `test_banco_158.py`, incluyendo auditoría física de 10 niveles, 8 arquetipos paramétricos y 21 PDFs). |
+| Auditoría física en 10 niveles (`verificador_fisico.py`) | **CONFIRMED** | 166/166 lecciones del banco sin alertas físicas; rechaza explícitamente trampas como $W = P\Delta V$ en expansión isotérmica (Nivel 6), $^\circ\text{C}$ dentro de $T^4$ (Nivel 5) y conducción de área variable sin integral (Nivel 6). |
+| Generador determinista de variantes (`fisica3/variantes.py`) | **CONFIRMED** | 8 arquetipos críticos (`Q049`, `E8`/`Q057`, `E16`/`Q111`, `E5`, `Q038`, `E1`, `Q063`, `Q128`) recalculados en Python (`0` cuota IA, `0` faltas DSL, `0` comandos TeX desconocidos, `0` alertas físicas). |
+| Catálogo y recorte de los 21 PDFs de exámenes + Modo sin saltos | **CONFIRMED** | 22 fuentes registradas (17 exámenes/reposiciones + folleto + Recomendados + Superexamen + Formulario + Programa FI2103 II-2026), `369` problemas segmentados, navegador `"Exámenes y PDFs"` en la biblioteca y expansión sin saltos de soluciones resumidas. |
 | Higiene del repositorio (`tools/check_workspace_hygiene.py`) | **CONFIRMED** | Salida `0` (`0 violations`). |
 
 ---
@@ -58,15 +61,16 @@
 
 ---
 
-## 4. Defecto Adicional Detectado y Reparado Durante la Auditoría Final
+## 4. Defectos Adicionales Detectados y Reparados Durante la Auditoría Final
 
-Durante el barrido Playwright sobre las 166 lecciones se detectó un error real en `assets/cuadernu/tutor_web/js/visuales/dilatacion.js`: los ejercicios con especificación de barra única (`caso: "barra"` en `T-DIL` y `Q036`) disparaban `TypeError: Cannot read properties of undefined (reading 'map')` al caer en `_barras()` sin arreglo `barras`. Se corrigió el respaldo de barra única y el barrido posterior confirmó `0` errores de consola y `0` lienzos vacíos en las 166 lecciones.
+1. **Barra única en dilatación (`dilatacion.js`):** Durante el barrido Playwright sobre las 166 lecciones se detectó un error real en `assets/cuadernu/tutor_web/js/visuales/dilatacion.js`: los ejercicios con especificación de barra única (`caso: "barra"` en `T-DIL` y `Q036`) disparaban `TypeError: Cannot read properties of undefined (reading 'map')` al caer en `_barras()` sin arreglo `barras`. Se corrigió el respaldo de barra única y el barrido posterior confirmó `0` errores de consola y `0` lienzos vacíos en las 166 lecciones.
+2. **Redondeo de sustitución en `Q122` (`banco_maquinas.py`):** La auditoría aritmética Nivel 1 sobre las 166 lecciones detectó que `Q122` mostraba `C_p` redondeado a 3 cifras (`29,0`) en la línea de sustitución de `Q_H` mientras el resultado `-869,1 J` usaba 4 cifras (`28,97`), y la voz del paso final narraba `18,4` (valor redondeado del solucionario) frente al `17,81` calculado en pantalla. Se unificó a `{tex(cp, 4)}` y `{n(K, 4)}` (fuente única de verdad).
 
 ---
 
 ## 5. Archivos Principales Modificados o Creados
 
-- **Backend Python (`tools/tutor_runtime/`):** `fisica3/` (16 módulos: `dsl.py`, `formato.py`, `ayudas.py`, `registro.py`, `rutas.py`, `indice_superexamen.py`, `banco_recomendados.py`, `banco_dilatacion.py`, `banco_calorimetria.py`, `banco_conduccion.py`, `banco_radiacion.py`, `banco_gases.py`, `banco_primera_ley.py`, `banco_ciclos.py`, `banco_ciclos2.py`, `banco_maquinas.py`, `banco_entropia.py`, `teoria.py`), `banco_api.py`, `documentos.py`, `voz.py`, `vision.py`, `verificador_numerico.py`, `sympy_verifier.py`, `gemini_engines.py`, `demo_lessons.py`, `server.py`.
+- **Backend Python (`tools/tutor_runtime/`):** `fisica3/` (17 módulos: `dsl.py`, `formato.py`, `ayudas.py`, `registro.py`, `rutas.py`, `indice_superexamen.py`, `banco_recomendados.py`, `banco_dilatacion.py`, `banco_calorimetria.py`, `banco_conduccion.py`, `banco_radiacion.py`, `banco_gases.py`, `banco_primera_ley.py`, `banco_ciclos.py`, `banco_ciclos2.py`, `banco_maquinas.py`, `banco_entropia.py`, `teoria.py`, `variantes.py`), `banco_api.py`, `documentos.py`, `voz.py`, `vision.py`, `verificador_numerico.py`, `verificador_fisico.py`, `sympy_verifier.py`, `gemini_engines.py`, `demo_lessons.py`, `server.py`.
 - **Frontend modular (`assets/cuadernu/tutor_web/`):** `index.html`, `styles/tutor.css`, `fonts/` (WOFF2 locales OFL sin CDN), `js/mate/`, `js/leccion/`, `js/pizarra/`, `js/visuales/`, `js/ui/`, `js/nucleo/`, `js/app.js`.
 - **C++ (`studio/`):** `studio/app/studio_tutor_panel.cpp`, `studio/tutor/tutor_sidecar_bridge.hpp`, `studio/tutor/tutor_sidecar_bridge.cpp`.
 - **Pruebas (`tests/tutor_runtime/`):** `tests/tutor_runtime/test_banco_158.py` y `tests/tutor_runtime/test_tutor_runtime.py`.

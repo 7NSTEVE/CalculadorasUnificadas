@@ -2006,6 +2006,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                     texto_ocr = str(evt.get("texto") or "").strip()
                     nombre = str(evt.get("nombre") or "Imagen pegada").strip()
                     mod_req = str(evt.get("modelo") or "")
+                    sin_saltos = bool(evt.get("sin_saltos", True))
                     if not img_b64:
                         continue
                     try:
@@ -2019,7 +2020,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                         try:
                             prompt = nota or (
                                 "Resuelve completamente el ejercicio o explica el contenido de esta imagen "
-                                "paso a paso en español claro para alguien que necesita pasos cortos."
+                                "paso a paso sin saltarte despejes ni unidades en español claro para alguien que necesita pasos cortos."
                             )
                             lec = await generar_leccion_ia(
                                 ctx.visual_director,
@@ -2029,6 +2030,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                                 texto_ocr=texto_ocr,
                                 modelo=mod_req,
                                 titulo_hint=nombre,
+                                sin_saltos=sin_saltos,
                             )
                             await send_json_safe({"type": "LECCION_IA", "leccion": lec})
                             await send_json_safe({"type": "STATE_CHANGE", "state": "WAITING_FOR_STUDENT"})
@@ -2042,6 +2044,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                     doc_id = str(evt.get("doc") or "").strip()
                     clave = str(evt.get("clave") or "").strip()
                     mod_req = str(evt.get("modelo") or "")
+                    sin_saltos = bool(evt.get("sin_saltos", True))
                     if not doc_id or not clave:
                         continue
 
@@ -2058,13 +2061,14 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                             etiq = ctx.documentos.etiqueta(doc_id, clave)
                             lec = await generar_leccion_ia(
                                 ctx.visual_director,
-                                prompt=f"Resuelve paso a paso este ejercicio ({etiq}).",
+                                prompt=f"Resuelve paso a paso SIN SALTARTE PASOS INTERMEDIOS este ejercicio ({etiq}).",
                                 imagen_bytes=png_bytes,
                                 mime="image/png",
                                 texto_ocr=prob.texto,
                                 guia_solucion=sol_txt,
                                 modelo=mod_req,
                                 titulo_hint=etiq,
+                                sin_saltos=sin_saltos,
                             )
                             lec["recorte"] = await asyncio.to_thread(ctx.documentos.recorte, doc_id, clave)
                             await send_json_safe({"type": "LECCION_IA", "leccion": lec})

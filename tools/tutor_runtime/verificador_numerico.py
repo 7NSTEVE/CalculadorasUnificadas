@@ -128,13 +128,13 @@ def _tex_a_aritmetica(expr: str) -> str:
     s = re.sub(r"(?<=\d),(?=\d)", ".", s)
     # Separador de miles con espacio fino: 10\,000 -> 10000
     s = re.sub(r"(?<=\d)(?:\\,|\\;|~|\s)+(?=\d{3}\b)", "", s)
-    # Quitar unidades explícitas \text{...} / \mathrm{...} / °C / %
-    s = re.sub(r"\\(?:text|mathrm|operatorname|mathbf)\s*\{[^{}]*\}", " ", s)
+    # Quitar unidades explícitas \text{m}^2, \text{m}^{-1}, \mathrm{...}, °C, %
+    s = re.sub(r"\\(?:text|mathrm|operatorname|mathbf)\s*\{[^{}]*\}(?:\s*\^\s*(?:\{[^{}]*\}|-?\d+))?", " ", s)
     s = re.sub(r"\^\s*\{?\s*\\circ\s*\}?\s*[CFK]?", " ", s)
     s = re.sub(r"°\s*[CFK]?", " ", s)
     s = s.replace(r"\%", " ").replace("%", " ")
     s = s.replace(r"\left", "").replace(r"\right", "")
-    s = s.replace(r"\,", " ").replace(r"\;", " ").replace(r"\!", " ").replace(r"\quad", " ").replace(r"\qquad", " ")
+    s = s.replace(r"\,", " ").replace(r"\;", " ").replace(r"\!", " ").replace(r"\ ", " ").replace(r"\quad", " ").replace(r"\qquad", " ")
     s = s.replace(r"\cdot", "*").replace(r"\times", "*").replace("·", "*").replace("×", "*")
     s = s.replace("−", "-").replace("–", "-").replace("—", "-")
 
@@ -182,10 +182,10 @@ def _tex_a_aritmetica(expr: str) -> str:
     s = _UNIDADES_FINAL_RE.sub("", s).strip()
     # Quitar llaves sobrantes simples
     s = s.replace("{", "(").replace("}", ")")
-    # Multiplicación implícita segura entre números/paréntesis/constantes
+    # Multiplicación implícita segura entre números/paréntesis/constantes/funciones
     s = re.sub(r"(\d|\))\s*\(", r"\1*(", s)
-    s = re.sub(r"\)\s*(\d|pi\b|e\b)", r")*\1", s)
-    s = re.sub(r"(\d)\s*(pi\b)", r"\1*\2", s)
+    s = re.sub(r"\)\s*(\d|(?:pi|e|ln|log|log10|sin|cos|tan|sqrt|exp)\b)", r")*\1", s)
+    s = re.sub(r"(\d)\s*((?:pi|ln|log|log10|sin|cos|tan|sqrt|exp)\b)", r"\1*\2", s)
     s = re.sub(r"\b(ln|log|log10|sin|cos|tan|sqrt|exp)\s+([0-9.]+)", r"\1(\2)", s)
     return s.strip()
 
@@ -247,6 +247,28 @@ def _tolerancia_redondeo(der_str: str, val_calc: float, es_aprox: bool) -> float
     return max(half_ulp * 1.2, 0.0008 * max(abs(val_calc), 1e-12), 1e-4)
 
 
+def _quitar_unidad_parentesis_final(der_str: str) -> str:
+    """Si el lado derecho trae unidad equivalente entre paréntesis ej. '23,62 kW (23617 W)', toma el valor principal."""
+    return re.sub(
+        r"(?:\\;|\\quad|\s)+\(\s*[-+]?\d[\d.,{}\s\\]*\\?(?:text|mathrm)\{[^{}]+\}\s*\)\s*$",
+        "",
+        der_str.strip(),
+    ).strip()
+
+
+def _factor_prefijo_si(s: str) -> float:
+    """Devuelve factor SI si el término termina en prefijo/unidad (ej. kW->1e3, L->1e-3 m³, cm->1e-2 m)."""
+    st = s.strip()
+    m = re.search(r"(?:\\text|\\mathrm)\{\s*([kMmGc])?(W|J|Pa|Hz|N|V|A|L|m)\s*\}\s*(?:\^\s*\{?([23])\}?)?\s*$", st)
+    if not m:
+        return 1.0
+    pref, unit, exp_s = m.group(1) or "", m.group(2), int(m.group(3) or 1)
+    if unit == "L":
+        return {"m": 1e-6, "": 1e-3}.get(pref, 1.0)
+    f = {"k": 1e3, "M": 1e6, "G": 1e9, "m": 1e-3, "c": 1e-2}.get(pref, 1.0)
+    return f**exp_s
+
+
 def verificar_ecuacion_tex(
     tex_str: str,
     rel_tol: Optional[float] = None,
@@ -274,13 +296,26 @@ def verificar_ecuacion_tex(
         for idx in range(0, len(tokens) - 2, 2):
             izq = tokens[idx].strip()
             op = tokens[idx + 1].strip()
-            der = tokens[idx + 2].strip()
+            der_raw = tokens[idx + 2].strip()
+            der = _quitar_unidad_parentesis_final(der_raw)
             if not izq or not der or not _tiene_operacion(izq):
                 continue
             val_izq = evaluar_expresion_segura(izq)
             val_der = evaluar_expresion_segura(der)
             if val_izq is None or val_der is None:
                 continue
+            # Si un lado está expresado en porcentaje (ej. 1 - 350/700 = 50 %), convertir % -> fracción
+            der_es_pct = bool(re.search(r"(?:\\%|%)\s*$", der))
+            izq_es_pct = bool(re.search(r"(?:\\%|%)\s*$", izq))
+            if der_es_pct and not izq_es_pct and abs(val_izq) <= 1.05 and abs(val_der) > 1.0:
+                val_der = val_der / 100.0
+            elif izq_es_pct and not der_es_pct and abs(val_der) <= 1.05 and abs(val_izq) > 1.0:
+                val_izq = val_izq / 100.0
+            # Si el lado derecho expresa el resultado con prefijo SI (ej. 23,62 kW frente a 23617 W en el cálculo)
+            f_der = _factor_prefijo_si(der)
+            if f_der != 1.0 and _factor_prefijo_si(izq) == 1.0:
+                if abs(val_izq - val_der * f_der) < abs(val_izq - val_der):
+                    val_der = val_der * f_der
             comprobaciones += 1
             diff = abs(val_izq - val_der)
             denom = max(abs(val_izq), abs(val_der), 1e-12)

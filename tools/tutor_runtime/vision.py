@@ -26,6 +26,7 @@ from PIL import Image
 
 from .fisica3 import registro
 from .pdf_rag import fold_accents
+from .verificador_fisico import auditar_leccion
 from .verificador_numerico import limpiar_voz_latex, recalcular_leccion_ia
 
 MAX_IMAGEN_BYTES = 12 * 1024 * 1024
@@ -402,37 +403,44 @@ def reconocer_imagen(
     return {"id": "", "etiqueta": "", "titulo": "", "seguro": False, "texto": ocr_txt[:1500], "metodo": "sin_texto"}
 
 
-_LECCION_IA_PROMPT = """Eres un profesor particular audiovisual que explica paso a paso en español natural de Costa Rica para alguien que necesita pasos cortos.
-Resuelve el problema dado (de CUALQUIER materia: física, cálculo, química, biología, historia, programación, etc.) devolviendo EXCLUSIVAMENTE un JSON válido con este formato:
+_LECCION_IA_PROMPT = """Eres un profesor particular audiovisual que explica paso a paso en español natural de Costa Rica para alguien que necesita pasos cortos y sin asumir conocimientos previos (modo principiante absoluto, SIN SALTOS).
+Resuelve el problema dado (de CUALQUIER materia: física, cálculo, ondas, fluidos, termodinámica, química, biología, historia, programación, etc.) devolviendo EXCLUSIVAMENTE un JSON válido con este formato:
 {
   "titulo": "Título claro y breve del ejercicio",
   "tema": "materia_o_tema",
-  "enunciado": "Resumen corto del enunciado (en español claro; fórmulas entre $...$ si hace falta)",
+  "enunciado": "Resumen claro del enunciado (fórmulas entre $...$ si hace falta)",
+  "formulas": ["ecuación principal del formulario usada"],
   "pasos": [
     {
       "titulo": "Título corto del paso",
-      "porque": "Razón breve de por qué hacemos este paso",
+      "porque": "Por qué aplica esta fórmula y por qué NO aplican alternativas (ej. por qué no usar W=PΔV en isotérmico)",
+      "origen": [
+        {"que": "$T_1 = 200\\,^\\circ\\text{C}$", "de": "dato dado en el enunciado"}
+      ],
+      "lento": [
+        {"nota": "Despeje intermedio renglón por renglón", "tex": "ecuación intermedia"}
+      ],
       "tramos": [
         {
           "habla": "Explicación hablada corta en español natural (SIN NINGÚN LaTeX, sin barras invertidas ni signos de dólar)",
           "acc": [
             {"a": "mate", "tex": "ecuación LaTeX limpia", "color": "azul"},
-            {"a": "texto", "txt": "Nota breve en la pizarra", "clase": "nota"}
+            {"a": "texto", "txt": "Nota breve o trampa de examen en la pizarra", "clase": "nota"}
           ]
         }
       ]
     }
   ],
   "respuestas": [
-    {"inciso": "", "tex": "resultado final", "nota": "explicación breve"}
+    {"inciso": "", "tex": "resultado final con unidades", "nota": "explicación breve"}
   ]
 }
-REGLAS ESTRICTAS:
-1. PROHIBIDO escribir LaTeX crudo (\\frac, ^, _, $) dentro de "habla". Todo "habla" se lee en voz alta tal cual.
-2. En "acc" usa solo: {"a":"mate","tex":"..."}, {"a":"texto","txt":"..."}, {"a":"lista","items":[...]}.
-3. Cada paso debe tener 1 o 2 tramos cortos (máximo 45 palabras en cada "habla").
-4. Muestra siempre fórmula simbólica, sustitución con unidades y resultado numérico final.
-5. Usa entre 3 y 6 pasos claros.
+REGLAS ESTRICTAS (MODO SIN SALTOS):
+1. Las soluciones oficiales de exámenes parciales suelen venir MUY resumidas y saltarse despejes, cambios de variable, integrales y conversiones de unidades. PROHIBIDO copiar esos saltos: expande CADA despeje algebraico, CADA conversión (°C→K, cm²→m², L→m³, g→kg, atm→Pa), y CADA regla de integración paso a paso.
+2. Verifica la aplicabilidad física: NUNCA uses W = P ΔV en un proceso isotérmico o adiabático; NUNCA uses H = kAΔT/L constante si A(x) o k(r) varían; usa siempre Kelvin en PV=nRT, T⁴ y Carnot.
+3. PROHIBIDO escribir LaTeX crudo (\\frac, ^, _, $) dentro de "habla". Todo "habla" se lee en voz alta tal cual.
+4. En "acc" usa solo: {"a":"mate","tex":"..."}, {"a":"texto","txt":"..."}, {"a":"lista","items":[...]}.
+5. Cada paso debe tener 1 o 2 tramos cortos (máximo 45 palabras en cada "habla"). Usa entre 4 y 7 pasos claros y completos.
 """
 
 
@@ -441,6 +449,7 @@ def _normalizar_leccion_ia(raw: Dict[str, Any], titulo_hint: str = "", enunciado
     titulo = str(raw.get("titulo") or titulo_hint or "Solución paso a paso")[:110]
     tema = str(raw.get("tema") or "general")[:40]
     enunciado = str(raw.get("enunciado") or enunciado_hint or "")[:1200]
+    formulas = [str(f) for f in (raw.get("formulas") or []) if str(f).strip()][:8]
     pasos_out: List[Dict[str, Any]] = []
 
     for idx, p in enumerate(raw.get("pasos") or []):
@@ -481,15 +490,25 @@ def _normalizar_leccion_ia(raw: Dict[str, Any], titulo_hint: str = "", enunciado
                 tramos_out.append({"habla": habla, "acc": accs_out})
                 if habla:
                     habla_parts.append(habla)
+        origen_out = [
+            {"que": str(o.get("que") or ""), "de": str(o.get("de") or "")}
+            for o in (p.get("origen") or [])
+            if isinstance(o, dict) and (o.get("que") or o.get("de"))
+        ][:8]
+        lento_out = [
+            {"nota": str(ln.get("nota") or ""), "tex": str(ln.get("tex") or "")}
+            for ln in (p.get("lento") or [])
+            if isinstance(ln, dict) and (ln.get("nota") or ln.get("tex"))
+        ][:8]
         if tramos_out:
             pasos_out.append({
                 "id": f"p{idx + 1}",
                 "titulo": str(p.get("titulo") or f"Paso {idx + 1}")[:90],
-                "porque": str(p.get("porque") or "")[:300],
+                "porque": str(p.get("porque") or "")[:360],
                 "habla": " ".join(habla_parts),
                 "tramos": tramos_out,
-                "origen": [],
-                "lento": [],
+                "origen": origen_out,
+                "lento": lento_out,
             })
 
     resps_out = []
@@ -506,14 +525,19 @@ def _normalizar_leccion_ia(raw: Dict[str, Any], titulo_hint: str = "", enunciado
         "titulo": titulo,
         "tema": tema,
         "enunciado": enunciado,
-        "fuente": {"doc": "ia", "nota": "Resuelto por IA y verificado aritméticamente en Python"},
-        "formulas": [],
+        "fuente": {"doc": "ia", "nota": "Resuelto paso a paso sin saltos y auditado en Python (10 niveles)"},
+        "formulas": formulas,
         "pasos": pasos_out,
         "respuestas": resps_out,
         "libre": True,
         "sinCierre": False,
     }
-    return recalcular_leccion_ia(lec)
+    lec = recalcular_leccion_ia(lec)
+    aud = auditar_leccion(lec)
+    lec["auditoria_fisica"] = aud
+    if aud["alertas"] and not lec.get("aviso"):
+        lec["aviso"] = "Auditoría física detectó alertas: " + " · ".join(aud["alertas"][:2])
+    return lec
 
 
 async def generar_leccion_ia(
@@ -526,8 +550,9 @@ async def generar_leccion_ia(
     guia_solucion: str = "",
     modelo: str = "",
     titulo_hint: str = "",
+    sin_saltos: bool = True,
 ) -> Dict[str, Any]:
-    """Genera una lección completa para imágenes/problemas nuevos y recalcula sus cuentas en Python."""
+    """Genera una lección completa sin saltos para imágenes/problemas nuevos y la audita en 10 niveles."""
     client = getattr(visual_director, "_client", None) if visual_director else None
     if client is None:
         return _normalizar_leccion_ia(
@@ -541,7 +566,7 @@ async def generar_leccion_ia(
                         "porque": "El motor local no tiene clave activa de Gemini para problemas fuera del banco.",
                         "tramos": [
                             {
-                                "habla": "Este ejercicio no está en el banco local y no hay clave de nube configurada. Puedes revisar cualquiera de los ciento cincuenta y ocho ejercicios del banco sin conexión.",
+                                "habla": "Este ejercicio no está en el banco local y no hay clave de nube configurada. Puedes revisar cualquiera de los ciento cincuenta y ocho ejercicios del banco o generar variantes numéricas sin conexión.",
                                 "acc": [{"a": "texto", "txt": texto_ocr[:320] or "Configura tu clave de Gemini en CuadernU para resolver problemas nuevos."}],
                             }
                         ],
@@ -555,12 +580,19 @@ async def generar_leccion_ia(
 
     partes: List[Any] = []
     bloques = [prompt]
+    if sin_saltos:
+        bloques.append(
+            "MODO SIN SALTOS ACTIVO: desarrolla absolutamente todos los despejes intermedios, "
+            "conversiones de unidades y pasos de integración en 'tramos' y 'lento' como si el alumno "
+            "estuviera viendo el procedimiento desde cero."
+        )
     if texto_ocr:
-        bloques.append(f"Texto detectado en la imagen:\n{texto_ocr[:2400]}")
+        bloques.append(f"Texto detectado en el enunciado:\n{texto_ocr[:2400]}")
     if guia_solucion:
         bloques.append(
-            f"Referencia oficial del profesor (úsala solo para verificar el procedimiento correcto, "
-            f"nunca la menciones ni la copies literalmente):\n{guia_solucion[:3500]}"
+            "Referencia oficial del profesor (AVISO: esta solución suele venir muy resumida y saltarse pasos; "
+            "úsala solo para confirmar los valores finales y expande TODOS los pasos intermedios omitidos sin mencionarla):\n"
+            f"{guia_solucion[:3800]}"
         )
     partes.append("\n\n".join(bloques))
     if imagen_bytes:

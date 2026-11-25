@@ -7,7 +7,7 @@ import { ajustes, bus, conectar, enCuaderno, enviar, guardarAjuste, pedir } from
 import { usarLetra } from './nucleo/letra.js';
 import { aplicarTema } from './nucleo/paleta.js';
 import { Tablero } from './pizarra/tablero.js';
-import { Reproductor, miniPaso } from './leccion/reproductor.js';
+import { Reproductor, miniPaso, tintaDe } from './leccion/reproductor.js';
 import { Lateral } from './ui/lateral.js';
 import { Inicio } from './ui/inicio.js';
 import { Biblioteca } from './ui/biblioteca.js';
@@ -88,9 +88,23 @@ async function abrirLeccionSuelta(lec, opt = {}) {
   $('progreso').hidden = rep.total < 2;
 }
 
+/** Abre una variante numérica nueva calculada en Python. */
+async function abrirVariante(id) {
+  asistente.callar();
+  try {
+    const lec = await pedir(`/api/banco/variante/${encodeURIComponent(id)}`, { tiempo: 15000 });
+    await abrirLeccionSuelta(lec);
+    aviso('Variante con nuevos números calculada en Python.');
+  } catch {
+    aviso('No pude generar una variante nueva ahora.', { mal: true });
+  }
+}
+
 const acciones = {
   abrir: abrirLeccion,
   abrirSuelta: abrirLeccionSuelta,
+  variante: abrirVariante,
+  abrirProblemaDoc: (doc, pr) => material.abrirProblema(doc, pr),
   inicio: aInicio,
   biblioteca: aBiblioteca,
   pizarra: aPizarra,
@@ -174,6 +188,19 @@ bus.on('leccion:estado', ({ estado, i, total }) => {
 });
 
 bus.on('leccion:finpaso', ({ i, total, paso, lec }) => {
+  if (ajustes.sinSaltos && paso.lento && paso.lento.length) {
+    const v = rep.aclaracion('Despeje sin saltos', 'pregunta');
+    for (const r of paso.lento) {
+      if (r.nota) {
+        const tn = tintaDe({ a: 'texto', txt: r.nota, clase: 'nota' }, rep.tablero);
+        if (tn) { rep.tablero.agregar(tn, { paso: v }); tn.completar(); }
+      }
+      if (r.tex) {
+        const tm = tintaDe({ a: 'mate', tex: r.tex }, rep.tablero);
+        if (tm) { rep.tablero.agregar(tm, { paso: v }); tm.completar(); }
+      }
+    }
+  }
   if (paso.pregunta) ponerPregunta(rep, paso);
   if (i >= total - 1 && !lec.sinCierre) ponerCierre(rep, lec, acciones);
 });

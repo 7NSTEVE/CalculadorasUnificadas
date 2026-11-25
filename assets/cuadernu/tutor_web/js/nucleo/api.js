@@ -131,7 +131,7 @@ export function desconectar() {
 const CLAVE_AJUSTES = 'tutor.ajustes.v2';
 const POR_DEFECTO = {
   tema: 'light', letra: 'manuscrita', vel: 1, voz: 'Kore', motorVoz: 'auto', vozLocal: '', narracion: true,
-  foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-2.5-flash', zoom: 1, autoSeguir: false,
+  foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-2.5-flash', zoom: 1, autoSeguir: false, sinSaltos: false,
 };
 
 export const ajustes = (() => {

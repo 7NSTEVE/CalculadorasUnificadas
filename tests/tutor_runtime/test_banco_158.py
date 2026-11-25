@@ -32,11 +32,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from tools.tutor_runtime.demo_lessons import get_lesson_beats
 from tools.tutor_runtime.documentos import Documentos
-from tools.tutor_runtime.fisica3 import registro, rutas
+from tools.tutor_runtime.fisica3 import registro, rutas, variantes
 from tools.tutor_runtime.fisica3.dsl import revisar
 from tools.tutor_runtime.gemini_engines import GeminiLiveVoiceBridge, _normalize_beat
 from tools.tutor_runtime.server import create_app
 from tools.tutor_runtime.sympy_verifier import safe_parse_math
+from tools.tutor_runtime.verificador_fisico import auditar_leccion
 from tools.tutor_runtime.verificador_numerico import (
     evaluar_expresion_segura,
     limpiar_voz_latex,
@@ -365,6 +366,118 @@ class TestSeguridadRobustezYCuaderno(unittest.TestCase):
         tipos = [a["type"] for b in beats for a in b["actions"]]
         self.assertIn("write_math", tipos)
         self.assertIn("write_text", tipos)
+
+
+class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
+    def test_auditoria_fisica_10_niveles_banco_y_trampas_fisicas(self) -> None:
+        # 1. Todo el banco de 166 lecciones debe pasar sin alertas físicas
+        con_alerta = {}
+        for lid in registro.ids():
+            aud = auditar_leccion(registro.obtener(lid).a_json())
+            self.assertEqual(len(aud["niveles"]), 10)
+            if aud["alertas"]:
+                con_alerta[lid] = aud["alertas"]
+        self.assertEqual(con_alerta, {}, f"Alertas físicas inesperadas en el banco: {con_alerta}")
+
+        # 2. Trampa física nivel 6: usar W = P(V_f - V_i) en una expansión isotérmica
+        falsa_iso = {
+            "titulo": "Expansión isotérmica mal resuelta",
+            "tema": "ciclos",
+            "enunciado": "Un gas ideal experimenta una expansión isotérmica desde V_i hasta V_f.",
+            "pasos": [
+                {
+                    "titulo": "Cálculo erróneo",
+                    "habla": "Multiplicamos presión por cambio de volumen.",
+                    "tramos": [{"v": "Trabajo", "acc": [{"a": "mate", "tex": r"W = P(V_f - V_i)"}]}],
+                }
+            ],
+            "respuestas": [],
+        }
+        aud_iso = auditar_leccion(falsa_iso)
+        self.assertTrue(any("Nivel 6" in a and "isotérmica" in a for a in aud_iso["alertas"]), aud_iso["alertas"])
+
+        # 3. Trampa física nivel 5: °C dentro de T^4 en radiación
+        falsa_rad = {
+            "titulo": "Radiación en Celsius",
+            "tema": "radiacion",
+            "enunciado": "Calcule la potencia radiada a 100 °C.",
+            "pasos": [{"titulo": "Paso 1", "habla": "Elevamos a la cuatro.", "tramos": [{"v": "P", "acc": [{"a": "mate", "tex": r"P = \sigma A (100^\circ C)^4"}]}]}],
+            "respuestas": [],
+        }
+        aud_rad = auditar_leccion(falsa_rad)
+        self.assertTrue(any("Nivel 5" in a for a in aud_rad["alertas"]), aud_rad["alertas"])
+
+        # 4. Trampa física nivel 6: conducción con A(y) variable sin integral
+        falsa_cond = {
+            "titulo": "Barra piramidal sin integral",
+            "tema": "conduccion",
+            "enunciado": "Barra con área transversal variable A(y) = 0,2 - 0,1y entre 200 °C y 25 °C.",
+            "pasos": [{"titulo": "Paso 1", "habla": "Usamos Fourier constante.", "tramos": [{"v": "H", "acc": [{"a": "mate", "tex": r"H = \frac{k A \Delta T}{L}"}]}]}],
+            "respuestas": [],
+        }
+        aud_cond = auditar_leccion(falsa_cond)
+        self.assertTrue(any("Nivel 6" in a for a in aud_cond["alertas"]), aud_cond["alertas"])
+
+    def test_variantes_parametricas_los_8_arquetipos_y_api(self) -> None:
+        exprs = []
+        for arq in variantes.ARQUETIPOS:
+            for sem in (1, 7, 42):
+                lec = variantes.generar_variante(arq, semilla=sem)
+                self.assertEqual(revisar(lec), [], f"Variante {arq} (semilla {sem}) falló dsl.revisar")
+                j = lec.a_json()
+                aud = auditar_leccion(j)
+                self.assertEqual(aud["alertas"], [], f"Variante {arq} (semilla {sem}) tuvo alertas: {aud['alertas']}")
+                for p in j["pasos"]:
+                    for tr in p["tramos"]:
+                        for a in tr["acc"]:
+                            if a.get("a") == "mate" and a.get("tex"):
+                                exprs.append((arq, a["tex"]))
+
+        # Validar 100% del TeX generado en variantes con Node.js real
+        tex_js_uri = (REPO_ROOT / "assets" / "cuadernu" / "tutor_web" / "js" / "mate" / "tex.js").as_uri()
+        js_code = (
+            f"import {{ analizarTex }} from {json.dumps(tex_js_uri)};\n"
+            "import fs from 'node:fs';\n"
+            "const items = JSON.parse(fs.readFileSync(0, 'utf8'));\n"
+            "const bad = items.filter(([_, t]) => (analizarTex(t).desconocidos || []).length > 0);\n"
+            "console.log(JSON.stringify({ total: items.length, bad }));\n"
+        )
+        proc = subprocess.run(
+            [_node_cmd(), "--input-type=module", "-e", js_code],
+            input=json.dumps(exprs, ensure_ascii=False),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=20,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(json.loads(proc.stdout)["bad"], [])
+
+        # Endpoint HTTP /api/banco/variante/Q049
+        app = create_app({"session_token": ""})
+        client = TestClient(app)
+        rv = client.get("/api/banco/variante/Q049?semilla=7")
+        self.assertEqual(rv.status_code, 200)
+        body = rv.json()
+        self.assertTrue(body.get("esVariante"))
+        self.assertEqual(body["auditoria_fisica"]["alertas"], [])
+
+    def test_documentos_21_pdfs_catalogo_y_recorte_extra(self) -> None:
+        docs = Documentos(REPO_ROOT, cache=REPO_ROOT / "private_local" / "tutor_recortes")
+        rutas_enc = docs.rutas()
+        if "23-II-R" in rutas_enc and "26-F" in rutas_enc:
+            # Programa FI2103 II-2026 registrado junto a los 17 exámenes + folleto + superexamen + recomendados + formulario
+            self.assertGreaterEqual(len(rutas_enc), 21)
+            self.assertIn("programa", rutas_enc)
+            # Problema extra de examen de reposición (no está en el banco de 158) -> recorte PNG limpio
+            r_rep = docs.resolver("problema 2 de reposicion II-2023")
+            self.assertIsNotNone(r_rep)
+            self.assertEqual(r_rep["doc"], "23-II-R")
+            self.assertTrue(docs.png("23-II-R", "2").startswith(b"\x89PNG"))
+            # Problema extra del folleto
+            r_fol = docs.resolver("folleto 3.4-5")
+            self.assertIsNotNone(r_fol)
+            self.assertTrue(docs.png("26-F", r_fol["clave"]).startswith(b"\x89PNG"))
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 /** Banco de ejercicios: buscador instantáneo y filtros, agrupado por tema. */
 
 import { TintaTexto } from '../mate/tinta.js';
-import { bus } from '../nucleo/api.js';
+import { bus, pedir } from '../nucleo/api.js';
 import { banco, estaHecha, filtrar, nombreTema, TEMAS, textoFuente } from './banco.js';
 
 export class Biblioteca {
@@ -9,6 +9,8 @@ export class Biblioteca {
     this.el = el;
     this.acciones = acciones;
     this.f = { tema: '', tipo: '', fuente: '' };
+    this.docs = null;
+    this.docCache = new Map();
     this.caja = document.createElement('div');
     this.caja.className = 'biblio';
     const bus1 = document.createElement('div');
@@ -51,6 +53,7 @@ export class Biblioteca {
     this.filtros.replaceChildren(
       this._filtro('Recomendados', 'fuente', 'E'),
       this._filtro('Superexamen', 'fuente', 'Q'),
+      this._filtro('Exámenes y PDFs', 'fuente', 'DOCS'),
       this._filtro('Me faltan', 'fuente', 'pend'),
       this._filtro('Selección', 'tipo', 'seleccion'),
       this._filtro('Desarrollo', 'tipo', 'desarrollo'),
@@ -60,7 +63,100 @@ export class Biblioteca {
     this._lista();
   }
 
+  async _listaDocs() {
+    this.lista.replaceChildren();
+    if (!this.docs) {
+      const p = document.createElement('p');
+      p.className = 'vacio';
+      p.textContent = 'Cargando documentos de exámenes y folleto…';
+      this.lista.appendChild(p);
+      try {
+        const d = await pedir('/api/documentos', { tiempo: 20000 });
+        this.docs = (d.documentos || []).filter((x) => x.tipo !== 'hoja');
+      } catch {
+        p.textContent = 'No pude leer la lista de documentos.';
+        return;
+      }
+      if (this.f.fuente !== 'DOCS') return;
+      this.lista.replaceChildren();
+    }
+    const q = (this.q.value || '').trim().toLowerCase();
+    const visibles = this.docs.filter((d) => !q || `${d.doc} ${d.titulo} ${d.tipo}`.toLowerCase().includes(q));
+    if (!visibles.length) {
+      const p = document.createElement('p');
+      p.className = 'vacio';
+      p.textContent = 'Ningún documento coincide con esa búsqueda.';
+      this.lista.appendChild(p);
+      return;
+    }
+    const intro = document.createElement('p');
+    intro.className = 'nota';
+    intro.textContent = 'Abre cualquier examen, reposición o folleto para recortar el problema en la pizarra y resolverlo paso a paso sin saltos.';
+    this.lista.appendChild(intro);
+    for (const d of visibles) {
+      const det = document.createElement('details');
+      det.className = 'doc-caja';
+      const sum = document.createElement('summary');
+      const strong = document.createElement('strong');
+      strong.textContent = d.titulo;
+      const cod = document.createElement('span');
+      cod.className = 'cod';
+      cod.textContent = d.doc;
+      sum.append(cod, strong);
+      const cont = document.createElement('div');
+      cont.className = 'doc-problemas';
+      det.append(sum, cont);
+      det.addEventListener('toggle', async () => {
+        if (!det.open || cont.dataset.cargado) return;
+        cont.textContent = 'Segmentando problemas del PDF…';
+        try {
+          let info = this.docCache.get(d.doc);
+          if (!info) {
+            info = await pedir(`/api/documentos/${encodeURIComponent(d.doc)}`, { tiempo: 30000 });
+            this.docCache.set(d.doc, info);
+          }
+          cont.dataset.cargado = '1';
+          cont.replaceChildren();
+          const probs = info.problemas || [];
+          if (!probs.length) { cont.textContent = 'Sin problemas numerados detectados.'; return; }
+          const ul = document.createElement('ul');
+          ul.className = 'lista-ejs';
+          for (const pr of probs) {
+            const li = document.createElement('li');
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'ej';
+            const c = document.createElement('span');
+            c.className = 'cod';
+            c.textContent = pr.num;
+            const m = document.createElement('span');
+            const st = document.createElement('strong');
+            st.textContent = pr.titulo || `Problema ${pr.num}`;
+            const sm = document.createElement('small');
+            sm.textContent = [pr.leccion ? `Verificado (${pr.leccion})` : 'Recortar y resolver sin saltos', `pág. ${pr.pagina}`].join(' · ');
+            m.append(st, sm);
+            const e = document.createElement('span');
+            e.className = 'hecho';
+            e.textContent = pr.leccion && estaHecha(pr.leccion) ? '✓' : '';
+            b.append(c, m, e);
+            b.addEventListener('click', () => {
+              if (this.acciones.abrirProblemaDoc) this.acciones.abrirProblemaDoc(d.doc, pr);
+              else if (pr.leccion) this.acciones.abrir(pr.leccion);
+            });
+            li.appendChild(b);
+            ul.appendChild(li);
+          }
+          cont.appendChild(ul);
+        } catch {
+          cont.textContent = 'No pude abrir este documento.';
+        }
+      });
+      this.lista.appendChild(det);
+    }
+  }
+
   _lista() {
+    if (this.f.fuente === 'DOCS') { this._listaDocs(); return; }
     const r = filtrar(this.q.value, this.f);
     this.lista.replaceChildren();
     if (!r.length) {

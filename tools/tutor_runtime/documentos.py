@@ -32,6 +32,7 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "superexamen": (("superexamen_tercer_parcial_fisica_general_iii.pdf",), "Superexamen", "superexamen"),
     "recomendados": (("ejercicios_recomendados_3_iis2026.pdf",), "Ejercicios Recomendados 3", "recomendados"),
     "formulario": (("documentos-ii-2026_ecuaciones_tercer_parcial_fg3.pdf",), "Formulario del III Parcial", "hoja"),
+    "programa": (("documentos-ii-2026_fi2103_fisica_general_iii_2026-ii (2).pdf", "documentos-ii-2026_fi2103_fisica_general_iii_2026-ii.pdf"), "Programa del curso FI2103 II-2026", "hoja"),
     "23-II-O": (("banco-de-examenes_ii-2023_ii_examen_parcial_ordinario.pdf",), "III Parcial ordinario II-2023", "examen"),
     "23-II-E": (("banco-de-examenes_ii-2023_ii_examen_extraordinario.pdf",), "III Parcial extraordinario II-2023", "examen"),
     "23-II-R": (("banco-de-examenes_ii-2023_examen_de_reposicion.pdf", "banco-de-examenes_ii-2023_examen_de_reposicion.zip"), "Reposición II-2023", "examen"),

@@ -13,10 +13,11 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 
-from .fisica3 import registro, rutas
+from .fisica3 import registro, rutas, variantes
 from .fisica3.dsl import revisar
 from .documentos import MAX_PDF
 from .pdf_rag import fold_accents
+from .verificador_fisico import auditar_leccion
 from .vision import MAX_IMAGEN_BYTES, reconocer_imagen
 from .voz import ServicioVoz
 
@@ -183,6 +184,20 @@ def crear_router(
         revisa_token(request)
         return {"resultados": await asyncio.to_thread(buscar, q[:200])}
 
+    @r.get("/banco/variante/{id}")
+    async def api_variante(id: str, request: Request, semilla: Optional[int] = None) -> Dict[str, Any]:
+        revisa_token(request)
+
+        def _arma() -> Dict[str, Any]:
+            lec = variantes.generar_variante(id[:60], semilla=semilla)
+            j = lec.a_json()
+            j["auditoria_fisica"] = auditar_leccion(j)
+            j["esVariante"] = True
+            j["origenVariante"] = id[:60]
+            return j
+
+        return await asyncio.to_thread(_arma)
+
     @r.get("/banco/{id}")
     async def api_leccion(id: str, request: Request) -> Dict[str, Any]:
         revisa_token(request)
@@ -191,6 +206,7 @@ def crear_router(
         except KeyError:
             raise HTTPException(status_code=404, detail="Ese ejercicio no está en el banco")
         j = lec.a_json()
+        j["auditoria_fisica"] = await asyncio.to_thread(auditar_leccion, j)
         if documentos is not None:
             rec = await asyncio.to_thread(documentos.recorte_de_leccion, lec)
             if rec:
@@ -300,5 +316,22 @@ def crear_router(
             return {i: f for i in registro.ids() for f in [revisar(registro.obtener(i))] if f}
 
         return {"faltas": await asyncio.to_thread(_todo)}
+
+    @r.get("/banco-auditoria")
+    async def api_auditoria(request: Request) -> Dict[str, Any]:
+        """Auditoría física de 10 niveles sobre todas las lecciones del banco."""
+        revisa_token(request)
+
+        def _todo() -> Dict[str, Any]:
+            alertas: Dict[str, List[str]] = {}
+            total = 0
+            for i in registro.ids():
+                total += 1
+                aud = auditar_leccion(registro.obtener(i).a_json())
+                if aud["alertas"]:
+                    alertas[i] = aud["alertas"]
+            return {"total": total, "alertas": alertas}
+
+        return await asyncio.to_thread(_todo)
 
     return r

@@ -129,6 +129,7 @@ export function armarAjustes(el, acciones) {
       bloque('Tema', seg([['light', 'Claro'], ['dark', 'Oscuro'], ['high-contrast', 'Contraste']], ajustes.tema, (v) => { guardarAjuste('tema', v); aplicarTema(v); })),
       titulo('Ritmo'),
       fila('Plegar los pasos anteriores', casilla('foco')),
+      fila('Modo sin saltos (mostrar despejes)', casilla('sinSaltos')),
       fila('Pasar solo al siguiente paso', casilla('autoSeguir')),
       fila('Menos movimiento', casilla('menosMovimiento')),
       titulo('Preguntas libres e imágenes'),

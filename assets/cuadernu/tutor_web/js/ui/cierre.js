@@ -76,6 +76,25 @@ export function ponerCierre(rep, lec, acciones) {
     s.textContent = lec.cotejo.texto;
     v.cuerpo.appendChild(s);
   }
+  if (lec.auditoria_fisica && Array.isArray(lec.auditoria_fisica.niveles)) {
+    const det = document.createElement('details');
+    det.className = `auditoria-fisica${lec.auditoria_fisica.alertas && lec.auditoria_fisica.alertas.length ? ' con-alerta' : ''}`;
+    const sum = document.createElement('summary');
+    sum.textContent = lec.auditoria_fisica.resumen || 'Comprobaciones físicas y matemáticas';
+    det.appendChild(sum);
+    const ul = document.createElement('ul');
+    for (const n of lec.auditoria_fisica.niveles) {
+      const li = document.createElement('li');
+      li.className = `niv-${n.estado}`;
+      const tag = n.estado === 'comprobado' ? 'OK' : n.estado === 'alerta' ? 'ALERTA' : '—';
+      const b = document.createElement('strong');
+      b.textContent = `${n.nivel}. ${n.nombre} (${tag}): `;
+      li.append(b, document.createTextNode(n.detalle || ''));
+      ul.appendChild(li);
+    }
+    det.appendChild(ul);
+    v.cuerpo.appendChild(det);
+  }
   if (lec.practica) ponerPractica(v.cuerpo, lec, tab);
   const fila = document.createElement('div');
   fila.className = 'fila-botones';
@@ -87,6 +106,14 @@ export function ponerCierre(rep, lec, acciones) {
     b.textContent = `Siguiente: ${banco.mapa.get(sig).titulo.replace(/\$[^$]*\$/g, '').slice(0, 60)}`;
     b.addEventListener('click', () => acciones.abrir(sig));
     fila.appendChild(b);
+  }
+  if (acciones.variante && lec.tipo !== 'teoria') {
+    const vbtn = document.createElement('button');
+    vbtn.type = 'button';
+    vbtn.className = 'btn btn-suave';
+    vbtn.textContent = 'Practicar con otros números';
+    vbtn.addEventListener('click', () => acciones.variante(lec.origenVariante || lec.id));
+    fila.appendChild(vbtn);
   }
   const otra = document.createElement('button');
   otra.type = 'button';
