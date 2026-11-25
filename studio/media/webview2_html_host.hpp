@@ -65,6 +65,21 @@ public:
     void ReloadBlock(std::uint64_t objectId, const std::string& htmlSourceUtf8, const std::string& urlUtf8, bool allowNetwork);
     void DeactivateBlock(std::uint64_t objectId);
 
+    // Dedicated trusted virtual-host mode for the CuadernU Audiovisual Tutor Whiteboard:
+    // - Maps https://tutor.cuadernu.local/ to local assetsWebDir (HTTPS secure context for getUserMedia + AEC3).
+    // - Auto-grants COREWEBVIEW2_PERMISSION_KIND_MICROPHONE strictly to https://tutor.cuadernu.local/.
+    // - Allows loopback WebSocket/HTTP strictly to 127.0.0.1 and bridges JSON via PostWebMessageAsJson.
+    bool ActivateTutorHost(
+        HWND parentHwnd,
+        std::uint64_t hostId,
+        const RECT& boundsPx,
+        const std::wstring& assetsWebDir,
+        const std::string& queryParamsUtf8,
+        std::function<void(const std::string&)> onWebMessageJson,
+        std::function<void(std::uint64_t, bool)> onReady = nullptr);
+
+    bool PostMessageJson(std::uint64_t hostId, const std::string& jsonUtf8);
+
     // Suspend all active blocks immediately (e.g. on WM_SIZE SIZE_MINIMIZED)
     void SuspendAll();
     void Shutdown();

@@ -36,6 +36,7 @@
 #include "studio_command_ids.hpp"
 #include "studio_feature_dialogs.hpp"
 #include "studio_closure_dialogs.hpp"
+#include "studio_tutor_panel.hpp"
 #include "../pdf/table_interop.hpp"
 #include "../core/accessibility_engine.hpp"
 #include "../core/ai_provider_vault.hpp"
@@ -220,8 +221,11 @@ struct StudioAppState {
     int inspectorScrollY = 0;
     int inspectorMaxScrollY = 0;
     int inspectorHoverIdx = -1;
-    std::string academicStatusUtf8 = "Solo lectura \xC2\xB7 Offline-First listo";
-    std::string scheduleSummaryUtf8 = "Sin choques \xC2\xB7 Listo para optimizar";
+    std::string academicStatusUtf8 = "Conecta tu cuenta para ver cursos y entregas";
+    std::string scheduleSummaryUtf8 = "Listo para planificar tu semestre";
+    int cliTecPreviewSection = -1;
+    int cliTecPreviewSubView = 0;
+    bool cliTecDemoData = false;
 
     DocumentModel doc;
     CommandStack cmdStack;
@@ -230,6 +234,7 @@ struct StudioAppState {
     D2DRenderer renderer;
     NativeVideoPlayer videoPlayer;
     WebView2HtmlHost htmlHost;
+    Tutor::StudioTutorPanel tutorPanel;
     std::uint64_t activeHtmlObjectId = 0;
     ObjectTarget activeHtmlTarget{ true, 0 };
     HANDLE hCasioWatchStop = nullptr;
@@ -2603,6 +2608,8 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
     case CMD_STUDY_MENU: {
         HMENU menu = CreatePopupMenu();
         const UINT examGate = st->examModeLocked ? (MF_STRING | MF_GRAYED) : MF_STRING;
+        AppendMenuW(menu, examGate,  CMD_TUTOR_WHITEBOARD_OPEN, L"Pizarra Tutor Audiovisual (Voz + Lazo + PDF)...");
+        AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(menu, examGate,  CMD_CHECK_MY_WORK,       L"Revisar mi Procedimiento (Check My Work)...");
         AppendMenuW(menu, examGate,  CMD_TEACH_ME,            L"Gu\u00ED""a Socr\u00E1tica Paso a Paso (Teach Me)...");
         AppendMenuW(menu, examGate,  CMD_SUMMARIZE_NOTES,     L"Generar Resumen No Destructivo (Capa Separada)");
@@ -3834,8 +3841,10 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
 
         const auto snap = st->tecStore->Snapshot();
         st->academicStatusUtf8 = snap.sessionAuthenticated
-            ? ("TEC Digital conectado · " + std::to_string(snap.communities.size()) + " cursos (Solo Lectura)")
-            : ("TEC Digital · Modo Offline (" + std::to_string(snap.communities.size()) + " cursos en caché)");
+            ? (std::to_string(snap.communities.size()) + " cursos y comunidades sincronizados")
+            : (snap.communities.empty()
+                   ? "Conecta tu cuenta para ver cursos y entregas"
+                   : (std::to_string(snap.communities.size()) + " cursos guardados sin conexi\xC3\xB3n"));
         if (st->statusBannerUtf8.empty()) {
             st->statusBannerUtf8 = st->academicStatusUtf8;
         }
@@ -6319,6 +6328,71 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         PersistStudioProfileNow(st);
         st->statusBannerUtf8 = std::string("Paleta de color: ") +
             AccessibilityEngine::ColorBlindModeLabelUtf8(st->uiPrefs.accessibility.colorBlindMode);
+        break;
+    }
+    case CMD_TUTOR_WHITEBOARD_OPEN: {
+        if (st->examModeLocked) {
+            st->statusBannerUtf8 = "Bloqueado en Modo Examen";
+            break;
+        }
+        std::string tutorErr;
+        const AiProviderVault* vPtr = st->aiVault.IsEnabled() ? &st->aiVault : nullptr;
+        const bool ok = st->tutorPanel.OpenOrFocus(
+            st->hwndMain,
+            st->glassSettings,
+            vPtr,
+            [st](const std::string& beatsJsonArrayUtf8) -> Tutor::TutorBakeReport {
+                Tutor::TutorBakeReport rep;
+                if (IsDocumentLockedForEdit(st)) {
+                    rep.summaryUtf8 = "El documento est\xC3\xA1 bloqueado para edici\xC3\xB3n.";
+                    return rep;
+                }
+                Tutor::TutorSessionStateMachine sm;
+                sm.Reset("baked_from_panel");
+                try {
+                    const auto arr = nlohmann::json::parse(beatsJsonArrayUtf8);
+                    if (arr.is_array()) {
+                        for (const auto& item : arr) {
+                            Tutor::TutorBeat b;
+                            Tutor::TutorValidationResult vr;
+                            if (Tutor::ParseAndValidateTutorBeat(item.dump(), b, vr) && vr.ok) {
+                                sm.ApplyBeat(b);
+                            }
+                        }
+                    }
+                } catch (...) {}
+                double bx = 80.0, by = 80.0;
+                NextCardPlacement(st, bx, by);
+                rep = Tutor::BakeTutorSessionToDocument(st->doc, st->cmdStack, CurrentTarget(st), sm, bx, by);
+                if (rep.ok) {
+                    if (st->hwndViewport && IsWindow(st->hwndViewport)) {
+                        InvalidateRect(st->hwndViewport, nullptr, FALSE);
+                    }
+                    if (st->hwndMain && IsWindow(st->hwndMain)) {
+                        InvalidateRect(st->hwndMain, nullptr, FALSE);
+                    }
+                }
+                return rep;
+            },
+            [st](const std::string& statusUtf8) {
+                if (!statusUtf8.empty()) {
+                    st->statusBannerUtf8 = statusUtf8;
+                    if (st->hwndMain && IsWindow(st->hwndMain)) {
+                        InvalidateRect(st->hwndMain, nullptr, FALSE);
+                    }
+                }
+            },
+            &tutorErr);
+        if (!ok) {
+            st->statusBannerUtf8 = tutorErr.empty()
+                ? "No se pudo abrir la Pizarra Tutor Audiovisual"
+                : tutorErr;
+            MessageBoxW(
+                st->hwndMain,
+                Utf8ToWide(st->statusBannerUtf8).c_str(),
+                L"CuadernU \u00B7 Pizarra Tutor Audiovisual",
+                MB_ICONWARNING | MB_OK);
+        }
         break;
     }
     case CMD_STUDY_TUTOR_STEP: {
@@ -9601,7 +9675,8 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                     ? Utf8ToWide("Activo: " + actP->displayNameUtf8)
                     : L"Modo Local Determinista (BM25)";
                 drawBadge(provBadge, st->aiVault.IsEnabled() ? pal.accentGreen : pal.accentBlue);
-                drawBtn(L"Configurar Claves API de IA...", CMD_AI_PROVIDERS_VAULT, true);
+                drawBtn(L"Pizarra Tutor Audiovisual...", CMD_TUTOR_WHITEBOARD_OPEN, true);
+                drawBtn(L"Configurar Claves API de IA...", CMD_AI_PROVIDERS_VAULT);
                 drawBtn(L"Consulta IA con Citas", CMD_GROUNDED_AI_CITATIONS);
                 drawBtnPair(L"Tutor Socr\u00E1tico", CMD_STUDY_TUTOR_STEP, L"Revisar Pasos", CMD_CHECK_MY_WORK);
                 drawBtnPair(L"Resumir Notas", CMD_SUMMARIZE_NOTES, L"Traducir ES/EN", CMD_TRANSLATE_SELECTION);
@@ -9642,14 +9717,19 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 drawBtnPair(L"Sync 3 Modos", CMD_FOLDER_SYNC_3MODES, L"Colab LAN", CMD_TOGGLE_LAN_COLLAB_SERVER);
                 drawBtn(L"Explorar Comandos (Ctrl+K)", CMD_COMMAND_PALETTE);
             } else {
-                // TAB 5: Capas, Audio Sincronizado y Centro Académico TEC
-                drawSecHdr(L"Centro Acad\u00E9mico TEC", UiGlass::IconId::AcademicCap, pal.accentOrange);
-                drawBadge(L"Solo Lectura \u00B7 0 mutaciones", pal.accentGreen);
+                // TAB 5: TEC Digital, Capas y Audio Sincronizado
+                drawSecHdr(L"TEC Digital", UiGlass::IconId::AcademicCap, pal.accentBlue);
+#if defined(DOC_STUDIO_HAS_ACADEMIC)
+                const bool tecAuthed = st->tecStore && st->tecStore->IsAuthenticated();
+#else
+                const bool tecAuthed = false;
+#endif
+                drawBadge(tecAuthed ? L"Conectado" : L"Sin conectar", tecAuthed ? pal.accentGreen : pal.accentBlue);
                 drawInfoText(Utf8ToWide(st->academicStatusUtf8), 2);
-                drawBtn(L"Abrir Centro TEC Digital...", CMD_ACADEMIC_SYNC_TEC, true);
+                drawBtn(L"Abrir TEC Digital", CMD_ACADEMIC_SYNC_TEC, true);
+                drawBtnPair(L"Mis Cursos", CMD_ACADEMIC_EVALS_TEC, L"Horario", CMD_ACADEMIC_SOLVE_SCHEDULE);
                 drawBtnPair(L"Malla Curricular", CMD_ACADEMIC_MALLA_TEC, L"Notas", CMD_ACADEMIC_NOTAS_TEC);
-                drawBtnPair(L"Horarios en Vivo", CMD_ACADEMIC_SOLVE_SCHEDULE, L"Calendario", CMD_ACADEMIC_CALENDAR_TEC);
-                drawBtnPair(L"Evaluaciones", CMD_ACADEMIC_EVALS_TEC, L"Biblioteca", CMD_ACADEMIC_SEARCH_MATERIALS);
+                drawBtnPair(L"Calendario", CMD_ACADEMIC_CALENDAR_TEC, L"Biblioteca", CMD_ACADEMIC_SEARCH_MATERIALS);
                 drawDivider();
 
                 drawSecHdr(L"Gemini Notebook", UiGlass::IconId::SyncCloud, pal.accentBlue);
@@ -10523,6 +10603,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         if (st) {
             StopCasioInboxWatcher(st);
             st->videoPlayer.Stop();
+            st->tutorPanel.Close();
             st->htmlHost.Shutdown();
             CommitInlineTextEdit(st, true);
             st->speechSynth.Shutdown();
@@ -10612,6 +10693,12 @@ void ParseCliArgs(StudioAppState* st, std::wstring& outOpenPath, std::string& ou
             st->appearancePopoverOpen = true;
         } else if (arg == L"--search-open") {
             st->searchVisible = true;
+        } else if (arg == L"--tec-digital-preview" && i + 1 < argc) {
+            st->cliTecPreviewSection = std::clamp(_wtoi(argv[++i]), 0, 6);
+        } else if (arg == L"--tec-subview" && i + 1 < argc) {
+            st->cliTecPreviewSubView = std::clamp(_wtoi(argv[++i]), 0, 4);
+        } else if (arg == L"--tec-demo-data") {
+            st->cliTecDemoData = true;
         }
     }
     LocalFree(argv);
@@ -11137,8 +11224,43 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
                 }
             }
         }
-        ShowWindow(hwnd, st->smokeTestMode ? SW_SHOWNOACTIVATE : nCmdShow);
+        ShowWindow(hwnd, (st->smokeTestMode || st->cliTecPreviewSection >= 0) ? SW_SHOWNOACTIVATE : nCmdShow);
         UpdateWindow(hwnd);
+
+#if defined(DOC_STUDIO_HAS_ACADEMIC)
+        if (st->cliTecPreviewSection >= 0) {
+            if (!st->tecStore) {
+                st->tecStore = std::make_unique<DocStudio::TecDigital::TecAcademicStore>();
+                if (!st->cliTecDemoData) {
+                    st->tecStore->LoadSnapshotFromDisk(nullptr);
+                }
+            }
+            const auto sec = static_cast<DocStudio::TecDigitalUi::HubSection>(st->cliTecPreviewSection);
+            const wchar_t* shotW = st->screenshotOutPath.empty() ? nullptr : st->screenshotOutPath.c_str();
+            DocStudio::TecDigitalUi::RunTecDigitalCenterDialog(
+                hwnd,
+                st->doc,
+                *st->tecStore,
+                sec,
+                st->statusBannerUtf8,
+                nullptr,
+                st->cliTecPreviewSubView,
+                nullptr,
+                nullptr,
+                nullptr,
+                &st->glassSettings,
+                shotW,
+                st->cliTecDemoData);
+            if (shotW != nullptr) {
+                DestroyWindow(hwnd);
+                st.reset();
+                if (gdiplusToken) Gdiplus::GdiplusShutdown(gdiplusToken);
+                RoUninitialize();
+                CoUninitialize();
+                return 0;
+            }
+        }
+#endif
 
         if (!st->screenshotOutPath.empty() || st->smokeTestMode) {
             PostMessageW(hwnd, WM_APP_TAKE_SCREENSHOT, 0, 0);

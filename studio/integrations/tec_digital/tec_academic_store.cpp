@@ -433,12 +433,39 @@ bool TecAcademicStore::SyncAll(
         }
     }
     if (opts.syncGraphQlInclusiones && !cancelled()) {
-        report(96, "Consultando servicio oficial de inclusiones y graduación...");
+        report(94, "Consultando expediente JSON, malla y graduación...");
         auto& gql = service_->GraphQlClient();
         auto roleRes = gql.FetchUserType();
         if (roleRes.ok) {
             next.inclusionServiceStatus = "active";
             const std::string uid = gql.CachedUserId();
+            if (!sessionCarne.empty()) {
+                if (auto gi = gql.FetchStudentGeneralInfo(sessionCarne); gi.ok) {
+                    next.studentGeneralInfo = std::move(gi.value);
+                }
+                if (auto ap = gql.FetchActualPeriodCourses(sessionCarne); ap.ok) {
+                    next.actualPeriodCourses = std::move(ap.value);
+                }
+                if (!next.curriculumGraph || next.curriculumGraph->levels.empty() || !next.studentProfile) {
+                    if (auto cb = gql.FetchStudentCurriculum(sessionCarne); cb.ok) {
+                        if (!next.curriculumGraph || next.curriculumGraph->levels.empty()) {
+                            next.curriculumGraph = std::move(cb.value.graph);
+                        }
+                        if (!next.studentProfile || next.studentProfile->grades.empty()) {
+                            next.studentProfile = std::move(cb.value.profile);
+                        }
+                    }
+                }
+                if (auto ah = gql.FetchAcademicHistoryFallback(sessionCarne); ah.ok) {
+                    if (!next.expediente) {
+                        next.expediente = td::ExpedienteSummary{};
+                    }
+                    auto& dst = next.expediente->structured.stats;
+                    if (dst.weighted_avg_general <= 0.0 && ah.value.weighted_avg_general > 0.0) {
+                        dst = ah.value;
+                    }
+                }
+            }
             if (auto pg = gql.FetchPendingGraduationCourses(uid, sessionCarne); pg.ok) {
                 next.pendingGraduationCourses = std::move(pg.value);
             }
@@ -1252,6 +1279,35 @@ bool TecAcademicStore::SaveSnapshotToDisk(std::string* outErr) const {
             };
         }
 
+        if (snap.studentGeneralInfo) {
+            json rns = json::array();
+            for (const auto& r : snap.studentGeneralInfo->rn_courses) {
+                rns.push_back({{"course_code", r.course_code}, {"rn", r.rn}, {"course_name", r.course_name}});
+            }
+            j["student_general_info"] = {
+                {"career", snap.studentGeneralInfo->career},
+                {"weighted_average", snap.studentGeneralInfo->weighted_average},
+                {"outstanding_courses", snap.studentGeneralInfo->outstanding_courses},
+                {"available_registration_credits", snap.studentGeneralInfo->available_registration_credits},
+                {"rn_courses", std::move(rns)}
+            };
+        }
+
+        if (!snap.actualPeriodCourses.empty()) {
+            json apc = json::array();
+            for (const auto& c : snap.actualPeriodCourses) {
+                apc.push_back({
+                    {"id", c.id},
+                    {"code", c.code},
+                    {"materia", c.materia},
+                    {"credits", c.credits},
+                    {"professors", c.professors},
+                    {"schedule", c.schedule}
+                });
+            }
+            j["actual_period_courses"] = std::move(apc);
+        }
+
         if (!snap.pendingPerformanceEvals.empty()) {
             json pe = json::array();
             for (const auto& e : snap.pendingPerformanceEvals) {
@@ -1579,6 +1635,36 @@ bool TecAcademicStore::LoadSnapshotFromDisk(std::string* outErr) {
             sc.scholarship_type = sj.value("scholarship_type", "");
             sc.detail = sj.value("detail", "");
             loaded.scholarshipInfo = std::move(sc);
+        }
+        if (j.contains("student_general_info") && j["student_general_info"].is_object()) {
+            const auto& gj = j["student_general_info"];
+            td::StudentGeneralInfo gi;
+            gi.career = gj.value("career", "");
+            gi.weighted_average = gj.value("weighted_average", 0.0);
+            gi.outstanding_courses = gj.value("outstanding_courses", 0);
+            gi.available_registration_credits = gj.value("available_registration_credits", 0);
+            if (gj.contains("rn_courses") && gj["rn_courses"].is_array()) {
+                for (const auto& rj : gj["rn_courses"]) {
+                    gi.rn_courses.push_back({rj.value("course_code", ""), rj.value("rn", 0), rj.value("course_name", "")});
+                }
+            }
+            loaded.studentGeneralInfo = std::move(gi);
+        }
+        if (j.contains("actual_period_courses") && j["actual_period_courses"].is_array()) {
+            for (const auto& cj : j["actual_period_courses"]) {
+                td::GraphQlActualCourse c;
+                c.id = cj.value("id", "");
+                c.code = cj.value("code", "");
+                c.materia = cj.value("materia", "");
+                c.credits = cj.value("credits", 0);
+                if (cj.contains("professors") && cj["professors"].is_array()) {
+                    for (const auto& p : cj["professors"]) if (p.is_string()) c.professors.push_back(p.get<std::string>());
+                }
+                if (cj.contains("schedule") && cj["schedule"].is_array()) {
+                    for (const auto& sc : cj["schedule"]) if (sc.is_string()) c.schedule.push_back(sc.get<std::string>());
+                }
+                loaded.actualPeriodCourses.push_back(std::move(c));
+            }
         }
         if (j.contains("pending_performance_evals") && j["pending_performance_evals"].is_array()) {
             for (const auto& ej : j["pending_performance_evals"]) {

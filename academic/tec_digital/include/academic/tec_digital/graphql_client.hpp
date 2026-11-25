@@ -4,11 +4,13 @@
 #include "academic/tec_digital/auth_client.hpp"
 #include "academic/tec_digital/policy.hpp"
 #include "academic/tec_digital/sanitizer.hpp"
+#include "academic/tec_digital/tda_tds_client.hpp"
 #include "academic/tec_digital/types.hpp"
 
 #include <mutex>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace academic::tec_digital {
@@ -66,6 +68,25 @@ struct GraphQlActualCourse {
     std::vector<std::string> schedule;
 };
 
+struct StudentRnCourse {
+    std::string course_code;
+    int rn = 0;
+    std::string course_name;
+};
+
+struct StudentGeneralInfo {
+    std::string career;
+    double weighted_average = 0.0;
+    int outstanding_courses = 0;
+    int available_registration_credits = 0;
+    std::vector<StudentRnCourse> rn_courses;
+};
+
+struct GraphQlCurriculumBundle {
+    CurriculumGraph graph;
+    StudentCurriculumProfile profile;
+};
+
 class TecGraphQlClient {
 public:
     TecGraphQlClient(PolicyEnforcingTransport& transport,
@@ -97,6 +118,8 @@ public:
     Result<ScholarshipStatusInfo> FetchScholarshipStatus(std::string_view campaign_id);
     Result<std::vector<GraphQlActualCourse>> FetchActualPeriodCourses(std::string_view carne);
     Result<AcademicStatsSummary> FetchAcademicHistoryFallback(std::string_view carne);
+    Result<StudentGeneralInfo> FetchStudentGeneralInfo(std::string_view carne);
+    Result<GraphQlCurriculumBundle> FetchStudentCurriculum(std::string_view carne);
 
 private:
     Sanitizer SnapshotSanitizer() const;

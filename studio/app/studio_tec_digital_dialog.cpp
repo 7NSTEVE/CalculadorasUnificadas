@@ -1,6 +1,7 @@
 #ifdef _WIN32
 
 #include "studio_tec_digital_dialog.hpp"
+#include "studio_tec_digital_views.hpp"
 
 #include "../core/utf_conv.hpp"
 #include "../media/native_video_engine.hpp"
@@ -69,6 +70,8 @@ enum CtrlId : int {
     IDC_BTN_COURSE_SEND_GEMINI = 5311,
     IDC_LST_COURSE_FILES = 5312,
     IDC_BTN_COURSE_MORE = 5313,
+    IDC_COURSE_LIST_CANVAS = 5314,
+    IDC_COURSE_DETAIL_CANVAS = 5315,
 
     // Calendario
     IDC_CMB_CAL_FILTER = 5401,
@@ -76,6 +79,7 @@ enum CtrlId : int {
     IDC_BTN_CAL_EXPORT_ICS = 5403,
     IDC_CMB_CAL_VIEW = 5404,
     IDC_CAL_CANVAS = 5405,
+    IDC_AGENDA_CANVAS = 5406,
 
     // Expediente y Malla Curricular
     IDC_CMB_EXP_VIEW = 5501,   // 0=Estadisticas y Notas, 1=Malla Curricular Interactiva, 2=Atributos de Graduacion
@@ -91,6 +95,8 @@ enum CtrlId : int {
     IDC_CMB_MALLA_PLAN = 5511,
     IDC_BTN_MALLA_LOAD_PLAN = 5512,
     IDC_ATTR_CANVAS = 5513,
+    IDC_EXP_STATS_CANVAS = 5514,
+    IDC_BTN_MALLA_TOGGLE_PICKER = 5515,
 
     // HorariosTEC En Vivo
     IDC_CMB_HOR_SEDE = 5601,
@@ -116,6 +122,7 @@ enum CtrlId : int {
     IDC_CMB_HOR_PUB_SEDE = 5621,
     IDC_EDIT_HOR_CARNET = 5622,
     IDC_CMB_HOR_PUB_PER = 5623,
+    IDC_BTN_HOR_TOGGLE_FILTERS = 5624,
 
     // Biblioteca Offline
     IDC_EDIT_FTS_QUERY = 5701,
@@ -126,6 +133,7 @@ enum CtrlId : int {
     IDC_LBL_CACHE_USAGE = 5706,
     IDC_FTS_PREVIEW = 5707,
     IDC_BTN_FTS_OPEN = 5708,
+    IDC_FTS_CANVAS = 5709,
 
     // Tramites, Plagio y Servicios
     IDC_CMB_TRAMITE_CAT = 5801,
@@ -134,7 +142,8 @@ enum CtrlId : int {
     IDC_BTN_SVC_GUIA = 5804,
     IDC_BTN_SVC_SOPORTE = 5805,
     IDC_BTN_SVC_TURNITIN = 5806,
-    IDC_BTN_SVC_MORE = 5807
+    IDC_BTN_SVC_MORE = 5807,
+    IDC_TRAMITES_CANVAS = 5808
 };
 
 std::wstring GetCtrlTextW(HWND h) {
@@ -387,6 +396,56 @@ struct TecHubState {
     HWND hCmbTramite = nullptr, hTramiteReport = nullptr;
     HWND hBtnSvcMapa = nullptr, hBtnSvcGuia = nullptr, hBtnSvcSoporte = nullptr;
 
+    // Redesigned guías de interfaz vector canvases & progressive-disclosure state
+    HWND hCourseListCanvas = nullptr;
+    HWND hCourseDetailCanvas = nullptr;
+    HWND hAgendaCanvas = nullptr;
+    HWND hExpStatsCanvas = nullptr;
+    HWND hFtsCanvas = nullptr;
+    HWND hTramitesCanvas = nullptr;
+    HWND hBtnMallaPicker = nullptr;
+    HWND hBtnHorFilters = nullptr;
+
+    bool showLoginInline = false;
+    bool mallaPickerExpanded = false;
+    bool horFiltersExpanded = false;
+
+    int selectedCourseIdx = 0;
+    int courseSubTab = 0;
+    int selectedCourseFileIdx = 0;
+    int courseListScrollY = 0;
+    int courseListMaxScroll = 0;
+    int courseListHoverIdx = -1;
+    int courseDetailScrollY = 0;
+    int courseDetailMaxScroll = 0;
+    int courseDetailHoverSeg = -1;
+    int courseFileHoverIdx = -1;
+    std::vector<Views::SegmentedHit> courseSegHits;
+    std::vector<RECT> courseCardRects;
+    std::vector<RECT> courseFileRects;
+    std::vector<std::pair<RECT, int>> summaryCourseJumpRects;
+
+    int agendaScrollY = 0;
+    int agendaMaxScroll = 0;
+
+    int expStatsScrollY = 0;
+    int expStatsMaxScroll = 0;
+    int expGradeFilter = 0; // 0=Todas, 1=Aprobadas, 2=En curso, 3=Reprobadas
+    int expGradeFilterHover = -1;
+    std::vector<Views::SegmentedHit> expGradeFilterHits;
+
+    int ftsScrollY = 0;
+    int ftsMaxScroll = 0;
+    int selectedFtsIdx = 0;
+    int ftsHoverIdx = -1;
+    std::vector<RECT> ftsCardRects;
+
+    int tramitesScrollY = 0;
+    int tramitesMaxScroll = 0;
+
+    const wchar_t* autoScreenshotPathW = nullptr;
+    bool visualAuditDemoMode = false;
+
     int Sc(int px) const noexcept { return UiGlass::ScaleDpi(px, dpi); }
 
     void JoinWorker() {
@@ -469,7 +528,8 @@ ButtonVisualSpec ClassifyHigButton(int id, const UiGlass::GlassPalette& pal) noe
         return s;
     }
     if (id == IDC_BTN_MALLA_ZOOM_IN || id == IDC_BTN_MALLA_ZOOM_OUT ||
-        id == IDC_BTN_HOR_PREV || id == IDC_BTN_HOR_NEXT || id == IDC_BTN_CACHE_PRUNE) {
+        id == IDC_BTN_HOR_PREV || id == IDC_BTN_HOR_NEXT || id == IDC_BTN_CACHE_PRUNE ||
+        id == IDC_BTN_MALLA_TOGGLE_PICKER || id == IDC_BTN_HOR_TOGGLE_FILTERS) {
         s.tier = HigBtnTier::Quiet;
         return s;
     }
@@ -577,34 +637,38 @@ void UpdateActiveFramedPanels(TecHubState* st) {
     st->framedElevRects.clear();
     st->framedInputRects.clear();
 
+    const bool authedOrCached = st->store &&
+        (st->store->IsAuthenticated() || st->snap.sessionAuthenticated || !st->snap.communities.empty());
+
     switch (st->currentSection) {
     case HubSection::Resumen:
-        st->framedElevRects.push_back(st->panelAccountBand);
-        st->framedInputRects.push_back(st->rcInEmail);
-        st->framedInputRects.push_back(st->rcInPass);
+        if (!authedOrCached || st->showLoginInline) {
+            st->framedElevRects.push_back(st->panelAccountBand);
+            st->framedInputRects.push_back(st->rcInEmail);
+            st->framedInputRects.push_back(st->rcInPass);
+        } else if (st->panelAccountBand.right > st->panelAccountBand.left) {
+            st->framedElevRects.push_back(st->panelAccountBand);
+        }
         break;
     case HubSection::Cursos: {
-        st->framedPanelRects.push_back(st->panelCourseList);
-        st->framedPanelRects.push_back(st->panelCourseDetail);
-        int subTab = st->hCmbCourseSub ? static_cast<int>(SendMessageW(st->hCmbCourseSub, CB_GETCURSEL, 0, 0)) : 0;
-        if (subTab == 2) st->framedInputRects.push_back(st->rcInWhatIf);
+        if (st->courseSubTab == 2 && st->rcInWhatIf.right > st->rcInWhatIf.left) {
+            st->framedInputRects.push_back(st->rcInWhatIf);
+        }
         break;
     }
-    case HubSection::Calendario: {
-        int calMode = st->hCmbCalView ? static_cast<int>(SendMessageW(st->hCmbCalView, CB_GETCURSEL, 0, 0)) : 0;
-        if (calMode == 0) st->framedPanelRects.push_back(st->panelCalList);
+    case HubSection::Calendario:
         break;
-    }
     case HubSection::ExpedienteYMalla: {
         int expMode = st->hCmbExpView ? static_cast<int>(SendMessageW(st->hCmbExpView, CB_GETCURSEL, 0, 0)) : 0;
-        if (expMode == 0) st->framedPanelRects.push_back(st->panelExpReport);
-        else if (expMode == 1 || (expMode == 2 && !st->snap.graduateAttributes.empty())) {
+        if (expMode == 1 || (expMode == 2 && !st->snap.graduateAttributes.empty())) {
             st->framedPanelRects.push_back(st->panelMallaInspector);
         }
         break;
     }
     case HubSection::HorariosVivo: {
-        st->framedInputRects.push_back(st->rcInHorFilter);
+        if (st->horFiltersExpanded && st->rcInHorFilter.right > st->rcInHorFilter.left) {
+            st->framedInputRects.push_back(st->rcInHorFilter);
+        }
         int horSrc = st->hCmbHorSource ? static_cast<int>(SendMessageW(st->hCmbHorSource, CB_GETCURSEL, 0, 0)) : 0;
         if (horSrc == 2 && st->rcInHorCarnet.right > st->rcInHorCarnet.left) {
             st->framedInputRects.push_back(st->rcInHorCarnet);
@@ -613,11 +677,8 @@ void UpdateActiveFramedPanels(TecHubState* st) {
     }
     case HubSection::BibliotecaOffline:
         st->framedInputRects.push_back(st->rcInFts);
-        st->framedPanelRects.push_back(st->panelFtsList);
-        st->framedPanelRects.push_back(st->panelFtsPreview);
         break;
     case HubSection::TramitesYPerfil:
-        st->framedPanelRects.push_back(st->panelTramiteReport);
         break;
     }
 }
@@ -4745,7 +4806,11 @@ bool RunTecDigitalCenterDialog(
     SendCourseToGeminiFn onSendToGeminiNotebook,
     AddSm2FlashcardsFn onAddSm2Flashcards,
     SearchActiveDocFn onSearchActiveDoc,
-    const UiGlass::GlassSettings* glassSettings) {
+    const UiGlass::GlassSettings* glassSettings,
+    const wchar_t* autoScreenshotPathW,
+    bool seedVisualAuditDemoData) {
+    (void)autoScreenshotPathW;
+    (void)seedVisualAuditDemoData;
     static bool registered = false;
     if (!registered) {
         WNDCLASSEXW wc{};

@@ -54,7 +54,7 @@ using AddSm2FlashcardsFn = std::function<std::size_t(
 using SearchActiveDocFn = std::function<std::vector<ActiveDocSearchHit>(
     const std::string& queryUtf8)>;
 
-// Opens the modal guías de interfaz "Centro Academico TEC" workspace window.
+// Opens the modal guías de interfaz "TEC Digital" workspace window.
 // Returns true if the active DocumentModel was modified (e.g. course card,
 // schedule, curriculum roadmap, or material inserted onto canvas).
 bool RunTecDigitalCenterDialog(
@@ -68,7 +68,9 @@ bool RunTecDigitalCenterDialog(
     SendCourseToGeminiFn onSendToGeminiNotebook = nullptr,
     AddSm2FlashcardsFn onAddSm2Flashcards = nullptr,
     SearchActiveDocFn onSearchActiveDoc = nullptr,
-    const UiGlass::GlassSettings* glassSettings = nullptr);
+    const UiGlass::GlassSettings* glassSettings = nullptr,
+    const wchar_t* autoScreenshotPathW = nullptr,
+    bool seedVisualAuditDemoData = false);
 
 }  // namespace DocStudio::TecDigitalUi
 

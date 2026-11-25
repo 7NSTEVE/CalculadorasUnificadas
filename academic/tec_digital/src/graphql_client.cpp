@@ -69,6 +69,31 @@ double JsonDbl(const nlohmann::json& j, std::initializer_list<const char*> keys,
     return fallback;
 }
 
+nlohmann::json ToIntOrStr(std::string_view raw) {
+    std::string s = TrimAscii(raw);
+    if (!s.empty()) {
+        bool all_digits = true;
+        for (char c : s) {
+            if (c < '0' || c > '9') { all_digits = false; break; }
+        }
+        if (all_digits && s.size() <= 18) {
+            try {
+                return static_cast<int64_t>(std::stoll(s));
+            } catch (...) {}
+        }
+    }
+    return s;
+}
+
+const nlohmann::json* FindDataField(const nlohmann::json& j, std::initializer_list<const char*> names) {
+    if (!j.is_object() || !j.contains("data") || !j["data"].is_object()) return nullptr;
+    const auto& d = j["data"];
+    for (const char* n : names) {
+        if (d.contains(n)) return &d[n];
+    }
+    return nullptr;
+}
+
 std::string ExtractUserIdFromJwtPayload(std::string_view jwt) {
     size_t d1 = jwt.find('.');
     if (d1 == std::string_view::npos) return {};
@@ -262,22 +287,23 @@ Result<InclusionCampaignInfo> TecGraphQlClient::FetchStudentActiveCampaign(
 
     nlohmann::json vars = nlohmann::json::object();
     if (!uid.empty()) {
-        vars["requestUserId"] = uid;
+        vars["requestUserId"] = ToIntOrStr(uid);
     }
 
     static constexpr const char* kQuery =
-        "query GetStudentActiveCampaign($requestUserId: String) { "
-        "GetStudentActiveCampaign(requestUserId: $requestUserId) { "
-        "id name period start_date end_date student_entity active "
+        "query GetStudentActiveCampaign($requestUserId: Int) { "
+        "getStudentActiveCampaign(requestUserId: $requestUserId) { "
+        "id name period start_date end_date student_start_date student_end_date student_entity active "
         "} }";
     auto r = ExecuteQueryJson("GetStudentActiveCampaign", kQuery, vars.dump());
     if (!r.ok) return Result<InclusionCampaignInfo>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") || !j["data"].contains("GetStudentActiveCampaign")) {
-        return Result<InclusionCampaignInfo>::Failure("invalid_schema", "missing GetStudentActiveCampaign");
+    const nlohmann::json* node_ptr = FindDataField(j, {"getStudentActiveCampaign", "GetStudentActiveCampaign"});
+    if (j.is_discarded() || !node_ptr) {
+        return Result<InclusionCampaignInfo>::Failure("invalid_schema", "missing getStudentActiveCampaign");
     }
-    const auto& node = j["data"]["GetStudentActiveCampaign"];
+    const auto& node = *node_ptr;
     const nlohmann::json* obj = nullptr;
     if (node.is_object()) obj = &node;
     else if (node.is_array() && !node.empty() && node[0].is_object()) obj = &node[0];
@@ -304,28 +330,27 @@ Result<std::vector<PendingGradCourse>> TecGraphQlClient::FetchPendingGraduationC
     if (uid.empty()) uid = CachedUserId();
 
     nlohmann::json vars = {
-        {"userId", uid},
-        {"carnet", std::string(carne)}
+        {"userId", ToIntOrStr(uid)},
+        {"carnet", ToIntOrStr(carne)}
     };
     static constexpr const char* kQuery =
-        "query getStudentPendingGraduatedCourses($userId: String, $carnet: String) { "
+        "query getStudentPendingGraduatedCourses($userId: Int!, $carnet: Int!) { "
         "getStudentPendingGraduatedCourses(userId: $userId, carnet: $carnet) { "
-        "id code name credits "
+        "id name credits "
         "} }";
     auto r = ExecuteQueryJson("getStudentPendingGraduatedCourses", kQuery, vars.dump());
     if (!r.ok) return Result<std::vector<PendingGradCourse>>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") ||
-        !j["data"].contains("getStudentPendingGraduatedCourses") ||
-        !j["data"]["getStudentPendingGraduatedCourses"].is_array()) {
+    const nlohmann::json* arr_ptr = FindDataField(j, {"getStudentPendingGraduatedCourses"});
+    if (j.is_discarded() || !arr_ptr || !arr_ptr->is_array()) {
         return Result<std::vector<PendingGradCourse>>::Failure(
             "invalid_schema", "missing getStudentPendingGraduatedCourses array");
     }
 
     const Sanitizer san = SnapshotSanitizer();
     std::vector<PendingGradCourse> out;
-    for (const auto& item : j["data"]["getStudentPendingGraduatedCourses"]) {
+    for (const auto& item : *arr_ptr) {
         if (!item.is_object()) continue;
         PendingGradCourse c;
         c.id = san.SanitizeText(JsonStr(item, {"id"}));
@@ -350,17 +375,17 @@ Result<CourseRequisitesCheck> TecGraphQlClient::CheckCourseRequisites(
     if (uid.empty()) uid = CachedUserId();
 
     nlohmann::json vars = {
-        {"userId", uid},
-        {"carnet", std::string(carne)},
-        {"campaignId", std::string(campaign_id)},
-        {"courseId", std::string(course_id)},
+        {"userId", ToIntOrStr(uid)},
+        {"carnet", ToIntOrStr(carne)},
+        {"campaignId", ToIntOrStr(campaign_id)},
+        {"courseId", ToIntOrStr(course_id)},
         {"codAsignatura", std::string(cod_asignatura)},
         {"period", std::string(period)}
     };
     static constexpr const char* kQuery =
         "query getStudentRequisitsCorrequisitsByCourse("
-        "$userId: String, $carnet: String, $campaignId: String, "
-        "$courseId: String, $codAsignatura: String, $period: String) { "
+        "$userId: Int!, $carnet: Int!, $campaignId: Int!, "
+        "$courseId: Int!, $codAsignatura: String!, $period: String!) { "
         "getStudentRequisitsCorrequisitsByCourse("
         "userId: $userId, carnet: $carnet, campaignId: $campaignId, "
         "courseId: $courseId, codAsignatura: $codAsignatura, period: $period) { "
@@ -370,14 +395,13 @@ Result<CourseRequisitesCheck> TecGraphQlClient::CheckCourseRequisites(
     if (!r.ok) return Result<CourseRequisitesCheck>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") ||
-        !j["data"].contains("getStudentRequisitsCorrequisitsByCourse") ||
-        !j["data"]["getStudentRequisitsCorrequisitsByCourse"].is_object()) {
+    const nlohmann::json* obj_ptr = FindDataField(j, {"getStudentRequisitsCorrequisitsByCourse"});
+    if (j.is_discarded() || !obj_ptr || !obj_ptr->is_object()) {
         return Result<CourseRequisitesCheck>::Failure(
             "invalid_schema", "missing getStudentRequisitsCorrequisitsByCourse");
     }
 
-    const auto& obj = j["data"]["getStudentRequisitsCorrequisitsByCourse"];
+    const auto& obj = *obj_ptr;
     const Sanitizer san = SnapshotSanitizer();
     CourseRequisitesCheck chk;
     chk.course_code = san.SanitizeText(std::string(cod_asignatura));
@@ -405,28 +429,27 @@ Result<std::vector<InclusionApplicationRecord>> TecGraphQlClient::FetchStudentAp
     std::string_view campaign_id,
     std::string_view carne) {
     nlohmann::json vars = {
-        {"campaignId", std::string(campaign_id)},
-        {"carnet", std::string(carne)}
+        {"campaignId", ToIntOrStr(campaign_id)},
+        {"carnet", ToIntOrStr(carne)}
     };
     static constexpr const char* kQuery =
-        "query GetAllStudentApplications($campaignId: String, $carnet: String) { "
-        "GetAllStudentApplications(campaignId: $campaignId, carnet: $carnet) { "
+        "query GetAllStudentApplications($campaignId: Int!, $carnet: Int!) { "
+        "getAllStudentApplications(campaignId: $campaignId, carnet: $carnet) { "
         "id course_code course_name group status comment updated_at "
         "} }";
     auto r = ExecuteQueryJson("GetAllStudentApplications", kQuery, vars.dump());
     if (!r.ok) return Result<std::vector<InclusionApplicationRecord>>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") ||
-        !j["data"].contains("GetAllStudentApplications") ||
-        !j["data"]["GetAllStudentApplications"].is_array()) {
+    const nlohmann::json* arr_ptr = FindDataField(j, {"getAllStudentApplications", "GetAllStudentApplications"});
+    if (j.is_discarded() || !arr_ptr || !arr_ptr->is_array()) {
         return Result<std::vector<InclusionApplicationRecord>>::Failure(
-            "invalid_schema", "missing GetAllStudentApplications array");
+            "invalid_schema", "missing getAllStudentApplications array");
     }
 
     const Sanitizer san = SnapshotSanitizer();
     std::vector<InclusionApplicationRecord> out;
-    for (const auto& item : j["data"]["GetAllStudentApplications"]) {
+    for (const auto& item : *arr_ptr) {
         if (!item.is_object()) continue;
         InclusionApplicationRecord rec;
         rec.id = san.SanitizeText(JsonStr(item, {"id", "application_id"}));
@@ -442,9 +465,9 @@ Result<std::vector<InclusionApplicationRecord>> TecGraphQlClient::FetchStudentAp
 }
 
 Result<ScholarshipStatusInfo> TecGraphQlClient::FetchScholarshipStatus(std::string_view campaign_id) {
-    nlohmann::json vars = {{"campaignId", std::string(campaign_id)}};
+    nlohmann::json vars = {{"campaignId", ToIntOrStr(campaign_id)}};
     static constexpr const char* kQuery =
-        "query getScholarship($campaignId: String) { "
+        "query getScholarship($campaignId: Int!) { "
         "getScholarship(campaignId: $campaignId) { "
         "campaign_id status scholarship_type detail "
         "} }";
@@ -452,10 +475,11 @@ Result<ScholarshipStatusInfo> TecGraphQlClient::FetchScholarshipStatus(std::stri
     if (!r.ok) return Result<ScholarshipStatusInfo>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") || !j["data"].contains("getScholarship")) {
+    const nlohmann::json* node_ptr = FindDataField(j, {"getScholarship"});
+    if (j.is_discarded() || !node_ptr) {
         return Result<ScholarshipStatusInfo>::Failure("invalid_schema", "missing getScholarship");
     }
-    const auto& node = j["data"]["getScholarship"];
+    const auto& node = *node_ptr;
     const nlohmann::json* obj = node.is_object() ? &node
                                                 : (node.is_array() && !node.empty() && node[0].is_object()
                                                        ? &node[0]
@@ -476,40 +500,49 @@ Result<ScholarshipStatusInfo> TecGraphQlClient::FetchScholarshipStatus(std::stri
 
 Result<std::vector<GraphQlActualCourse>> TecGraphQlClient::FetchActualPeriodCourses(
     std::string_view carne) {
-    nlohmann::json vars = {{"carnet", std::string(carne)}};
+    nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
     static constexpr const char* kQuery =
-        "query getStudentActualPeriod($carnet: String) { "
+        "query getStudentActualPeriod($carnet: Int!) { "
         "getStudentActualPeriod(carnet: $carnet) { "
-        "id code materia credits professors schedule "
+        "id materia credits professors schedule "
         "} }";
     auto r = ExecuteQueryJson("getStudentActualPeriod", kQuery, vars.dump());
     if (!r.ok) return Result<std::vector<GraphQlActualCourse>>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") ||
-        !j["data"].contains("getStudentActualPeriod") ||
-        !j["data"]["getStudentActualPeriod"].is_array()) {
+    const nlohmann::json* arr_ptr = FindDataField(j, {"getStudentActualPeriod"});
+    if (j.is_discarded() || !arr_ptr || !arr_ptr->is_array()) {
         return Result<std::vector<GraphQlActualCourse>>::Failure(
             "invalid_schema", "missing getStudentActualPeriod array");
     }
 
     const Sanitizer san = SnapshotSanitizer();
     std::vector<GraphQlActualCourse> out;
-    for (const auto& item : j["data"]["getStudentActualPeriod"]) {
+    for (const auto& item : *arr_ptr) {
         if (!item.is_object()) continue;
         GraphQlActualCourse c;
         c.id = san.SanitizeText(JsonStr(item, {"id"}));
         c.code = san.SanitizeText(JsonStr(item, {"code", "cod_asignatura", "id"}));
         c.materia = san.SanitizeText(JsonStr(item, {"materia", "name"}));
         c.credits = JsonInt(item, {"credits", "creditos"});
-        if (item.contains("professors") && item["professors"].is_array()) {
-            for (const auto& p : item["professors"]) {
-                if (p.is_string()) c.professors.push_back(san.SanitizeText(p.get<std::string>()));
+        if (item.contains("professors")) {
+            if (item["professors"].is_array()) {
+                for (const auto& p : item["professors"]) {
+                    if (p.is_string()) c.professors.push_back(san.SanitizeText(p.get<std::string>()));
+                }
+            } else if (item["professors"].is_string()) {
+                std::string ps = TrimAscii(item["professors"].get<std::string>());
+                if (!ps.empty()) c.professors.push_back(san.SanitizeText(ps));
             }
         }
-        if (item.contains("schedule") && item["schedule"].is_array()) {
-            for (const auto& sc : item["schedule"]) {
-                c.schedule.push_back(san.SanitizeText(sc.is_string() ? sc.get<std::string>() : sc.dump()));
+        if (item.contains("schedule")) {
+            if (item["schedule"].is_array()) {
+                for (const auto& sc : item["schedule"]) {
+                    c.schedule.push_back(san.SanitizeText(sc.is_string() ? sc.get<std::string>() : sc.dump()));
+                }
+            } else if (item["schedule"].is_string()) {
+                std::string ss = TrimAscii(item["schedule"].get<std::string>());
+                if (!ss.empty()) c.schedule.push_back(san.SanitizeText(ss));
             }
         }
         out.push_back(std::move(c));
@@ -518,38 +551,177 @@ Result<std::vector<GraphQlActualCourse>> TecGraphQlClient::FetchActualPeriodCour
 }
 
 Result<AcademicStatsSummary> TecGraphQlClient::FetchAcademicHistoryFallback(std::string_view carne) {
-    nlohmann::json vars = {{"carnet", std::string(carne)}};
+    nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
     static constexpr const char* kQuery =
-        "query getStudentAcademicHistory($carnet: String) { "
+        "query getStudentAcademicHistory($carnet: Int!) { "
         "getStudentAcademicHistory(carnet: $carnet) { "
-        "statistics { pPonderado tHoras numCursosA numCreditosA numPromedioA numCursosR numCreditosR } "
+        "statistics { pPonderado tHoras numCursosA numCreditosA numPromedioA numCursosR numCreditosR numPromedioR "
+        "mCursadas mMatriculadas mRetiradas mReconocidas mSuficiencia mPendientes mCongelados mConsultadas "
+        "tCreditos tCreditosSinNota porcentajeAprobado porcentajeReprobado } "
         "} }";
     auto r = ExecuteQueryJson("getStudentAcademicHistory", kQuery, vars.dump());
     if (!r.ok) return Result<AcademicStatsSummary>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
-    if (j.is_discarded() || !j.contains("data") ||
-        !j["data"].contains("getStudentAcademicHistory") ||
-        !j["data"]["getStudentAcademicHistory"].is_object()) {
+    const nlohmann::json* hist_ptr = FindDataField(j, {"getStudentAcademicHistory"});
+    if (j.is_discarded() || !hist_ptr || !hist_ptr->is_object()) {
         return Result<AcademicStatsSummary>::Failure(
             "invalid_schema", "missing getStudentAcademicHistory");
     }
 
-    const auto& hist = j["data"]["getStudentAcademicHistory"];
+    const auto& hist = *hist_ptr;
     AcademicStatsSummary st;
     if (hist.contains("statistics") && hist["statistics"].is_object()) {
         const auto& s = hist["statistics"];
         st.weighted_avg_general = JsonDbl(s, {"pPonderado", "weighted_avg"});
         st.weighted_avg_passed = JsonDbl(s, {"numPromedioA"});
         st.weighted_avg_failed = JsonDbl(s, {"numPromedioR"});
+        st.passed_pct = JsonDbl(s, {"porcentajeAprobado"});
+        st.failed_pct = JsonDbl(s, {"porcentajeReprobado"});
         st.hours_taken = JsonInt(s, {"tHoras"});
         st.count_aprobadas = JsonInt(s, {"numCursosA"});
         st.credits_passed = JsonInt(s, {"numCreditosA"});
         st.count_reprobadas = JsonInt(s, {"numCursosR"});
         st.credits_failed = JsonInt(s, {"numCreditosR"});
-        st.credits_total = st.credits_passed + st.credits_failed;
+        st.credits_total = JsonInt(s, {"tCreditos"}, st.credits_passed + st.credits_failed);
+        st.credits_no_grade = JsonInt(s, {"tCreditosSinNota"});
+        st.subjects_taken = JsonInt(s, {"mCursadas"});
+        st.subjects_consulted = JsonInt(s, {"mConsultadas"});
+        st.count_en_curso = JsonInt(s, {"mMatriculadas"});
+        st.count_retiradas = JsonInt(s, {"mRetiradas"});
+        st.count_reconocidas = JsonInt(s, {"mReconocidas"});
+        st.count_suficiencia = JsonInt(s, {"mSuficiencia"});
+        st.count_pendientes = JsonInt(s, {"mPendientes"});
+        st.count_congeladas = JsonInt(s, {"mCongelados"});
     }
     return Result<AcademicStatsSummary>::Success(st);
+}
+
+Result<StudentGeneralInfo> TecGraphQlClient::FetchStudentGeneralInfo(std::string_view carne) {
+    nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
+    static constexpr const char* kQuery =
+        "query getStudentGeneralInfo($carnet: Int!) { "
+        "getStudentGeneralInfo(carnet: $carnet) { "
+        "carreer weightedAverage outstandingCourses availableRegistrationCredits "
+        "rn { ide_materia rn course_name } "
+        "} }";
+    auto r = ExecuteQueryJson("getStudentGeneralInfo", kQuery, vars.dump());
+    if (!r.ok) return Result<StudentGeneralInfo>::Failure(r.error_code, r.error_message);
+
+    auto j = nlohmann::json::parse(r.value, nullptr, false);
+    const nlohmann::json* obj_ptr = FindDataField(j, {"getStudentGeneralInfo"});
+    if (j.is_discarded() || !obj_ptr || !obj_ptr->is_object()) {
+        return Result<StudentGeneralInfo>::Failure("invalid_schema", "missing getStudentGeneralInfo");
+    }
+
+    const auto& obj = *obj_ptr;
+    const Sanitizer san = SnapshotSanitizer();
+    StudentGeneralInfo info;
+    info.career = san.SanitizeText(JsonStr(obj, {"carreer", "career"}));
+    info.weighted_average = JsonDbl(obj, {"weightedAverage", "weighted_average"});
+    info.outstanding_courses = JsonInt(obj, {"outstandingCourses", "outstanding_courses"});
+    info.available_registration_credits = JsonInt(obj, {"availableRegistrationCredits", "available_registration_credits"});
+    if (obj.contains("rn") && obj["rn"].is_array()) {
+        for (const auto& rni : obj["rn"]) {
+            if (!rni.is_object()) continue;
+            StudentRnCourse rc;
+            rc.course_code = san.SanitizeText(JsonStr(rni, {"ide_materia", "code"}));
+            rc.rn = JsonInt(rni, {"rn"});
+            rc.course_name = san.SanitizeText(JsonStr(rni, {"course_name", "name"}));
+            if (!rc.course_code.empty() || !rc.course_name.empty()) {
+                info.rn_courses.push_back(std::move(rc));
+            }
+        }
+    }
+    return Result<StudentGeneralInfo>::Success(std::move(info));
+}
+
+Result<GraphQlCurriculumBundle> TecGraphQlClient::FetchStudentCurriculum(std::string_view carne) {
+    nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
+    static constexpr const char* kQuery =
+        "query getStudentCurriculum($carnet: Int!) { "
+        "getStudentCurriculum(carnet: $carnet) { "
+        "id_plan dsc_plan "
+        "curriculum { "
+        "id courses { "
+        "id_course name trucatedName credits hours "
+        "requirements { id } co_requirements { id } required_by { id } equivalent { id } tEquiv "
+        "best_status grades_record { year period modality state grade group } "
+        "} } } }";
+    auto r = ExecuteQueryJson("getStudentCurriculum", kQuery, vars.dump());
+    if (!r.ok) return Result<GraphQlCurriculumBundle>::Failure(r.error_code, r.error_message);
+
+    auto j = nlohmann::json::parse(r.value, nullptr, false);
+    const nlohmann::json* obj_ptr = FindDataField(j, {"getStudentCurriculum"});
+    if (j.is_discarded() || !obj_ptr || !obj_ptr->is_object()) {
+        return Result<GraphQlCurriculumBundle>::Failure("invalid_schema", "missing getStudentCurriculum");
+    }
+
+    const auto& obj = *obj_ptr;
+    const Sanitizer san = SnapshotSanitizer();
+    GraphQlCurriculumBundle bundle;
+    bundle.graph.id_curriculum = JsonInt(obj, {"id_plan", "id_curriculum"});
+    bundle.graph.dsc_curriculum = san.SanitizeText(JsonStr(obj, {"dsc_plan", "dsc_curriculum"}));
+
+    auto extract_ids = [&](const nlohmann::json& c, const char* key, std::vector<std::string>& dst) {
+        if (!c.contains(key) || !c[key].is_array()) return;
+        for (const auto& el : c[key]) {
+            if (el.is_string()) {
+                std::string s = san.SanitizeText(el.get<std::string>());
+                if (!s.empty()) dst.push_back(std::move(s));
+            } else if (el.is_object()) {
+                std::string s = san.SanitizeText(JsonStr(el, {"id", "id_course", "code"}));
+                if (!s.empty()) dst.push_back(std::move(s));
+            }
+        }
+    };
+
+    if (obj.contains("curriculum") && obj["curriculum"].is_array()) {
+        for (const auto& lv : obj["curriculum"]) {
+            if (!lv.is_object()) continue;
+            CurriculumLevel level;
+            level.id = san.SanitizeText(JsonStr(lv, {"id"}));
+            if (lv.contains("courses") && lv["courses"].is_array()) {
+                for (const auto& cj : lv["courses"]) {
+                    if (!cj.is_object()) continue;
+                    CurriculumCourseNode node;
+                    node.id_course = san.SanitizeText(JsonStr(cj, {"id_course", "id"}));
+                    node.name = san.SanitizeText(JsonStr(cj, {"name"}));
+                    node.truncated_name = san.SanitizeText(JsonStr(cj, {"trucatedName", "truncatedName"}));
+                    node.credits = JsonInt(cj, {"credits"});
+                    node.hours = JsonInt(cj, {"hours"});
+                    node.t_equiv = san.SanitizeText(JsonStr(cj, {"tEquiv"}));
+                    extract_ids(cj, "requirements", node.requirements);
+                    extract_ids(cj, "co_requirements", node.co_requirements);
+                    extract_ids(cj, "required_by", node.required_by);
+                    extract_ids(cj, "equivalent", node.equivalent);
+
+                    StudentCourseRecord rec;
+                    rec.id_course = node.id_course;
+                    rec.best_status = san.SanitizeText(JsonStr(cj, {"best_status"}));
+                    if (cj.contains("grades_record") && cj["grades_record"].is_array()) {
+                        for (const auto& gr : cj["grades_record"]) {
+                            if (!gr.is_object()) continue;
+                            CourseGradeAttempt att;
+                            att.year = JsonInt(gr, {"year"});
+                            att.period = JsonInt(gr, {"period"});
+                            att.modality = san.SanitizeText(JsonStr(gr, {"modality"}));
+                            att.state = JsonInt(gr, {"state"});
+                            att.grade = JsonDbl(gr, {"grade"});
+                            att.group = JsonInt(gr, {"group"});
+                            rec.grades_record.push_back(std::move(att));
+                        }
+                    }
+                    if (!rec.id_course.empty()) {
+                        bundle.profile.grades.push_back(std::move(rec));
+                    }
+                    level.courses.push_back(std::move(node));
+                }
+            }
+            bundle.graph.levels.push_back(std::move(level));
+        }
+    }
+    return Result<GraphQlCurriculumBundle>::Success(std::move(bundle));
 }
 
 }  // namespace academic::tec_digital

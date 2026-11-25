@@ -58,6 +58,9 @@ struct WebView2HtmlHost::Impl {
         RECT bounds{};
         std::string htmlSourceUtf8;
         std::string urlUtf8;
+        std::wstring virtualHostFolderW;
+        std::string tutorQueryParamsUtf8;
+        bool isTutorHost = false;
         bool allowNetwork = false;
         bool ready = false;
         bool suspended = false;
@@ -68,6 +71,11 @@ struct WebView2HtmlHost::Impl {
         bool hasNetFilter = false;
         EventRegistrationToken newWinToken{};
         bool hasNewWinHandler = false;
+        EventRegistrationToken permToken{};
+        bool hasPermHandler = false;
+        EventRegistrationToken msgToken{};
+        bool hasMsgHandler = false;
+        std::function<void(const std::string&)> onWebMessageJson;
         std::function<void(std::uint64_t, bool)> onReady;
     };
 
@@ -87,6 +95,72 @@ struct WebView2HtmlHost::Impl {
         if (blk.hasNewWinHandler) {
             blk.webview->remove_NewWindowRequested(blk.newWinToken);
             blk.hasNewWinHandler = false;
+        }
+        if (blk.hasPermHandler) {
+            blk.webview->remove_PermissionRequested(blk.permToken);
+            blk.hasPermHandler = false;
+        }
+        if (blk.hasMsgHandler) {
+            blk.webview->remove_WebMessageReceived(blk.msgToken);
+            blk.hasMsgHandler = false;
+        }
+
+        if (blk.isTutorHost) {
+            // Trusted local virtual host for CuadernU Audiovisual Tutor (HTTPS secure context for getUserMedia + AEC3)
+            ComPtr<ICoreWebView2_3> wv3;
+            if (SUCCEEDED(blk.webview.As(&wv3)) && wv3 && !blk.virtualHostFolderW.empty()) {
+                wv3->SetVirtualHostNameToFolderMapping(
+                    L"tutor.cuadernu.local",
+                    blk.virtualHostFolderW.c_str(),
+                    COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);
+            }
+            blk.webview->add_PermissionRequested(
+                Callback<ICoreWebView2PermissionRequestedEventHandler>(
+                    [](ICoreWebView2*, ICoreWebView2PermissionRequestedEventArgs* args) -> HRESULT {
+                        if (!args) return S_OK;
+                        COREWEBVIEW2_PERMISSION_KIND kind{};
+                        LPWSTR uri = nullptr;
+                        if (SUCCEEDED(args->get_PermissionKind(&kind)) &&
+                            (kind == COREWEBVIEW2_PERMISSION_KIND_MICROPHONE ||
+                             kind == COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ) &&
+                            SUCCEEDED(args->get_Uri(&uri)) && uri) {
+                            const std::wstring u(uri);
+                            CoTaskMemFree(uri);
+                            if (u.rfind(L"https://tutor.cuadernu.local", 0) == 0 ||
+                                u.rfind(L"http://127.0.0.1", 0) == 0 ||
+                                u.rfind(L"http://localhost", 0) == 0) {
+                                args->put_State(COREWEBVIEW2_PERMISSION_STATE_ALLOW);
+                            }
+                        }
+                        return S_OK;
+                    }).Get(),
+                &blk.permToken);
+            blk.hasPermHandler = true;
+
+            if (blk.onWebMessageJson) {
+                auto cb = blk.onWebMessageJson;
+                blk.webview->add_WebMessageReceived(
+                    Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+                        [cb](ICoreWebView2*, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
+                            if (!args) return S_OK;
+                            LPWSTR rawJson = nullptr;
+                            if (SUCCEEDED(args->get_WebMessageAsJson(&rawJson)) && rawJson) {
+                                const std::string utf8 = WideToUtf8(rawJson);
+                                CoTaskMemFree(rawJson);
+                                cb(utf8);
+                            }
+                            return S_OK;
+                        }).Get(),
+                    &blk.msgToken);
+                blk.hasMsgHandler = true;
+            }
+
+            std::wstring targetUrl = L"https://tutor.cuadernu.local/index.html";
+            if (!blk.tutorQueryParamsUtf8.empty()) {
+                targetUrl += L"?" + Utf8ToWide(blk.tutorQueryParamsUtf8);
+            }
+            blk.webview->Navigate(targetUrl.c_str());
+            return;
         }
         const bool allowNet = blk.allowNetwork;
         blk.webview->add_NewWindowRequested(
@@ -463,6 +537,100 @@ void WebView2HtmlHost::DeactivateBlock(std::uint64_t objectId) {
     impl_->blocks.erase(it);
 #else
     (void)objectId;
+#endif
+}
+
+bool WebView2HtmlHost::ActivateTutorHost(
+    HWND parentHwnd,
+    std::uint64_t hostId,
+    const RECT& boundsPx,
+    const std::wstring& assetsWebDir,
+    const std::string& queryParamsUtf8,
+    std::function<void(const std::string&)> onWebMessageJson,
+    std::function<void(std::uint64_t, bool)> onReady)
+{
+#if defined(DOC_STUDIO_HAS_WEBVIEW2)
+    if (!impl_ || !parentHwnd || !IsWindow(parentHwnd)) return false;
+
+    auto& blk = impl_->blocks[hostId];
+    blk.parentHwnd = parentHwnd;
+    blk.objectId = hostId;
+    blk.bounds = boundsPx;
+    blk.isTutorHost = true;
+    blk.allowNetwork = true;
+    blk.virtualHostFolderW = assetsWebDir;
+    blk.tutorQueryParamsUtf8 = queryParamsUtf8;
+    blk.onWebMessageJson = std::move(onWebMessageJson);
+    blk.onReady = std::move(onReady);
+    blk.visible = true;
+
+    if (blk.controller && blk.webview) {
+        if (blk.suspended) {
+            ComPtr<ICoreWebView2_3> wv3;
+            if (SUCCEEDED(blk.webview.As(&wv3)) && wv3) wv3->Resume();
+            blk.suspended = false;
+        }
+        blk.controller->put_Bounds(boundsPx);
+        blk.controller->put_IsVisible(TRUE);
+        impl_->ApplyContent(blk);
+        if (blk.onReady) blk.onReady(hostId, true);
+        return true;
+    }
+
+    if (impl_->env) {
+        impl_->CreateControllerFor(hostId);
+        return true;
+    }
+
+    if (!impl_->envCreating) {
+        impl_->envCreating = true;
+        const std::wstring userDataDir = (std::filesystem::path(StudioProfileStore::DefaultProfileRootDir()) / L"WebView2Cache").wstring();
+        auto aliveTok = impl_->alive;
+        const HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
+            nullptr,
+            userDataDir.c_str(),
+            nullptr,
+            Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+                [this, aliveTok](HRESULT envHr, ICoreWebView2Environment* createdEnv) -> HRESULT {
+                    if (!aliveTok || !aliveTok->load()) return S_OK;
+                    impl_->envCreating = false;
+                    if (FAILED(envHr) || !createdEnv) {
+                        for (auto& kv : impl_->blocks) {
+                            if (kv.second.onReady) kv.second.onReady(kv.first, false);
+                        }
+                        return S_OK;
+                    }
+                    impl_->env = createdEnv;
+                    for (auto& kv : impl_->blocks) {
+                        if (!kv.second.controller) {
+                            impl_->CreateControllerFor(kv.first);
+                        }
+                    }
+                    return S_OK;
+                }).Get());
+        if (FAILED(hr)) {
+            impl_->envCreating = false;
+            return false;
+        }
+    }
+    return true;
+#else
+    (void)parentHwnd; (void)hostId; (void)boundsPx; (void)assetsWebDir;
+    (void)queryParamsUtf8; (void)onWebMessageJson; (void)onReady;
+    return false;
+#endif
+}
+
+bool WebView2HtmlHost::PostMessageJson(std::uint64_t hostId, const std::string& jsonUtf8) {
+#if defined(DOC_STUDIO_HAS_WEBVIEW2)
+    if (!impl_) return false;
+    auto it = impl_->blocks.find(hostId);
+    if (it == impl_->blocks.end() || !it->second.webview) return false;
+    const std::wstring wJson = Utf8ToWide(jsonUtf8);
+    return SUCCEEDED(it->second.webview->PostWebMessageAsJson(wJson.c_str()));
+#else
+    (void)hostId; (void)jsonUtf8;
+    return false;
 #endif
 }
 

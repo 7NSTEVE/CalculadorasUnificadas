@@ -74,6 +74,8 @@ struct TecAcademicSnapshot {
     std::optional<academic::tec_digital::InclusionCampaignInfo> inclusionCampaign;
     std::vector<academic::tec_digital::InclusionApplicationRecord> inclusionApplications;
     std::optional<academic::tec_digital::ScholarshipStatusInfo> scholarshipInfo;
+    std::optional<academic::tec_digital::StudentGeneralInfo> studentGeneralInfo;
+    std::vector<academic::tec_digital::GraphQlActualCourse> actualPeriodCourses;
     std::vector<academic::tec_digital::PerformanceForm> performanceEvalForms;
     std::vector<academic::tec_digital::PerformanceEvalPending> pendingPerformanceEvals;
     std::map<std::string, std::vector<academic::tec_digital::FileVersionRecord>> fileVersionsByObjectId;

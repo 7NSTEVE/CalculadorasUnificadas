@@ -85,6 +85,9 @@ set(DOC_CORE_SOURCES
     media/native_video_engine.cpp
     media/webview2_html_host.cpp
     render/d2d_renderer.cpp
+    tutor/tutor_whiteboard_protocol.cpp
+    tutor/tutor_document_baker.cpp
+    tutor/tutor_sidecar_bridge.cpp
 )
 
 option(CUADERNU_ENABLE_GEMINI_NOTEBOOK "Enable optional decoupled Google Gemini Notebook REST/MCP integration" ON)
@@ -167,6 +170,7 @@ target_link_libraries(CuadernuTecIntegration PUBLIC
 set(CUADERNU_APP_SOURCES
     app/main_studio.cpp
     app/studio_tec_digital_dialog.cpp
+    app/studio_tutor_panel.cpp
 )
 if(WIN32 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../assets/cuadernu/cuadernu.rc")
     list(APPEND CUADERNU_APP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/cuadernu/cuadernu.rc")
@@ -341,6 +345,14 @@ add_test(
     NAME TecDigitalIntegrationTest
     COMMAND TecDigitalIntegrationTest "${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+add_executable(TutorWhiteboardTest tests/tutor_whiteboard_test.cpp)
+target_compile_definitions(TutorWhiteboardTest PRIVATE _UNICODE UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+if(MSVC)
+    target_compile_options(TutorWhiteboardTest PRIVATE /W4 /utf-8 /EHsc)
+endif()
+target_link_libraries(TutorWhiteboardTest PRIVATE DocumentCore tinta_nucleo)
+add_test(NAME TutorWhiteboardTest COMMAND TutorWhiteboardTest)
 
 
 
