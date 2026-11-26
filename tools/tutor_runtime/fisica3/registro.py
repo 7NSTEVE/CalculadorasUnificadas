@@ -27,6 +27,7 @@ MODULOS = [
     "banco_maquinas",
     "banco_entropia",
     "banco_practica",
+    "banco_blindaje_ii_2026",
     "teoria",
 ]
 

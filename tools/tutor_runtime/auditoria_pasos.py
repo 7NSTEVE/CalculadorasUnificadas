@@ -45,7 +45,7 @@ def clase(acc):
         return "F"
     if rol == "resultado":
         return "R"
-    return "N" if re.search(r"\d", SCI.sub("", re.sub(r"_\{[^}]*\}|_[A-Za-z0-9]|\^\{[^}]*\}", "", tex))) else "S"
+    return "N" if re.search(r"\d", SCI.sub("", re.sub(r"_\{[^}]*\}|_[A-Za-z0-9]|\^\{[^}]*\}|\^[A-Za-z0-9]", "", tex))) else "S"
 
 
 FUERA_PARCIAL = {"6.16", "6.17"}
@@ -90,7 +90,7 @@ def auditar(lid):
                     pass  # el propio resultado trae la sustitución
                 elif i == 0:
                     out["faltas"].append(f"p{n} «{tit[:40]}»: resultado sin desarrollo en el paso: {tex[:70]}")
-                elif cls[i - 1] in ("F", "S") and re.search(r"\d", tex) and not (tex.count("=") >= 2 and clase({"tex": tex.split("=", 1)[1]}) == "N"):
+                elif cls[i - 1] in ("F", "S") and clase({"tex": tex}) == "N" and not (tex.count("=") >= 2 and clase({"tex": tex.split("=", 1)[1]}) == "N"):
                     out["faltas"].append(f"p{n} «{tit[:40]}»: de la fórmula al resultado sin sustituir: {lineas[i-1]['tex'][:50]} → {tex[:50]}")
                 elif cls[i - 1] == "N":
                     prev = str(lineas[i - 1].get("tex") or "")

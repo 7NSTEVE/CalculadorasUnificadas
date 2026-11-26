@@ -61,12 +61,15 @@ class TestBanco158YTeoria(unittest.TestCase):
         # Prácticas oficiales del II-2026: 6 de la primera, 14 de selección y 12 de desarrollo de la segunda
         esperados_p = ({f"PR1-{i}" for i in range(1, 7)} | {f"PR2-S{i}" for i in range(1, 15)}
                        | {f"PR2-D{i}" for i in range(1, 13)})
+        # Blindaje II-2026 para las casillas nuevas del formulario (F1C3, F12C2, F5C3, F14C2)
+        esperados_b = {"P26-1", "P26-2", "P26-3"}
 
         self.assertTrue(esperados_e.issubset(ids), f"Faltan E: {sorted(esperados_e - ids)}")
         self.assertTrue(esperados_q.issubset(ids), f"Faltan Q: {sorted(esperados_q - ids)}")
         self.assertTrue(esperados_t.issubset(ids), f"Faltan T: {sorted(esperados_t - ids)}")
         self.assertTrue(esperados_p.issubset(ids), f"Faltan prácticas: {sorted(esperados_p - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 3)
+        self.assertTrue(esperados_b.issubset(ids), f"Faltan blindaje II-2026: {sorted(esperados_b - ids)}")
+        self.assertEqual(len(ids), 166 + 32 + 3 + 3)
 
         faltas = {}
         for lid in sorted(ids):
@@ -78,7 +81,13 @@ class TestBanco158YTeoria(unittest.TestCase):
 
     def test_ruta_del_examen_resuelve_todas_las_lecciones(self) -> None:
         pub = rutas.publicas()
-        self.assertGreaterEqual(len(pub), 1)
+        self.assertGreaterEqual(len(pub), 4)
+        ids_rutas = {r["id"] for r in pub}
+        self.assertIn("estrategia_ii_2026", ids_rutas)
+        est = next(r for r in pub if r["id"] == "estrategia_ii_2026")
+        est_ids = {it["id"] for it in est["items"]}
+        for obligatorio in ("PR1-4", "PR2-D2", "PR2-D9", "P26-1", "P26-2", "P26-3", "PR2-S1", "PR2-S13"):
+            self.assertIn(obligatorio, est_ids)
         for ruta in pub:
             for item in ruta.get("items", []):
                 lid = item["id"] if isinstance(item, dict) else str(item)
@@ -446,6 +455,7 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
         self.assertTrue(any("Formulario II-2026" in a for a in aud_cp["alertas"]), aud_cp["alertas"])
 
     def test_variantes_parametricas_los_8_arquetipos_y_api(self) -> None:
+        self.assertEqual(len(variantes.ARQUETIPOS), 15)
         exprs = []
         for arq in variantes.ARQUETIPOS:
             for sem in (1, 7, 42):
@@ -690,8 +700,10 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             x0, y0, x1, y1 = c["caja"]
             self.assertTrue(0.0 <= x0 < x1 <= 1.0 and 0.0 <= y0 < y1 <= 1.0, c)
 
-        # 2. Auditoría estricta de las 166 lecciones del banco (0 violaciones, 0 alertas físicas)
+        # 2. Auditoría estricta de las 204 lecciones del banco (0 violaciones, 0 alertas físicas, 42/42 casillas)
         desarrollos = 0
+        cobertura: dict[str, list[str]] = {c["id"]: [] for c in cat["celdas"]}
+        cobertura_des: dict[str, list[str]] = {c["id"]: [] for c in cat["celdas"]}
         for lid in registro.ids():
             j = registro.obtener(lid).a_json()
             self.assertEqual(verificar_origen_formulario(j), [], f"{lid} usa atajo sin derivar")
@@ -699,23 +711,42 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             self.assertEqual(aud["alertas"], [], f"{lid} tiene alertas físicas: {aud['alertas']}")
             mapa = mapear_formulario_leccion(j)
             self.assertEqual(len(mapa["por_paso"]), len(j.get("pasos") or []), lid)
+            cids_lec = {c["id"] for c in mapa["celdas"]}
             for c in mapa["celdas"]:
                 self.assertIn(c["id"], CAJAS_CELDAS)
                 self.assertIn(c["color"], COLORES_FORMULARIO)
+                cobertura[c["id"]].append(lid)
+                if j.get("tipo") not in ("seleccion", "teoria"):
+                    cobertura_des[c["id"]].append(lid)
             if j.get("tipo") not in ("seleccion", "teoria"):
                 desarrollos += 1
                 self.assertGreaterEqual(len(mapa["celdas"]), 1, f"Desarrollo {lid} sin celdas mapeadas")
-        self.assertGreaterEqual(desarrollos, 90)
+            # Cero falsos positivos F13C1 (Boltzmann) en conducción
+            if registro.grupo(j.get("tema") or "") == "conduccion":
+                self.assertNotIn("F13C1", cids_lec, f"Falso positivo Boltzmann F13C1 en conducción {lid}")
+            # Cero falsos positivos F10C3 (conversión a Kelvin) sin conversión real 273 / T_K = T
+            if "F10C3" in cids_lec:
+                blob_k = json.dumps(j.get("pasos") or [], ensure_ascii=False) + " " + " ".join(j.get("formulas") or [])
+                self.assertRegex(
+                    blob_k,
+                    r"273|T_K\s*=\s*T",
+                    f"Falso positivo F10C3 (conversión a Kelvin) en {lid}",
+                )
+        self.assertGreaterEqual(desarrollos, 100)
+        huerfanas = [cid for cid, ls in cobertura.items() if not ls]
+        self.assertEqual(huerfanas, [], f"Casillas del formulario II-2026 sin cobertura: {huerfanas}")
+        for cid_nuevo in ("F1C3", "F12C2", "F5C3", "F14C2"):
+            self.assertGreaterEqual(len(cobertura_des[cid_nuevo]), 1, f"Casilla {cid_nuevo} sin desarrollo")
 
-        # 3. Las 8 variantes paramétricas × 3 semillas = 24 variantes limpias
-        for vid in ("Q006", "Q022", "Q049", "Q070", "Q076", "E15", "E21", "Q122"):
+        # 3. Los 15 arquetipos paramétricos × 3 semillas = 45 variantes limpias
+        for arq in variantes.ARQUETIPOS:
             for sem in (101, 202, 303):
-                j = variantes.generar_variante(vid, semilla=sem).a_json()
-                self.assertEqual(verificar_origen_formulario(j), [], f"Variante {vid}/{sem}")
+                j = variantes.generar_variante(arq, semilla=sem).a_json()
+                self.assertEqual(verificar_origen_formulario(j), [], f"Variante {arq}/{sem}")
                 aud = auditar_leccion(j)
-                self.assertEqual(aud["alertas"], [], f"Variante {vid}/{sem}: {aud['alertas']}")
+                self.assertEqual(aud["alertas"], [], f"Variante {arq}/{sem}: {aud['alertas']}")
                 mapa = mapear_formulario_leccion(j)
-                self.assertGreaterEqual(len(mapa["celdas"]), 1, f"Variante {vid}/{sem} sin celdas")
+                self.assertGreaterEqual(len(mapa["celdas"]), 1, f"Variante {arq}/{sem} sin celdas")
 
         # 4. Prueba negativa: rechaza atajos sin ecuación base
         trampa = {
@@ -757,12 +788,30 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             ("Q049", {"F2C2", "F2C1"}),
             ("Q122", {"F4C1", "F7C3", "F8C3", "F9C2", "F10C2"}),
             ("Q014", {"F1C1", "F1C2"}),
+            ("PR2-D3", {"F2C1"}),
+            ("PR2-D6", {"F4C1", "F8C2"}),
+            ("PR2-D9", {"F8C2", "F11C3", "F12C1", "F14C2"}),
+            ("P26-1", {"F1C1", "F1C2", "F1C3"}),
+            ("P26-2", {"F12C2", "F10C3", "F3C2"}),
+            ("P26-3", {"F4C1", "F4C2", "F4C3", "F5C1", "F5C2", "F5C3", "F13C1", "F13C2", "F14C1", "F14C2"}),
         ):
             r = client.get(f"/api/banco/{qid}")
             self.assertEqual(r.status_code, 200)
             fm = r.json().get("formulario_mapa") or {}
             ids_hallados = {c["id"] for c in fm.get("celdas") or []}
             self.assertTrue(esperadas.issubset(ids_hallados), f"{qid}: faltan {esperadas - ids_hallados} en {ids_hallados}")
+            if qid == "PR2-D3":
+                self.assertNotIn("F13C1", ids_hallados)
+
+    def test_simulacro_js_filtra_corte_ii_2026_sin_entropia_carnot_ni_vdw(self) -> None:
+        sim_src = (REPO_ROOT / "assets" / "cuadernu" / "tutor_web" / "js" / "ui" / "simulacro.js").read_text(encoding="utf-8")
+        # Verifica la función pura esDelCorteII2026 sin importar dependencias DOM
+        self.assertIn("FUERA_II_2026", sim_src)
+        for fuera in ("Q071", "Q072", "Q073", "Q118", "Q125"):
+            self.assertIn(f"'{fuera}'", sim_src)
+        self.assertIn("tema !== 'entropia'", sim_src)
+        self.assertIn("Simulacro predictivo II-2026", sim_src)
+        self.assertIn("Incluir histórico completo", sim_src)
 
 
 if __name__ == "__main__":

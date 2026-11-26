@@ -101,46 +101,71 @@ def q120() -> Leccion:
     n_mol = 7.107e-2
     v1, v2, p3 = 3.50e-3, 1.40e-3, 1.013e5
     g = Gas(n_mol, "mono")
-    # 3->1 isobaric => p1 = p3
+    # 3->1 isobárico => p1 = p3
     g.pone("1", p=p3, v=v1)
     g.pone("2", v=v2, t=g.t("1"))
-    # 2->3 adiabatic to p3: p2 V2^g = p3 V3^g
-    v3 = v2 * (g.p("2") / p3) ** (1.0 / g.g)
+    # 2->3 adiabático hasta p3: p2 V2^g = p3 V3^g
+    f35 = (g.p("2") / p3) ** (1.0 / g.g)
+    v3 = v2 * f35
     g.pone("3", p=p3, v=v3)
     r12 = g.proceso("1", "2", "isotermico")
     r23 = g.proceso("2", "3", "adiabatico")
     r31 = g.proceso("3", "1", "isobarico")
     res = [("1→2", r12), ("2→3", r23), ("3→1", r31)]
-    wnet = r12["W"] + r23["W"] + r31["W"]
-    qc = r31["Q"]
-    K = abs(qc) / abs(wnet)
     L = _des("Q120", "Refrigerador de gas ideal monoatómico (3 etapas)",
              "Un refrigerador opera con $7{,}107\\times 10^{-2}$ mol de gas ideal monoatómico: $1\\to 2$ compresión isotérmica de $V_1=3{,}50\\times 10^{-3}\\ \\text{m}^3$ a $V_2=1{,}40\\times 10^{-3}\\ \\text{m}^3$; $2\\to 3$ expansión adiabática hasta $p_3=1{,}013\\times 10^5$ Pa; $3\\to 1$ expansión isobárica cerrando el ciclo. A) Diagrama $p$-$V$. B) $T_1, p_2, T_3, V_3$. C) $W, Q, \\Delta U$. D) $K$.",
              claves=["refrigerador", "ciclo antihorario", "monoatómico"],
              visual=visual_pv(g, [("1", "2", "isotermico"), ("2", "3", "adiabatico"), ("3", "1", "isobarico")],
                               uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
-    L.paso("A y B) Estados del ciclo")\
-        .di("Como de tres a uno es isobárico, la presión en uno es igual a la presión en tres.", DATO("expande isobáricamente"),
-            M(rf"T_1 = T_2 = \frac{{p_1 V_1}}{{nR}} = \frac{{(1{{,}}013\times 10^5)(3{{,}}50\times 10^{{-3}})}}{{(7{{,}}107\times 10^{{-2}})(8{{,}}314)}} = {tex(g.t('1'), dec=1, u='K')}"),
-            M(rf"p_2 = p_1\frac{{V_1}}{{V_2}} = (1{{,}}013\times 10^5)\frac{{3{{,}}50}}{{1{{,}}40}} = {tex(g.p('2'), 4, u='Pa', sci='si')}"))\
-        .di("Con la relación adiabática de un gas monoatómico hallamos el estado tres.",
-            M(rf"V_3 = V_2\left(\frac{{p_2}}{{p_3}}\right)^{{3/5}} = {tex(v3, 4, u='m^3', sci='si')}\qquad T_3 = \frac{{p_3 V_3}}{{nR}} = {tex(g.t('3'), dec=1, u='K')}"),
-            tabla_estados(g, ["1", "2", "3"], up="kPa", uv="L", fp=1e-3, fv=1e3, cp=4, cv=3))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Tres etapas: comprimir sin cambiar la temperatura, expandir sin calor y expandir a presión constante hasta cerrar.", DATO("expande isobáricamente"),
+            LISTA(["$n=7{,}107\\times10^{-2}$ mol, monoatómico",
+                   "$1\\to2$: $T$ constante, de $V_1=3{,}50\\times10^{-3}$ m³ a $V_2=1{,}40\\times10^{-3}$ m³",
+                   "$2\\to3$: adiabático hasta $p_3=1{,}013\\times10^5$ Pa",
+                   "$3\\to1$: $p$ constante, así que $p_1=p_3$"]))\
+        .di("Monoatómico: de la hoja salen la capacidad a volumen constante, la de presión constante y gama.",
+            F(r"C_V=\frac{3}{2}R"), F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"))\
+        .di("Sustituimos: gama vale cinco tercios.",
+            M(rf"C_V=\frac{{3}}{{2}}(8{{,}}314)={tex(g.cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"),
+            M(r"C_P=\frac{3}{2}R+R=\frac{5}{2}R\qquad \gamma=\frac{\frac{5}{2}R}{\frac{3}{2}R}=\frac{5}{3}"))
+    p = L.paso("B) Estado 1 y temperatura de 2")
+    p.di("Como de tres a uno la presión no cambia, la presión de uno es la de tres.", V(foco="31"), M(r"p_1=p_3=1{,}013\times10^5\ \text{Pa}"))
+    estado_T(p, g, "1", primero=True, voz="Despejamos la temperatura del gas ideal y la calculamos en 1.")
+    p.di("De uno a dos la temperatura no cambia.", V(foco="12"), M(rf"T_2=T_1={tex(g.t('1'), dec=1, u='K')}"))
+    L.paso("B) Presión de 2")\
+        .di("A temperatura constante, del gas ideal se conserva el producto de presión por volumen.", F(r"pV=nRT"),
+            M(r"p_1V_1=p_2V_2\;\Rightarrow\;p_2=p_1\,\frac{V_1}{V_2}"))\
+        .di("Sustituimos: la razón de volúmenes da dos coma cinco.",
+            M(r"p_2=(1{,}013\times10^5)\,\frac{3{,}50\times10^{-3}}{1{,}40\times10^{-3}}=(1{,}013\times10^5)(2{,}5)"))\
+        .di("Ya tenemos la presión de 2.", M(rf"p_2={tex(g.p('2'), 5, u='Pa')}", "p2", "verde"))
+    L.paso("B) Volumen de 3: despeje con la adiabática")\
+        .di("De dos a tres no hay calor. La hoja da la relación de presión y volumen en la adiabática.", V(foco="23"), F(r"pV^\gamma=\text{cte}"))\
+        .di("La igualamos entre 2 y 3.", M(r"p_3V_3^{\gamma}=p_2V_2^{\gamma}"))\
+        .di("Dividimos los dos lados entre la presión de 3, para dejar solo lo que tiene el volumen de 3.",
+            M(r"V_3^{\gamma}=V_2^{\gamma}\,\frac{p_2}{p_3}"))\
+        .di("Para quitar el exponente gama, elevamos los dos lados a uno sobre gama: al multiplicar los exponentes queda uno.",
+            M(r"\left(V_3^{\gamma}\right)^{1/\gamma}=V_3^{\gamma\cdot\frac{1}{\gamma}}=V_3^{1}=V_3"),
+            M(r"V_3=V_2\left(\frac{p_2}{p_3}\right)^{1/\gamma}"))
+    L.paso("B) Volumen de 3: los números")\
+        .di("Como gama es cinco tercios, uno sobre gama es tres quintos, o sea cero coma seis.",
+            M(r"\frac{1}{\gamma}=\frac{3}{5}=0{,}6"),
+            M(r"\frac{p_2}{p_3}=\frac{2{,}5325\times10^5}{1{,}013\times10^5}=2{,}5"))\
+        .di("En la calculadora: dos coma cinco elevado a cero coma seis.",
+            M(rf"V_3=(1{{,}}40\times10^{{-3}})(2{{,}}5)^{{0{{,}}6}}=(1{{,}}40\times10^{{-3}})({tex(f35, 5)})"))\
+        .di("El volumen de 3.", M(rf"V_3={tex(v3, 4, u='m^3')}", "v3", "verde"))
+    estado_T(L.paso("B) Temperatura de 3"), g, "3", voz="Y con el gas ideal, la temperatura de 3.")
     explica_proceso(L.paso("C1) Compresión isotérmica 1→2"), g, "1", "2", "isotermico", foco="12")
     explica_proceso(L.paso("C2) Expansión adiabática 2→3"), g, "2", "3", "adiabatico", foco="23")
     explica_proceso(L.paso("C3) Expansión isobárica 3→1"), g, "3", "1", "isobarico", foco="31")
-    L.paso("D) Coeficiente de rendimiento del refrigerador")\
-        .di("El trabajo neto es negativo porque es un refrigerador; el calor absorbido del foco frío es el de la etapa tres a uno.", V(foco="ciclo"),
-            tabla_quw(res),
-            M(rf"W_{{\text{{neto}}}} = {tex(wnet, 4, u='J')}\qquad Q_C = Q_{{31}} = {tex(qc, 4, u='J')}"))\
-        .di(f"Dividimos el calor extraído entre la magnitud del trabajo neto: da {n(K, 3)}.",
-            F(r"K = \frac{|Q_C|}{|W_{\text{neto}}|}"),
-            R(rf"K = \frac{{{tex(qc, 4)}}}{{{tex(abs(wnet), 3)}}} = {tex(K, 3)}", "rd"))
+    L.paso("D) ¿Motor o refrigerador?")\
+        .di("De 1 a 2 sube hacia la izquierda por la isoterma, baja de 2 a 3 por la adiabática, que va por debajo, y vuelve por abajo hasta 1: gira en sentido antihorario.", V(foco="ciclo"))\
+        .di("En sentido antihorario el trabajo neto es negativo: es un refrigerador.",
+            M(r"\text{antihorario}\;\Rightarrow\;W_{\text{neto}}<0\;\Rightarrow\;\text{refrigerador}"))
+    c = cierre_ciclo(L, res, refri=True, titulo="D) Coeficiente de rendimiento del refrigerador", id_e="rd")
     L.responde("T1", rf"T_1={tex(g.t('1'), dec=1)}\ \text{{K}}", g.t("1"), "K")\
-     .responde("Wnet", rf"W_{{\text{{neto}}}}={tex(wnet, 3)}\ \text{{J}}", wnet, "J")\
-     .responde("K", rf"K={tex(K, 3)}", K, "")
+     .responde("Wnet", rf"W_{{\text{{neto}}}}={tex(c['W'], 3)}\ \text{{J}}", c["W"], "J")\
+     .responde("K", rf"K={tex(c['K'], 3)}", c["K"], "")
     return L.usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"K=\frac{|Q_C|}{|W|}")
-
 
 # ============================================================================ Q121
 @leccion("Q121")
@@ -150,7 +175,9 @@ def q121() -> Leccion:
              {"A": "I y II", "B": "II y III", "C": "I y III", "D": "I, II y III"}, "C",
              claves=["máquina térmica", "sentido horario", "ciclo"])
     L.paso("Revisar las tres propiedades")\
-        .di("Un motor entrega trabajo positivo, gira en sentido horario en el diagrama p-V y, al volver al estado inicial, su cambio total de energía interna es cero.", DATO("máquina térmica"),
+        .di("Con la primera ley y el trabajo como área en el diagrama p-V revisamos cada afirmación del ciclo.", DATO("máquina térmica"),
+            F(r"\Delta U=Q-W"), F(r"W=\int_{V_1}^{V_2}p\,dV"), F(r"e=\frac{W}{Q_H}"))\
+        .di("Un motor entrega trabajo positivo, gira en sentido horario y, al cerrar el ciclo, su cambio de energía interna es cero.",
             LISTA(["**I. Correcta**: un motor produce trabajo neto ($W_{\\text{neto}} > 0$)",
                    "**II. Incorrecta**: el sentido horario es motor; antihorario es refrigerador",
                    "**III. Correcta**: en todo ciclo cerrado $\\Delta U_{\\text{ciclo}} = 0$"]))\
@@ -161,7 +188,7 @@ def q121() -> Leccion:
         "D": ("La D incluye la dos.", "Solo I y III."),
         "C": ("La C es la correcta: uno y tres.", "$W>0$ y $\\Delta U_{\\text{ciclo}}=0$."),
     })
-    return L.oficial("III Parcial extraordinario II-2024", "C").usa(r"\Delta U_{\text{ciclo}}=0")
+    return L.oficial("III Parcial extraordinario II-2024", "C").usa(r"\Delta U=Q-W", r"W=\int_{V_1}^{V_2}p\,dV", r"e=\frac{W}{Q_H}")
 
 
 # ============================================================================ Q122

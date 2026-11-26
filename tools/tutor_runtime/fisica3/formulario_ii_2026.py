@@ -314,8 +314,8 @@ _REGLAS_CELDAS: Tuple[Tuple[str, re.Pattern[str]], ...] = (
     ("F7C2", re.compile(r"\\Delta\s*U(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*(?:Q(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*)?n\s*C_V\s*(?:\\,)?(?:\\Delta\s*T|\(T)|n\s*C_V\s*(?:\\,)?\(T_[A-Za-z0-9]\s*[-−]\s*T_[A-Za-z0-9]\)", re.I)),
     ("F7C3", re.compile(r"C_[pP]\s*=\s*C_V\s*\+\s*R|C_[pP]\s*[-−]\s*C_V\s*=\s*R", re.I)),
     # Fila 8: C_V mono/dia y gamma
-    ("F8C1", re.compile(r"C_\{?V(?:\\text\{mono\}|mono)?\}?\s*=\s*(?:\\frac\{3\}\{2\}|\\tfrac\{3\}\{2\}|3/2)\s*R|monoat[óo]mic", re.I)),
-    ("F8C2", re.compile(r"C_\{?V(?:\\text\{dia\}|dia)?\}?\s*=\s*(?:\\frac\{5\}\{2\}|\\tfrac\{5\}\{2\}|5/2)\s*R|diat[óo]mic", re.I)),
+    ("F8C1", re.compile(r"C_\{?V(?:,?\\text\{mono\}|,?mono)?\}?\s*=\s*(?:\\frac\{3\}\{2\}|\\tfrac\{3\}\{2\}|3/2)\s*R|3R/2|monoat[óo]mic", re.I)),
+    ("F8C2", re.compile(r"C_\{?V(?:,?\\text\{dia\}|,?dia)?\}?\s*=\s*(?:\\frac\{5\}\{2\}|\\tfrac\{5\}\{2\}|5/2)\s*R|5R/2|diat[óo]mic", re.I)),
     ("F8C3", re.compile(r"\\gamma\s*=\s*\\frac\{C_[pP]\}\{C_V\}|\\gamma\s*=\s*(?:\\frac\{5\}\{3\}|\\frac\{7\}\{5\}|5/3|7/5|1\{?,\}?4|1\{?,\}?67)", re.I)),
     # Fila 9: Procesos adiabáticos
     ("F9C1", re.compile(r"\\frac\{1\}\{\\gamma\s*[-−]\s*1\}\s*\(\s*p_?1\s*V_?1|p_1\s*V_1\s*[-−]\s*p_2\s*V_2", re.I)),
@@ -324,7 +324,7 @@ _REGLAS_CELDAS: Tuple[Tuple[str, re.Pattern[str]], ...] = (
     # Fila 10: Máquinas, refrigeradores, Kelvin
     ("F10C1", re.compile(r"e\s*=\s*\\frac\{W|e\s*=\s*1\s*[-−]\s*(?:\\left)?\||e\s*=\s*1\s*[-−]\s*\\frac\{\|Q_[cC]\||e\s*=\s*W/Q_H|e\s*=\s*\\frac\{[\d{,}]+", re.I)),
     ("F10C2", re.compile(r"K\s*=\s*\\frac\{\|Q_[cC]\|\}\{\|W|K\s*=\s*\|Q_[cC]\|/\|W\||K\s*=\s*\\frac\{\|Q_[cC]\|\}\{\|Q_H\|\s*[-−]", re.I)),
-    ("F10C3", re.compile(r"273\{?,\}?15|T_K\s*=\s*T|kelvin|\+\s*273", re.I)),
+    ("F10C3", re.compile(r"273\{?,\}?15|T_K\s*=\s*T|(?:\+|-|−)\s*273(?:\{?,\}?15)?(?!\d)", re.I)),
     # Fila 11: Calor diferencial / Otto
     ("F11C1", re.compile(r"dQ\s*=\s*n\s*C_V\s*dT|Q(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*(?:\\Delta\s*U(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*)?n\s*C_V\s*(?:\\,)?(?:\\Delta\s*T|\(T)", re.I)),
     ("F11C2", re.compile(r"dQ\s*=\s*n\s*C_[pP]\s*dT|Q(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*n\s*C_[pP]\s*(?:\\,)?(?:\\Delta\s*T|\(T)", re.I)),
@@ -333,13 +333,13 @@ _REGLAS_CELDAS: Tuple[Tuple[str, re.Pattern[str]], ...] = (
     ("F12C1", re.compile(r"r\s*=\s*\\frac\{V_\{?(?:\\text\{)?m[áa]x\}?\}?\}\{V_\{?(?:\\text\{)?m[íi]n|raz[óo]n\s+de\s+compresi[óo]n", re.I)),
     ("F12C2", re.compile(r"\\frac\{9\}\{5\}\s*T|T_\{?\^?\\circ\s*\\text\{F\}|Fahrenheit|\^\\circ\s*F", re.I)),
     ("F12C3", re.compile(r"8\{?,\}?314", re.I)),
-    # Fila 13: k_B, N_A, sigma
-    ("F13C1", re.compile(r"1\{?,\}?38\s*\\?times\s*10\^\{?-23\}?|1[.,]38×10|k_B", re.I)),
-    ("F13C2", re.compile(r"6\{?,\}?022\s*\\?times\s*10\^\{?23\}?|6[.,]022×10|N_A", re.I)),
+    # Fila 13: k_B (sensible a mayúsculas y contexto Boltzmann: nunca conductividad k_B de una capa B), N_A, sigma
+    ("F13C1", re.compile(r"1\{?,\}?38\s*\\?times\s*10\^\{?-23\}?|1[.,]38×10\^?\{?-23\}?|(?<![A-Za-z])k_\{?B\}?\s*(?:\\,)?\s*(?:T|=|/|\\cdot)|(?<![A-Za-z])3\s*k_\{?B\}?(?![A-Za-z])|constante\s+de\s+Boltzmann")),
+    ("F13C2", re.compile(r"6\{?,\}?022\s*\\?times\s*10\^\{?23\}?|6[.,]022×10|(?<![A-Za-z])N_A(?![A-Za-z])")),
     ("F13C3", re.compile(r"5\{?,\}?67\s*\\?times\s*10\^\{?-8\}?|5[.,]67×10|\\sigma\s*=", re.I)),
     # Fila 14: atm->Pa, L->cm3, R (L*atm)
     ("F14C1", re.compile(r"101\s*,?325|1\{?,\}?013\s*\\?times\s*10\^5|101325", re.I)),
-    ("F14C2", re.compile(r"1000\s*(?:\\text\{)?cm\^3|10\^\{?-3\}\s*(?:\\text\{)?m\^3|1\s*(?:\\ )?\s*\\text\{L\}\s*=\s*1000", re.I)),
+    ("F14C2", re.compile(r"1\s*(?:\\ |\\,)?\s*(?:\\text\{)?L\}?\s*=\s*1000\s*(?:\\ |\\,)?\s*(?:\\text\{)?cm(?:\^3|³)|1000\s*(?:\\ |\\,)?\s*(?:\\text\{)?cm(?:\^3|³)|(?:\\text\{)?cm(?:\^3|³)\}?\s*=\s*0\{?,\}?\d+\s*(?:\\ |\\,)?\s*(?:\\text\{)?L\}?|10\^\{?-3\}\s*(?:\\ |\\,)?\s*(?:\\text\{)?m\^3", re.I)),
     ("F14C3", re.compile(r"0\{?,\}?08206", re.I)),
 )
 

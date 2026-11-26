@@ -69,12 +69,11 @@ export class Inicio {
 
       const acc = document.createElement('div');
       acc.className = 'accesos';
-      const nE = banco.lecciones.filter((l) => /^E\d/.test(l.id)).length;
-      const nQ = banco.lecciones.filter((l) => /^Q\d/.test(l.id)).length;
+      const nEj = banco.lecciones.filter((l) => l.tipo !== 'teoria').length;
       acc.append(
-        boton('acceso', `${svg(ICO.libro)}<span><strong>Banco de ejercicios</strong><small>${nE + nQ} resueltos paso a paso</small></span>`, () => acciones.biblioteca()),
+        boton('acceso', `${svg(ICO.libro)}<span><strong>Banco de ejercicios</strong><small>${nEj} resueltos paso a paso</small></span>`, () => acciones.biblioteca()),
         boton('acceso', `${svg(ICO.hoja)}<span><strong>Abrir PDF o imagen</strong><small>También puedes pegar con Ctrl+V</small></span>`, () => acciones.adjuntar()),
-        boton('acceso', `${svg(ICO.reloj)}<span><strong>Simulacro</strong><small>Selección única con reloj</small></span>`, () => acciones.simulacro()),
+        boton('acceso', `${svg(ICO.reloj)}<span><strong>Simulacro II-2026</strong><small>Predictivo (17 pts) o rápido</small></span>`, () => acciones.simulacro()),
         boton('acceso', `${svg(ICO.idea)}<span><strong>Preguntar lo que sea</strong><small>Cualquier materia</small></span>`, () => acciones.preguntar()),
       );
       caja.appendChild(acc);

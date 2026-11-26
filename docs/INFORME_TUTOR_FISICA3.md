@@ -1,7 +1,7 @@
 # Informe de Verificación · Tutor Audiovisual de Física General III (CuadernU)
 
 **Rama:** `feat/tutor-audiovisual`  
-**Alcance:** Reconstrucción determinista, banco verificado de 158 ejercicios + 8 mini-lecciones de teoría (166 lecciones totales), motor matemático 2D con trazado sincronizado a la voz, reconocimiento `Ctrl+V`, endurecimiento de seguridad loopback y arranque no bloqueante en C++.
+**Alcance:** Reconstrucción determinista, banco verificado de **204 lecciones** (21 Recomendados + 137 Superexamen + 32 Prácticas II-2026 + 3 Blindaje II-2026 + 11 Teoría y Cálculo), cobertura **42/42 casillas** del formulario oficial II-2026, 15 arquetipos paramétricos, Simulacro Predictivo II-2026, motor matemático 2D con trazado sincronizado a la voz, reconocimiento `Ctrl+V`, endurecimiento de seguridad loopback y arranque no bloqueante en C++.
 
 ---
 
@@ -86,3 +86,13 @@
   - `mapear_formulario_leccion()` asigna a cada paso las celdas exactas usadas con número y color (`azul`, `rojo`, `verde`, `naranja`, `morado`, `turquesa`), tanto para el banco, las variantes y las lecciones generadas por IA.
   - En la UI (`lateral.js`, `tablero.js`, `reproductor.js`, `tutor.css`), cada paso muestra etiquetas clicables del mismo color que encierran la celda correspondiente con un círculo a mano sobre la hoja oficial en la pestaña **Fórmulas** (con vista ampliada modal y avisos explícitos para temas fuera de la hoja como $\Delta S$ y Carnot).
 - **Corrección adicional detectada en auditoría Chromium:** Se corrigió un desbordamiento de índice en `assets/cuadernu/tutor_web/js/visuales/pv.js` (`VisualPV.dibujar`), logrando `0` errores de consola y `0` errores de página en temas Claro y Oscuro.
+
+---
+
+## 7. Blindaje II-2026 y Auditoría Forense de Patrones (`24` PDFs / `17/17` Formularios)
+
+Véase el informe completo en [AUDITORIA_PATRONES_II_2026.md](AUDITORIA_PATRONES_II_2026.md):
+
+- **Cobertura `42/42` casillas del formulario II-2026:** Se agregaron `P26-1` (Esfuerzo térmico `F1C3` + dilatación), `P26-2` (Escala Fahrenheit `F12C2` + calorimetría) y `P26-3` (Teoría cinética con Avogadro `F5C3` + `1 L = 1000 cm³` `F14C2`), totalizando **204 lecciones verificadas** con `0` casillas sin cobertura y `0` falsos positivos en `F13C1` (Boltzmann) y `F10C3` (conversión a Kelvin).
+- **15 arquetipos paramétricos deterministas (`variantes.py`):** Se añadieron 7 generadores de alta probabilidad (`conduccion_cono`, `conduccion_exponencial`, `conduccion_cilindro_capas`, `ciclo_recta_integral`, `esfuerzo_termico`, `otto_completo_inverso`, `calorimetria_fusion_trampa`), verificados en `45` variantes (`15 × 3` semillas) con `0` faltas DSL, `0` comandos TeX desconocidos y `0` alertas físicas.
+- **Ruta `estrategia_ii_2026` y Simulacro Predictivo II-2026:** Ruta prioritaria en Inicio y simulacro contrarreloj que excluye por defecto Entropía, Carnot y Van der Waals, reproduciendo la estructura `4×2 pts + 3×3 pts = 17 pts` + `3` desarrollos sugeridos de `I-2026`.

@@ -132,6 +132,7 @@ def pr1_2() -> Leccion:
     mmin = qn / (lv + cw * 100.0)
     L = _des("PR1-2", "Hielo a −20 °C con vapor a 100 °C", "4.7", _f1(2, 2),
              "En un recipiente aislado de capacidad calorífica despreciable se colocan $0{,}250$ kg de hielo a $-20{,}0\\ ^\\circ$C y se inyectan $0{,}0400$ kg de vapor a $100\\ ^\\circ$C. 1) ¿Se funde todo el hielo? 2) Temperatura final y masas de cada fase. 3) Masa mínima de vapor para fundir exactamente todo el hielo.",
+             aviso="Nota editorial del PDF: el encabezado indica (15 pts), pero los incisos impresos suman 6 + 4 + 2 = 12 pts. La física y todos los cálculos aquí están verificados.",
              claves=["cambio de fase", "vapor", "hielo", "práctica"],
              visual={"tipo": "calor", "Tf": round(tf, 1),
                      "componentes": [{"n": "hielo", "m": 250, "T": -20, "fase": "hielo"}, {"n": "vapor", "m": 40, "T": 100, "fase": "vapor"}],
@@ -308,11 +309,11 @@ def pr1_4() -> Leccion:
         .di("Despejamos hache: multiplicamos por pi erre uno erre dos y dividimos entre ele.".replace("hache", dice("H", "hache")).replace("pi erre uno erre dos", dice("πr₁r₂", "pi erre uno erre dos")).replace("entre ele", "entre " + dice("L", "ele")),
             R(r"H=\frac{\pi k\,r_1r_2\,(T_1-T_2)}{L}", "r2"))
     L.paso("3) Calcular H")\
-        .di("Sustituimos en metros.", V(foco="perfil"), M(r"H=\frac{\pi(205)(0{,}0100)(0{,}0300)(100-0)}{0{,}200}"))\
-        .di("Multiplicamos arriba.", M(rf"H=\frac{{{tex(num, 4)}}}{{0{{,}}200}}"), R(rf"H={tex(H, 3)}\ \text{{W}}", "r3a"))
+        .di("Sustituimos los radios y el largo en metros, junto con la conductividad y la diferencia de temperaturas.", V(foco="perfil"), M(r"H=\frac{\pi(205)(0{,}0100)(0{,}0300)(100-0)}{0{,}200}"))\
+        .di("Multiplicamos todos los factores del numerador y dividimos entre cero coma doscientos metros.", M(rf"H=\frac{{{tex(num, 4)}}}{{0{{,}}200}}"), R(rf"H={tex(H, 3)}\ \text{{W}}", "r3a"))
     L.paso("3) Hielo que se funde por hora")\
-        .di("La energía de una hora.", F(r"H=\frac{dQ}{dt}\;\Rightarrow\;Q=H\,\Delta t"), M(rf"Q=({tex(H, 4)})(3600)={tex(q, 4)}\ \text{{J}}"))\
-        .di("Esa energía funde hielo.", F(r"Q=\pm mL"), M(rf"m=\frac{{Q}}{{L_f}}=\frac{{{tex(q, 4)}}}{{3{{,}}34\times10^5}}"),
+        .di("De la hoja, la corriente de calor es energía por unidad de tiempo; multiplicamos por tres mil seiscientos segundos de una hora.", F(r"H=\frac{dQ}{dt}\;\Rightarrow\;Q=H\,\Delta t"), M(rf"Q=({tex(H, 4)})(3600)={tex(q, 4)}\ \text{{J}}"))\
+        .di("Esa energía entra al hielo a cero grados para fundirlo; dividimos entre el calor latente de fusión.", F(r"Q=\pm mL"), M(rf"m=\frac{{Q}}{{L_f}}=\frac{{{tex(q, 4)}}}{{3{{,}}34\times10^5}}"),
             R(rf"m={tex(mh, 3)}\ \text{{kg por hora}}", "r3b"))
     L.paso("4) La temperatura a lo largo de la barra")\
         .di("Repetimos la integral, pero solo desde cero hasta una equis cualquiera.".replace("equis", dice("x", "equis")),
@@ -323,10 +324,10 @@ def pr1_4() -> Leccion:
             M(r"T(x)=T_1-\frac{H}{\pi k b}\left(\frac{1}{r_1}-\frac{1}{r(x)}\right)"))\
         .di("Calculamos el factor de adelante.", M(rf"\frac{{H}}{{\pi kb}}=\frac{{{tex(H, 4)}}}{{\pi(205)({tex(b, 3)})}}={tex(fac, 4)}\ \text{{K}}\cdot\text{{m}}"))
     L.paso("4) Punto medio y dónde vale 50 °C")\
-        .di("A la mitad, el radio es dos centímetros.", V(foco="punto"), M(rf"r(L/2)={tex(rmid, 3)}\ \text{{m}}"),
+        .di("A la mitad de la barra el radio vale dos centímetros; sustituimos en la expresión de temperatura y restamos los inversos.", V(foco="punto"), M(rf"r(L/2)={tex(rmid, 3)}\ \text{{m}}"),
             M(rf"T=100-{tex(fac, 4)}\left(\frac{{1}}{{0{{,}}0100}}-\frac{{1}}{{{tex(rmid, 3)}}}\right)=100-{tex(fac, 4)}(100-50{{,}}0)"),
             R(rf"T(L/2)={tex(tmid, 3)}\ {C}", "r4a"))\
-        .di("Para cincuenta grados despejamos el radio y luego la posición.",
+        .di("Para hallar dónde la temperatura cae a cincuenta grados despejamos primero el radio y luego la posición equis.".replace("equis", dice("x", "equis")),
             M(rf"100-\frac{{1}}{{r}}=\frac{{100-50}}{{{tex(fac, 4)}}}={tex((t1 - 50.0) / fac, 4)}\;\Rightarrow\;r={tex(r50, 3)}\ \text{{m}}"),
             M(rf"x=\frac{{r-r_1}}{{b}}=\frac{{{tex(r50, 3)}-0{{,}}0100}}{{{tex(b, 3)}}}={tex(x50, 3)}\ \text{{m}}"),
             R(rf"x={tex(x50 * 100, 3)}\ \text{{cm}}", "r4b"))
@@ -359,6 +360,7 @@ def pr1_5() -> Leccion:
     res = [("A→B", rab), ("B→C", rbc), ("C→A", rca)]
     L = _des("PR1-5", "Ciclo con P = αV, isocórico e isobárico (monoatómico)", "6.11", _f1(5, 4),
              "Un motor usa $0{,}160$ mol de gas monoatómico: $A\\to B$ con $P=\\alpha V$ (recta por el origen), $B\\to C$ isocórico, $C\\to A$ isobárico. $A$: $100$ kPa, $4{,}00$ L; $B$: $200$ kPa, $8{,}00$ L; $C$: $100$ kPa, $8{,}00$ L. 1) $\\alpha$ y temperaturas. 2) $W_{AB}$ con la integral. 3) Tabla de $Q$, $W$, $\\Delta U$. 4) Demuestre que en $A\\to B$ el gas absorbe calor en todo momento. 5) Eficiencia.",
+             aviso="Nota editorial del PDF: el encabezado indica (20 pts), pero los incisos impresos suman 3 + 4 + 6 + 2 + 3 = 18 pts. Todos los cálculos aquí están verificados.",
              claves=["P = αV", "ciclo", "monoatómico", "práctica"],
              visual=visual_pv(g, [("A", "B", "recta"), ("B", "C", "isocorico"), ("C", "A", "isobarico")], uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
     L.paso("Qué nos dan y qué piden")\
@@ -474,8 +476,10 @@ def pr1_6() -> Leccion:
     explica_proceso(L.paso("3) C→A (volumen constante)"), g, "C", "A", "isocorico", foco="CA")
     c = cierre_ciclo(L, res, titulo="3) y 4) Tabla y verificación del ciclo", solo_totales=True)
     L.paso("4) ¿Entrega trabajo o lo consume?")\
-        .di("El trabajo neto es negativo: el ciclo antihorario consume trabajo. Funciona como refrigerador o bomba de calor, no como motor.", V(foco="ciclo"),
-            R(rf"W_{{\text{{neto}}}}={tex(c['W'], 4)}\ \text{{J}}<0\;\Rightarrow\;\text{{consume trabajo}}", "r4"))
+        .di("Como el ciclo se recorre en sentido antihorario, el trabajo neto sale negativo: consume trabajo y actúa como refrigerador o bomba de calor.", V(foco="ciclo"),
+            M(rf"W_{{\text{{neto}}}}=W_{{AB}}+W_{{BC}}+W_{{CA}}={tex(c['W'], 4)}\ \text{{J}}<0"),
+            R(rf"W_{{\text{{neto}}}}={tex(c['W'], 4)}\ \text{{J}}<0\;\Rightarrow\;\text{{consume trabajo}}", "r4"),
+            OJO("No apliques $e=W/Q_H$ en un ciclo antihorario: este ciclo no es un motor, es un refrigerador o bomba de calor."))
     L.responde("1", rf"P_A={tex(g.p('A'), 4)}\ \text{{Pa}}", g.p("A"), "Pa").responde("1", rf"T_C={tex(tc, 4)}\ \text{{K}}", tc, "K")\
      .responde("1", rf"P_C={tex(pc, 4)}\ \text{{Pa}}", pc, "Pa").responde("2", rf"W_{{AB}}={tex(rab['W'], 4)}\ \text{{J}}", rab["W"], "J")\
      .responde("2", rf"W_{{BC}}={tex(wbc, 4)}\ \text{{J}}", wbc, "J").responde("4", rf"W_{{\text{{neto}}}}={tex(c['W'], 4)}\ \text{{J}}", c["W"], "J")
@@ -789,7 +793,8 @@ def pr2_d1() -> Leccion:
     L.paso("a) Radio y área transversal")\
         .di("El radio cambia en línea recta de erre uno a erre dos.".replace("erre uno", dice("R₁", "erre uno")).replace("erre dos", dice("R₂", "erre dos")), V(foco="dx"),
             M(r"R(x)=R_1+\frac{R_2-R_1}{L}\,x"))\
-        .di("La sección es un círculo.", R(r"A(x)=\pi\left(R_1+\frac{R_2-R_1}{L}\,x\right)^2", "ra"))
+        .di("La sección transversal en cada posición es un círculo de radio erre de equis.".replace("erre de equis", dice("R(x)", "erre de equis")),
+            M(r"A(x)=\pi\,R(x)^2"), R(r"A(x)=\pi\left(R_1+\frac{R_2-R_1}{L}\,x\right)^2", "ra"))
     L.paso("b) Fourier y cambio de variable")\
         .di("Partimos de la ley de Fourier de la hoja.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,\pi R(x)^2\,\frac{dT}{dx}"))\
         .di("Cambiamos de equis al radio: derivamos erre de equis.".replace("erre de equis", dice("R(x)", "erre de equis")).replace("de equis al", "de " + dice("x", "equis") + " al"),
@@ -1027,8 +1032,9 @@ def pr2_d6() -> Leccion:
              claves=["cuatro procesos", "diatómico", "práctica"],
              visual=visual_pv(g, [("A", "B", "isocorico"), ("B", "C", "isotermico"), ("C", "D", "isocorico"), ("D", "A", "isobarico")], uv="m³", up="kPa", fp=1e-3, valores=valores_visual(res)))
     L.paso("Qué nos dan y qué piden")\
-        .di("Cuatro procesos que vuelven al inicio. B y C están en la misma isoterma: pe por ve vale lo mismo.".replace("pe por ve", dice("PV", "pe por ve")), DATO("Dos moles"),
+        .di("Cuatro procesos que vuelven al inicio. B y C están en la misma isoterma: pe por ve vale lo mismo; como el gas es diatómico, tomamos su capacidad molar de la hoja.".replace("pe por ve", dice("PV", "pe por ve")), DATO("Dos moles"),
             TABLA(["Estado", "$V$ (m³)", "$P$ (kPa)"], [["A", "$0{,}02$", "$100$"], ["B", "$0{,}02$", "$600$"], ["C", "$0{,}06$", "$200$"], ["D", "$0{,}06$", "$100$"]]),
+            F(r"C_{V\text{dia}}=\frac{5}{2}R"),
             M(r"P_BV_B=(600\times10^3)(0{,}02)=12\,000\ \text{J}=P_CV_C=(200\times10^3)(0{,}06)"))
     p = L.paso("a) Temperaturas")
     estado_T(p, g, "A", primero=True, voz="Despejamos la temperatura del gas ideal y la calculamos en A.")
@@ -1072,7 +1078,8 @@ def pr2_d7() -> Leccion:
             M(rf"Q_{{\text{{Fe,máx}}}}=(0{{,}}600)(450)(180-0)={_j(qfe)}\ \text{{J}}"))\
         .di("No alcanza: queda hielo sin fundir.", M(rf"{_j(qfe)}\ \text{{J}}<{_j(qf)}\ \text{{J}}"), R(r"\text{No se funde todo el hielo}", "ra"))
     L.paso("b) Temperatura final")\
-        .di("Si queda hielo junto con agua, la mezcla solo puede estar a cero grados. El calorímetro y el agua no cambian de temperatura.",
+        .di("Como el calor del hierro no alcanza para fundir todo el hielo, coexisten hielo y agua líquida en equilibrio a cero grados. El agua inicial y el calorímetro no cambian de temperatura.",
+            M(rf"Q_{{\text{{Fe,máx}}}}={_j(qfe)}\ \text{{J}}<Q_{{\text{{fundir}}}}={_j(qf)}\ \text{{J}}\;\Rightarrow\;\text{{coexisten hielo y agua}}"),
             R(rf"T_f=0\ {C}", "rb"), NOTA("Hielo y agua conviven solo a $0\\ ^\\circ$C (a 1 atm)."))
     L.paso("c) Masas finales")\
         .di("Todo lo que da el hierro se usa para fundir hielo.", M(rf"m_{{\text{{fundida}}}}=\frac{{Q_{{\text{{Fe}}}}}}{{L_f}}=\frac{{{_j(qfe)}}}{{334\,000}}={tex(mfund, 4)}\ \text{{kg}}"))\
@@ -1146,15 +1153,16 @@ def pr2_d9() -> Leccion:
         .di("El ciclo Otto: compresión sin calor, calentamiento a volumen constante, expansión sin calor y enfriamiento a volumen constante.", DATO("razón de compresión es 9,00"),
             LISTA(["$n=0{,}0250$ mol, $\\gamma=1{,}40$", "$T_1=300$ K, $V_1=500\\ \\text{cm}^3$", "$r=9{,}00$, $Q_H=650$ J"]))
     L.paso("a) Volumen mínimo")\
-        .di("La razón de compresión de la hoja es el volumen máximo entre el mínimo.", F(r"r=\frac{V_{\text{máx}}}{V_{\text{mín}}}"),
+        .di("La razón de compresión de la hoja es el volumen máximo entre el mínimo; también convertimos el volumen inicial a litros con la equivalencia de la hoja.", F(r"r=\frac{V_{\text{máx}}}{V_{\text{mín}}}"),
+            M(r"1\ \text{L}=1000\ \text{cm}^3\;\Rightarrow\;V_1=500\ \text{cm}^3=0{,}500\ \text{L}"),
             M(r"V_{\text{mín}}=\frac{V_1}{r}=\frac{500}{9{,}00}"), R(rf"V_{{\text{{mín}}}}={tex(v1 / r * 1e6, 3)}\ \text{{cm}}^3", "ra"))
     L.paso("b) Temperatura al final de la compresión")\
         .di("Compresión adiabática: la relación de temperatura y volumen de la hoja.", V(foco="12"), F(r"TV^{\gamma-1}=\text{cte}"),
             M(r"T_2V_2^{\gamma-1}=T_1V_1^{\gamma-1}\;\Rightarrow\;T_2=T_1\left(\frac{V_1}{V_2}\right)^{\gamma-1}=T_1\,r^{\gamma-1}"))\
         .di("Sustituimos.", M(rf"T_2=300\,(9{{,}}00)^{{0{{,}}40}}=300\,({tex(f, 4)})"), R(rf"T_2={tex(t2, 4)}\ \text{{K}}", "rb"))
     L.paso("c) Temperatura máxima")\
-        .di("Primero ce ve, con las dos casillas de la hoja.".replace("ce ve", dice("C_V", "ce ve")), F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"),
-            M(rf"C_V=\frac{{R}}{{\gamma-1}}=\frac{{8{{,}}314}}{{0{{,}}40}}={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
+        .di("Para un gas diatómico tomamos ce ve de la hoja y comprobamos que coincide con erre entre gama menos uno.".replace("ce ve", dice("C_V", "ce ve")), F(r"C_{V\text{dia}}=\frac{5}{2}R"), F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"),
+            M(rf"C_V=\frac{{R}}{{\gamma-1}}=\frac{{8{{,}}314}}{{0{{,}}40}}=\frac{{5}}{{2}}(8{{,}}314)={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
         .di("El calor a volumen constante sube la temperatura.", V(foco="23"), F(r"Q=nC\,\Delta T"),
             M(rf"T_3=T_2+\frac{{Q_H}}{{nC_V}}={tex(t2, 4)}+\frac{{650}}{{(0{{,}}0250)({tex(cv, 4)})}}={tex(t2, 4)}+{tex(qh / ncv, 4)}"),
             R(rf"T_3={tex(t3, 4)}\ \text{{K}}", "rc"))
@@ -1166,9 +1174,10 @@ def pr2_d9() -> Leccion:
             M(rf"Q_C=nC_V(T_1-T_4)=({tex(ncv, 4)})(300-{tex(t4, 4)})={tex(qc, 4)}\ \text{{J}}"))\
         .di("En un ciclo la energía interna no cambia: el trabajo neto es el calor neto.", F(r"\Delta U=Q-W"), M(r"\Delta U_{\text{ciclo}}=0\;\Rightarrow\;W=Q_H+Q_C"),
             M(rf"W=650+({tex(qc, 4)})"), R(rf"W={tex(w, 4)}\ \text{{J}}", "re"))
-    L.paso("f) Eficiencia")\
+    L.paso("f) Eficiencia y despeje inverso de r")\
         .di("Lo que se obtiene entre lo que se paga.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{tex(w, 4)}}}{{650}}"), R(rf"e={tex(e, 3)}={tex(e * 100, 3)}\ \%", "rf"))\
-        .di("Revisión con la eficiencia de Otto de la hoja.", F(r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}"), M(rf"1-\frac{{1}}{{{tex(f, 4)}}}=1-{tex(1 / f, 4)}={tex(1 - 1 / f, 3)}"))
+        .di("Revisión con la eficiencia de Otto de la hoja. Si en el examen te dan la eficiencia y piden la razón de compresión, recuerda el despeje inverso.", F(r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}"), M(rf"1-\frac{{1}}{{{tex(f, 4)}}}=1-{tex(1 / f, 4)}={tex(1 - 1 / f, 3)}"),
+            OJO(r"Trampa inversa frecuente: si conoces $e_{\text{otto}}$ y piden $r$, despeja $r = \left(\frac{1}{1-e_{\text{otto}}}\right)^{1/(\gamma-1)}$."))
     L.responde("a", rf"V={tex(v1 / r * 1e6, 3)}\ \text{{cm}}^3", v1 / r * 1e6, "cm³").responde("b", rf"T_2={tex(t2, 4)}\ \text{{K}}", t2, "K")\
      .responde("c", rf"T_3={tex(t3, 4)}\ \text{{K}}", t3, "K").responde("d", rf"T_4={tex(t4, 4)}\ \text{{K}}", t4, "K")\
      .responde("e", rf"W={tex(w, 4)}\ \text{{J}}", w, "J").responde("f", rf"e={tex(e, 3)}", e, "")

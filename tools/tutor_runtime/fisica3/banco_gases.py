@@ -6,7 +6,7 @@ import math
 
 from .ayudas import R_GAS, T0, revisar_opciones
 from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, TABLA, V
-from .formato import n, nu, tex
+from .formato import dice, n, nu, tex
 from .indice_superexamen import fuente, nivel, tema
 from .registro import leccion
 
@@ -112,10 +112,10 @@ def q074() -> Leccion:
     L.paso("Convertir a SI y despejar p")\
         .di("Pasamos litros a metros cúbicos y Celsius a kelvin.", DATO("30,0 L"),
             LISTA(["$V = 30{,}0\\ \\text{L} = 0{,}0300\\ \\text{m}^3$", "$T = 80{,}0 + 273{,}15 = 353{,}15$ K", "$n = 2{,}00$ mol"]))\
-        .di(f"Despejamos la presión y salen {nu(p / 1e3, 'kPa', 4)}.", V(foco="presion"),
-            F(r"p = \frac{n R T}{V}"),
-            M(rf"p = \frac{{(2{{,}}00)(8{{,}}314)(353{{,}}15)}}{{0{{,}}0300}} = {tex(p, 4, u='Pa', sci='si')}"),
-            R(rf"p = {tex(p / 1e3, 4, u='kPa')}"))
+        .di("Despejamos la presión del gas ideal de la hoja.", V(foco="presion"), F(r"pV=nRT\;\Rightarrow\;p = \frac{n R T}{V}"))\
+        .di("Sustituimos.", M(rf"p = \frac{{(2{{,}}00)(8{{,}}314)(353{{,}}15)}}{{0{{,}}0300}}"))\
+        .di("Multiplicamos arriba y dividimos.", M(rf"p = \frac{{{tex(n_mol * R_GAS * T_k, 5)}}}{{0{{,}}0300}} = {tex(p, 4, u='Pa', sci='si')}"))\
+        .di(f"En kilopascales se divide entre mil: {nu(p / 1e3, 'kPa', 4)}.", R(rf"p = {tex(p / 1e3, 4, u='kPa')}"))
     revisar_opciones(L, {
         "A": ("La A olvidó convertir litros a metros cúbicos: falta un factor mil.", "Usó $30$ en vez de $0{,}030$."),
         "B": ("La B ni siquiera coincide en cifras.", "Cálculo erróneo."),
@@ -162,12 +162,16 @@ def q076() -> Leccion:
     L.paso("A) Rapidez eficaz en equilibrio térmico")\
         .di("En equilibrio térmico ambos gases tienen la misma temperatura.", DATO("equilibrio térmico"),
             F(r"v_{\text{rms}} = \sqrt{\frac{3RT}{M}}"))\
+        .di("Dividimos la de oxígeno entre la de helio: tres, erre y te se cancelan, y la masa molar del helio queda arriba.".replace("erre y te", dice("R y T", "erre y te")),
+            M(r"\frac{v_{\text{rms,O}_2}}{v_{\text{rms,He}}}=\frac{\sqrt{3RT/M_{\text{O}_2}}}{\sqrt{3RT/M_{\text{He}}}}=\sqrt{\frac{M_{\text{He}}}{M_{\text{O}_2}}}"))\
         .di(f"El oxígeno pesa ocho veces más que el helio, así que su rapidez eficaz es menor: un {n(razon_v * 100, 3)} por ciento de la del helio.",
-            M(rf"\frac{{v_{{\text{{rms,O}}_2}}}}{{v_{{\text{{rms,He}}}}}} = \sqrt{{\frac{{4{{,}}0026}}{{31{{,}}9988}}}} = {tex(razon_v, 3)} < 1"),
+            M(rf"\frac{{v_{{\text{{rms,O}}_2}}}}{{v_{{\text{{rms,He}}}}}} = \sqrt{{\frac{{4{{,}}0026}}{{31{{,}}9988}}}} = \sqrt{{{tex(4.0026 / 31.9988, 4)}}} = {tex(razon_v, 3)} < 1"),
             R(r"v_{\text{rms}}(\text{O}_2)\ \text{es menor que}\ v_{\text{rms}}(\text{He})", "ra"))
     L.paso("B) Cilindro sellado al disminuir la presión")\
+        .di("La energía cinética de traslación de la hoja; y del gas ideal, ene erre te es pe ve.".replace("ene erre te es pe ve", dice("nRT = pV", "ene erre te es pe ve")),
+            F(r"K_{\text{tr}} = \frac{3}{2}nRT"), F(r"pV=nRT"), M(r"K_{\text{tr}} = \frac{3}{2}nRT = \frac{3}{2}pV"))\
         .di("Con volumen y moles fijos, si baja la presión, baja la temperatura y baja la energía cinética traslacional.",
-            F(r"K_{\text{tr}} = \frac{3}{2}nRT = \frac{3}{2}pV"),
+            M(r"V\ \text{fijo},\ p\downarrow\;\Rightarrow\;K_{\text{tr}}=\tfrac{3}{2}pV\downarrow"),
             R(r"K_{\text{tr}}\ \text{disminuye}", "rb"))
     L.paso("C y D) Fuga más rápida y mayor aumento de temperatura")\
         .di("Con igual energía cinética media tienen igual temperatura, pero el helio es más rápido y escapa antes por el agujero.",
@@ -216,9 +220,11 @@ def q078() -> Leccion:
              claves=["presión microscópica", "energía cinética media"],
              visual={"tipo": "gas", "modo": "temperatura"})
     L.paso("Relación entre presión y energía cinética media")\
-        .di("La ecuación cinética de la presión conecta los choques con la energía cinética media.", V(foco="presion"), DATO("directamente proporcional"),
-            F(r"pV = \frac{2}{3}N\,K_{\text{med}} \;\Rightarrow\; p = \frac{2}{3}\frac{N}{V}\,K_{\text{med}}"))\
+        .di("Partimos de la ley del gas ideal y la energía cinética total de la hoja: al igualar ene erre te queda pe ve igual a dos tercios de ka.", V(foco="presion"), DATO("directamente proporcional"),
+            F(r"pV=nRT"), F(r"K=\frac{3}{2}nRT"),
+            M(r"pV = \frac{2}{3}K = \frac{2}{3}N\,K_{\text{med}} \;\Rightarrow\; p = \frac{2}{3}\frac{N}{V}\,K_{\text{med}}"))\
         .di("Ojo con la rapidez eficaz: la presión va con el cuadrado de la rapidez, no con la rapidez lineal.",
+            F(r"\frac{1}{2}m(v^2)_{\text{med}}=\frac{3k_B T}{2}"),
             M(r"p = \frac{1}{3}\frac{N m}{V}\,v_{\text{rms}}^2 \;\Rightarrow\; p \propto K_{\text{med}}\ \ (\text{y } p \propto v_{\text{rms}}^2)"))
     revisar_opciones(L, {
         "A": ("La A no: a igual temperatura, la presión no depende de la masa molar.", "$pV=nRT$."),
@@ -226,7 +232,7 @@ def q078() -> Leccion:
         "D": ("La D falla porque A y C son falsas.", "Solo B es proporcionalidad directa."),
         "B": ("La B es la correcta: directamente proporcional a la energía cinética media.", "$p = \\frac{2N}{3V}K_{\\text{med}}$."),
     })
-    return L.oficial("III Parcial extraordinario II-2025", "B").usa(r"pV=\frac{2}{3}NK_{\text{med}}")
+    return L.oficial("III Parcial extraordinario II-2025", "B").usa(r"pV=nRT", r"K=\frac{3}{2}nRT")
 
 
 # ============================================================================ Q079

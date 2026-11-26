@@ -35,6 +35,40 @@ _PRACTICAS: List[Tuple[str, List[Tuple[str, str]]]] = [
 ]
 
 
+# Top Estrategia II-2026: evidencia cruzada de Patrones.txt + auditoría de 17 exámenes + fórmulas nuevas
+_ESTRATEGIA_II_2026: List[Tuple[str, List[Tuple[str, str]]]] = [
+    ("1. Conducción con integrales (alta probabilidad)", [
+        ("T-MAT2", "Las cinco integrales del parcial"),
+        ("PR1-4", "Cono truncado + fusión de hielo"),
+        ("PR2-D2", "Área lineal A₀(1+x/L) y gradiente"),
+        ("PR2-D10", "Área exponencial A₀ e^(−x/L)"),
+        ("PR1-3", "Cilindro 2 capas + condensación"),
+        ("Q049", "Barra piramidal A(y) variable"),
+    ]),
+    ("2. Ciclos con integrales e información incompleta", [
+        ("PR1-5", "Recta P = αV con integral y dQ > 0"),
+        ("PR1-6", "Ciclo antihorario (W < 0, trampa)"),
+        ("PR2-D11", "Rectángulo con información incompleta"),
+        ("PR2-D4", "Ciclo triangular monoatómico"),
+        ("PR2-D5", "Hallar γ y tipo de gas en adiabática"),
+    ]),
+    ("3. Calorimetría con trampa de fusión parcial", [
+        ("PR1-2", "Hielo −20 °C + vapor (fusión total)"),
+        ("PR2-D7", "Hierro en hielo + agua (fusión parcial)"),
+        ("PR2-D12", "Calentador eléctrico por etapas"),
+        ("PR1-1", "4 cuerpos y masa de hierro"),
+    ]),
+    ("4. Fórmulas nuevas del formulario II-2026", [
+        ("PR2-D9", "Ciclo Otto completo + trampa inversa r"),
+        ("P26-1", "Esfuerzo térmico F/A = −YαΔT (nueva)"),
+        ("P26-2", "Escala Fahrenheit y ΔT (nueva)"),
+        ("P26-3", "Teoría cinética con M = N_A m y cm³"),
+        ("PR2-S1", "Selección · calor específico en °F"),
+        ("PR2-S13", "Selección · barra enfriada sujeta"),
+    ]),
+]
+
+
 def _construye(bloques: List[Tuple[str, List[Tuple[str, str]]]]) -> List[Dict[str, Any]]:
     items = []
     for bloque, ls in bloques:
@@ -51,6 +85,12 @@ def publicas() -> List[Dict[str, Any]]:
             "titulo": "Prácticas del III parcial (II-2026)",
             "descripcion": "Los 32 problemas de las dos prácticas oficiales de este semestre, resueltos paso a paso desde la hoja.",
             "items": _construye(_PRACTICAS),
+        },
+        {
+            "id": "estrategia_ii_2026",
+            "titulo": "Top 12 Estrategia II-2026 (Patrones + Fórmulas nuevas)",
+            "descripcion": "Ruta priorizada con la auditoría de los 17 exámenes históricos, las 2 prácticas y las 4 casillas nuevas de la hoja II-2026.",
+            "items": _construye(_ESTRATEGIA_II_2026),
         },
         {
             "id": "manana",

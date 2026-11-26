@@ -180,17 +180,18 @@ def q022() -> Leccion:
         .di("Fundir el hielo.", M(rf"Q_1=(0{{,}}190)(3{{,}}33\times10^5)={_j(q1)}", "q1", "rojo"), V(etapa=0))\
         .di("Calentar esa agua de cero a cien.", M(rf"Q_2=(0{{,}}190)(4190)(100)={_j(q2)}", "q2", "rojo"), V(etapa=1))\
         .di("Calentar el hierro de cero a cien.", M(rf"Q_3=(0{{,}}392)(470)(100)={_j(q3)}", "q3", "rojo"), V(etapa=2))\
-        .di("En total.", M(rf"Q_{{\text{{pide}}}}={_j(tot, 6)}", "tot"))
+        .di("En total, sumamos los tres.", M(rf"Q_{{\text{{pide}}}}={_j(q1)}+{_j(q2)}+{_j(q3)}={_j(tot, 6)}", "tot"))
     L.paso("Comparar con el vapor")\
         .di("Lo máximo que puede dar condensándose todo.", M(rf"Q_{{\text{{vapor}}}}=(0{{,}}0700)(2{{,}}256\times10^6)={_j(disp, 6)}", "da"), V(foco="comparar"))\
         .di("No alcanza por poquito: se condensa todo y la temperatura queda un poco abajo de cien.", M(rf"{tex(disp, 6, sci='no')}<{tex(tot, 6, sci='no')} \;\Rightarrow\; 0<T_{{eq}}<100\ {C}", "cmp", "azul"))
     L.paso("Plantear la conservación de la energía")\
         .di("Lo que cede el vapor, condensarse y luego enfriarse, lo ganan el hielo y el hierro.", M(r"\underbrace{m_vL_v+m_vc_a(100-T)}_{\text{cede}}=\underbrace{m_hL_f+m_hc_aT+m_{Fe}c_{Fe}T}_{\text{ganan}}", "bal"))\
-        .di("Ponemos números, sin prisa.", M(rf"{tex(disp, 6, sci='no')}+{tex(der, 4)}\,(100-T)={tex(q1, 5, sci='no')}+{tex(mh * ca, 4)}\,T+{tex(mf * cf, 5)}\,T"))\
-        .despacio((rf"m_vc_a=(0{{,}}0700)(4190)={tex(der, 4)}", ""), (rf"m_hc_a=(0{{,}}190)(4190)={tex(mh * ca, 4)}", ""), (rf"m_{{Fe}}c_{{Fe}}=(0{{,}}392)(470)={tex(mf * cf, 5)}", ""))
+        .di("Primero los productos de masa por calor específico.", M(rf"m_vc_a=(0{{,}}0700)(4190)={tex(der, 4)}"), M(rf"m_hc_a=(0{{,}}190)(4190)={tex(mh * ca, 4)}"), M(rf"m_{{Fe}}c_{{Fe}}=(0{{,}}392)(470)={tex(mf * cf, 5)}"))\
+        .di("Ponemos números, sin prisa.", M(rf"{tex(disp, 6, sci='no')}+{tex(der, 4)}\,(100-T)={tex(q1, 5, sci='no')}+{tex(mh * ca, 4)}\,T+{tex(mf * cf, 5)}\,T"))
     L.paso("Despejar la temperatura")\
-        .di("Abrimos el paréntesis.", M(rf"{tex(disp, 6, sci='no')}+{tex(der * 100, 5, sci='no')}-{tex(der, 4)}\,T={tex(q1, 5, sci='no')}+{tex(izq, 5)}\,T"))\
-        .di("Las te a un lado, los números al otro.".replace("Las te", "Las " + dice("T", "te")), M(rf"{tex(disp + der * 100 - q1, 6, sci='no')}={tex(izq + der, 6)}\,T"))\
+        .di("Abrimos el paréntesis y juntamos las dos te de la derecha.".replace("dos te", "dos " + dice("T", "te")), M(rf"{tex(disp, 6, sci='no')}+{tex(der * 100, 5, sci='no')}-{tex(der, 4)}\,T={tex(q1, 5, sci='no')}+{tex(izq, 5)}\,T"))\
+        .di("Las te a un lado sumando, los números al otro restando.".replace("Las te", "Las " + dice("T", "te")),
+            M(rf"{tex(disp, 6, sci='no')}+{tex(der * 100, 5, sci='no')}-{tex(q1, 5, sci='no')}={tex(izq, 5)}\,T+{tex(der, 4)}\,T"), M(rf"{tex(disp + der * 100 - q1, 6, sci='no')}={tex(izq + der, 6)}\,T"))\
         .di("Dividimos.", M(rf"T=\frac{{{tex(disp + der * 100 - q1, 6, sci='no')}}}{{{tex(izq + der, 6)}}}"), R(rf"T_{{eq}}={tex(Tf, 3)}\ {C}", "ra"))\
         .di("Dio menos de cien y más de cero: el caso que supusimos era el correcto.", NOTA("Si hubiera salido más de 100 o menos de 0, el caso estaría mal escogido."))
     L.paso("Composición final")\
@@ -306,9 +307,14 @@ def _mezcla_aguas(q: str, m1: float, T1: float, m2: float, T2: float, ops: dict,
         .por_que("La que tiene más masa cambia menos su temperatura: jala la mezcla hacia ella.")
     L.paso("Comprobarlo con la ecuación")\
         .di("Lo que cede una lo gana la otra. El específico es el mismo y se cancela.", F(r"\sum Q=0"), M(r"m_1\cancel{c}(T-T_1)+m_2\cancel{c}(T-T_2)=0"))\
-        .di("Despejamos.", M(r"T=\frac{m_1T_1+m_2T_2}{m_1+m_2}", "f", "azul"))\
-        .di("Sustituimos.", M(rf"T=\frac{{({m1:g})({T1:g})+({m2:g})({T2:g})}}{{{m1:g}+{m2:g}}}=\frac{{{tex(m1 * T1 + m2 * T2, 5, sci='no', recorta=True)}}}{{{m1 + m2:g}}}"), R(rf"T={tex(Tf, 3)}\ {C}"))\
-        .despacio((r"m_1T-m_1T_1+m_2T-m_2T_2=0", "se abren los paréntesis"), (r"T(m_1+m_2)=m_1T_1+m_2T_2", "se agrupa $T$"))
+        .di("Abrimos los paréntesis.", M(r"m_1T-m_1T_1+m_2T-m_2T_2=0"))\
+        .di("Dejamos a la izquierda lo que tiene te, y la sacamos de factor común.".replace("tiene te", "tiene " + dice("T", "te")),
+            M(r"m_1T+m_2T=m_1T_1+m_2T_2"), M(r"T(m_1+m_2)=m_1T_1+m_2T_2"))\
+        .di("La suma de las masas pasa a dividir.", M(r"T=\frac{m_1T_1+m_2T_2}{m_1+m_2}", "f", "azul"))
+    L.paso("Comprobarlo con números")\
+        .di("Sustituimos.", M(rf"T=\frac{{({m1:g})({T1:g})+({m2:g})({T2:g})}}{{{m1:g}+{m2:g}}}"))\
+        .di("Multiplicamos arriba y sumamos abajo.", M(rf"T=\frac{{{m1 * T1:g}+{m2 * T2:g}}}{{{m1 + m2:g}}}=\frac{{{tex(m1 * T1 + m2 * T2, 5, sci='no', recorta=True)}}}{{{m1 + m2:g}}}"))\
+        .di("Dividimos.", R(rf"T={tex(Tf, 3)}\ {C}"))
     revisar_opciones(L, motivos)
     return L.oficial(of, corr).usa(r"\sum Q=0", r"Q=mc\Delta T")
 
@@ -340,7 +346,7 @@ def q027() -> Leccion:
         .di("Aunque las masas son iguales, el hielo y el agua no son lo mismo.", DATO("misma masa"), LISTA(["$c_{\\text{hielo}}\\neq c_{\\text{agua}}$", "El hielo además puede **fundirse**"]))\
         .di("El promedio simple pide mismo material y sin cambio de fase.", OJO("El promedio solo sirve con masas iguales, mismo $c$ y sin cambio de fase."))
     L.paso("Qué determina la temperatura final")\
-        .di("La condición que siempre se cumple es la conservación de la energía.", F(r"\sum Q=0"), M(r"Q_{\text{absorbe el hielo}}=Q_{\text{cede el agua}}", "c", "azul"))\
+        .di("En un sistema aislado el calor ganado y el cedido se compensan usando las dos casillas de calorimetría de la hoja.", F(r"Q=mc\,\Delta T"), F(r"Q=\pm mL"), M(r"\sum Q=0\;\Rightarrow\;Q_{\text{absorbe el hielo}}=Q_{\text{cede el agua}}", "c", "azul"))\
         .di("La temperatura final es la que hace cierta esa igualdad.", T("$T_f$ es el valor que cumple esa igualdad."))
     revisar_opciones(L, {
         "A": ("La A no, por lo que vimos.", "Distinto $c$ y cambio de fase."),
@@ -348,7 +354,7 @@ def q027() -> Leccion:
         "C": ("La C suena bien, pero ‘casi nunca’ no explica qué determina la temperatura, y no siempre hay cambio de estado.".replace("‘casi nunca’", "casi nunca"), "No siempre hay cambio de estado; no dice qué fija $T_f$."),
         "D": ("La D es la correcta: la temperatura final sale de igualar energías.", "Sale de igualar energías."),
     })
-    return L.oficial("III Parcial extraordinario I-2026", "D").usa(r"\sum Q=0")
+    return L.oficial("III Parcial extraordinario I-2026", "D").usa(r"Q=mc\Delta T", r"Q=\pm mL")
 
 
 # ============================================================================ Q029
@@ -471,17 +477,19 @@ def _prueba_cero(q: str, titulo: str, enunciado: str, *, hielo, agua=None, vapor
             p.di("Primero el vapor se enfría hasta cien grados.", M(rf"q_1=({tex(mv, 3, sci='no')})({tex(cv, 4, sci='no')})({tex(Tv - 100, 3, recorta=True)})={_j(q1, 4)}", "q1"))
         p.di("Se condensa a cien grados." if q1 <= 0 else "Luego se condensa.", M(rf"q_2=({tex(mv, 3, sci='no')})({tex(Lv, 4)})={_j(q2)}", "q2"))
         p.di("Y esa agua baja de cien a cero.", M(rf"q_3=({tex(mv, 3, sci='no')})({tex(ca, 4, sci='no')})(100)={_j(q3, 4)}", "q3"))
-        p.di("En total, el vapor da esto.", M(rf"Q_{{\text{{vapor}}}}={_j(q1 + q2 + q3)}", "qv", "rojo"))
+        sumandos = "+".join(_j(x, 5) for x in (q1, q2, q3) if x > 0)
+        p.di("En total, sumamos lo que da el vapor.", M(rf"Q_{{\text{{vapor}}}}={sumandos}={_j(q1 + q2 + q3)}", "qv", "rojo"))
     if agua:
         p = L.paso("Lo que da el agua")
         p.di("El agua baja de su temperatura hasta cero.", M(rf"Q_{{\text{{agua}}}}=({tex(agua[0], 4, sci='no')})({tex(ca, 4, sci='no')})({tex(agua[1], 4, recorta=True)})={_j(partes[-1][3])}", "qa", "rojo"))
         if vapor:
-            p.di("Sumado con el vapor.", M(rf"Q_{{\text{{dan}}}}={_j(da)}", "qd"))
+            p.di("Sumado con el vapor.", M(rf"Q_{{\text{{dan}}}}=Q_{{\text{{vapor}}}}+Q_{{\text{{agua}}}}={_j(q1 + q2 + q3)}+{_j(partes[-1][3])}={_j(da)}", "qd"))
     p = L.paso("Lo que pide el hielo")
     if qh > 0:
         p.di("Llegar a cero grados.", M(rf"Q_h=({tex(mh, 4, sci='no')})({tex(ch, 4, sci='no')})({tex(-Th, 3, recorta=True)})={_j(qh, 4)}", "qh"), V(etapa=0))
         p.di("Y fundirse completo costaría esto.", M(rf"mL_f=({tex(mh, 4, sci='no')})({tex(Lf, 3)})={_j(fund)}", "ff"), V(etapa=1))
-        p.di("Sobra para calentarlo, pero no alcanza para fundirlo todo.", M(rf"{tex(qh, 4, sci='no')}<{tex(da, 5, sci='no')}<{tex(qh + fund, 5, sci='no')}", "cmp", "azul"), V(foco="comparar"))
+        p.di("Calentarlo y fundirlo todo costaría la suma de los dos.", M(rf"Q_h+mL_f={tex(qh, 4, sci='no')}+{_j(fund)}={tex(qh + fund, 5, sci='no')}\ \text{{J}}"))
+        p.di("Lo que se da alcanza para calentarlo, pero no para fundirlo todo.", M(rf"{tex(qh, 4, sci='no')}<{tex(da, 5, sci='no')}<{tex(qh + fund, 5, sci='no')}", "cmp", "azul"), V(foco="comparar"))
     else:
         p.di("El hielo ya está a cero: solo falta fundirlo. Fundirlo todo costaría esto.", M(rf"mL_f=({tex(mh, 4, sci='no')})({tex(Lf, 3)})={_j(fund)}", "ff"), V(etapa=0))
         p.di("No alcanza: queda hielo.", M(rf"{tex(da, 5, sci='no')}<{tex(fund, 5, sci='no')}", "cmp", "azul"), V(foco="comparar"))
@@ -548,10 +556,13 @@ def q035() -> Leccion:
         .di("Se funde todo y sobra: la temperatura queda arriba de cero.", M(rf"{tex(cond, 5, sci='no')}>{tex(fu, 5, sci='no')} \;\Rightarrow\; T_f>0", "c", "azul"))
     L.paso("Conservación de la energía")\
         .di("Cede el vapor: se condensa y luego se enfría como agua. Ganan el hielo y el cobre.", M(r"m_vL_v+m_vc_a(100-T)=m_hL_f+m_hc_aT+m_{Cu}c_{Cu}T", "bal", "azul"))\
-        .di("Con números.", M(rf"{tex(cond, 5, sci='no')}+{tex(k1, 4)}\,(100-T)={tex(fu, 5, sci='no')}+{tex(mh * ca, 4)}\,T+{tex(mc * cc, 4)}\,T"))\
-        .despacio((rf"m_vc_a=(0{{,}}0120)(4186)={tex(k1, 4)}", ""), (rf"m_hc_a=(0{{,}}0420)(4186)={tex(mh * ca, 4)}", ""), (rf"m_{{Cu}}c_{{Cu}}=(0{{,}}322)(387)={tex(mc * cc, 4)}", ""))
+        .di("Primero los productos de masa por calor específico.", M(rf"m_vc_a=(0{{,}}0120)(4186)={tex(k1, 4)}"), M(rf"m_hc_a=(0{{,}}0420)(4186)={tex(mh * ca, 4)}"), M(rf"m_{{Cu}}c_{{Cu}}=(0{{,}}322)(387)={tex(mc * cc, 4)}"))\
+        .di("Con números.", M(rf"{tex(cond, 5, sci='no')}+{tex(k1, 4)}\,(100-T)={tex(fu, 5, sci='no')}+{tex(mh * ca, 4)}\,T+{tex(mc * cc, 4)}\,T"))
     L.paso("a) Despejar la temperatura")\
-        .di("Abrimos y juntamos.", M(rf"{tex(cond, 5, sci='no')}+{tex(k1 * 100, 4, sci='no')}-{tex(fu, 5, sci='no')}=({tex(k1, 4)}+{tex(k2, 4)})\,T"), M(rf"{tex(cond + k1 * 100 - fu, 5, sci='no')}={tex(k1 + k2, 4)}\,T"))\
+        .di("Abrimos el paréntesis y juntamos las dos te de la derecha.".replace("dos te", "dos " + dice("T", "te")),
+            M(rf"{tex(cond, 5, sci='no')}+{tex(k1 * 100, 4, sci='no')}-{tex(k1, 4)}\,T={tex(fu, 5, sci='no')}+{tex(k2, 4)}\,T"))\
+        .di("Las te a un lado sumando y los números al otro restando.".replace("Las te", "Las " + dice("T", "te")),
+            M(rf"{tex(cond, 5, sci='no')}+{tex(k1 * 100, 4, sci='no')}-{tex(fu, 5, sci='no')}=({tex(k1, 4)}+{tex(k2, 4)})\,T"), M(rf"{tex(cond + k1 * 100 - fu, 5, sci='no')}={tex(k1 + k2, 4)}\,T"))\
         .di("Dividimos.", R(rf"T_f=\frac{{{tex(cond + k1 * 100 - fu, 5, sci='no')}}}{{{tex(k1 + k2, 4)}}}={tex(Tf, 3)}\ {C}", "ra"))
     L.paso("b) Composición")\
         .di("Cincuenta y tantos grados: no puede haber hielo ni vapor. Todo es agua.", M(r"m_{\text{agua}}=0{,}0420+0{,}0120"), R(r"m_{\text{agua}}=0{,}0540\ \text{kg}\qquad m_{\text{hielo}}=m_{\text{vapor}}=0", "rb"), V(foco="final"))
