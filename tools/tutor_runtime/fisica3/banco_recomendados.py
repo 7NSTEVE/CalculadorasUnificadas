@@ -356,7 +356,8 @@ def e8() -> Leccion:
         .di("Integramos desde adentro hasta afuera.", M(r"H\int_{a}^{b}dr=-2\pi k_0L\int_{T_{int}}^{T_{ext}}dT", "int"), V(foco="barrido"))\
         .di("Los límites van en parejas: en el radio a está cien grados, en el radio be, veinticinco.".replace("radio a ", "radio " + dice("a", "a") + " ").replace("radio be", "radio " + dice("b", "be")), NOTA("$r=a \\leftrightarrow T=100$ y $r=b \\leftrightarrow T=25$"))
     L.paso("Resolver las integrales")\
-        .di("Las dos son directas.", M(r"H\,\Big[\,r\,\Big]_a^b=-2\pi k_0L\,\Big[\,T\,\Big]_{T_{int}}^{T_{ext}}"))\
+        .di("Las dos son directas: sumar todos los pedacitos de radio da el radio, y los de temperatura, la temperatura.", M(r"\int dr=r\qquad \int dT=T"), NOTA("Regla 1 con exponente cero, lección **T-MAT2**."))\
+        .di("Con sus límites.", M(r"H\,\Big[\,r\,\Big]_a^b=-2\pi k_0L\,\Big[\,T\,\Big]_{T_{int}}^{T_{ext}}"))\
         .di("Superior menos inferior.", M(r"H\,(b-a)=-2\pi k_0L\,(T_{ext}-T_{int})"))\
         .di("Metemos el menos en el paréntesis y se voltea la resta.", M(r"H\,(b-a)=2\pi k_0L\,(T_{int}-T_{ext})", "e3"))\
         .despacio((r"-(T_{ext}-T_{int})=-T_{ext}+T_{int}=T_{int}-T_{ext}", "el menos cambia los dos signos"))
@@ -397,14 +398,16 @@ def _esfera_hierro(id: str, fuente: dict) -> Leccion:
         .por_que("El área crece con el radio: las cáscaras de afuera son más grandes. Por eso no se puede usar la fórmula de pared plana.")\
         .sale_de(("$4\\pi r^2$", "área de la superficie de una esfera"))
     L.paso("Separar variables")\
-        .di("Las erres a un lado y la temperatura al otro.", M(r"\frac{dr}{r^2}=-\frac{4\pi k}{H}\,dT", "sep"))\
-        .di("Integramos de adentro hacia afuera.", M(r"\int_{r_2}^{r_1}\frac{dr}{r^2}=-\frac{4\pi k}{H}\int_{T_2}^{T_1}dT", "int"), V(foco="barrido"))\
-        .despacio((r"H\,dr=-4\pi k\,r^2\,dT", "multiplicamos por $dr$"), (r"\frac{H\,dr}{r^2}=-4\pi k\,dT", "dividimos entre $r^2$"), (r"\frac{dr}{r^2}=-\frac{4\pi k}{H}\,dT", "dividimos entre $H$"))
+        .di("Las erres a un lado y la temperatura al otro. Paso uno: multiplicar los dos lados por de erre.".replace("de erre", dice("dr", "de erre")), M(r"H\,dr=-4\pi k\,r^2\,dT"))\
+        .di("Paso dos: dividir entre erre cuadrado. Paso tres: dividir entre hache.".replace("erre cuadrado", dice("r²", "erre cuadrado")).replace("hache", dice("H", "hache")),
+            M(r"\frac{H\,dr}{r^2}=-4\pi k\,dT\;\Rightarrow\;\frac{dr}{r^2}=-\frac{4\pi k}{H}\,dT", "sep"), NOTA("Receta en la lección **T-MAT3**."))\
+        .di("Integral a los dos lados, de adentro hacia afuera.", M(r"\int_{r_2}^{r_1}\frac{dr}{r^2}=-\frac{4\pi k}{H}\int_{T_2}^{T_1}dT", "int"), V(foco="barrido"))
     L.paso("La integral de 1/r²")\
-        .di("Uno entre erre cuadrado es erre a la menos dos; sumamos uno al exponente y dividimos.", M(r"\int r^{-2}dr=\frac{r^{-1}}{-1}=-\frac{1}{r}", "prim", "azul"))\
+        .di("Uno entre erre cuadrado es erre a la menos dos; regla de la potencia: sumamos uno al exponente y dividimos entre el nuevo.", M(r"\frac{1}{r^2}=r^{-2}\;\Rightarrow\;\int r^{-2}dr=\frac{r^{-2+1}}{-2+1}=\frac{r^{-1}}{-1}=-\frac{1}{r}", "prim", "azul"),
+            NOTA("Regla 1 de la lección **T-MAT2**."))\
         .di("Evaluamos: arriba menos abajo.", M(r"\left[-\frac{1}{r}\right]_{r_2}^{r_1}=-\frac{1}{r_1}-\left(-\frac{1}{r_2}\right)"))\
         .di("Queda la resta de los inversos.", M(r"=\frac{1}{r_2}-\frac{1}{r_1}", "res"))\
-        .di("El otro lado es fácil.", M(r"-\frac{4\pi k}{H}\,(T_1-T_2)=\frac{4\pi k}{H}\,(T_2-T_1)", "der"))
+        .di("El otro lado: sumar los pedacitos de temperatura da el cambio total.", M(r"-\frac{4\pi k}{H}\int_{T_2}^{T_1}dT=-\frac{4\pi k}{H}\,(T_1-T_2)=\frac{4\pi k}{H}\,(T_2-T_1)", "der"))
     L.paso("Despejar la temperatura exterior")\
         .di("Igualamos los dos lados.", M(r"\frac{1}{r_2}-\frac{1}{r_1}=\frac{4\pi k}{H}\,(T_2-T_1)"))\
         .di("Pasamos el factor al otro lado, volteado.", M(r"T_2-T_1=\frac{H}{4\pi k}\left(\frac{1}{r_2}-\frac{1}{r_1}\right)"))\
@@ -483,10 +486,14 @@ def e11() -> Leccion:
         .por_que("Si pasara más calor por una capa que por la otra, la energía se acumularía en el medio y la temperatura cambiaría. Estacionario significa que nada cambia.")
     L.paso("Fourier en un cilindro")\
         .di("Partimos de la ley de Fourier con el área lateral.", F(r"H=-kA\frac{dT}{dr}"), M(r"H=-k\,(2\pi rL)\frac{dT}{dr}", "e1"), V(foco="dr"))\
-        .di("Separamos.", M(r"\frac{dr}{r}=-\frac{2\pi kL}{H}\,dT"))\
-        .di("Integramos: la de uno entre erre es logaritmo natural.", M(r"\ln\left(\frac{r_e}{r_i}\right)=\frac{2\pi kL}{H}\,(T_i-T_e)", "ln"))\
-        .di("Despejamos hache. Sirve para cualquier capa.".replace("hache", dice("H", "hache")), M(r"H=\frac{2\pi kL\,(T_i-T_e)}{\ln(r_e/r_i)}", "cap", "azul"))\
-        .despacio((r"\int_{r_i}^{r_e}\frac{dr}{r}=\ln r_e-\ln r_i=\ln\frac{r_e}{r_i}", "resta de logaritmos es logaritmo del cociente"), (r"-\frac{2\pi kL}{H}(T_e-T_i)=\frac{2\pi kL}{H}(T_i-T_e)", "el menos voltea la resta"))
+        .di("Separamos: multiplicamos por de erre y dividimos entre erre y entre hache.".replace("de erre", dice("dr", "de erre")).replace("entre erre", "entre " + dice("r", "erre")).replace("hache", dice("H", "hache")),
+            M(r"H\,dr=-k\,(2\pi rL)\,dT\;\Rightarrow\;\frac{dr}{r}=-\frac{2\pi kL}{H}\,dT"), NOTA("Receta en la lección **T-MAT3**."))
+    L.paso("Integrar una capa")\
+        .di("Integral a los dos lados, del radio interno al externo de la capa.", M(r"\int_{r_i}^{r_e}\frac{dr}{r}=-\frac{2\pi kL}{H}\int_{T_i}^{T_e}dT"))\
+        .di("Izquierda: regla dos, uno entre erre da logaritmo; la resta de logaritmos es el logaritmo de la división.".replace("entre erre", "entre " + dice("r", "erre")),
+            M(r"\int_{r_i}^{r_e}\frac{dr}{r}=\Big[\ln r\Big]_{r_i}^{r_e}=\ln r_e-\ln r_i=\ln\frac{r_e}{r_i}"))\
+        .di("Derecha: la suma de pedacitos de temperatura; el menos voltea la resta.", M(r"-\frac{2\pi kL}{H}\int_{T_i}^{T_e}dT=-\frac{2\pi kL}{H}(T_e-T_i)=\frac{2\pi kL}{H}(T_i-T_e)"))\
+        .di("Juntamos y despejamos hache. Sirve para cualquier capa.".replace("hache", dice("H", "hache")), M(r"\ln\left(\frac{r_e}{r_i}\right)=\frac{2\pi kL}{H}\,(T_i-T_e)\;\Rightarrow\;H=\frac{2\pi kL\,(T_i-T_e)}{\ln(r_e/r_i)}", "cap", "azul"))
     L.paso("Escribirla para cada capa")\
         .di("Para el aire.", M(r"H=\frac{2\pi k_aL\,(T_1-T_2)}{\ln(r_2/r_1)}", "ha"))\
         .di("Para el magnox.", M(r"H=\frac{2\pi k_mL\,(T_2-T_3)}{\ln(r_3/r_2)}", "hm"))\
@@ -525,10 +532,14 @@ def e12() -> Leccion:
         .di("Piden la pérdida de calor y cuánto forro extra la baja a la mitad.", M(r"H=\;?\qquad \text{grosor extra}=\;?"))
     L.paso("La idea: Fourier radial")\
         .di("El calor cruza cilindros cada vez más grandes.", V(foco="dr"), F(r"H=-kA\frac{dT}{dr}"), M(r"A=2\pi rL"))\
-        .di("Sustituimos el área y separamos variables.", M(r"\frac{dr}{r}=-\frac{2\pi kL}{H}\,dT", "sep"))
+        .di("Sustituimos el área.", M(r"H=-k\,(2\pi rL)\,\frac{dT}{dr}"))\
+        .di("Separamos: multiplicamos por de erre y dividimos entre erre y entre hache.".replace("de erre", dice("dr", "de erre")).replace("entre erre", "entre " + dice("r", "erre")).replace("hache", dice("H", "hache")),
+            M(r"H\,dr=-2\pi kL\,r\,dT\;\Rightarrow\;\frac{dr}{r}=-\frac{2\pi kL}{H}\,dT", "sep"), NOTA("Receta en la lección **T-MAT3**."))
     L.paso("Integrar")\
         .di("Del radio interno al externo, con sus temperaturas en parejas.", M(r"\int_a^b\frac{dr}{r}=-\frac{2\pi kL}{H}\int_{T_i}^{T_e}dT"), V(foco="barrido"))\
-        .di("El lado izquierdo da logaritmo natural.", M(r"\ln\left(\frac{b}{a}\right)=\frac{2\pi kL}{H}\,(T_i-T_e)"))\
+        .di("Izquierda: regla dos, uno entre erre da logaritmo. Derecha: la suma de pedacitos de temperatura.".replace("entre erre", "entre " + dice("r", "erre")),
+            M(r"\Big[\ln r\Big]_a^b=\ln b-\ln a=\ln\frac{b}{a}"), M(r"-\frac{2\pi kL}{H}\,(T_e-T_i)=\frac{2\pi kL}{H}\,(T_i-T_e)"))\
+        .di("Juntamos.", M(r"\ln\left(\frac{b}{a}\right)=\frac{2\pi kL}{H}\,(T_i-T_e)"))\
         .di("Despejamos.", M(r"H=\frac{2\pi kL\,(T_i-T_e)}{\ln(b/a)}", "h", "azul"))
     L.paso("a) La pérdida de calor")\
         .di("Ponemos números.", M(r"H=\frac{2\pi(0{,}024)(6{,}2)(100-11)}{\ln(0{,}08/0{,}03)}"))\
@@ -608,7 +619,9 @@ def e14() -> Leccion:
         .por_que("$N(v)\\,dv$ es cuántas moléculas tienen rapidez entre $v$ y $v+dv$. Sumarlas todas da el total, y sumar es integrar.")
     L.paso("a) Tramo 1: la parábola")\
         .di("Este sí lleva integral.", M(r"A_1=\int_0^{v_0}\frac{N_0}{v_0^2}\,v^2\,dv"), V(foco=0))\
-        .di("La constante sale y la integral de ve cuadrado es ve cubo entre tres.".replace("ve cuadrado", dice("v²", "ve cuadrado")).replace("ve cubo", dice("v³", "ve cubo")), M(r"A_1=\frac{N_0}{v_0^2}\left[\frac{v^3}{3}\right]_0^{v_0}=\frac{N_0}{v_0^2}\cdot\frac{v_0^3}{3}"))\
+        .di("La constante sale. Regla de la potencia: ve cuadrado da ve cubo entre tres.".replace("ve cuadrado", dice("v²", "ve cuadrado")).replace("ve cubo", dice("v³", "ve cubo")),
+            M(r"\int v^2\,dv=\frac{v^{2+1}}{2+1}=\frac{v^3}{3}"), NOTA("Regla 1 de la lección **T-MAT2**."))\
+        .di("Arriba menos abajo: en cero da cero.", M(r"A_1=\frac{N_0}{v_0^2}\left[\frac{v^3}{3}\right]_0^{v_0}=\frac{N_0}{v_0^2}\left(\frac{v_0^3}{3}-0\right)=\frac{N_0}{v_0^2}\cdot\frac{v_0^3}{3}"))\
         .di("Se simplifica.", M(r"A_1=\frac{1}{3}N_0v_0", "a1", "verde"))
     L.paso("a) Tramos 2, 3 y 4: figuras conocidas")\
         .di("El tramo plano es un rectángulo de base ve cero y altura ene cero.".replace("ve cero", s("v_0")).replace("ene cero", s("N_0")), M(r"A_2=N_0\,v_0", "a2", "verde"), V(foco=1))\
@@ -628,11 +641,20 @@ def e14() -> Leccion:
     L.paso("c) Integrar los dos primeros")\
         .di("Parábola: queda ve cubo.".replace("ve cubo", dice("v³", "ve cubo")), M(r"I_1=\frac{N_0}{v_0^2}\int_0^{v_0}v^3dv=\frac{N_0}{v_0^2}\cdot\frac{v_0^4}{4}=\frac{1}{4}N_0v_0^2", "i1"), V(foco=0))\
         .di("Plano: integral de ve.".replace("integral de ve", "integral de " + dice("v", "ve")), M(r"I_2=N_0\int_{v_0}^{2v_0}v\,dv=N_0\,\frac{4v_0^2-v_0^2}{2}=\frac{3}{2}N_0v_0^2", "i2"), V(foco=1))
-    L.paso("c) Integrar los dos últimos")\
-        .di("El que sube.", M(r"I_3=\frac{N_0}{v_0}\int_{2v_0}^{3v_0}(v^2-v_0v)\,dv=\frac{N_0}{v_0}\left[\frac{v^3}{3}-\frac{v_0v^2}{2}\right]_{2v_0}^{3v_0}"), V(foco=2))\
-        .di("Evaluamos: cuatro y medio menos dos tercios.", M(r"I_3=\left(\frac{9}{2}-\frac{2}{3}\right)N_0v_0^2=\frac{23}{6}N_0v_0^2", "i3"))\
-        .di("El que baja.", M(r"I_4=\frac{2N_0}{v_0}\left[2v_0v^2-\frac{v^3}{3}\right]_{3v_0}^{4v_0}=\frac{10}{3}N_0v_0^2", "i4"), V(foco=3))\
-        .despacio((r"\left[\tfrac{v^3}{3}-\tfrac{v_0v^2}{2}\right]_{3v_0}=9v_0^3-\tfrac92v_0^3=\tfrac92v_0^3", "arriba"), (r"\left[\,\cdot\,\right]_{2v_0}=\tfrac83v_0^3-2v_0^3=\tfrac23v_0^3", "abajo"), (r"2\left[\left(32-\tfrac{64}{3}\right)-(18-9)\right]=2\left[\tfrac{32}{3}-9\right]=\tfrac{10}{3}", "el último tramo"))
+    L.paso("c) El tramo que sube")\
+        .di("Primero multiplicamos ve por la recta de ese tramo.".replace("ve por", dice("v", "ve") + " por"), V(foco=2),
+            M(r"v\,N_3(v)=v\cdot\frac{N_0}{v_0}(v-v_0)=\frac{N_0}{v_0}\left(v^2-v_0v\right)"))\
+        .di("Regla de la potencia término por término.", M(r"\int\left(v^2-v_0v\right)dv=\frac{v^3}{3}-v_0\,\frac{v^2}{2}"))\
+        .di("Arriba, en tres ve cero; abajo, en dos ve cero.".replace("tres ve cero", dice("3v₀", "tres ve cero")).replace("dos ve cero", dice("2v₀", "dos ve cero")),
+            M(r"\left[\tfrac{v^3}{3}-\tfrac{v_0v^2}{2}\right]_{3v_0}=9v_0^3-\tfrac92v_0^3=\tfrac92v_0^3\qquad \left[\tfrac{v^3}{3}-\tfrac{v_0v^2}{2}\right]_{2v_0}=\tfrac83v_0^3-2v_0^3=\tfrac23v_0^3"))\
+        .di("Restamos y multiplicamos por la constante de afuera.", M(r"I_3=\frac{N_0}{v_0}\left(\frac{9}{2}-\frac{2}{3}\right)v_0^3=\frac{23}{6}N_0v_0^2", "i3"))
+    L.paso("c) El tramo que baja")\
+        .di("Multiplicamos ve por la recta que baja.".replace("ve por", dice("v", "ve") + " por"), V(foco=3),
+            M(r"v\,N_4(v)=v\cdot\frac{2N_0}{v_0}(4v_0-v)=\frac{2N_0}{v_0}\left(4v_0v-v^2\right)"))\
+        .di("Regla de la potencia término por término.", M(r"\int\left(4v_0v-v^2\right)dv=4v_0\,\frac{v^2}{2}-\frac{v^3}{3}=2v_0v^2-\frac{v^3}{3}"))\
+        .di("Arriba, en cuatro ve cero; abajo, en tres ve cero.".replace("cuatro ve cero", dice("4v₀", "cuatro ve cero")).replace("tres ve cero", dice("3v₀", "tres ve cero")),
+            M(r"\left[2v_0v^2-\tfrac{v^3}{3}\right]_{4v_0}=32v_0^3-\tfrac{64}{3}v_0^3=\tfrac{32}{3}v_0^3\qquad \left[\,\cdot\,\right]_{3v_0}=18v_0^3-9v_0^3=9v_0^3"))\
+        .di("Restamos y multiplicamos por la constante de afuera.", M(r"I_4=\frac{2N_0}{v_0}\left(\frac{32}{3}-9\right)v_0^3=\frac{2N_0}{v_0}\cdot\frac{5}{3}v_0^3=\frac{10}{3}N_0v_0^2", "i4"))
     L.paso("c) Rapidez media")\
         .di("Sumamos las cuatro.", M(r"\int vN\,dv=\left(\frac14+\frac32+\frac{23}{6}+\frac{10}{3}\right)N_0v_0^2=\frac{107}{12}N_0v_0^2"))\
         .di("Dividimos entre el total de moléculas.", M(r"\overline{v}=\frac{\frac{107}{12}N_0v_0^2}{\frac{23}{6}N_0v_0}=\frac{107}{46}\,v_0"))\

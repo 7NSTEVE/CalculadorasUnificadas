@@ -363,7 +363,9 @@ def q012() -> Leccion:
         .di("Sumamos desde te hasta dos te.", M(r"\Delta L_1=L_0\int_{T}^{2T}(\beta+\gamma T'^3)\,dT'", "i1"))\
         .por_que("La fórmula del formulario $\\Delta L=\\alpha L_0\\Delta T$ solo vale si $\\alpha$ es constante. Si cambia, se suma tramo por tramo, o sea, se integra.")
     L.paso("a) Tramo 1: resolver")\
-        .di("La integral de beta es beta por te; la de te al cubo es te a la cuarta entre cuatro.", M(r"\int(\beta+\gamma T'^3)\,dT'=\beta T'+\frac{\gamma T'^4}{4}"))\
+        .di("Término por término con la regla de la potencia: beta es constante y da beta por te; te al cubo da te a la cuarta entre cuatro.",
+            M(r"\int\beta\,dT'=\beta T'\qquad \int\gamma T'^3\,dT'=\gamma\,\frac{T'^{3+1}}{3+1}=\frac{\gamma T'^4}{4}"),
+            M(r"\int(\beta+\gamma T'^3)\,dT'=\beta T'+\frac{\gamma T'^4}{4}"), NOTA("Regla 1 de la lección **T-MAT2**."))\
         .di("Evaluamos: arriba dos te, abajo te.", M(r"=\left[\beta(2T)+\frac{\gamma(2T)^4}{4}\right]-\left[\beta T+\frac{\gamma T^4}{4}\right]"))\
         .di("Dos a la cuarta es dieciséis: dieciséis cuartos menos un cuarto son quince cuartos.", M(r"=\beta T+\left(\frac{16}{4}-\frac{1}{4}\right)\gamma T^4=\beta T+\frac{15}{4}\gamma T^4", "r1", "azul"))\
         .despacio((r"\beta(2T)-\beta T=\beta T", "primer término"), (r"(2T)^4=16T^4", "se eleva el 2 y la T"), (r"\frac{16\gamma T^4}{4}-\frac{\gamma T^4}{4}=\frac{15}{4}\gamma T^4", "segundo término"))
@@ -373,7 +375,7 @@ def q012() -> Leccion:
         .di("Sacamos ele cero de factor común.".replace("ele cero", dice("L₀", "ele cero")), R(r"L_1=L_0\left(1+\beta T+\frac{15}{4}\gamma T^4\right)", "ra"))
     L.paso("b) Tramo 2: ahora se parte de L₁")\
         .di("La barra ya mide ele uno, y de ahí sigue creciendo.".replace("ele uno", dice("L₁", "ele uno")), M(r"\Delta L_2=L_1\int_{2T}^{3T}(3\beta+2\gamma T'^3)\,dT'"))\
-        .di("Integramos: tres beta te, más dos gama te a la cuarta entre cuatro.", M(r"=L_1\left[3\beta T'+\frac{2\gamma T'^4}{4}\right]_{2T}^{3T}"))\
+        .di("Misma regla de la potencia: tres beta da tres beta te; dos gama te al cubo da dos gama te a la cuarta entre cuatro.", M(r"=L_1\left[3\beta T'+\frac{2\gamma T'^4}{4}\right]_{2T}^{3T}"))\
         .di("Evaluamos. Tres a la cuarta es ochenta y uno; dos a la cuarta, dieciséis.", M(r"=L_1\left[3\beta(3T-2T)+\frac{\gamma}{2}(81T^4-16T^4)\right]"))\
         .di("Ochenta y uno menos dieciséis es sesenta y cinco.", M(r"\Delta L_2=L_1\left(3\beta T+\frac{65}{2}\gamma T^4\right)", "dl2", "azul"))
     L.paso("b) Longitud a 3T")\

@@ -73,16 +73,23 @@ def _area_lineal(q: str, titulo: str, enunciado: str, incisos, *, k: float, h: f
                 .di("Ponemos el área de esa altura.", M(rf"H=-k\,({A_tex})\,\frac{{dT}}{{dy}}"))\
                 .por_que("En estado estacionario el mismo $H$ atraviesa todas las rebanadas; lo que cambia es cuánto cae la temperatura en cada una.")
             L.paso(f"{lt}) Separar variables")\
-                .di("Lo que tiene ye a un lado y la temperatura al otro.".replace("ye", s("y")), M(rf"\frac{{H\,dy}}{{{A_tex}}}=-k\,dT"))\
-                .di("Integramos de abajo hacia arriba.", M(rf"H\int_0^{{{_nm(h)}}}\frac{{dy}}{{{A_tex}}}=-k\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT", "int", "azul"))\
-                .di("El lado de la temperatura es directo.", M(rf"-k\,(T_2-T_1)=-({_nm(k)})({_nm(t2)}-{_nm(t1)})={tex(k * (t1 - t2), 5, sci='no')}"))
+                .di("Separar es dejar lo de ye a un lado y lo de la temperatura al otro. Paso uno: multiplicar los dos lados por de ye.".replace("lo de ye", "lo de " + dice("y", "ye")).replace("por de ye", "por " + dice("dy", "de ye")),
+                    M(rf"H\,dy=-k\,({A_tex})\,dT"))\
+                .di("Paso dos: dividir los dos lados entre el área.", M(rf"\frac{{H\,dy}}{{{A_tex}}}=-k\,dT"), NOTA("Receta en la lección **T-MAT3**."))\
+                .di("Integral a los dos lados, de abajo hacia arriba: en ye cero está te uno; arriba, te dos.".replace("ye cero", dice("y = 0", "ye cero")).replace("te uno", dice("T₁", "te uno")).replace("te dos", dice("T₂", "te dos")),
+                    M(rf"H\int_0^{{{_nm(h)}}}\frac{{dy}}{{{A_tex}}}=-k\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT", "int", "azul"))\
+                .di("El lado de la temperatura: sumar todos los pedacitos da el cambio total.",
+                    M(rf"-k\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT=-k\,(T_2-T_1)=-({_nm(k)})({_nm(t2)}-{_nm(t1)})={tex(k * (t1 - t2), 5, sci='no')}"))
             L.paso(f"{lt}) La integral del área: cambio de variable")\
-                .di("Llamamos u al área.", M(rf"u={A_tex}\qquad du={sg if neg else ''}{_nm(ab)}\,dy\;\Rightarrow\;dy={'-' if neg else ''}\frac{{du}}{{{_nm(ab)}}}"))\
-                .di("Los límites pasan a ser las áreas de abajo y de arriba.", M(rf"y=0\Rightarrow u={_nm(a0)}\qquad y={_nm(h)}\Rightarrow u={tex(ah, 5)}"))\
-                .di("La integral de uno entre u es el logaritmo.", M(rf"\int\frac{{dy}}{{{A_tex}}}={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\ln u"))\
-                .di("Evaluamos arriba menos abajo.", M(rf"I=\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)={tex(I, 4)}\ \text{{m}}^{{-1}}", "ii", "verde"))\
-                .despacio((rf"{'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\left(\ln {tex(ah, 5)}-\ln {_nm(a0)}\right)", "arriba menos abajo"),
-                          (rf"\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)", "el signo menos da vuelta al cociente" if neg else "se juntan en un solo logaritmo"))
+                .di("Regla tres: al área le ponemos un nombre, u. Su pedacito de u es la pendiente por de ye.".replace("de u", dice("du", "de u")).replace("de ye", dice("dy", "de ye")),
+                    M(rf"u={A_tex}\qquad du={sg if neg else ''}{_nm(ab)}\,dy\;\Rightarrow\;dy={'-' if neg else ''}\frac{{du}}{{{_nm(ab)}}}"))\
+                .di("Los límites cambian: pasan a ser las áreas de abajo y de arriba.", M(rf"y=0\Rightarrow u={_nm(a0)}\qquad y={_nm(h)}\Rightarrow u={tex(ah, 5)}"))\
+                .di("Queda la regla dos: uno entre u da logaritmo.", M(rf"\int\frac{{dy}}{{{A_tex}}}={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\int\frac{{du}}{{u}}={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\ln u"),
+                    NOTA("Reglas 2 y 3 de la lección **T-MAT2**."))
+            L.paso(f"{lt}) La integral del área: arriba menos abajo")\
+                .di("Evaluamos el logaritmo arriba menos abajo.", M(rf"I={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\Big[\ln u\Big]_{{{_nm(a0)}}}^{{{tex(ah, 5)}}}={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\left(\ln {tex(ah, 5)}-\ln {_nm(a0)}\right)"))\
+                .di(("El signo menos da vuelta a la resta, y una resta de logaritmos es el logaritmo de la división." if neg else "Una resta de logaritmos es el logaritmo de la división."),
+                    M(rf"I=\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)={tex(I, 4)}\ \text{{m}}^{{-1}}", "ii", "verde"))
             L.paso(f"{lt}) Despejar el flujo")\
                 .di("Juntamos las dos integrales.", M(rf"H\,({tex(I, 4)})={tex(k * (t1 - t2), 5, sci='no')}"))\
                 .di("Despejamos.", M(rf"H=\frac{{{tex(k * (t1 - t2), 5, sci='no')}}}{{{tex(I, 4)}}}"))\
@@ -132,11 +139,15 @@ def _tubo(q: str, titulo: str, enunciado: str, *, k: float, lc: float, r1: float
     L.paso("A) Fourier en un cascarón cilíndrico")\
         .di("Tomamos un cascarón de radio erre y grosor de erre.".replace("radio erre", "radio " + dice("r", "erre")).replace("grosor de erre", "grosor " + dice("dr", "de erre")), V(foco="dr"), F(r"H=-kA\frac{dT}{dr}"))\
         .di("Su área es la pared del cilindro.", M(r"A=2\pi rL"), M(r"H=-k\,(2\pi rL)\,\frac{dT}{dr}", "f", "azul"))
-    L.paso("A) Separar variables e integrar")\
-        .di("Erre con de erre a un lado; la temperatura al otro.".replace("Erre con de erre", dice("r y dr", "erre y de erre")), M(r"H\,\frac{dr}{r}=-2\pi kL\,dT"))\
-        .di("Integramos del radio interno al externo.", M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(r2)}}}\frac{{dr}}{{r}}=-2\pi kL\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT"))\
-        .di("La de la izquierda es un logaritmo.", M(rf"\int_{{{_nm(r1)}}}^{{{_nm(r2)}}}\frac{{dr}}{{r}}=\ln\frac{{{_nm(r2)}}}{{{_nm(r1)}}}={tex(lnr, 4)}"))\
-        .di("La de la derecha, la resta de temperaturas.", M(rf"-2\pi kL\,(T_2-T_1)=2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})"))
+    L.paso("A) Separar variables")\
+        .di("Separar es dejar lo del radio a un lado y lo de la temperatura al otro. Paso uno: multiplicar los dos lados por de erre.".replace("de erre", dice("dr", "de erre")),
+            M(r"H\,dr=-k\,(2\pi rL)\,dT"))\
+        .di("Paso dos: dividir los dos lados entre erre.".replace("entre erre", "entre " + dice("r", "erre")), M(r"H\,\frac{dr}{r}=-2\pi kL\,dT"), NOTA("Receta en la lección **T-MAT3**."))\
+        .di("Integral a los dos lados, del radio interno al externo.", M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(r2)}}}\frac{{dr}}{{r}}=-2\pi kL\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT"))
+    L.paso("A) Resolver las dos integrales")\
+        .di("Izquierda: regla dos, uno entre erre da logaritmo. Arriba menos abajo, y la resta de logaritmos es el logaritmo de la división.".replace("entre erre", "entre " + dice("r", "erre")),
+            M(rf"\int_{{{_nm(r1)}}}^{{{_nm(r2)}}}\frac{{dr}}{{r}}=\Big[\ln r\Big]_{{{_nm(r1)}}}^{{{_nm(r2)}}}=\ln {_nm(r2)}-\ln {_nm(r1)}=\ln\frac{{{_nm(r2)}}}{{{_nm(r1)}}}={tex(lnr, 4)}"))\
+        .di("Derecha: sumar los pedacitos de temperatura da el cambio total.", M(rf"-2\pi kL\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT=-2\pi kL\,(T_2-T_1)=2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})"))
     L.paso("A) Despejar el flujo")\
         .di("Despejamos hache.".replace("hache", s("H", "hache")), M(rf"H=\frac{{2\pi kL\,(T_1-T_2)}}{{\ln(r_2/r_1)}}=\frac{{2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})}}{{{tex(lnr, 4)}}}"))\
         .di(f"En todo el tubo: {nu(H / 1e3, 'kW', 4)}.", M(rf"H={tex(H, 4, u='W')}"))
@@ -147,8 +158,9 @@ def _tubo(q: str, titulo: str, enunciado: str, *, k: float, lc: float, r1: float
         .di("Flujo por tiempo, en segundos.", F(r"Q=H\,\Delta t"), M(rf"Q=({tex(H, 4)})({_nm(dt_s)})"))\
         .di("Queda.", R(rf"Q={tex(Q, 4, u='J')}", "rb"))
     L.paso(f"C) Temperatura en r = {_nm(rm * 100, 3)} cm")\
-        .di("Integramos solo hasta ese radio.", V(foco="punto"), M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(rm)}}}\frac{{dr}}{{r}}=-2\pi kL\,(T-{_nm(t1)})"))\
-        .di("Despejamos la temperatura.", M(rf"T={_nm(t1)}-\frac{{H}}{{2\pi kL}}\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}"))\
+        .di("Repetimos la integral, pero solo hasta ese radio.", V(foco="punto"), M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(rm)}}}\frac{{dr}}{{r}}=-2\pi kL\int_{{{_nm(t1)}}}^{{T}}dT"))\
+        .di("Las dos integrales salen igual que antes: un logaritmo y una resta.", M(rf"H\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}=-2\pi kL\,(T-{_nm(t1)})"))\
+        .di("Despejamos la temperatura: dividimos entre menos dos pi ka ele y pasamos sumando.", M(rf"T={_nm(t1)}-\frac{{H}}{{2\pi kL}}\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}"))\
         .di("Sustituimos.", M(rf"T={_nm(t1)}-\frac{{{tex(H, 4)}}}{{2\pi({_nm(k)})({_nm(lc)})}}\ln({tex(rm / r1, 3)})"))\
         .di(f"Da {nu(tm, '°C', dec=1)}.", R(rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", "rc"))
     L.responde("A", rf"H/L={tex(HL / 1e3, 4)}\ \text{{kW/m}}", HL, "W/m").responde("B", rf"Q={tex(Q, 4)}\ \text{{J}}", Q, "J").responde("C", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
@@ -206,12 +218,15 @@ def q037() -> Leccion:
         .di("El área que cruza el calor a un radio erre es la pared lateral del cilindro.".replace("erre", dice("r", "erre")),
             M(r"A(r) = 2\pi r L"), M(r"H = -k\,(2\pi rL)\,\frac{dT}{dr}"))\
         .por_que("En estado estacionario la misma corriente $H$ cruza cada capa cilíndrica, aunque el área crezca con $r$.")
-    L.paso("A) Separar variables e integrar")\
-        .di("Dejamos el radio de un lado y la temperatura del otro.", M(r"H\,\frac{dr}{r} = -2\pi kL\,dT"))\
-        .di("Integramos desde el radio interior hasta el exterior.", V(foco="barrido"),
-            M(r"H\int_{R_1}^{R_2}\frac{dr}{r} = -2\pi k L\int_{T_1}^{T_2}dT"))\
-        .di("A la izquierda sale un logaritmo; a la derecha, la resta de temperaturas.",
-            M(r"\int_{R_1}^{R_2}\frac{dr}{r}=\ln\left(\frac{R_2}{R_1}\right)\qquad -2\pi kL\,(T_2-T_1)=2\pi kL\,(T_1-T_2)"))\
+    L.paso("A) Separar variables")\
+        .di("Dejamos el radio de un lado y la temperatura del otro. Paso uno: multiplicar por de erre.".replace("de erre", dice("dr", "de erre")), M(r"H\,dr=-k\,(2\pi rL)\,dT"))\
+        .di("Paso dos: dividir entre erre.".replace("entre erre", "entre " + dice("r", "erre")), M(r"H\,\frac{dr}{r} = -2\pi kL\,dT"), NOTA("Receta en la lección **T-MAT3**."))\
+        .di("Integral a los dos lados, desde el radio interior hasta el exterior.", V(foco="barrido"),
+            M(r"H\int_{R_1}^{R_2}\frac{dr}{r} = -2\pi k L\int_{T_1}^{T_2}dT"))
+    L.paso("A) Resolver las integrales")\
+        .di("Izquierda: regla dos, uno entre erre da logaritmo; la resta de logaritmos es el logaritmo de la división.".replace("entre erre", "entre " + dice("r", "erre")),
+            M(r"\int_{R_1}^{R_2}\frac{dr}{r}=\Big[\ln r\Big]_{R_1}^{R_2}=\ln R_2-\ln R_1=\ln\left(\frac{R_2}{R_1}\right)"))\
+        .di("Derecha: la suma de los pedacitos de temperatura; el menos voltea la resta.", M(r"-2\pi kL\int_{T_1}^{T_2}dT=-2\pi kL\,(T_2-T_1)=2\pi kL\,(T_1-T_2)"))\
         .di("Juntamos y despejamos hache.".replace("hache", dice("H", "hache")),
             M(r"H\ln\left(\frac{R_2}{R_1}\right) = 2\pi k L\,(T_1-T_2)"),
             R(r"H = \frac{2\pi k L\,(T_1-T_2)}{\ln(R_2/R_1)}", "ra"))
@@ -302,16 +317,23 @@ def q039() -> Leccion:
         .di(f"El tiempo para quinientos joules es calor entre flujo: {nu(t_500, 's', 3)}.",
             M(rf"t = \frac{{Q}}{{H}} = \frac{{500}}{{{tex(h1, 4)}}}"), R(rf"t = {tex(t_500, 3, u='s')}", "ra"))
     L.paso("B) Separar variables con área variable")\
-        .di("Como el eje equis va del foco frío al caliente, la temperatura sube con equis.", V(foco="dx"),
-            F(r"H = k A(x)\,\frac{dT}{dx} \;\Rightarrow\; \frac{H}{k}\frac{dx}{A(x)} = dT"))\
-        .di("Al invertir el área, el denominador pasa arriba y la integral queda polinomial.",
+        .di("Partimos de la ley de Fourier de la hoja. Como equis va del foco frío al caliente, la temperatura sube con equis y el signo solo indica el sentido.".replace("equis", dice("x", "equis")), V(foco="dx"),
+            F(r"H=-kA\,\frac{dT}{dx}"), M(r"H = k\,A(x)\,\frac{dT}{dx}"))\
+        .di("Separamos: multiplicamos por de equis y dividimos entre ka por el área.".replace("de equis", dice("dx", "de equis")).replace("entre ka", "entre " + dice("k", "ka")),
+            M(r"H\,dx=k\,A(x)\,dT\;\Rightarrow\;\frac{H}{k}\,\frac{dx}{A(x)} = dT"))\
+        .di("Uno entre el área: la fracción se da vuelta y queda un polinomio, fácil de integrar.",
             M(r"\frac{1}{A(x)} = \frac{1 + x/2{,}0}{0{,}01} = 100\left(1 + \frac{x}{2{,}0}\right)"),
             NOTA("Nota: aunque el texto dice 'se ensancha', la fórmula dada disminuye de $0{,}01$ a $0{,}005\\ \\text{m}^2$."))
-    L.paso("Integrar hasta el final y hasta la mitad")\
-        .di("Integramos en toda la barra para obtener la resistencia geométrica total.", V(foco="barrido"),
-            M(rf"I(2{{,}}00) = 100\int_0^{{2{{,}}00}}\left(1+\frac{{x}}{{2{{,}}0}}\right)dx = 100\left[x+\frac{{x^2}}{{4}}\right]_0^2 = {tex(I_tot, 3)}\ \text{{m}}^{{-1}}"))\
-        .di("Ahora integramos solo hasta la mitad, en un metro.", V(foco="punto"),
-            M(rf"I(1{{,}}00) = 100\left(1 + \frac{{1^2}}{{4}}\right) = {tex(I_mid, 3)}\ \text{{m}}^{{-1}}"))\
+    L.paso("B) Integrar en toda la barra")\
+        .di("Integral a los dos lados: equis de cero a dos metros y la temperatura de veinte a ochenta.".replace("equis", dice("x", "equis")), V(foco="barrido"),
+            M(r"\frac{H}{k}\int_0^{2{,}00}100\left(1+\frac{x}{2{,}0}\right)dx=\int_{20}^{80}dT=80-20=60"))\
+        .di("Un polinomio se integra término por término con la regla de la potencia: uno da equis; equis entre dos da equis cuadrado entre cuatro.".replace("da equis;", "da " + dice("x", "equis") + ";").replace("equis entre dos da equis cuadrado entre cuatro", dice("x/2 → x²/4", "equis entre dos da equis cuadrado entre cuatro")),
+            M(r"\int\left(1+\frac{x}{2}\right)dx=x+\frac{1}{2}\cdot\frac{x^2}{2}=x+\frac{x^2}{4}"), NOTA("Regla 1 de la lección **T-MAT2**."))\
+        .di("Arriba menos abajo.", M(rf"I(2{{,}}00)=100\left[x+\frac{{x^2}}{{4}}\right]_0^2=100\left[\left(2+\frac{{4}}{{4}}\right)-0\right]={tex(I_tot, 3)}\ \text{{m}}^{{-1}}"))
+    L.paso("B) Hasta la mitad y comparar")\
+        .di("Ahora solo hasta un metro, con la misma regla.", V(foco="punto"),
+            M(rf"I(1{{,}}00)=100\left[x+\frac{{x^2}}{{4}}\right]_0^1=100\left(1 + \frac{{1^2}}{{4}}\right) = {tex(I_mid, 3)}\ \text{{m}}^{{-1}}"),
+            M(r"\frac{H}{k}\,(125)=T(1)-20\qquad \frac{H}{k}\,(300)=80-20"))\
         .di("Dividiendo las dos integrales se cancelan hache y ka.",
             M(rf"\frac{{T(1)-20}}{{80-20}} = \frac{{125}}{{300}} = \frac{{5}}{{12}} \;\Rightarrow\; T(1) = 20 + 60\left(\frac{{5}}{{12}}\right)"),
             R(rf"T(1{{,}}00\ \text{{m}}) = {tex(t_mid, dec=1, u='°C')}", "rb"))\
@@ -367,12 +389,15 @@ def q041() -> Leccion:
         .di("El área transversal es un círculo de ese radio.", M(r"A = \pi r^2"), M(r"H = -k\,\pi r^2\,\frac{dT}{dy}"))
     L.paso("A) Cambiar la variable a r y separar")\
         .di("Derivamos el radio: así cambiamos de ye a erre.".replace("ye a erre", dice("y a r", "ye a erre")), M(r"dr=\frac{b-a}{h}\,dy\;\Rightarrow\;dy=\frac{h}{b-a}\,dr"))\
-        .di("Separamos: la geometría a la izquierda, la temperatura a la derecha.", M(r"H\,\frac{dy}{\pi r^2}=-k\,dT"))\
+        .di("Separamos: multiplicamos por de ye y dividimos entre pi erre cuadrado.".replace("de ye", dice("dy", "de ye")).replace("pi erre cuadrado", dice("πr²", "pi erre cuadrado")), M(r"H\,\frac{dy}{\pi r^2}=-k\,dT"))\
         .di("Ponemos de ye en términos de de erre.".replace("de ye", dice("dy", "de ye")).replace("de erre", dice("dr", "de erre")), M(r"\frac{Hh}{\pi(b-a)}\,\frac{dr}{r^2}=-k\,dT"))
-    L.paso("A) Integrar y despejar H")\
-        .di("Integramos de abajo hacia arriba.", V(foco="barrido"), M(r"\frac{Hh}{\pi(b-a)}\int_a^b\frac{dr}{r^2}=-k\int_{T_1}^{T_2}dT"))\
-        .di("La integral de uno entre erre cuadrado.".replace("erre", dice("r", "erre")), M(r"\int_a^b\frac{dr}{r^2}=\left[-\frac{1}{r}\right]_a^b=\frac{1}{a}-\frac{1}{b}=\frac{b-a}{ab}"))\
-        .di("La de la temperatura.", M(r"-k\int_{T_1}^{T_2}dT=-k\,(T_2-T_1)=k\,(T_1-T_2)"))\
+    L.paso("A) La integral de 1/r² (regla 1)")\
+        .di("Integramos de abajo hacia arriba: el radio va de a a be.".replace("a a be", dice("a a b", "a a be")), V(foco="barrido"), M(r"\frac{Hh}{\pi(b-a)}\int_a^b\frac{dr}{r^2}=-k\int_{T_1}^{T_2}dT"))\
+        .di("Uno entre erre cuadrado es erre a la menos dos; regla de la potencia: se suma uno y se divide.".replace("erre cuadrado", dice("r²", "erre cuadrado")).replace("erre a la menos dos", dice("r⁻²", "erre a la menos dos")),
+            M(r"\int r^{-2}\,dr=\frac{r^{-2+1}}{-2+1}=\frac{r^{-1}}{-1}=-\frac{1}{r}"), NOTA("Regla 1 de la lección **T-MAT2**."))\
+        .di("Arriba menos abajo; menos por menos da más. Luego, la resta con denominador común.", M(r"\int_a^b\frac{dr}{r^2}=\Big[-\frac{1}{r}\Big]_a^b=\left(-\frac{1}{b}\right)-\left(-\frac{1}{a}\right)=\frac{1}{a}-\frac{1}{b}=\frac{b-a}{ab}"))
+    L.paso("A) La derecha, juntar y despejar H")\
+        .di("La de la temperatura: la suma de los pedacitos.", M(r"-k\int_{T_1}^{T_2}dT=-k\,(T_2-T_1)=k\,(T_1-T_2)"))\
         .di("Juntamos: el factor be menos a se cancela.".replace("be menos a", dice("(b − a)", "be menos a")), M(r"\frac{Hh}{\pi(b-a)}\cdot\frac{b-a}{ab}=k\,(T_1-T_2)\;\Rightarrow\;\frac{Hh}{\pi ab}=k\,(T_1-T_2)"))\
         .di("Despejamos hache.".replace("hache", dice("H", "hache")), M(r"H = \frac{\pi k a b\,(T_1-T_2)}{h}", "fh", "azul"))
     L.paso("A) Sustituir los datos")\
@@ -446,12 +471,17 @@ def q043() -> Leccion:
             M(r"R(x) = R_0 - \frac{R_0-R_1}{L}\,x \qquad A(x) = \pi R(x)^2"))
     L.paso("A) Cambio de variable al radio")\
         .di("Derivamos el radio para pasar de equis a erre.".replace("equis a erre", dice("x a R", "equis a erre")), M(r"dR=-\frac{R_0-R_1}{L}\,dx\;\Rightarrow\;dx=-\frac{L}{R_0-R_1}\,dR"))\
-        .di("Separamos variables.", M(r"H_A\,\frac{dx}{\pi R^2}=-k_A\,dT"))\
+        .di("Separamos: multiplicamos por de equis y dividimos entre pi erre cuadrado.".replace("de equis", dice("dx", "de equis")).replace("pi erre cuadrado", dice("πR²", "pi erre cuadrado")), M(r"H_A\,\frac{dx}{\pi R^2}=-k_A\,dT"))\
         .di("Integramos toda la barra: cuando equis vale cero el radio es erre cero, y al final es erre uno.".replace("equis", dice("x", "equis")).replace("erre cero", dice("R₀", "erre cero")).replace("erre uno", dice("R₁", "erre uno")),
             M(r"H_A\int_0^L\frac{dx}{\pi R^2}=-k_A\int_{T_H}^{T_C}dT"))
-    L.paso("A) Resolver las integrales")\
-        .di("La de la izquierda, con el cambio de variable; el signo menos invierte los límites.",
-            M(r"\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi(R_0-R_1)}\int_{R_1}^{R_0}\frac{dR}{R^2}=\frac{L}{\pi(R_0-R_1)}\left(\frac{1}{R_1}-\frac{1}{R_0}\right)"))\
+    L.paso("A) La integral de la izquierda")\
+        .di("Ponemos de equis en términos de de erre. Los límites cambian: en equis cero el radio es erre cero; en equis ele, erre uno.".replace("de equis", dice("dx", "de equis")).replace("de erre", dice("dR", "de erre")).replace("equis cero", dice("x = 0", "equis cero")).replace("erre cero", dice("R₀", "erre cero")).replace("equis ele", dice("x = L", "equis ele")).replace("erre uno", dice("R₁", "erre uno")),
+            M(r"\int_0^L\frac{dx}{\pi R^2}=-\frac{L}{\pi(R_0-R_1)}\int_{R_0}^{R_1}\frac{dR}{R^2}"))\
+        .di("Un signo menos delante se quita dando vuelta a los límites.", M(r"=\frac{L}{\pi(R_0-R_1)}\int_{R_1}^{R_0}\frac{dR}{R^2}"))\
+        .di("Regla uno: uno entre erre cuadrado da menos uno entre erre. Arriba menos abajo.".replace("erre cuadrado", dice("R²", "erre cuadrado")).replace("entre erre.", "entre " + dice("R", "erre") + "."),
+            M(r"\int_{R_1}^{R_0}\frac{dR}{R^2}=\Big[-\frac{1}{R}\Big]_{R_1}^{R_0}=-\frac{1}{R_0}+\frac{1}{R_1}=\frac{1}{R_1}-\frac{1}{R_0}"), NOTA("Reglas 1 y 3 de la lección **T-MAT2**."))
+    L.paso("A) Simplificar, la derecha y despejar")\
+        .di("Juntamos lo anterior.", M(r"\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi(R_0-R_1)}\left(\frac{1}{R_1}-\frac{1}{R_0}\right)"))\
         .di("Como uno entre erre uno menos uno entre erre cero es la resta sobre el producto, se cancela.".replace("erre uno", dice("R₁", "erre uno")).replace("erre cero", dice("R₀", "erre cero")),
             M(r"\frac{1}{R_1}-\frac{1}{R_0}=\frac{R_0-R_1}{R_0R_1}\;\Rightarrow\;\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi R_0R_1}"))\
         .di("La de la derecha.", M(r"-k_A\int_{T_H}^{T_C}dT=k_A\,(T_H-T_C)"))\
@@ -493,10 +523,15 @@ def q044() -> Leccion:
         .di("El calor sale en dirección radial. Partimos de la ley de Fourier de la hoja.", V(foco="dr"), DATO("cascarón esférico"), F(r"H = -kA\,\frac{dT}{dr}", "f"))\
         .di("El área de una esfera de radio erre es cuatro pi erre cuadrado.".replace("radio erre", "radio " + dice("r", "erre")).replace("pi erre cuadrado", dice("4πr²", "pi erre cuadrado")),
             M(r"A=4\pi r^2\;\Rightarrow\;H = -k\,(4\pi r^2)\,\frac{dT}{dr}"))\
-        .di("Separamos e integramos una capa, de su radio interno al externo.",
+        .di("Separamos: multiplicamos por de erre y dividimos entre cuatro pi erre cuadrado.".replace("de erre", dice("dr", "de erre")).replace("cuatro pi erre cuadrado", dice("4πr²", "cuatro pi erre cuadrado")),
+            M(r"H\,dr=-4\pi k\,r^2\,dT\;\Rightarrow\;H\,\frac{dr}{r^2}=-4\pi k\,dT"))
+    L.paso("Integrar una capa")\
+        .di("Integral a los dos lados, del radio interno al externo de la capa.",
             M(r"H\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{r^2} = -4\pi k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT"))\
-        .di("La integral de uno entre erre cuadrado es la resta de inversos.".replace("erre", dice("r", "erre")),
-            M(r"H\left(\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}\right)=4\pi k\,(T_{\text{int}}-T_{\text{ext}})"))
+        .di("Regla uno: uno entre erre cuadrado da menos uno entre erre. Arriba menos abajo.".replace("erre cuadrado", dice("r²", "erre cuadrado")).replace("entre erre.", "entre " + dice("r", "erre") + "."),
+            M(r"\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{r^2}=\Big[-\frac{1}{r}\Big]_{r_{\text{int}}}^{r_{\text{ext}}}=\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}"), NOTA("Regla 1 de la lección **T-MAT2**."))\
+        .di("Derecha: la suma de pedacitos de temperatura; el menos voltea la resta.", M(r"-4\pi k\,(T_{\text{ext}}-T_{\text{int}})=4\pi k\,(T_{\text{int}}-T_{\text{ext}})"))\
+        .di("Juntamos.", M(r"H\left(\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}\right)=4\pi k\,(T_{\text{int}}-T_{\text{ext}})"))
     L.paso("Factor geométrico de cada capa")\
         .di("Despejamos la caída de temperatura de una capa.", M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}}{4\pi k}"))\
         .di("Para no arrastrar la fracción, llamamos R uno y R dos a ese factor en cada capa.",
@@ -639,7 +674,8 @@ def q050() -> Leccion:
         .di("Ponemos la conductividad de esa altura.", M(r"H=-(200+1000y)\,A\,\frac{dT}{dy}"))\
         .por_que("En estado estacionario el mismo flujo $H$ cruza todas las capas; lo que cambia de capa en capa es la caída de temperatura.")
     L.paso("A) Separar variables")\
-        .di("Todo lo que tiene ye a la izquierda y la temperatura a la derecha.".replace("ye", s("y")), M(r"\frac{H}{A}\cdot\frac{dy}{200+1000y}=-dT"))\
+        .di("Separamos: multiplicamos por de ye y dividimos entre el área y entre la conductividad de esa altura.".replace("de ye", dice("dy", "de ye")),
+            M(r"H\,dy=-(200+1000y)\,A\,dT\;\Rightarrow\;\frac{H}{A}\cdot\frac{dy}{200+1000y}=-dT"), NOTA("Receta en la lección **T-MAT3**; la integral de la izquierda es la regla 3 de **T-MAT2**."))\
         .di("Integramos de cero a de, y de trescientos a cien grados.".replace("a de,", "a " + dice("d", "de") + ","), M(r"\frac{H}{A}\int_0^{0{,}0200}\frac{dy}{200+1000y}=-\int_{300}^{100}dT", "int", "azul"))\
         .di("La de la derecha es fácil: menos cien menos trescientos, con el signo de afuera da doscientos.", M(r"-\int_{300}^{100}dT=-(100-300)=200"))
     L.paso("A) La integral de la izquierda: cambio de variable")\
@@ -789,10 +825,15 @@ def q055() -> Leccion:
         .di("Partimos de la ley de Fourier de la hoja, en dirección radial.", V(foco="dr"), F(r"H = -kA\,\frac{dT}{dr}"))\
         .di("Es la mitad de un tubo: el área a un radio erre es la mitad de dos pi erre ele.".replace("radio erre", "radio " + dice("r", "erre")).replace("dos pi erre ele", dice("2πrL", "dos pi erre ele")),
             M(r"A(r) = \frac{1}{2}(2\pi r L) = \pi r L"), M(r"H = -k(\pi r L)\,\frac{dT}{dr}"))
-    L.paso("Separar variables e integrar")\
-        .di("El radio a un lado, la temperatura al otro.", M(r"H\,\frac{dr}{r} = -\pi kL\,dT"))\
-        .di("Integramos del radio interno al externo.", V(foco="barrido"), M(r"H\int_a^b \frac{dr}{r} = -\pi k L\int_{T_a}^{T_b}dT"))\
-        .di("Sale un logaritmo a la izquierda y la resta de temperaturas a la derecha.", M(r"H\ln\left(\frac{b}{a}\right)=\pi kL\,(T_a-T_b)"))\
+    L.paso("Separar variables")\
+        .di("El radio a un lado, la temperatura al otro. Paso uno: multiplicar por de erre.".replace("de erre", dice("dr", "de erre")), M(r"H\,dr=-k\,(\pi rL)\,dT"))\
+        .di("Paso dos: dividir entre erre.".replace("entre erre", "entre " + dice("r", "erre")), M(r"H\,\frac{dr}{r} = -\pi kL\,dT"), NOTA("Receta en la lección **T-MAT3**."))\
+        .di("Integral a los dos lados, del radio interno al externo.", V(foco="barrido"), M(r"H\int_a^b \frac{dr}{r} = -\pi k L\int_{T_a}^{T_b}dT"))
+    L.paso("Resolver las integrales")\
+        .di("Izquierda: regla dos, uno entre erre da logaritmo; la resta de logaritmos es el logaritmo de la división.".replace("entre erre", "entre " + dice("r", "erre")),
+            M(r"\int_a^b\frac{dr}{r}=\Big[\ln r\Big]_a^b=\ln b-\ln a=\ln\frac{b}{a}"))\
+        .di("Derecha: la suma de los pedacitos de temperatura; el menos voltea la resta.", M(r"-\pi kL\int_{T_a}^{T_b}dT=-\pi kL\,(T_b-T_a)=\pi kL\,(T_a-T_b)"))\
+        .di("Juntamos.", M(r"H\ln\left(\frac{b}{a}\right)=\pi kL\,(T_a-T_b)"))\
         .di("Despejamos hache.".replace("hache", dice("H", "hache")), M(r"H = \frac{\pi k L\,(T_a-T_b)}{\ln(b/a)}"))
     L.paso("Sustituir los datos")\
         .di("Sustituimos.", V(foco="flujo"), M(r"H = \frac{\pi(238{,}0)(0{,}1)(80-20)}{\ln(1{,}0/0{,}2)}"))\
@@ -828,19 +869,24 @@ def _esfera_kr(q: str, aviso: str = "") -> Leccion:
         .di("Tomamos un cascarón de radio erre y grosor de erre.".replace("radio erre", "radio " + dice("r", "erre")).replace("grosor de erre", "grosor " + dice("dr", "de erre")), V(foco="dr"), F(r"H=-kA\frac{dT}{dr}"))\
         .di("El área de una esfera es cuatro pi erre cuadrado.", M(r"A=4\pi r^2"))\
         .di("Ponemos el área y la conductividad.", M(r"H=-(k_0r)(4\pi r^2)\frac{dT}{dr}"), M(r"H=-4\pi k_0\,r^3\,\frac{dT}{dr}", "f", "azul"))
-    L.paso("(a) Separar variables e integrar")\
-        .di("Pasamos el erre al cubo con de erre, y la temperatura al otro lado.".replace("de erre", dice("dr", "de erre")), M(r"H\,\frac{dr}{r^3}=-4\pi k_0\,dT"))\
-        .di("Integramos de adentro hacia afuera.", M(r"H\int_{0{,}150}^{0{,}600}\frac{dr}{r^3}=-4\pi k_0\int_{20}^{100}dT"))\
-        .di("La integral de erre a la menos tres es menos uno entre dos erre cuadrado.", M(r"\int\frac{dr}{r^3}=\int r^{-3}\,dr=\frac{r^{-2}}{-2}=-\frac{1}{2r^2}"))\
-        .despacio((r"\int r^{-3}\,dr", "se suma 1 al exponente: $-3+1=-2$"), (r"=\frac{r^{-2}}{-2}", "y se divide entre el exponente nuevo"), (r"=-\frac{1}{2r^2}", "se escribe con el exponente positivo"))
+    L.paso("(a) Separar variables")\
+        .di("Separar: paso uno, multiplicar los dos lados por de erre.".replace("de erre", dice("dr", "de erre")), M(r"H\,dr=-4\pi k_0\,r^3\,dT"))\
+        .di("Paso dos: dividir los dos lados entre erre al cubo.".replace("erre al cubo", dice("r³", "erre al cubo")), M(r"H\,\frac{dr}{r^3}=-4\pi k_0\,dT"), NOTA("Receta en la lección **T-MAT3**."))\
+        .di("Integral a los dos lados, de adentro hacia afuera.", M(r"H\int_{0{,}150}^{0{,}600}\frac{dr}{r^3}=-4\pi k_0\int_{20}^{100}dT"))
+    L.paso("(a) La integral de 1/r³ (regla 1)")\
+        .di("Uno entre erre al cubo es erre a la menos tres.".replace("erre al cubo", dice("r³", "erre al cubo")).replace("erre a la menos tres", dice("r⁻³", "erre a la menos tres")), M(r"\frac{1}{r^3}=r^{-3}"))\
+        .di("Regla de la potencia: se suma uno al exponente, menos tres más uno es menos dos, y se divide entre menos dos.",
+            M(r"\int r^{-3}\,dr=\frac{r^{-3+1}}{-3+1}=\frac{r^{-2}}{-2}"))\
+        .di("Se escribe con el exponente positivo.", M(r"\frac{r^{-2}}{-2}=-\frac{1}{2r^2}"), NOTA("Regla 1 de la lección **T-MAT2**."))
     L.paso("(a) Evaluar y despejar H")\
-        .di("Evaluamos entre los dos radios.", M(r"\left[-\frac{1}{2r^2}\right]_{0{,}150}^{0{,}600}=\frac{1}{2}\left(\frac{1}{0{,}150^2}-\frac{1}{0{,}600^2}\right)"), M(rf"=\frac{{1}}{{2}}(44{{,}}44-2{{,}}78)={tex(denom / 2, 4)}\ \text{{m}}^{{-2}}"))\
-        .di("Del otro lado, ochenta grados.", M(r"-4\pi k_0(100-20)=-4\pi(1{,}50)(80)"))\
+        .di("Arriba menos abajo. Menos por menos da más.", M(r"\Big[-\frac{1}{2r^2}\Big]_{0{,}150}^{0{,}600}=\left(-\frac{1}{2(0{,}600)^2}\right)-\left(-\frac{1}{2(0{,}150)^2}\right)=\frac{1}{2}\left(\frac{1}{0{,}150^2}-\frac{1}{0{,}600^2}\right)"),
+            M(rf"=\frac{{1}}{{2}}(44{{,}}44-2{{,}}78)={tex(denom / 2, 4)}\ \text{{m}}^{{-2}}"))\
+        .di("Del otro lado, la suma de pedacitos de temperatura: ochenta grados.", M(r"-4\pi k_0\int_{20}^{100}dT=-4\pi k_0(100-20)=-4\pi(1{,}50)(80)"))\
         .di("Despejamos.", M(rf"H=\frac{{-4\pi(1{{,}}50)(80)}}{{{tex(denom / 2, 4)}}}"), R(rf"H={tex(-H, 3)}\ \text{{W}}\quad(|H|={tex(H, 3, u='W')})", "ra"))\
         .di("Sale negativo porque el calor va hacia el centro, contra el sentido de erre.", NOTA("El signo menos solo dice la dirección: el calor entra."))
     L.paso("(b) Temperatura a 30 cm")\
-        .di("Integramos desde adentro hasta treinta centímetros.", V(foco="punto"), M(r"H\int_{0{,}150}^{0{,}300}\frac{dr}{r^3}=-4\pi k_0\,(T-20)"))\
-        .di("La integral.", M(r"\frac{1}{2}\left(\frac{1}{0{,}150^2}-\frac{1}{0{,}300^2}\right)=\frac{1}{2}(44{,}44-11{,}11)=16{,}67"))\
+        .di("Repetimos la integral desde adentro hasta treinta centímetros.", V(foco="punto"), M(r"H\int_{0{,}150}^{0{,}300}\frac{dr}{r^3}=-4\pi k_0\int_{20}^{T}dT=-4\pi k_0\,(T-20)"))\
+        .di("La integral, con la misma regla, arriba menos abajo.", M(r"\Big[-\frac{1}{2r^2}\Big]_{0{,}150}^{0{,}300}=\frac{1}{2}\left(\frac{1}{0{,}150^2}-\frac{1}{0{,}300^2}\right)=\frac{1}{2}(44{,}44-11{,}11)=16{,}67"))\
         .di("Despejamos te.".replace("te", s("T")), M(rf"T=20-\frac{{H(16{{,}}67)}}{{4\pi(1{{,}}50)}}=20-\frac{{({tex(-H, 3)})(16{{,}}67)}}{{18{{,}}85}}"))\
         .di(f"Da {nu(tm, '°C', dec=1)}.", R(rf"T(0{{,}}300\ \text{{m}})={tex(tm, dec=1)}\ ^\circ\text{{C}}={tex(tm + 273.15, dec=2)}\ \text{{K}}", "rb"))
     L.responde("a", rf"|H|={tex(H, 3)}\ \text{{W}}", H, "W").responde("b", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
@@ -868,12 +914,14 @@ def q058() -> Leccion:
         .di("Derivamos la altura para cambiar de variable.", M(r"dy=\frac{A-B}{L}\,dx\;\Rightarrow\;dx = \frac{L}{A-B}\,dy"))
     L.paso("Fourier y separar variables")\
         .di("Partimos de la ley de Fourier de la hoja.", F(r"H = -kA\,\frac{dT}{dx}"), M(r"H = -k_0\,(C y)\,\frac{dT}{dx}"))\
-        .di("Separamos: la geometría a la izquierda.", M(r"H\,\frac{dx}{C\,y}=-k_0\,dT"))\
+        .di("Separamos: multiplicamos por de equis y dividimos entre la profundidad por la altura.".replace("de equis", dice("dx", "de equis")), M(r"H\,dx=-k_0\,(C\,y)\,dT\;\Rightarrow\;H\,\frac{dx}{C\,y}=-k_0\,dT"))\
         .di("Ponemos de equis en términos de de ye.".replace("de equis", dice("dx", "de equis")).replace("de ye", dice("dy", "de ye")), M(r"\frac{HL}{C(A-B)}\,\frac{dy}{y}=-k_0\,dT"))
     L.paso("Integrar y despejar H")\
         .di("Integramos de un extremo al otro: la altura va de B a A y la temperatura de cien a cero.", V(foco="barrido"),
             M(r"\frac{HL}{C(A-B)}\int_B^A\frac{dy}{y}=-k_0\int_{100}^{0}dT"))\
-        .di("Las dos integrales.", M(r"\int_B^A\frac{dy}{y}=\ln\left(\frac{A}{B}\right)\qquad -k_0\int_{100}^{0}dT=-k_0(0-100)=100\,k_0"))\
+        .di("Izquierda: regla dos, uno entre ye da logaritmo; la resta de logaritmos es el logaritmo de la división.".replace("entre ye", "entre " + dice("y", "ye")),
+            M(r"\int_B^A\frac{dy}{y}=\Big[\ln y\Big]_B^A=\ln A-\ln B=\ln\left(\frac{A}{B}\right)"))\
+        .di("Derecha: la suma de los pedacitos de temperatura.", M(r"-k_0\int_{100}^{0}dT=-k_0(0-100)=100\,k_0"))\
         .di("Juntamos.", M(r"\frac{HL}{C(A-B)}\ln\left(\frac{A}{B}\right) = 100\,k_0"))\
         .di("Despejamos el flujo de calor.", R(r"H = \frac{100\,k_0 C\,(A-B)}{L\ln(A/B)}", "ra"))
     L.responde("", r"H=\frac{100\,k_0 C(A-B)}{L\ln(A/B)}", None, "")
@@ -898,11 +946,19 @@ def q059() -> Leccion:
     L.paso("Integrar Fourier en las dos capas cilíndricas")\
         .di("Los radios son cinco, cinco coma cinco y ocho coma cinco centímetros.", DATO("5.00 cm"),
             LISTA(["$r_1=0{,}0500$ m, $r_2=0{,}0550$ m, $r_3=0{,}0850$ m", "$k_{\\text{acero}}=50{,}2$, $k_{\\text{caucho}}=0{,}160$ W/(m·K)"]))\
-        .di("Partimos de Fourier diferencial con el área lateral cilíndrica dos pi erre ele, integramos y definimos el factor geométrico de cada capa.", V(foco="dr"),
-            F(r"H = -k(2\pi r L)\frac{dT}{dr} \;\Rightarrow\; H\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{2\pi r L} = -k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT"),
-            M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\ln(r_{\text{ext}}/r_{\text{int}})}{2\pi k L}"),
-            M(rf"R_1 = \frac{{\ln(5{{,}}5/5{{,}}0)}}{{2\pi(50{{,}}2)(1{{,}}0)}} = {tex(R1, 4, u='K/W', sci='si')}"),
-            M(rf"R_2 = \frac{{\ln(8{{,}}5/5{{,}}5)}}{{2\pi(0{{,}}160)(1{{,}}0)}} = {tex(R2, 4, u='K/W')}"))
+        .di("Partimos de la ley de Fourier de la hoja con el área lateral del cilindro.", V(foco="dr"), F(r"H=-kA\,\frac{dT}{dr}"), M(r"H = -k\,(2\pi r L)\,\frac{dT}{dr}"))\
+        .di("Separamos: multiplicamos por de erre y dividimos entre dos pi erre ele.".replace("de erre", dice("dr", "de erre")).replace("dos pi erre ele", dice("2πrL", "dos pi erre ele")),
+            M(r"H\,\frac{dr}{2\pi rL}=-k\,dT"), NOTA("Receta en la lección **T-MAT3**."))
+    L.paso("Integrar una capa")\
+        .di("Integral a los dos lados, del radio interno al externo de la capa.", M(r"\frac{H}{2\pi L}\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{r} = -k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT"))\
+        .di("Izquierda: regla dos, logaritmo. Derecha: la suma de los pedacitos de temperatura.",
+            M(r"\Big[\ln r\Big]_{r_{\text{int}}}^{r_{\text{ext}}}=\ln\frac{r_{\text{ext}}}{r_{\text{int}}}\qquad -k\,(T_{\text{ext}}-T_{\text{int}})=k\,(T_{\text{int}}-T_{\text{ext}})"))\
+        .di("Despejamos la caída de temperatura de la capa: hache por un factor que llamamos erre.".replace("hache", dice("H", "hache")).replace("llamamos erre", "llamamos " + dice("R", "erre")),
+            M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\ln(r_{\text{ext}}/r_{\text{int}})}{2\pi k L}=H\,R"))
+    L.paso("El factor de cada capa")\
+        .di("Acero y caucho.", M(rf"R_1 = \frac{{\ln(5{{,}}5/5{{,}}0)}}{{2\pi(50{{,}}2)(1{{,}}0)}} = {tex(R1, 4, u='K/W', sci='si')}"),
+            M(rf"R_2 = \frac{{\ln(8{{,}}5/5{{,}}5)}}{{2\pi(0{{,}}160)(1{{,}}0)}} = {tex(R2, 4, u='K/W')}"))\
+        .di("En serie el mismo hache cruza las dos capas y las caídas se suman.".replace("hache", dice("H", "hache")), M(r"T_1-T_3=H\,(R_1+R_2)"))
     L.paso("(a) y (b) Flujo y temperatura en la interfaz")\
         .di(f"El flujo total sale {nu(H, 'W', 4)}.", V(foco="perfil"),
             M(rf"H = \frac{{T_1-T_3}}{{R_1+R_2}} = \frac{{125{{,}}0-40{{,}}0}}{{{tex(R1 + R2, 4)}}}"),
@@ -911,7 +967,9 @@ def q059() -> Leccion:
             M(rf"T_2 = 125{{,}}0 - H R_1 = 125{{,}}0 - {tex(H * R1, 3)}"),
             R(rf"T_2 = {tex(t2, dec=2, u='°C')}", "ra"))
     L.paso("(c) Perfil T(r) dentro del caucho")\
-        .di("Integramos dentro del caucho desde la interfaz hasta un radio erre cualquiera.", V(foco="listo"),
+        .di("Repetimos la integral dentro del caucho, desde la interfaz hasta un radio erre cualquiera.".replace("radio erre", "radio " + dice("r", "erre")), V(foco="listo"),
+            M(r"\frac{H}{2\pi L}\int_{r_2}^{r}\frac{dr}{r}=-k_2\int_{T_2}^{T}dT\;\Rightarrow\;\frac{H}{2\pi L}\ln\frac{r}{r_2}=-k_2\,(T-T_2)"))\
+        .di("Despejamos te de erre.".replace("te de erre", dice("T(r)", "te de erre")),
             M(r"T(r) = T_2 - \frac{H}{2\pi k_2 L}\ln\left(\frac{r}{r_2}\right)"),
             R(rf"T(r) = {tex(t2, dec=2)} - {tex(coef_ln, 4)}\ln\left(\frac{{r}}{{0{{,}}0550\ \text{{m}}}}\right)\ ^\circ\text{{C}}", "rc"))
     L.responde("a", rf"T_2={tex(t2, dec=2)}\ ^\circ\text{{C}}", t2, "°C").responde("b", rf"H={tex(H, 4)}\ \text{{W}}", H, "W")
@@ -946,9 +1004,18 @@ def q061() -> Leccion:
             M(rf"b = 73{{,}}2 - ({tex(m, 4)})(293) = {tex(b, 3, u='W/(m·K)')}"),
             R(rf"k(T) = {tex(m, 3)}\,T + {tex(b, 3)}\ \ \text{{W/(m}}\cdot\text{{K)}}", "ra"))
     L.paso("(b) Integrar k(T) dT con el área en m²")\
-        .di("Separamos variables: el área es tres coma veinticinco por diez a la menos cuatro metros cuadrados.", V(foco="barrido"),
-            F(r"H\int_0^L dx = A\int_{293}^{573}(mT+b)\,dT"))\
-        .di("Para una función lineal, la integral es simplemente la conductividad promedio por delta te.",
+        .di("Partimos de la ley de Fourier de la hoja; ahora ka depende de la temperatura.".replace("ka depende", dice("k", "ka") + " depende"), V(foco="barrido"),
+            F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k(T)\,A\,\frac{dT}{dx}"))\
+        .di("Separamos: multiplicamos por de equis. Ka queda del lado de la temperatura, porque depende de te.".replace("de equis", dice("dx", "de equis")).replace("Ka queda", dice("k", "Ka") + " queda").replace("de te", "de " + dice("T", "te")),
+            M(r"H\,dx=-A\,k(T)\,dT"))\
+        .di("Integramos: equis de cero a ele, la temperatura del extremo caliente al frío. El menos da vuelta a los límites.".replace("equis", dice("x", "equis")).replace("a ele", "a " + dice("L", "ele")),
+            M(r"H\int_0^L dx=-A\int_{573}^{293}(mT+b)\,dT\;\Rightarrow\;H\,L = A\int_{293}^{573}(mT+b)\,dT"))
+    L.paso("(b) La integral de una recta (regla 1)")\
+        .di("Término por término con la regla de la potencia: eme te da eme te cuadrado entre dos; be da be te.".replace("eme te da eme te cuadrado entre dos", dice("mT → mT²/2", "eme te da eme te cuadrado entre dos")).replace("be da be te", dice("b → bT", "be da be te")),
+            M(r"\int(mT+b)\,dT=\frac{m\,T^2}{2}+b\,T"), NOTA("Regla 1 de la lección **T-MAT2**."))\
+        .di("Arriba menos abajo, y sacamos la resta de temperaturas como factor común.",
+            M(r"\Big[\frac{mT^2}{2}+bT\Big]_{293}^{573}=\frac{m}{2}\left(573^2-293^2\right)+b\,(573-293)=(573-293)\left[m\,\frac{573+293}{2}+b\right]"))\
+        .di("El corchete es la conductividad a la temperatura del medio, que es el promedio de los dos extremos porque k es una recta.".replace("k es", dice("k", "ka") + " es"),
             M(rf"k_{{\text{{prom}}}} = \frac{{73{{,}}2 + 54{{,}}0}}{{2}} = {tex(k_prom, 3)}\ \text{{W/(m}}\cdot\text{{K)}}"),
             M(rf"H = \frac{{A\,k_{{\text{{prom}}}}\,\Delta T}}{{L}} = \frac{{(3{{,}}25\times 10^{{-4}})({tex(k_prom, 3)})(280)}}{{0{{,}}742}}"))\
         .di(f"El flujo real es {nu(H, 'W', 3)}.", R(rf"H = {tex(H, 3, u='W')}", "rb"))

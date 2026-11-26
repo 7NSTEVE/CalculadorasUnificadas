@@ -5,7 +5,7 @@ from __future__ import annotations
 from .ayudas import SIGMA, T0, revisar_opciones
 from .banco_recomendados import _filamento
 from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, V
-from .formato import n, nu, tex
+from .formato import dice, n, nu, tex
 from .indice_superexamen import fuente, nivel, tema
 from .registro import leccion
 
@@ -214,7 +214,11 @@ def q070() -> Leccion:
             F(r"H_{\text{neto}} = A e \sigma\,(T^4 - T_s^4)"),
             M(rf"H_{{\text{{neto}}}} = ({tex(A, 3)})(1)(5{{,}}67\times 10^{{-8}})(373{{,}}15^4 - 298{{,}}15^4) = {tex(H, 4, u='W')}"))
     L.paso("Relacionar H con dT/dt")\
-        .di("El calor perdido en cada segundo enfría el agua según eme ce de te en de te.",
+        .di("Partimos del calor sensible de la hoja, para un pedacito de tiempo: el agua pierde de Q y baja de te.".replace("de Q", dice("dQ", "de Q")).replace("de te.", dice("dT.", "de te.")),
+            F(r"Q=mc\,\Delta T\;\Rightarrow\;dQ=mc\,dT"))\
+        .di("Dividimos los dos lados entre de te chiquita: calor por segundo igual a eme ce por grados por segundo.".replace("de te chiquita", dice("dt", "de te chiquita")).replace("eme ce", dice("mc", "eme ce")),
+            M(r"\frac{dQ}{dt}=mc\,\frac{dT}{dt}"), NOTA("$dT/dt$ es la rapidez con que cambia la temperatura: grados por segundo (lección **T-MAT1**)."))\
+        .di("Lo que sale por radiación es lo que pierde el agua: por eso el signo menos. Despejamos la rapidez.",
             F(r"H_{\text{neto}} = -m c\frac{dT}{dt} \;\Rightarrow\; \left|\frac{dT}{dt}\right| = \frac{H_{\text{neto}}}{m c}"))\
         .di(f"Dividimos entre ocho kilos por cuatro mil ciento noventa: da {nu(tasa, 'K/s', 3)}.",
             M(rf"\left|\frac{{dT}}{{dt}}\right| = \frac{{{tex(H, 4)}}}{{(8{{,}}00)(4190)}}"),

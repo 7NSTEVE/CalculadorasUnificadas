@@ -87,7 +87,9 @@ def t_con() -> Leccion:
         .pregunta_rapida("Si la pared fuera el doble de gruesa, el flujo sería…", ["La mitad", "El doble"], 0, "$L$ está dividiendo.")
     L.paso("Cuando algo cambia: la fórmula de Fourier")\
         .di("Si el área o la conductividad cambian por el camino, se usa la versión con derivada.", V(foco="dr"), F(r"H=-kA\,\frac{dT}{dx}"))\
-        .di("La receta siempre es la misma.", LISTA(["Escribir $A$ (y $k$) en función de $x$ o de $r$", "Separar: $H\\,\\frac{dx}{kA}=-dT$", "Integrar los dos lados", "Despejar $H$"]))\
+        .di("La receta siempre es la misma. Si nunca ha visto integrales, antes vea las tres lecciones de cálculo desde cero.",
+            LISTA(["Escribir $A$ (y $k$) en función de $x$ o de $r$", "Separar: $H\\,\\frac{dx}{kA}=-dT$", "Integrar los dos lados", "Despejar $H$"]),
+            NOTA("Cálculo desde cero: **T-MAT1** (pendiente e integral), **T-MAT2** (las integrales del parcial), **T-MAT3** (separar variables)."))\
         .di("En un tubo el área es la pared lateral; en una esfera, toda la superficie.", M(r"A_{\text{tubo}}=2\pi rL\qquad A_{\text{esfera}}=4\pi r^2"))
     L.paso("Ojo con las fórmulas de tubo y esfera")\
         .di("Al integrar en un tubo sale un logaritmo, y en una esfera, uno entre erre.".replace("uno entre erre", dice("1/r", "uno entre erre")), M(r"H_{\text{tubo}}=\frac{2\pi kL\,(T_1-T_2)}{\ln(r_2/r_1)}"))\
