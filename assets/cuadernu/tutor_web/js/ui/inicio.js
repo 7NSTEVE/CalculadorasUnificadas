@@ -8,6 +8,7 @@ const ICO = {
   libro: 'M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V3Zm3 13a1 1 0 0 0 0 2h9v-2H8ZM8 6v2h8V6H8Zm0 4v2h6v-2H8Z',
   reloj: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v4.6l3.5 2.1-1 1.7L11 12.8V7h2Z',
   hoja: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 7V3.5L18.5 9H13Z',
+  formula: 'M4 4h16v3H9.2l4.8 5-4.8 5H20v3H4v-2.6L9.4 12 4 6.6V4Z',
   idea: 'M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2ZM9 19h6v1.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 20.5V19Z',
 };
 
@@ -72,8 +73,9 @@ export class Inicio {
       const nEj = banco.lecciones.filter((l) => l.tipo !== 'teoria').length;
       acc.append(
         boton('acceso', `${svg(ICO.libro)}<span><strong>Banco de ejercicios</strong><small>${nEj} resueltos paso a paso</small></span>`, () => acciones.biblioteca()),
-        boton('acceso', `${svg(ICO.hoja)}<span><strong>Abrir PDF o imagen</strong><small>También puedes pegar con Ctrl+V</small></span>`, () => acciones.adjuntar()),
+        boton('acceso', `${svg(ICO.formula)}<span><strong>Estudiar el formulario</strong><small>42 casillas: uso, trampas y patrones</small></span>`, () => acciones.estudiarFormulario()),
         boton('acceso', `${svg(ICO.reloj)}<span><strong>Simulacro II-2026</strong><small>Predictivo (17 pts) o rápido</small></span>`, () => acciones.simulacro()),
+        boton('acceso', `${svg(ICO.hoja)}<span><strong>Abrir PDF o imagen</strong><small>También puedes pegar con Ctrl+V</small></span>`, () => acciones.adjuntar()),
         boton('acceso', `${svg(ICO.idea)}<span><strong>Preguntar lo que sea</strong><small>Cualquier materia</small></span>`, () => acciones.preguntar()),
       );
       caja.appendChild(acc);

@@ -16,6 +16,7 @@ from fastapi.responses import Response
 from .fisica3 import registro, rutas, simbolos, variantes
 from .fisica3.dsl import revisar
 from .fisica3.formulario_ii_2026 import catalogo_formulario, mapear_formulario_leccion
+from .fisica3.guia_formulario_ii_2026 import guia_completa
 from .documentos import MAX_PDF
 from .pdf_rag import fold_accents
 from .verificador_fisico import auditar_leccion
@@ -229,6 +230,11 @@ def crear_router(
         for c in cat.get("celdas") or []:
             c["simbolos"] = simbolos.simbolos_de(c.get("tex", ""), simbolos.grupo_celda(c.get("id", "")))
         return cat
+
+    @r.get("/formulario/guia")
+    async def api_formulario_guia(request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+        return await asyncio.to_thread(guia_completa)
 
     @r.get("/formulario/hoja.png")
     async def api_formulario_hoja(request: Request) -> Response:

@@ -11,6 +11,7 @@ import { Reproductor, miniPaso, tintaDe } from './leccion/reproductor.js';
 import { Lateral } from './ui/lateral.js';
 import { Inicio } from './ui/inicio.js';
 import { Biblioteca } from './ui/biblioteca.js';
+import { EstudioFormulario } from './ui/formulario_estudio.js';
 import { armarAjustes } from './ui/ajustes.js';
 import { banco, cargarBanco, idDeTexto, textoFuente } from './ui/banco.js';
 import { ponerCierre, ponerPregunta } from './ui/cierre.js';
@@ -36,13 +37,18 @@ function verVista(v) {
   document.body.dataset.vista = v;
   $('vista-inicio').hidden = v !== 'inicio';
   $('vista-biblioteca').hidden = v !== 'biblioteca';
+  $('vista-formulario').hidden = v !== 'formulario';
   $('vista-pizarra').hidden = v !== 'pizarra';
   $('transporte').hidden = v !== 'pizarra' || !rep.lec;
   $('progreso').hidden = v !== 'pizarra' || !rep.lec || rep.total < 2;
   if (v !== 'pizarra') {
     document.body.classList.remove('enfoque');
     $('btn-enfoque').setAttribute('aria-pressed', 'false');
-    $('titulo').textContent = v === 'biblioteca' ? 'Banco de ejercicios' : 'Pizarra del profesor';
+    $('titulo').textContent = v === 'biblioteca'
+      ? 'Banco de ejercicios'
+      : v === 'formulario'
+        ? 'Estudio del formulario oficial'
+        : 'Pizarra del profesor';
     $('subtitulo-barra').textContent = '';
     $('subtitulo').hidden = true;
   }
@@ -116,6 +122,12 @@ const acciones = {
     verVista('inicio');
     return simulacro.abrir();
   },
+  estudiarFormulario: (celdaId = null, modo = null) => {
+    if (rep.estado === 'hablando') rep.pausar();
+    asistente.callar();
+    verVista('formulario');
+    return estudioFormulario.abrir({ celda: celdaId, modo });
+  },
   preguntar: () => { aPizarra(); $('pregunta').focus(); },
   cambioVoz: () => { rep.motorLec = null; if (rep.lec && ['hablando', 'pausado'].includes(rep.estado)) rep.irA(rep.i, { reproducir: rep.estado === 'hablando' }); },
   cambioModelo: (m) => enviar({ type: 'UPDATE_SETTINGS', visual_model: m }),
@@ -137,7 +149,9 @@ const lapiz = new Lapiz({ tablero, rep, asistente, acciones, svg: $('capa-lapiz'
 const simulacro = new Simulacro({ el: $('vista-inicio'), acciones });
 const inicio = new Inicio($('vista-inicio'), acciones);
 const biblioteca = new Biblioteca($('vista-biblioteca'), acciones);
+const estudioFormulario = new EstudioFormulario({ el: $('vista-formulario'), acciones });
 armarAjustes($('ajustes'), acciones);
+bus.on('formulario:estudiar', ({ celdaId = null, modo = null } = {}) => acciones.estudiarFormulario(celdaId, modo));
 
 /* ------------------------------------------------------------------ estado de la lección */
 
@@ -365,4 +379,4 @@ const pedida = new URLSearchParams(window.location.search).get('leccion');
 })();
 
 /* Gancho de pruebas: no se usa en la aplicación */
-window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema };
+window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario };

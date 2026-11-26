@@ -297,12 +297,28 @@ export class Lateral {
           : `${n} celdas marcadas por color`;
       info.append(tit, sub);
 
+      const accCab = document.createElement('div');
+      accCab.className = 'form-cab-acc';
+
+      const btnEst = document.createElement('button');
+      btnEst.type = 'button';
+      btnEst.className = 'btn btn-suave form-btn-zoom';
+      btnEst.textContent = 'Estudiar';
+      btnEst.title = 'Abrir la guía interactiva de esta fórmula';
+      btnEst.addEventListener('click', () => {
+        const pasoIds = (mapa.por_paso && mapa.por_paso[this.pasoActual]) || [];
+        const celdaId = pasoIds[0] || (mapa.celdas[0] && mapa.celdas[0].id) || null;
+        bus.emit('formulario:estudiar', { celdaId });
+      });
+
       const btnZoom = document.createElement('button');
       btnZoom.type = 'button';
       btnZoom.className = 'btn btn-suave form-btn-zoom';
       btnZoom.textContent = 'Ampliar';
       btnZoom.addEventListener('click', () => this._abrirHojaGrande(mapa));
-      cab.append(info, btnZoom);
+
+      accCab.append(btnEst, btnZoom);
+      cab.append(info, accCab);
       p.appendChild(cab);
 
       const hoja = construirHojaSvg(mapa, {

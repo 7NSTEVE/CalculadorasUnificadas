@@ -813,6 +813,99 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
         self.assertIn("Simulacro predictivo II-2026", sim_src)
         self.assertIn("Incluir histórico completo", sim_src)
 
+    def test_guia_estudio_formulario_42_celdas_patrones_y_api(self) -> None:
+        from tools.tutor_runtime.fisica3.formulario_ii_2026 import CAJAS_CELDAS
+        from tools.tutor_runtime.fisica3.guia_formulario_ii_2026 import guia_completa
+
+        g = guia_completa()
+        self.assertEqual(g["total"], 42)
+        self.assertEqual(len(g["celdas"]), 42)
+        ids_guia = {c["id"] for c in g["celdas"]}
+        self.assertEqual(ids_guia, set(CAJAS_CELDAS.keys()))
+
+        lecciones_validas = set(registro.ids())
+        exprs: list[tuple[str, str]] = []
+
+        for c in g["celdas"]:
+            cid = c["id"]
+            self.assertTrue(c.get("que_es"), f"{cid} sin que_es")
+            self.assertTrue(c.get("cuando_si"), f"{cid} sin cuando_si")
+            self.assertTrue(c.get("cuando_no"), f"{cid} sin cuando_no")
+            self.assertTrue(c.get("unidades"), f"{cid} sin unidades")
+            self.assertTrue(c.get("errores"), f"{cid} sin errores")
+            self.assertTrue(c.get("pistas_enunciado"), f"{cid} sin pistas_enunciado")
+            pat = c.get("patron_examen") or {}
+            self.assertTrue(pat.get("en_formularios"), f"{cid} sin en_formularios")
+            self.assertTrue(pat.get("parte"), f"{cid} sin parte")
+            self.assertTrue(pat.get("historial"), f"{cid} sin historial")
+            self.assertTrue(c.get("simbolos"), f"{cid} sin simbolos")
+            self.assertGreaterEqual(len(c.get("ejemplos") or []), 1, f"{cid} sin ejemplos en el banco")
+            for ej in c["ejemplos"]:
+                self.assertIn(ej["id"], lecciones_validas, f"{cid} refiere a lección inexistente {ej['id']}")
+            for conf in c.get("confundir_con") or []:
+                self.assertIn(conf["id"], CAJAS_CELDAS, f"{cid} refiere a gemela inexistente {conf['id']}")
+            exprs.append((cid, c["tex"]))
+            for d in c.get("se_deriva") or []:
+                exprs.append((f"{cid}:deriv", d["tex"]))
+
+        # Decisiones rápidas y entrenador apuntan únicamente a celdas y lecciones reales
+        self.assertGreaterEqual(len(g["decisiones"]), 12)
+        for d in g["decisiones"]:
+            self.assertIn(d["leccion"], lecciones_validas, d)
+            for cid in d["celdas"]:
+                self.assertIn(cid, CAJAS_CELDAS, d)
+
+        self.assertGreaterEqual(len(g["fuera_de_hoja"]), 4)
+        self.assertGreaterEqual(len(g["entrenador"]), 30)
+        for ent in g["entrenador"]:
+            self.assertIn(ent["leccion"], lecciones_validas, ent)
+            self.assertIn(ent["distractor"], CAJAS_CELDAS, ent)
+            self.assertGreaterEqual(len(ent["celdas_validas"]), 1, ent)
+            for cid in ent["celdas_validas"]:
+                self.assertIn(cid, CAJAS_CELDAS, ent)
+
+        # Validar 100 % del TeX (42 casillas + derivaciones) con analizarTex en Node.js
+        tex_js_uri = (REPO_ROOT / "assets" / "cuadernu" / "tutor_web" / "js" / "mate" / "tex.js").as_uri()
+        js_code = (
+            f"import {{ analizarTex }} from {json.dumps(tex_js_uri)};\n"
+            "import fs from 'node:fs';\n"
+            "const items = JSON.parse(fs.readFileSync(0, 'utf8'));\n"
+            "const bad = items\n"
+            "  .map(([id, t]) => [id, t, analizarTex(t).desconocidos || []])\n"
+            "  .filter(([, , d]) => d.length > 0);\n"
+            "console.log(JSON.stringify({ total: items.length, bad }));\n"
+        )
+        proc = subprocess.run(
+            [_node_cmd(), "--input-type=module", "-e", js_code],
+            input=json.dumps(exprs, ensure_ascii=False),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=20,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        res_tex = json.loads(proc.stdout)
+        self.assertEqual(res_tex["bad"], [], f"TeX con comandos desconocidos: {res_tex['bad']}")
+
+        # Endpoint HTTP /api/formulario/guia + validación de token/Origin
+        app = create_app({"session_token": "tok-guia-test"})
+        client = TestClient(app)
+
+        r_ok = client.get("/api/formulario/guia?token=tok-guia-test", headers={"Origin": "http://127.0.0.1:8765"})
+        self.assertEqual(r_ok.status_code, 200)
+        body = r_ok.json()
+        self.assertEqual(body["total"], 42)
+        self.assertEqual(len(body["celdas"]), 42)
+
+        # Pruebas negativas: sin token (401) y Origin externo (403)
+        r_no_tok = client.get("/api/formulario/guia")
+        self.assertEqual(r_no_tok.status_code, 401)
+        r_bad_ori = client.get(
+            "/api/formulario/guia?token=tok-guia-test",
+            headers={"Origin": "https://evil.example"},
+        )
+        self.assertEqual(r_bad_ori.status_code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()
