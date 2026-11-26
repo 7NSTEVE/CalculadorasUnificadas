@@ -58,11 +58,15 @@ class TestBanco158YTeoria(unittest.TestCase):
         esperados_e = {f"E{i}" for i in range(1, 22)}
         esperados_q = {f"Q{i:03d}" for i in range(1, 138)}
         esperados_t = {"T-DIL", "T-CAL", "T-CON", "T-RAD", "T-GAS", "T-PV", "T-MAQ", "T-ENT"}
+        # Prácticas oficiales del II-2026: 6 de la primera, 14 de selección y 12 de desarrollo de la segunda
+        esperados_p = ({f"PR1-{i}" for i in range(1, 7)} | {f"PR2-S{i}" for i in range(1, 15)}
+                       | {f"PR2-D{i}" for i in range(1, 13)})
 
         self.assertTrue(esperados_e.issubset(ids), f"Faltan E: {sorted(esperados_e - ids)}")
         self.assertTrue(esperados_q.issubset(ids), f"Faltan Q: {sorted(esperados_q - ids)}")
         self.assertTrue(esperados_t.issubset(ids), f"Faltan T: {sorted(esperados_t - ids)}")
-        self.assertEqual(len(ids), 166)
+        self.assertTrue(esperados_p.issubset(ids), f"Faltan prácticas: {sorted(esperados_p - ids)}")
+        self.assertEqual(len(ids), 166 + 32)
 
         faltas = {}
         for lid in sorted(ids):
@@ -501,6 +505,22 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             r_fol = docs.resolver("folleto 3.4-5")
             self.assertIsNotNone(r_fol)
             self.assertTrue(docs.png("26-F", r_fol["clave"]).startswith(b"\x89PNG"))
+
+    def test_practicas_ii_2026_segmentadas_y_enlazadas(self) -> None:
+        docs = Documentos(REPO_ROOT, cache=REPO_ROOT / "private_local" / "tutor_recortes")
+        rutas_enc = docs.rutas()
+        if "26-II-P1" not in rutas_enc or "26-II-P2" not in rutas_enc:
+            self.skipTest("Las prácticas del II-2026 no están en esta máquina")
+        p1 = [p.clave for p in docs.problemas("26-II-P1")]
+        p2 = [p.clave for p in docs.problemas("26-II-P2")]
+        self.assertEqual(p1, [str(i) for i in range(1, 7)])
+        self.assertEqual(p2, [f"S{i}" for i in range(1, 15)] + [f"D{i}" for i in range(1, 13)])
+        for doc, claves, pre in (("26-II-P1", p1, "PR1"), ("26-II-P2", p2, "PR2")):
+            for c in claves:
+                self.assertEqual(docs.leccion_de(doc, c), f"{pre}-{c}")
+        self.assertTrue(docs.png("26-II-P2", "D10").startswith(b"\x89PNG"))
+        self.assertEqual(docs.resolver("práctica 2 desarrollo 4")["clave"], "D4")
+        self.assertEqual(docs.resolver("PR1-3")["doc"], "26-II-P1")
 
     def test_voz_edge_neural_mapa_y_audio_mp3(self) -> None:
         from tools.tutor_runtime.voz import VOCES_NEURALES, _mapa_desde_palabras, normalizar_voz

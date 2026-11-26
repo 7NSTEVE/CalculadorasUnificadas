@@ -64,11 +64,25 @@ y agregar la ecuación de la hoja donde ayude (por ejemplo Q078 se puede derivar
 | III Parciales 2023–2026 (ordinarios y extraordinarios) | 92 | 92 |
 | Reposiciones 2023–2026 | 22 | 8 |
 | Folleto de Física III | 97 | 37 |
-| **Total** | **369** | **295** |
+| Práctica del Parcial 3 (II-2026) | 6 | 6 |
+| Práctica del tercer examen (II-2026) | 26 | 26 |
+| **Total** | **401** | **327** |
 
 Los 74 que no abren lección verificada son **todos de otros parciales** (oscilaciones, ondas y fluidos:
 folleto 1.x y 2.x y parte de las reposiciones). Esos los resuelve la IA a partir del recorte del
 problema, con la misma regla de cinco renglones; sus números no están verificados por código.
+
+### Las dos prácticas del II-2026
+
+Lecciones `PR1-1`…`PR1-6` (Práctica del Parcial 3) y `PR2-S1`…`PR2-S14`, `PR2-D1`…`PR2-D12` (Práctica del
+tercer examen). Están en la ruta **«Prácticas del III parcial (II-2026)»**, que sale primera en el inicio.
+También se abren escribiendo, por ejemplo, `PR2-D4` o «práctica 2 desarrollo 4».
+
+- Las prácticas no traen solución publicada: cada resultado se calculó en la lección, se comparó con un
+  cálculo a mano independiente y pasa el verificador aritmético.
+- Cada problema se recorta del PDF (con su figura) y se pega al inicio de la pizarra.
+- Los desarrollos simbólicos (tronco de cono D1, área exponencial D10) muestran en el visual un perfil
+  ilustrativo con T₁ = 100 y T₂ = 0, porque el enunciado no da números.
 
 ## Cómo repetir la auditoría
 

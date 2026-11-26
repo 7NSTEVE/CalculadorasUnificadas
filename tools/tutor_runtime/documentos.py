@@ -51,7 +51,12 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "26-I-E": (("documentos-i-2026_examenes_2026i_fg3_solucion_exam3_extraordinario.pdf",), "III Parcial extraordinario I-2026", "examen"),
     "26-I-R": (("documentos-i-2026_examenes_2026i_fg3_solucion_examen_reposicion_ordinario.pdf",), "Reposición I-2026", "examen"),
     "26-F": (("documentos-i-2026_material-complementario_folleto-fisica3_(1).pdf", "documentos-i-2026_material-complementario_folleto-fisica3_.pdf"), "Folleto de Física III", "folleto"),
+    "26-II-P1": (("practica del parcial 3_iis2026.pdf",), "Práctica del Parcial 3 (II-2026)", "practica"),
+    "26-II-P2": (("practica tercer parcial fiii.pdf",), "Práctica del tercer examen (II-2026)", "practica"),
 }
+
+# Prácticas del II-2026: cada problema tiene su lección PR1-N, PR2-SN (selección) o PR2-DN (desarrollo).
+PRACTICAS = {"26-II-P1": "PR1", "26-II-P2": "PR2"}
 
 # Problemas del Superexamen cuya figura está cambiada en ese PDF: se recortan del examen original.
 FIGURA_CAMBIADA = {"Q038", "Q048", "Q083", "Q091", "Q095"}
@@ -143,6 +148,8 @@ def _zona(tipo: str, page: fitz.Page) -> Tuple[float, float]:
         return 60.0, 784.0
     if tipo == "recomendados":
         return 60.0, h - 48.0
+    if tipo == "practica":
+        return 58.0, h - 50.0  # sin el encabezado del curso ni el pie "Material de estudio"
     return 50.0, h - 50.0
 
 
@@ -456,9 +463,43 @@ def segmenta_general(doc: fitz.Document) -> List[Problema]:
     return []
 
 
+def segmenta_practica(doc: fitz.Document) -> List[Problema]:
+    """Prácticas del II-2026: «Problema N — tema» o secciones I (selección) y II/III (desarrollo) con ítems «N.»."""
+    anclas: List[Dict[str, Any]] = []
+    fines: List[Tuple[int, float]] = []
+    cache: Dict[int, Tuple[List[Linea], List[fitz.Rect]]] = {}
+    seccion = ""
+    for i in range(len(doc)):
+        ls = _lineas(doc[i])
+        cache[i] = (ls, _graficos(doc[i]))
+        z0, z1 = _zona("practica", doc[i])
+        for k in ls:
+            if k.y0 < z0 or k.y0 > z1:
+                continue
+            t = k.texto
+            mp = re.match(r"^Problema\s+(\d{1,2})\s*[—–-]\s*(.+)$", t)
+            if mp:
+                tit = re.sub(r"\s*\(\d+\s*$", "", mp.group(2)).strip()
+                anclas.append({"p": i, "y": k.y0, "num": mp.group(1), "clave": mp.group(1), "titulo": tit})
+                continue
+            if re.match(r"^I\.\s*Selecci", t):
+                seccion = "S"
+                fines.append((i, k.y0))
+                continue
+            if re.match(r"^(?:II|III)\.\s*(?:Desarrollo|Desaf)", t):
+                seccion = "D"
+                fines.append((i, k.y0))  # el título de sección no pertenece al problema anterior
+                continue
+            m = _RE_NUM.match(t)
+            if seccion and m and k.negrita and k.x0 < 100:
+                tit = m.group(2).strip() if seccion == "D" else ""
+                anclas.append({"p": i, "y": k.y0, "num": m.group(1), "clave": f"{seccion}{m.group(1)}", "titulo": tit})
+    return _arma(doc, "practica", anclas, sorted(fines), cache)
+
+
 SEGMENTADORES = {
     "superexamen": segmenta_superexamen, "recomendados": segmenta_recomendados, "examen": segmenta_examen,
-    "folleto": segmenta_folleto, "general": segmenta_general, "hoja": lambda d: [],
+    "folleto": segmenta_folleto, "general": segmenta_general, "hoja": lambda d: [], "practica": segmenta_practica,
 }
 
 
@@ -803,6 +844,9 @@ class Documentos:
             return clave if registro.existe(clave) else None
         if id == "recomendados":
             return f"E{clave}" if registro.existe(f"E{clave}") else None
+        if id in PRACTICAS:
+            lid = f"{PRACTICAS[id]}-{clave}"
+            return lid if registro.existe(lid) else None
         q = self.cruce().get((id, str(clave).lower()))
         return q if q and registro.existe(q) else None
 
@@ -883,6 +927,18 @@ class Documentos:
         m = re.search(r"\bq\s*0*(\d{1,3})\b", t)
         if m:
             return self._hallado("superexamen", f"Q{int(m.group(1)):03d}")
+        # Prácticas del II-2026: «PR2-D4», «práctica 2 desarrollo 4», «práctica del parcial problema 3»
+        m = re.search(r"\bpr\s*([12])\s*-?\s*([sd]?)\s*(\d{1,2})\b", t)
+        if m:
+            return self._hallado(f"26-II-P{m.group(1)}", f"{m.group(2).upper()}{m.group(3)}")
+        if "practica" in t:
+            num = re.search(r"(?:problema|pregunta|ejercicio|item|desarrollo|desafio|seleccion|numero)\s*#?\s*(\d{1,2})", t) or re.search(r"\b(\d{1,2})\b(?!.*\b\d{1,2}\b)", re.sub(r"20\d\d|\bparcial\s*3\b|\bpractica\s*[12]\b", " ", t))
+            if num:
+                if re.search(r"seleccion|unica", t):
+                    return self._hallado("26-II-P2", f"S{num.group(1)}")
+                if re.search(r"desarrollo|desafio|tercer examen|fiii|practica\s*2|segunda practica", t):
+                    return self._hallado("26-II-P2", f"D{num.group(1)}")
+                return self._hallado("26-II-P1", num.group(1))
         doc = None
         if re.search(r"recomendad", t):
             doc = "recomendados"

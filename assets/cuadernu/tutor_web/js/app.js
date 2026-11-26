@@ -166,7 +166,7 @@ function pintarProgreso() {
 
 bus.on('leccion:abierta', (lec) => {
   $('titulo').textContent = lec.titulo.replace(/\$([^$]*)\$/g, '$1').replace(/[\\{}]/g, '');
-  $('subtitulo-barra').textContent = [/^[EQ]\d/.test(lec.id) ? lec.id : '', textoFuente(lec.fuente)].filter(Boolean).join(' · ');
+  $('subtitulo-barra').textContent = [/^([EQ]\d|PR\d)/.test(lec.id) ? lec.id : '', textoFuente(lec.fuente)].filter(Boolean).join(' · ');
   $('transporte').hidden = false;
   $('btn-enfoque').hidden = false;
 });

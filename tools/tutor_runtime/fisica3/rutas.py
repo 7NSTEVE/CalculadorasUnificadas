@@ -26,6 +26,13 @@ _CRITICOS: List[Tuple[str, List[Tuple[str, str]]]] = [
     ("Calorimetría y máquinas clave", [("E5", ""), ("Q038", ""), ("E17", ""), ("E21", ""), ("Q128", "")]),
 ]
 
+# Las dos prácticas oficiales del II-2026, en el orden de los PDF
+_PRACTICAS: List[Tuple[str, List[Tuple[str, str]]]] = [
+    ("Práctica del Parcial 3", [(f"PR1-{i}", "") for i in range(1, 7)]),
+    ("Práctica del tercer examen · selección única", [(f"PR2-S{i}", "") for i in range(1, 15)]),
+    ("Práctica del tercer examen · desarrollo y desafíos", [(f"PR2-D{i}", "") for i in range(1, 13)]),
+]
+
 
 def _construye(bloques: List[Tuple[str, List[Tuple[str, str]]]]) -> List[Dict[str, Any]]:
     items = []
@@ -38,6 +45,12 @@ def _construye(bloques: List[Tuple[str, List[Tuple[str, str]]]]) -> List[Dict[st
 
 def publicas() -> List[Dict[str, Any]]:
     return [
+        {
+            "id": "practicas",
+            "titulo": "Prácticas del III parcial (II-2026)",
+            "descripcion": "Los 32 problemas de las dos prácticas oficiales de este semestre, resueltos paso a paso desde la hoja.",
+            "items": _construye(_PRACTICAS),
+        },
         {
             "id": "manana",
             "titulo": "Ruta del examen",

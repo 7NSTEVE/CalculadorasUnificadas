@@ -185,7 +185,7 @@ export class Biblioteca {
         b.dataset.id = l.id;
         const c = document.createElement('span');
         c.className = 'cod';
-        c.textContent = /^[EQ]\d/.test(l.id) ? l.id : '·';
+        c.textContent = /^([EQ]\d|PR\d)/.test(l.id) ? l.id : '·';
         const m = document.createElement('span');
         const s = document.createElement('strong');
         const tt = new TintaTexto(l.titulo, { etiqueta: 'span', px: 16, clase: 'sin-mano' });
