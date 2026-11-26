@@ -588,7 +588,12 @@ async def generar_leccion_ia(
         bloques.append(
             "MODO SIN SALTOS ACTIVO: desarrolla absolutamente todos los despejes intermedios, "
             "conversiones de unidades y pasos de integración en 'tramos' y 'lento' como si el alumno "
-            "estuviera viendo el procedimiento desde cero."
+            "estuviera viendo el procedimiento desde cero. En cada cálculo escribe, en renglones separados: "
+            "(1) la ecuación tal como viene en el formulario oficial, (2) el despeje o la igualación con otra "
+            "ecuación de la hoja, (3) la sustitución con números y unidades, (4) la cuenta intermedia "
+            "(numerador, denominador, logaritmo o potencia por separado) y (5) el resultado. Nunca pases de "
+            "la fórmula al resultado en un solo renglón. Carnot y entropía no entran en el III parcial "
+            "(corte en la sección 20.5): si el ejercicio los pide, resuélvelos igual pero avisa que no entran."
         )
     if texto_ocr:
         bloques.append(f"Texto detectado en el enunciado:\n{texto_ocr[:2400]}")

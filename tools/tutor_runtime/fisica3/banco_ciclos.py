@@ -465,17 +465,23 @@ def q101() -> Leccion:
 @leccion("Q102")
 def q102() -> Leccion:
     n_mol, T, pf = 2.50, 420.0, 120e3
-    vf = n_mol * R_GAS * T / pf
+    num = n_mol * R_GAS * T
+    vf = num / pf
     vi = vf / 3.0
     L = _sel("Q102", "Volumen inicial tras triplicar volumen isotérmicamente",
              "Tras una expansión isotérmica a $420$ K de $2{,}50$ mol de gas ideal, el volumen inicial se triplica y la presión final es $120$ kPa. El volumen inicial es:",
              {"A": "8,08 L", "B": "24,3 L", "C": "72,9 L", "D": "87,3 L"}, "B",
              claves=["isotérmica", "gas ideal"])
-    L.paso("Hallar volumen final y dividir entre 3")\
-        .di(f"Hallamos el volumen final con la ley de gases ideales: da {nu(vf * 1e3, 'L', 3)}.", DATO("se triplica"),
-            F(r"V_f = \frac{nRT}{p_f} = \frac{(2{,}50)(8{,}314)(420)}{120\times 10^3} = 72{,}75\ \text{L}"))\
-        .di(f"Como se triplicó, dividimos entre tres y da {nu(vi * 1e3, 'L', 3)}.",
-            R(rf"V_i = \frac{{V_f}}{{3}} = {tex(vi * 1e3, 3, u='L')}"))
+    L.paso("Volumen final con el gas ideal")\
+        .di("Del estado final conocemos todo menos el volumen. Despejamos de la ley del gas ideal de la hoja.", DATO("se triplica"),
+            F(r"pV=nRT\;\Rightarrow\;V=\frac{nRT}{p}"))\
+        .di("Sustituimos con la presión en pascales.", M(r"V_f = \frac{(2{,}50)(8{,}314)(420)}{120\times 10^3}"),
+            M(rf"V_f=\frac{{{tex(num, 5)}}}{{120\,000}}={tex(vf, 4, u='m^3')}"))\
+        .di("En litros: mil litros por metro cúbico.", M(rf"V_f=({tex(vf, 4)})(1000)={tex(vf * 1e3, 4, u='L')}"))
+    L.paso("Volumen inicial")\
+        .di("El volumen final es el triple del inicial: despejamos.", M(r"V_f=3V_i\;\Rightarrow\;V_i=\frac{V_f}{3}"))\
+        .di(f"Dividimos entre tres: {nu(vi * 1e3, 'L', 3)}.", M(rf"V_i=\frac{{{tex(vf * 1e3, 4)}}}{{3}}"),
+            R(rf"V_i = {tex(vi * 1e3, 3, u='L')}"))
     revisar_opciones(L, {
         "A": ("La A dividió dos veces entre tres.", "Solo se divide una vez."),
         "C": ("La C es el volumen final, no el inicial.", "Faltó dividir entre $3$."),
@@ -483,7 +489,6 @@ def q102() -> Leccion:
         "B": ("La B es la correcta: veinticuatro coma tres litros.", "$V_i \\approx 24{,}3$ L."),
     })
     return L.oficial("III Parcial extraordinario I-2026", "B").usa(r"pV=nRT")
-
 
 # ============================================================================ Q103
 @leccion("Q103")

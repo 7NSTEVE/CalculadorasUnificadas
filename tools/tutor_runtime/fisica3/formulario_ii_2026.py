@@ -517,10 +517,11 @@ def mapear_formulario_leccion(lec: Dict[str, Any]) -> Dict[str, Any]:
 
     # Renglón por renglón: qué celdas usa cada línea matemática (para citar la casilla en la pizarra)
     # Cada renglón escrito: de qué casillas sale. Los renglones que siguen a una ecuación del
-    # formulario dentro del mismo paso (igualar, despejar, sustituir, resultado) heredan su color.
+    # formulario (igualar, despejar, integrar, sustituir, resultado) heredan su color hasta que
+    # aparece otra ecuación de la hoja, aunque la cadena siga en el paso siguiente.
     por_accion: Dict[str, Dict[str, Any]] = {}
+    ultima: List[str] = []
     for p in pasos:
-        ultima: List[str] = []
         for tr in p.get("tramos") or []:
             for acc in tr.get("acc") or []:
                 if not isinstance(acc, dict) or acc.get("a") != "mate" or not acc.get("id"):

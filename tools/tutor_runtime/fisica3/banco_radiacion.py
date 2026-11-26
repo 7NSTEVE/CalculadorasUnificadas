@@ -103,9 +103,13 @@ def q066() -> Leccion:
               "D": "Ambos emiten igual energía porque comparten temperatura."}, "C",
              claves=["emisividad", "razón de potencias"],
              visual={"tipo": "radiacion", "T": 400, "e": 0.30, "objeto": "cobre"})
-    L.paso("Razón de potencias radiadas")\
-        .di("Con igual área y temperatura, se cancelan el área, sigma y la temperatura a la cuarta.", DATO("emisividad"),
-            F(r"\frac{H_{\text{negro}}}{H_{\text{Cu}}} = \frac{e_{\text{negro}}}{e_{\text{Cu}}} = \frac{1{,}0}{0{,}3}"))\
+    L.paso("Potencia radiada de cada superficie")\
+        .di("Partimos de la ley de Stefan-Boltzmann de la hoja.", DATO("emisividad"), F(r"H=Ae\sigma T^4"))\
+        .di("El cuerpo negro tiene emisividad uno; el cobre, cero coma tres. Área y temperatura son iguales.",
+            M(r"H_{\text{negro}}=A(1)\sigma T^4\qquad H_{\text{Cu}}=A(0{,}3)\sigma T^4"))
+    L.paso("Razón de potencias")\
+        .di("Dividimos una entre la otra: se cancelan el área, sigma y la temperatura a la cuarta.",
+            M(r"\frac{H_{\text{negro}}}{H_{\text{Cu}}}=\frac{A(1)\sigma T^4}{A(0{,}3)\sigma T^4}=\frac{1}{0{,}3}"))\
         .di(f"Uno entre cero coma tres da aproximadamente {n(razon, 2)}.",
             R(rf"\frac{{H_{{\text{{negro}}}}}}{{H_{{\text{{Cu}}}}}} \approx {tex(razon, 2)}"))
     revisar_opciones(L, {
@@ -115,7 +119,6 @@ def q066() -> Leccion:
         "C": ("La C es la correcta: unas tres coma tres veces más.", "$1/0{,}3\\approx 3{,}3$."),
     })
     return L.oficial("III Parcial extraordinario I-2025", "C").usa(r"H=Ae\sigma T^4")
-
 
 # ============================================================================ Q067
 @leccion("Q067")
@@ -147,7 +150,9 @@ def q068() -> Leccion:
     e, A = 0.850, 0.200
     T = 97.0 + T0
     Ts = 27.0 + T0
-    H = e * SIGMA * A * (T ** 4 - Ts ** 4)
+    pre = A * e * SIGMA
+    d4 = T ** 4 - Ts ** 4
+    H = pre * d4
     H_273 = e * SIGMA * A * (370.0 ** 4 - 300.0 ** 4)
     L = _sel("Q068", "Radiación neta de un recipiente a 97 °C en habitación a 27 °C",
              "En una habitación a $27{,}0\\ ^\\circ$C hay un recipiente metálico a $97{,}0\\ ^\\circ$C con $e=0{,}850$ y $A=0{,}200\\ \\text{m}^2$. El flujo neto de calor por radiación es:",
@@ -155,14 +160,17 @@ def q068() -> Leccion:
              claves=["radiación neta", "kelvin"],
              visual={"tipo": "radiacion", "T": 370.15, "Ts": 300.15, "e": e, "A": A, "H": round(H, 1), "objeto": "recipiente"})
     L.paso("Pasar las temperaturas a kelvin")\
-        .di("En radiación es obligatorio usar kelvin antes de elevar a la cuarta.", DATO("97,0 °C"),
-            M(r"T = 97{,}0 + 273{,}15 = 370{,}15\ \text{K}\qquad T_s = 27{,}0 + 273{,}15 = 300{,}15\ \text{K}"),
+        .di("En radiación es obligatorio usar kelvin antes de elevar a la cuarta. La hoja da la conversión.", DATO("97,0 °C"),
+            F(r"T_K=T_C+273{,}15"), M(r"T = 97{,}0 + 273{,}15 = 370{,}15\ \text{K}"), M(r"T_s = 27{,}0 + 273{,}15 = 300{,}15\ \text{K}"),
             OJO("Nunca calcules $(97-27)^4$: cada temperatura va a la cuarta **en kelvin** y luego se restan."))
     L.paso("Calcular el flujo neto")\
-        .di("Aplicamos Stefan-Boltzmann neto.",
+        .di("Partimos de la radiación neta de la hoja.",
             F(r"H_{\text{neto}} = A e \sigma\,(T^4 - T_s^4)"),
             M(r"H_{\text{neto}} = (0{,}200)(0{,}850)(5{,}67\times 10^{-8})(370{,}15^4 - 300{,}15^4)"))\
-        .di(f"Resultan {nu(H, 'W', 4)}, y usando doscientos setenta y tres exacto da {nu(H_273, 'W', 4)}.",
+        .di("Elevamos cada temperatura a la cuarta y restamos.", M(rf"370{{,}}15^4={tex(T ** 4, 4)}"), M(rf"300{{,}}15^4={tex(Ts ** 4, 4)}"),
+            M(rf"370{{,}}15^4-300{{,}}15^4={tex(d4, 4)}"))\
+        .di("Multiplicamos los tres factores de adelante.", M(rf"(0{{,}}200)(0{{,}}850)(5{{,}}67\times 10^{{-8}})={tex(pre, 4)}"))\
+        .di(f"Y el producto final: {nu(H, 'W', 4)}.", M(rf"H_{{\text{{neto}}}}=({tex(pre, 4)})({tex(d4, 4)})"),
             R(rf"H_{{\text{{neto}}}} = {tex(H, 4, u='W')}"),
             NOTA(f"Con $T_0=273$ K sale ${tex(H_273, 4, u='W')}$, exacto con la opción C."))
     revisar_opciones(L, {
@@ -172,7 +180,6 @@ def q068() -> Leccion:
         "C": ("La C es la correcta: ciento dos coma seis watts.", "Coincide con $H_{\\text{neto}}$. "),
     })
     return L.oficial("III Parcial extraordinario I-2026", "C").usa(r"H_{\text{neto}}=Ae\sigma(T^4-T_s^4)")
-
 
 # ============================================================================ Q069
 @leccion("Q069")

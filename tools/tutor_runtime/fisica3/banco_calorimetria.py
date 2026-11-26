@@ -378,7 +378,7 @@ def q029() -> Leccion:
             M(r"Q_A=m_Ac_A\,\Delta T+m_VL_V", "f", "azul"))\
         .di("Calentarse.", M(rf"(0{{,}}2230)(4190)(79{{,}}0)={_j(qa1)}", "qa1"), V(etapa=0))\
         .di("Evaporar cuatro coma siete gramos.", M(rf"(0{{,}}0047)(2{{,}}256\times10^6)={_j(qa2)}", "qa2"), V(etapa=1))\
-        .di("Sumamos.", R(rf"Q_A={tex(qa, 3, u='J')}", "rb"))
+        .di("Sumamos los dos calores.", M(rf"Q_A={tex(qa1, 5, sci='no')}+{tex(qa2, 5, sci='no')}={tex(qa, 5, sci='no')}\ \text{{J}}"), R(rf"Q_A={tex(qa, 3, u='J')}", "rb"))
     L.paso("c) Calor que recibió el tazón")\
         .di("El tazón es cobre y también sube setenta y nueve grados.", M(r"Q_T=(0{,}1460)(390)(79{,}0)"), R(rf"Q_T={tex(qt, 3, u='J', sci='no')}", "rc"), V(etapa=2))\
         .di("Es poquito comparado con el agua, pero se cuenta.", NOTA("Olvidar el recipiente es el error más común."))
