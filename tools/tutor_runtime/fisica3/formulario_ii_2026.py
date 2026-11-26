@@ -319,7 +319,7 @@ _REGLAS_CELDAS: Tuple[Tuple[str, re.Pattern[str]], ...] = (
     ("F8C3", re.compile(r"\\gamma\s*=\s*\\frac\{C_[pP]\}\{C_V\}|\\gamma\s*=\s*(?:\\frac\{5\}\{3\}|\\frac\{7\}\{5\}|5/3|7/5|1\{?,\}?4|1\{?,\}?67)", re.I)),
     # Fila 9: Procesos adiabáticos
     ("F9C1", re.compile(r"\\frac\{1\}\{\\gamma\s*[-−]\s*1\}\s*\(\s*p_?1\s*V_?1|p_1\s*V_1\s*[-−]\s*p_2\s*V_2", re.I)),
-    ("F9C2", re.compile(r"p\s*V\^\\gamma|p_[A-Za-z0-9]\s*V_[A-Za-z0-9]\^\{?(?:\\gamma|1\{?,\}?4)|\\left\(\\frac\{V_[A-Za-z0-9]\}\{V_[A-Za-z0-9]\}\\right\)\^\{?(?:\\gamma|1\{?,\}?4)|\\left\(\\frac\{p_[A-Za-z0-9]\}\{p_[A-Za-z0-9]\}\\right\)\^\{?1/\\gamma", re.I)),
+    ("F9C2", re.compile(r"p\s*V\^\\gamma|p_[A-Za-z0-9]\s*V_[A-Za-z0-9]\^\{?(?:\\gamma(?!\s*[-−]\s*1)|1\{?,\}?4)|\\left\(\\frac\{V_[A-Za-z0-9]\}\{V_[A-Za-z0-9]\}\\right\)\^\{?(?:\\gamma(?!\s*[-−]\s*1)|1\{?,\}?4)|\\left\(\\frac\{p_[A-Za-z0-9]\}\{p_[A-Za-z0-9]\}\\right\)\^\{?1/\\gamma", re.I)),
     ("F9C3", re.compile(r"T\s*V\^\{\\gamma\s*[-−]\s*1\}|T_[A-Za-z0-9]\s*V_[A-Za-z0-9]\^\{\\gamma|\\left\(\\frac\{T_[A-Za-z0-9]\}\{T_[A-Za-z0-9]\}\\right\)\^\{?(?:1/\(\\gamma|2\{?,\}?5|1\{?,\}?5)", re.I)),
     # Fila 10: Máquinas, refrigeradores, Kelvin
     ("F10C1", re.compile(r"e\s*=\s*\\frac\{W|e\s*=\s*1\s*[-−]\s*(?:\\left)?\||e\s*=\s*1\s*[-−]\s*\\frac\{\|Q_[cC]\||e\s*=\s*W/Q_H|e\s*=\s*\\frac\{[\d{,}]+", re.I)),
@@ -506,11 +506,33 @@ def mapear_formulario_leccion(lec: Dict[str, Any]) -> Dict[str, Any]:
             "nota": "No figura impresa como ecuación directa; parte de F10C1 o F10C2 sustituyendo |Q_c/Q_H| = T_C/T_H en ciclo reversible.",
         })
 
+    # Renglón por renglón: qué celdas usa cada línea matemática (para citar la casilla en la pizarra)
+    # Cada renglón escrito: de qué casillas sale. Los renglones que siguen a una ecuación del
+    # formulario dentro del mismo paso (igualar, despejar, sustituir, resultado) heredan su color.
+    por_accion: Dict[str, Dict[str, Any]] = {}
+    for p in pasos:
+        ultima: List[str] = []
+        for tr in p.get("tramos") or []:
+            for acc in tr.get("acc") or []:
+                if not isinstance(acc, dict) or acc.get("a") != "mate" or not acc.get("id"):
+                    continue
+                cids = [c for c in _celdas_en_texto(str(acc.get("tex") or "")) if c in orden_num]
+                if not cids:
+                    if ultima:
+                        por_accion[str(acc["id"])] = {"celdas": list(ultima), "formula": False, "hereda": True}
+                    continue
+                cids.sort(key=lambda c: (1 if _POR_ID[c][1] else 0, orden_num[c]))
+                por_accion[str(acc["id"])] = {"celdas": cids, "formula": acc.get("rol") == "formula"}
+                base = [c for c in cids if not _POR_ID[c][1]]
+                if base:
+                    ultima = base
+
     return {
         "titulo": "Formulario oficial · III Parcial FI2103 II-2026",
         "hoja_url": "/api/formulario/hoja.png",
         "aspecto": list(HOJA_ASPECTO),
         "celdas": celdas_out,
         "por_paso": por_paso_ordenado,
+        "por_accion": por_accion,
         "fuera_de_hoja": fuera_de_hoja,
     }

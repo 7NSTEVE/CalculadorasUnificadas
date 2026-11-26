@@ -447,3 +447,24 @@ body.enfoque .estado { display: none; }
 .visor-form-cab strong { font-size: 0.98em; font-weight: 600; color: var(--tinta); }
 .visor-form-cuerpo { overflow: auto; min-height: 0; }
 .visor-form-cuerpo .hoja-formulario { max-width: 680px; margin: 0 auto; }
+
+/* ------------------------------------------------------------------ citas del formulario en la pizarra */
+.cita-form { display: flex; flex-wrap: wrap; gap: 0.6em; margin: 0.35em 0 0.1em; }
+.cita-item { display: inline-flex; align-items: center; gap: 0.6em; padding: 0.3em 0.75em 0.3em 0.35em; border: 1.5px solid color-mix(in srgb, var(--fc) 45%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--fc) 7%, var(--tarjeta)); color: var(--tinta); font-family: var(--ui); font-size: 0.8em; text-align: left; cursor: pointer; }
+.cita-num { width: 1.7em; height: 1.7em; border-radius: 50%; background: var(--fc); color: #ffffff; font-weight: 700; display: inline-grid; place-items: center; flex: 0 0 auto; }
+:root[data-theme="dark"] .cita-num, :root[data-theme="high-contrast"] .cita-num { color: #0b1220; }
+.cita-recorte { position: relative; display: inline-block; flex: 0 0 auto; background-color: #ffffff; background-repeat: no-repeat; border-radius: 6px; margin: 7px 8px; }
+.cita-circulo { position: absolute; left: -8px; top: -7px; width: calc(100% + 16px); height: calc(100% + 14px); overflow: visible; pointer-events: none; }
+.cita-circulo path { fill: none; stroke: var(--fc); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.cita-form.anima .cita-circulo path { stroke-dasharray: 1600; stroke-dashoffset: 1600; animation: cita-traza 900ms ease-out 120ms forwards; }
+.cita-form.anima .cita-recorte { animation: cita-aparece 380ms ease-out; }
+@keyframes cita-traza { to { stroke-dashoffset: 0; } }
+@keyframes cita-aparece { from { opacity: 0; transform: translateY(-4px); } }
+.cita-txt { color: var(--tinta2); max-width: 15em; line-height: 1.3; }
+.linea-mate.usa-form { padding-left: 0.7em; border-left: 4px solid color-mix(in srgb, var(--fc) 70%, transparent); border-radius: 0 0 0 2px; }
+.linea-mate.es-formula { border-left-width: 6px; border-left-color: var(--fc); }
+.linea-mate.usa-form.hereda { border-left-color: color-mix(in srgb, var(--fc) 40%, transparent); }
+.usos { position: absolute; left: -2.35em; top: 0.15em; display: inline-flex; flex-direction: column; gap: 0.2em; }
+.usos i { font-style: normal; font-family: var(--ui); font-size: 0.68rem; font-weight: 700; width: 1.6em; height: 1.6em; border-radius: 50%; display: inline-grid; place-items: center; background: var(--fc); color: #ffffff; }
+:root[data-theme="dark"] .usos i, :root[data-theme="high-contrast"] .usos i { color: #0b1220; }
+@media (prefers-reduced-motion: reduce) { .cita-form.anima .cita-circulo path { animation: none; stroke-dashoffset: 0; } }

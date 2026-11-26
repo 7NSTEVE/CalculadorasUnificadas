@@ -9,6 +9,7 @@
 import { TintaMate, TintaTexto, tintaLista, tintaTabla } from '../mate/tinta.js';
 import { ajustes, bus, menosMovimiento, pedir } from '../nucleo/api.js';
 import { Enunciado } from './enunciado.js';
+import { Citas } from '../pizarra/citas.js';
 import { callarTodo, crearVoz, prepararVoz } from './voz_leccion.js';
 
 const ACELERA = 2.6; // la mano puede ir hasta 2,6 veces su ritmo natural
@@ -80,6 +81,7 @@ class Obra {
     if (!t) { this.terminar(); return; }
     t.progreso(0);
     rep.tablero.agregar(t, { paso: this.vista, id: acc.id });
+    if (acc.a === 'mate' && rep.citas) rep.citas.aplicar(acc, t);
     this.cosa = t;
     this.dur = t.duracionNatural;
     rep.tablero.seguir(t.el);
@@ -119,6 +121,7 @@ class Obra {
 
 export class Reproductor {
   constructor({ tablero, lateral }) {
+    this.citas = new Citas(tablero);
     this.tablero = tablero;
     this.lateral = lateral;
     this.lec = null;
@@ -158,6 +161,7 @@ export class Reproductor {
     this.vistas = [];
     this.tablero.limpiar();
     this.lateral.abrirLeccion(lec);
+    this.citas.usar(lec);
     this.enun = new Enunciado(this.tablero, lec);
     this.enun.alDato = (caja, color) => this.lateral.marcarDato(caja, color);
     bus.emit('leccion:abierta', lec);
