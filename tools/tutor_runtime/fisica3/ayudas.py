@@ -182,9 +182,10 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
         p.di(f"El trabajo es lo mismo con el signo cambiado: {'el gas se comprime' if r['W'] < 0 else 'el gas se expande a costa de su energía'}.",
              M(rf"W_{{{ab}}} = {qtx(r['W'], cifras=cifras)}", color="verde"))
     elif tipo == "recta":
-        p.di(f"De {a} a {b} la presión cambia en línea recta: partimos de la integral del trabajo del formulario, que es el área del trapecio.", V(foco=foco),
-             F(r"W = \int_{V_1}^{V_2} p\,dV"),
-             F(rf"W_{{{ab}}} = \frac{{p_{a}+p_{b}}}{{2}}\,(V_{b}-V_{a})"))
+        p.di(f"De {a} a {b} la presión cambia en línea recta. La integral del trabajo de la hoja es el área bajo la línea en el diagrama.", V(foco=foco),
+             F(r"W = \int_{V_1}^{V_2} p\,dV"))
+        p.di("Bajo una recta esa área es un trapecio: el promedio de las dos alturas por la base. No hace falta integrar.",
+             M(rf"W_{{{ab}}} = \frac{{p_{a}+p_{b}}}{{2}}\,(V_{b}-V_{a})"))
         p.di("Sustituimos.", M(rf"= \frac{{{tex(g.p(a), cifras)}+{tex(g.p(b), cifras)}}}{{2}}\,({tex(g.v(b), cifras, recorta=True)}-{tex(g.v(a), cifras, recorta=True)}) = {qtx(r['W'], cifras=cifras)}"))
         p.di("La energía interna solo mira las temperaturas.", F(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"),
              M(rf"= ({ntx})({cv_num})({sTb}-{sTa}) = {qtx(r['U'], cifras=cifras)}"))

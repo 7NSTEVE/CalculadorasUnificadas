@@ -57,7 +57,7 @@ class TestBanco158YTeoria(unittest.TestCase):
         ids = set(registro.ids())
         esperados_e = {f"E{i}" for i in range(1, 22)}
         esperados_q = {f"Q{i:03d}" for i in range(1, 138)}
-        esperados_t = {"T-DIL", "T-CAL", "T-CON", "T-RAD", "T-GAS", "T-PV", "T-MAQ", "T-ENT"}
+        esperados_t = {"T-DIL", "T-CAL", "T-CON", "T-RAD", "T-GAS", "T-PV", "T-MAQ", "T-ENT", "T-MAT1", "T-MAT2", "T-MAT3"}
         # Prácticas oficiales del II-2026: 6 de la primera, 14 de selección y 12 de desarrollo de la segunda
         esperados_p = ({f"PR1-{i}" for i in range(1, 7)} | {f"PR2-S{i}" for i in range(1, 15)}
                        | {f"PR2-D{i}" for i in range(1, 13)})
@@ -66,7 +66,7 @@ class TestBanco158YTeoria(unittest.TestCase):
         self.assertTrue(esperados_q.issubset(ids), f"Faltan Q: {sorted(esperados_q - ids)}")
         self.assertTrue(esperados_t.issubset(ids), f"Faltan T: {sorted(esperados_t - ids)}")
         self.assertTrue(esperados_p.issubset(ids), f"Faltan prácticas: {sorted(esperados_p - ids)}")
-        self.assertEqual(len(ids), 166 + 32)
+        self.assertEqual(len(ids), 166 + 32 + 3)
 
         faltas = {}
         for lid in sorted(ids):

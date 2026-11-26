@@ -28,6 +28,7 @@ _CRITICOS: List[Tuple[str, List[Tuple[str, str]]]] = [
 
 # Las dos prácticas oficiales del II-2026, en el orden de los PDF
 _PRACTICAS: List[Tuple[str, List[Tuple[str, str]]]] = [
+    ("Antes de empezar: cálculo desde cero", [("T-MAT1", "Pendiente e integral"), ("T-MAT2", "Las cinco integrales del parcial"), ("T-MAT3", "Logaritmos y separar variables")]),
     ("Práctica del Parcial 3", [(f"PR1-{i}", "") for i in range(1, 7)]),
     ("Práctica del tercer examen · selección única", [(f"PR2-S{i}", "") for i in range(1, 15)]),
     ("Práctica del tercer examen · desarrollo y desafíos", [(f"PR2-D{i}", "") for i in range(1, 13)]),

@@ -222,3 +222,127 @@ def t_ent() -> Leccion:
         .di("Cero en un proceso reversible; mayor que cero en uno real.", LISTA(["$=0$: reversible (ideal)", "$>0$: irreversible (todo lo real: mezclar, frenar, enfriar)"]))\
         .pregunta_rapida("Al mezclar agua caliente y fría, ΔS del universo es…", ["Mayor que cero", "Cero"], 0, "Mezclar es irreversible: no se separan solas.")
     return L.usa(r"\Delta S=\int\frac{dQ}{T}")
+
+
+# ============================================================================ T-MAT1
+@leccion("T-MAT1")
+def t_mat1() -> Leccion:
+    L = _teo("T-MAT1", "Cálculo desde cero (1): qué es dT/dx y qué es una integral", "teoria",
+             claves=["derivada", "integral", "desde cero", "pendiente"],
+             enunciado="Lo mínimo de cálculo para el parcial: qué significa la pendiente dT/dx, qué es una integral y cómo se calcula entre dos límites. Sin saber nada antes.",
+             visual={"tipo": "funcion", "expr": "2*x", "x_min": 0, "x_max": 3, "riemann": True, "exact_value": 9, "x_label": "x", "y_label": "2x", "title": "Sumar pedacitos de 2x de 0 a 3"})
+    L.paso("La pendiente: cuánto cambia por cada metro")\
+        .di("Una barra está a cien grados en un punto y a ochenta grados medio metro más allá.", M(r"\Delta T=80-100=-20\ ^\circ\text{C}\qquad \Delta x=0{,}5\ \text{m}"))\
+        .di("La rapidez del cambio es lo que cambió dividido entre la distancia.", M(r"\frac{\Delta T}{\Delta x}=\frac{-20}{0{,}5}=-40\ \frac{^\circ\text{C}}{\text{m}}"))\
+        .di("Baja cuarenta grados por cada metro. El signo menos dice que baja.", NOTA("$\\Delta$ (delta) significa *cambio*: final menos inicial."))
+    L.paso("dT/dx: la misma idea en un punto")\
+        .di("Si la distancia es pequeñísima, en vez de delta se escribe la letra de. Eso es la derivada: la pendiente justo en un punto.",
+            M(r"\frac{dT}{dx}=\text{cuánto cambia }T\text{ por cada metro, en ese punto}"))\
+        .di("Aparece en la ley de Fourier de la hoja: el calor fluye más rápido donde la temperatura cae más rápido.", F(r"H=-kA\,\frac{dT}{dx}"))\
+        .di("El signo menos: si la temperatura baja hacia adelante, el calor va hacia adelante.", M(r"\frac{dT}{dx}<0\;\Rightarrow\;H>0"))
+    L.paso("Pedacitos: dx y dT")\
+        .di("De equis es un pedacito de largo muy pequeño. De te es lo que cambia la temperatura en ese pedacito.",
+            M(r"dT=\frac{dT}{dx}\cdot dx"))\
+        .di("Es lo mismo que decir: cambio igual a cambio por metro, por metros.", M(r"dT=(-40)(0{,}001)=-0{,}04\ ^\circ\text{C}"))\
+        .di("Ese es un pedacito de un milímetro. Separar variables es justo esto: mover los de equis y de te como si fueran números.", NOTA("$dx$ y $dT$ se pueden multiplicar y dividir como números normales."))
+    L.paso("La integral: sumar todos los pedacitos")\
+        .di("El signo de integral es una ese alargada: significa sumar muchos pedacitos.", M(r"\int\ =\ \text{suma de pedacitos}"))\
+        .di("Si sumo todos los pedacitos de cambio de temperatura, obtengo el cambio total.", M(r"\int_{T_1}^{T_2}dT=T_2-T_1"))\
+        .di("Los números de abajo y de arriba son los límites: desde dónde y hasta dónde se suma.", NOTA("Abajo va el **inicio** y arriba el **final**."))
+    L.paso("Calcular una integral entre dos límites")\
+        .di("Se busca una función que al evaluarla dé la suma. Se escribe entre corchetes y se resta: lo de arriba menos lo de abajo.",
+            M(r"\int_a^b f(x)\,dx=\Big[F(x)\Big]_a^b=F(b)-F(a)"))\
+        .di("Ejemplo: la integral de dos equis de cero a tres. Su función es equis al cuadrado, como se ve en la próxima lección.",
+            M(r"\int_0^3 2x\,dx=\Big[x^2\Big]_0^3=3^2-0^2=9"))\
+        .di("En el dibujo, mueva el control de rectángulos: la suma se acerca a nueve. La integral es el área bajo la curva.", V(foco="area"))
+    L.paso("Los números constantes salen afuera")\
+        .di("Lo que no cambia, como ka, pi o un área fija, sale de la integral y multiplica.", M(r"\int_a^b 5\,dx=5\int_a^b dx=5\,(b-a)"))\
+        .di("Por ejemplo, de uno a cuatro.", M(r"\int_1^4 5\,dx=5\,(4-1)=15"))\
+        .pregunta_rapida("¿Cuánto da la integral de 1 a 4 de 3 dx?", ["9", "12", "3"], 0, "Sale el 3 y queda $3(4-1)=9$.")
+    L.paso("Derivada de una potencia (la usamos una vez)")\
+        .di("Para derivar una potencia: el exponente baja a multiplicar y al exponente se le resta uno.", M(r"d\left(x^n\right)=n\,x^{n-1}\,dx"))\
+        .di("Ejemplo con ve al cuadrado, que aparece en la práctica uno.", M(r"d\left(V^2\right)=2\,V^{2-1}\,dV=2V\,dV"))\
+        .pregunta_rapida("¿Cuánto es d(x³)?", ["3x² dx", "x² dx", "3x dx"], 0, "Baja el 3 y el exponente queda en 2.")
+    return L.usa(r"H=-kA\frac{dT}{dx}")
+
+
+# ============================================================================ T-MAT2
+@leccion("T-MAT2")
+def t_mat2() -> Leccion:
+    L = _teo("T-MAT2", "Cálculo desde cero (2): las cinco integrales del parcial", "teoria",
+             claves=["integrales", "potencia", "logaritmo", "cambio de variable", "desde cero"],
+             enunciado="Las únicas integrales que aparecen en los problemas del III parcial, cada una con un ejemplo resuelto y dónde aparece.",
+             visual={"tipo": "funcion", "expr": "1/x", "x_min": 1, "x_max": 6, "shade_from": 2, "shade_to": 6, "x_label": "r", "y_label": "1/r", "title": "Área bajo 1/r de 2 a 6 = ln 3"})
+    L.paso("Regla 1 · Potencia")\
+        .di("Para una potencia: al exponente se le suma uno y se divide entre ese exponente nuevo.", M(r"\int x^n\,dx=\frac{x^{n+1}}{n+1}\qquad (n\neq-1)"))\
+        .di("Equis sola es equis a la uno.", M(r"\int x\,dx=\int x^1\,dx=\frac{x^{1+1}}{1+1}=\frac{x^2}{2}"))\
+        .di("Y un número solo es equis a la cero.", M(r"\int dx=\int x^0\,dx=\frac{x^{1}}{1}=x"))
+    L.paso("Regla 1 con exponentes negativos")\
+        .di("Uno entre erre al cuadrado es erre a la menos dos: misma regla.", M(r"\frac{1}{r^2}=r^{-2}"),
+            M(r"\int r^{-2}\,dr=\frac{r^{-2+1}}{-2+1}=\frac{r^{-1}}{-1}=-\frac{1}{r}"))\
+        .di("Con límites: lo de arriba menos lo de abajo.", M(r"\int_1^2\frac{dr}{r^2}=\Big[-\frac{1}{r}\Big]_1^2=\left(-\frac{1}{2}\right)-\left(-\frac{1}{1}\right)=\frac{1}{2}"))\
+        .di("Aparece en las esferas, donde el área es cuatro pi erre al cuadrado.", NOTA("Esfera: $\\int\\frac{dr}{r^2}$ · conductividad $k_0r$: $\\int\\frac{dr}{r^3}=-\\frac{1}{2r^2}$."))
+    L.paso("Regla 2 · Uno entre equis da logaritmo")\
+        .di("Con exponente menos uno la regla uno falla: dividiría entre cero. Esa integral es el logaritmo natural.", M(r"\int\frac{dx}{x}=\ln x"))\
+        .di("Con límites, la resta de logaritmos es el logaritmo de la división.", M(r"\int_2^6\frac{dr}{r}=\ln 6-\ln 2=\ln\frac{6}{2}=\ln 3=1{,}099"))\
+        .di("En el dibujo, esa es el área bajo uno entre erre de dos a seis.", V(foco="area"),
+            NOTA("Aparece en **tubos** ($A=2\\pi rL$) y en el **trabajo isotérmico** ($p=nRT/V$)."))
+    L.paso("Regla 3 · Cambio de variable con a + bx")\
+        .di("Si abajo hay un paréntesis a más be equis, a ese paréntesis le ponemos un nombre: u.",
+            M(r"u=a+bx\;\Rightarrow\;du=b\,dx\;\Rightarrow\;dx=\frac{du}{b}"))\
+        .di("Así la integral se vuelve de las reglas uno o dos.", M(r"\int\frac{dx}{a+bx}=\frac{1}{b}\int\frac{du}{u}=\frac{1}{b}\ln(a+bx)"))\
+        .di("Con el paréntesis al cuadrado se usa la regla de la potencia.", M(r"\int\frac{dx}{(a+bx)^2}=\frac{1}{b}\int u^{-2}\,du=\frac{1}{b}\left(-\frac{1}{u}\right)=-\frac{1}{b\,(a+bx)}"))
+    L.paso("Regla 3: para qué sirve")\
+        .di("Aparece cuando el radio o el área crecen en línea recta: conos truncados y barras de área lineal.",
+            M(r"r(x)=r_1+\frac{r_2-r_1}{L}\,x=a+bx"))\
+        .di("Ojo con los límites: si cambia la variable, cambian los límites. Cuando equis va de cero a ele, u va de a hasta a más be ele.",
+            M(r"x=0\Rightarrow u=a\qquad x=L\Rightarrow u=a+bL"))
+    L.paso("Regla 4 · Exponencial")\
+        .di("La exponencial casi no cambia al integrar: queda igual, multiplicada por lo que divide a equis.", M(r"\int e^{x/L}\,dx=L\,e^{x/L}"))\
+        .di("Con límites. Recuerde que e a la cero es uno y e a la uno es e, dos coma siete uno ocho.",
+            M(r"\int_0^L e^{x/L}\,dx=L\Big[e^{x/L}\Big]_0^L=L\left(e^{1}-e^{0}\right)=L\,(e-1)"))
+    L.paso("La tabla completa")\
+        .di("Estas son todas. Cuando una lección diga regla uno, dos, tres o cuatro, se refiere a esta tabla.",
+            TABLA(["Regla", "Integral", "Dónde aparece"],
+                  [["1", "$\\int x^n dx=\\frac{x^{n+1}}{n+1}$", "$P=\\alpha V$, esferas, $k$ variable"],
+                   ["2", "$\\int\\frac{dx}{x}=\\ln x$", "tubos, trabajo isotérmico"],
+                   ["3", "$\\int\\frac{dx}{(a+bx)^m}$ con $u=a+bx$", "conos, área lineal"],
+                   ["4", "$\\int e^{x/L}dx=Le^{x/L}$", "área exponencial"]]))\
+        .pregunta_rapida("¿Cuánto da la integral de 1 a e de dx/x?", ["1", "e", "0"], 0, "$\\ln e-\\ln 1=1-0=1$.")
+    return L.usa(r"H=-kA\frac{dT}{dx}", r"W=\int p\,dV")
+
+
+# ============================================================================ T-MAT3
+@leccion("T-MAT3")
+def t_mat3() -> Leccion:
+    L = _teo("T-MAT3", "Cálculo desde cero (3): logaritmos y separar variables", "teoria",
+             claves=["logaritmo", "separar variables", "Fourier", "desde cero"],
+             enunciado="Las tres reglas de logaritmos que se usan y la receta para separar variables en la ley de Fourier, comprobada con la fórmula de la hoja.",
+             visual={"tipo": "conduccion", "geo": "pared", "L": 1.0, "T1": 100, "T2": 20, "eje": "x", "uT": "°C"})
+    L.paso("Qué es un logaritmo")\
+        .di("El logaritmo natural responde: ¿a qué potencia hay que elevar el número e para obtener este número? El número e vale dos coma siete uno ocho.",
+            M(r"\ln x=y\;\Leftrightarrow\;e^{y}=x"))\
+        .di("Dos valores que conviene saber.", M(r"\ln 1=0\quad(\text{porque }e^0=1)"), M(r"\ln(e)=1\quad(\text{porque }e^1=e)"))
+    L.paso("Las tres reglas que se usan")\
+        .di("Una resta de logaritmos es el logaritmo de la división.", M(r"\ln a-\ln b=\ln\frac{a}{b}"))\
+        .di("Una suma es el logaritmo del producto.", M(r"\ln(a\,b)=\ln a+\ln b"))\
+        .di("Y un exponente adentro baja a multiplicar. Esta sirve para despejar exponentes.", M(r"\ln\left(a^{n}\right)=n\ln a"))
+    L.paso("Despejar un exponente con logaritmos")\
+        .di("Ejemplo como el de hallar gama: un número elevado a una incógnita.".replace("gama", dice("γ", "gama")), M(r"0{,}5^{\,x}=0{,}758"))\
+        .di("Se saca logaritmo a los dos lados y el exponente baja.", M(r"\ln\left(0{,}5^{\,x}\right)=\ln 0{,}758\;\Rightarrow\;x\ln 0{,}5=\ln 0{,}758"))\
+        .di("Se divide.", M(r"x=\frac{\ln 0{,}758}{\ln 0{,}5}=\frac{-0{,}2771}{-0{,}6931}=0{,}400"))
+    L.paso("Separar variables: la receta")\
+        .di("En la ley de Fourier hay dos variables: temperatura y posición. Separar es dejar lo de te con de te a un lado, y lo de equis con de equis al otro.", F(r"H=-kA\,\frac{dT}{dx}"))\
+        .di("Paso uno: multiplicar los dos lados por de equis.", M(r"H\,dx=-kA\,dT"))\
+        .di("Paso dos: dividir los dos lados entre ka por A.", M(r"\frac{H\,dx}{kA}=-dT"))
+    L.paso("Integrar los dos lados con los mismos puntos")\
+        .di("Se pone la integral a los dos lados. Los límites son los mismos dos puntos: en el inicio hay te uno y al final te dos.",
+            M(r"\int_0^L\frac{H\,dx}{kA}=-\int_{T_1}^{T_2}dT"))\
+        .di("Si el área es constante, sale de la integral junto con hache y ka.", M(r"\frac{H}{kA}\int_0^L dx=-(T_2-T_1)\;\Rightarrow\;\frac{H}{kA}\,L=T_1-T_2"))\
+        .di("Se despeja hache: sale la fórmula de la hoja. El método funciona.", R(r"H=\frac{kA\,(T_1-T_2)}{L}"), F(r"H=kA\,\frac{T_H-T_C}{L}"))
+    L.paso("Cuando el área cambia con la posición")\
+        .di("Si el área depende de equis, no puede salir de la integral: se escribe A de equis y se usa la tabla de reglas.", M(r"\frac{H}{k}\int_0^L\frac{dx}{A(x)}=T_1-T_2"))\
+        .di("Tubo, regla dos. Esfera, regla uno. Cono o área lineal, regla tres. Área exponencial, regla cuatro.",
+            LISTA(["Tubo: $A=2\\pi rL$ → regla 2", "Esfera: $A=4\\pi r^2$ → regla 1", "Cono o área lineal → regla 3", "$A_0e^{-x/L}$ → regla 4"]))\
+        .pregunta_rapida("Al separar variables en H = −kA dT/dx, ¿qué queda del lado de la temperatura?", ["−dT", "H dx", "kA"], 0, "Se pasa $kA$ dividiendo y $dx$ multiplicando: queda $-dT$.")
+    return L.usa(r"H=-kA\frac{dT}{dx}", r"H=kA\frac{\Delta T}{L}")
