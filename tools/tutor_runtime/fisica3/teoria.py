@@ -7,7 +7,7 @@ qué significa cada letra, un ejemplo con números y la trampa típica. Un movim
 from __future__ import annotations
 
 from .ayudas import Gas, visual_pv
-from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, T, TABLA, V, s
+from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, T, TABLA, V, VISUAL, s
 from .formato import dice, n, nu, tex
 from .registro import leccion
 
@@ -348,3 +348,147 @@ def t_mat3() -> Leccion:
             LISTA(["Tubo: $A=2\\pi rL$ → regla 2", "Esfera: $A=4\\pi r^2$ → regla 1", "Cono o área lineal → regla 3", "$A_0e^{-x/L}$ → regla 4"]))\
         .pregunta_rapida("Al separar variables en H = −kA dT/dx, ¿qué queda del lado de la temperatura?", ["−dT", "H dx", "kA"], 0, "Se pasa $kA$ dividiendo y $dx$ multiplicando: queda $-dT$.")
     return L.usa(r"H=-kA\frac{dT}{dx}", r"H=kA\frac{\Delta T}{L}")
+
+
+# ============================================================================ T-CONO
+def _visual_cono() -> dict:
+    """Cono acostado: radio de 1 a 3 cm en 20 cm, con el perfil de temperatura real de la práctica."""
+    import math as _m
+    k, lb, r1, r2, t1, t2 = 205.0, 0.200, 0.0100, 0.0300, 100.0, 0.0
+    b = (r2 - r1) / lb
+    H = _m.pi * k * r1 * r2 * (t1 - t2) / lb
+    fac = H / (_m.pi * k * b)
+    pts = [[round(lb * i / 40, 4), round(t1 - fac * (1 / r1 - 1 / (r1 + b * lb * i / 40)), 2)] for i in range(41)]
+    return {"tipo": "conduccion", "geo": "pared", "L": lb, "T1": t1, "T2": t2, "eje": "x", "uT": "°C",
+            "forma": "0.333 + 0.667 * u", "pts": pts, "xm": lb / 2, "etA": "π r(x)²",
+            "nota": "Cara chica: r = 1 cm · cara grande: r = 3 cm · largo 20 cm"}
+
+
+@leccion("T-CONO")
+def t_cono() -> Leccion:
+    r1c, r2c, lc = 1.0, 3.0, 20.0  # en centímetros, para la intuición
+    L = _teo("T-CONO", "El tronco de cono desde cero: geometría, receta y la integral sin saltos", "teoria",
+             claves=["tronco de cono", "cono truncado", "radio variable", "área variable", "integral", "desde cero", "receta"],
+             enunciado="Para quien no entiende la geometría del cono truncado ni de dónde sale la integral. "
+                       "Con un solo ejemplo (la práctica 1, problema 4): radio de 1 cm a 3 cm en 20 cm de largo, k = 205 W/(m·K), "
+                       "100 °C en la cara chica y 0 °C en la grande. Al final: la receta de 6 renglones para el examen.",
+             visual=_visual_cono())
+    L.paso("1. Qué es un tronco de cono")\
+        .di("Piense en un vaso de plástico o en un balde: de un lado es angosto y del otro es ancho.",
+            NOTA("**Tronco de cono** = un cono al que le cortaron la punta. Tiene una cara chica (radio $r_1$) y una cara grande (radio $r_2$)."))\
+        .di("Ahora acuéstelo de lado. El calor entra por una cara y sale por la otra, a lo largo, en la dirección equis.".replace("equis", dice("x", "equis")),
+            V(foco="barrido"))\
+        .di("Córtelo como un pan, en rebanadas muy delgadas. Cada rebanada es un círculo: las de un lado son chiquitas y las del otro, grandes.",
+            V(foco="dx"), M(r"\text{rebanada en } x:\ \text{un círculo de radio } r(x)"))\
+        .pregunta_rapida("¿Qué forma tiene cada rebanada del tronco de cono?", ["Un círculo", "Un cuadrado", "Un triángulo"], 0,
+                         "Si se corta un cono en rodajas, cada rodaja es un círculo; solo cambia su tamaño.")
+    L.paso("2. El radio crece parejo, como una rampa")\
+        .di("Ejemplo de la práctica: el radio va de un centímetro a tres centímetros, en un largo de veinte centímetros.",
+            M(r"r_1=1\ \text{cm}\qquad r_2=3\ \text{cm}\qquad L=20\ \text{cm}"))\
+        .di("En veinte centímetros el radio crece dos. Entonces, en cada centímetro crece dos entre veinte.",
+            M(r"\text{crece}=r_2-r_1=3-1=2\ \text{cm}"), M(r"\text{por cada cm}=\frac{2}{20}=0{,}1\ \text{cm}"))\
+        .di("Con eso armamos una tabla: arrancamos en uno y sumamos cero coma uno por cada centímetro que avanzamos.",
+            TABLA(["x (cm)", "0", "5", "10", "15", "20"], [["r (cm)", "1,0", "1,5", "2,0", "2,5", "3,0"]]))\
+        .di("Si se dibuja el radio contra la posición, sale una línea recta. Por eso se dice que el radio crece linealmente.",
+            VISUAL("funcion", expr="1+0.1*x", x_min=0, x_max=20, x_label="x (cm)", y_label="r (cm)", title="El radio crece en línea recta"))
+    L.paso("3. La fórmula del radio es la de una recta")\
+        .di("La regla de la tabla en una sola fórmula: el radio inicial, más lo que crece por cada centímetro, por la distancia.",
+            M(r"r(x)=r_1+\frac{r_2-r_1}{L}\,x"))\
+        .di("A lo que crece por cada unidad de largo le decimos be: es la pendiente de la recta.".replace("be:", dice("b", "be") + ":"),
+            M(r"b=\frac{r_2-r_1}{L}\;\Rightarrow\;r(x)=r_1+b\,x"))\
+        .di("Revisamos los extremos. En equis igual a cero queda erre uno; en equis igual a ele queda erre dos.".replace("erre uno", dice("r₁", "erre uno")).replace("erre dos", dice("r₂", "erre dos")),
+            M(r"r(0)=r_1+b\cdot 0=r_1"), M(r"r(L)=r_1+\frac{r_2-r_1}{L}\,L=r_1+r_2-r_1=r_2"))\
+        .di("Con los números del ejemplo, en el centro de la barra.",
+            M(r"r(x)=1+0{,}1\,x\quad(\text{en cm})"), M(r"r(10)=1+0{,}1\,(10)=1+1=2\ \text{cm}"))\
+        .pregunta_rapida("Si el radio va de 2 cm a 6 cm en 40 cm, ¿cuánto crece por cada centímetro?", ["0,1 cm", "0,2 cm", "4 cm"], 0,
+                         "Crece $6-2=4$ cm en 40 cm: $\\frac{4}{40}=0{,}1$ cm por cada cm.")
+    L.paso("4. El área de cada rebanada")\
+        .di("Cada rebanada es un círculo, y el área de un círculo es pi por el radio al cuadrado. Eso es geometría de colegio.",
+            VISUAL("conduccion", **{k: v for k, v in _visual_cono().items() if k != "tipo"}), M(r"A=\pi r^2"))\
+        .di("Como el radio cambia con equis, el área también cambia con equis.".replace("equis", dice("x", "equis")),
+            M(r"A(x)=\pi\,r(x)^2=\pi\,(r_1+b\,x)^2"))\
+        .di("Con números: en la cara chica, en el centro y en la cara grande.",
+            TABLA(["x (cm)", "0", "10", "20"], [["r (cm)", "1", "2", "3"], ["A (cm²)", "3,14", "12,57", "28,27"]]))\
+        .di("La cara grande tiene nueve veces el área de la chica. No hay un solo valor de A para toda la barra.",
+            OJO("$H=kA\\frac{T_H-T_C}{L}$ (la de pared) solo sirve si el área es la misma en todo el largo. Aquí no: hay que integrar."))
+    L.paso("5. La idea que destraba todo: el mismo calor cruza cada rebanada")\
+        .di("Piense en agua en una manguera que se ensancha: por cada parte pasa la misma cantidad de agua por segundo.")\
+        .di("Con el calor pasa igual. En estado estacionario nada se acumula: lo que entra a una rebanada, sale. Hache es el mismo en todas.".replace("Hache", dice("H", "Hache")),
+            M(r"H=\text{constante en todo el cono}"))\
+        .di("Lo que sí cambia es qué tan rápido baja la temperatura. La ley de Fourier de la hoja lo dice.",
+            F(r"H=-kA\,\frac{dT}{dx}"))\
+        .di("Despejando la pendiente: donde el área es chica, la temperatura cae más rápido.",
+            M(r"\left|\frac{dT}{dx}\right|=\frac{H}{kA}\quad\Rightarrow\quad A\ \text{chica}\;\Rightarrow\;\text{caída rápida}"), V(foco="punto"))
+    L.paso("6. La receta de 6 pasos (para cualquier área que cambia)")\
+        .di("Cuando el enunciado diga tronco de cono, radio que varía, o área A de equis, haga siempre esto, en este orden.".replace("A de equis", dice("A(x)", "A de equis")),
+            LISTA(["1. Escribir el radio: $r(x)=r_1+b\\,x$ con $b=\\frac{r_2-r_1}{L}$",
+                   "2. Escribir el área: $A(x)=\\pi\\,r(x)^2$",
+                   "3. Fourier de la hoja: $H=-kA\\frac{dT}{dx}$",
+                   "4. Separar: $\\frac{H\\,dx}{A(x)}=-k\\,dT$",
+                   "5. Integrar los dos lados ($x$ de $0$ a $L$; $T$ de $T_1$ a $T_2$)",
+                   "6. Despejar $H$"]))\
+        .di("En el examen no hay que inventar nada: es la misma receta cada vez. Solo cambia la fórmula del área.",
+            NOTA("Pirámide, cono, área lineal o exponencial: los pasos 3 a 6 son idénticos."))
+    L.paso("7. Pasos 3 y 4: Fourier y separar")\
+        .di("Escribimos Fourier y ponemos el área del cono.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,\pi\,r(x)^2\,\frac{dT}{dx}"))\
+        .di("Separar es dejar lo de equis a un lado y lo de temperatura al otro. Primero multiplicamos los dos lados por de equis.".replace("de equis", dice("dx", "de equis")),
+            M(r"H\,dx=-k\,\pi\,r(x)^2\,dT"))\
+        .di("Después dividimos los dos lados entre pi por el radio al cuadrado.",
+            M(r"\frac{H\,dx}{\pi\,r(x)^2}=-k\,dT"))
+    L.paso("8. Paso 5: integrar los dos lados")\
+        .di("Integrar es sumar todas las rebanadas: equis va de cero a ele, y la temperatura va de te uno a te dos.".replace("te uno a te dos", dice("T₁ a T₂", "te uno a te dos")).replace("a ele", "a " + dice("L", "ele")),
+            M(r"H\int_0^L\frac{dx}{\pi\,r(x)^2}=-k\int_{T_1}^{T_2}dT"))\
+        .di("Hache sale de la integral porque es constante: es el mismo en todas las rebanadas.".replace("Hache", dice("H", "Hache")))\
+        .di("La derecha es fácil: sumar todos los pedacitos de temperatura da final menos inicial.",
+            M(r"-k\int_{T_1}^{T_2}dT=-k\,(T_2-T_1)=k\,(T_1-T_2)"))
+    L.paso("9. La integral de la izquierda (1): usar el radio como letra")\
+        .di("El truco: en vez de equis, usamos el propio radio como variable. Le ponemos un nombre: u.".replace("equis", dice("x", "equis")),
+            M(r"u=r(x)=r_1+b\,x"))\
+        .di("Cuando equis avanza un pedacito, el radio crece be veces ese pedacito. Eso es lo que dice la pendiente.".replace("equis", dice("x", "equis")).replace("be veces", dice("b", "be") + " veces"),
+            M(r"du=b\,dx\;\Rightarrow\;dx=\frac{du}{b}"))\
+        .di("Los límites ahora son radios: al inicio el radio es erre uno y al final es erre dos.".replace("erre uno", dice("r₁", "erre uno")).replace("erre dos", dice("r₂", "erre dos")),
+            M(r"x=0\;\Rightarrow\;u=r_1\qquad x=L\;\Rightarrow\;u=r_2"))\
+        .di("Reemplazamos: el radio por u, y de equis por de u entre be. Lo constante sale de la integral.".replace("de equis", dice("dx", "de equis")).replace("de u entre be", dice("du/b", "de u entre be")),
+            M(r"\int_0^L\frac{dx}{\pi\,r(x)^2}=\int_{r_1}^{r_2}\frac{1}{\pi u^2}\cdot\frac{du}{b}=\frac{1}{\pi b}\int_{r_1}^{r_2}u^{-2}\,du"))
+    L.paso("10. La integral de la izquierda (2): regla de la potencia")\
+        .di("Uno entre u al cuadrado se escribe u a la menos dos. Regla de la tabla: al exponente se le suma uno y se divide entre el exponente nuevo.",
+            M(r"\int u^{-2}\,du=\frac{u^{-2+1}}{-2+1}=\frac{u^{-1}}{-1}=-\frac{1}{u}"))\
+        .di("Ahora los límites: lo de arriba menos lo de abajo.",
+            M(r"\frac{1}{\pi b}\Big[-\frac{1}{u}\Big]_{r_1}^{r_2}=\frac{1}{\pi b}\left[\left(-\frac{1}{r_2}\right)-\left(-\frac{1}{r_1}\right)\right]"))\
+        .di("Menos por menos da más. Ordenamos.", M(r"=\frac{1}{\pi b}\left(\frac{1}{r_1}-\frac{1}{r_2}\right)"))
+    L.paso("11. Simplificar (álgebra de colegio)")\
+        .di("Restamos las fracciones con denominador común: erre uno por erre dos.".replace("erre uno por erre dos", dice("r₁r₂", "erre uno por erre dos")),
+            M(r"\frac{1}{r_1}-\frac{1}{r_2}=\frac{r_2}{r_1r_2}-\frac{r_1}{r_1r_2}=\frac{r_2-r_1}{r_1r_2}"))\
+        .di("Ponemos be, que es la resta de radios entre ele. Uno entre be es ele entre la resta.".replace("ele", dice("L", "ele")),
+            M(r"\frac{1}{b}=\frac{L}{r_2-r_1}"))\
+        .di("Multiplicamos: la resta de radios está arriba y abajo, y se cancela.",
+            M(r"\frac{1}{\pi}\cdot\frac{L}{r_2-r_1}\cdot\frac{r_2-r_1}{r_1r_2}=\frac{L}{\pi\,r_1r_2}"))
+    L.paso("12. Paso 6: despejar H")\
+        .di("Juntamos la izquierda y la derecha.", M(r"H\,\frac{L}{\pi\,r_1r_2}=k\,(T_1-T_2)"))\
+        .di("Multiplicamos los dos lados por pi por erre uno por erre dos.".replace("erre uno por erre dos", dice("r₁r₂", "erre uno por erre dos")),
+            M(r"H\,L=\pi\,r_1r_2\,k\,(T_1-T_2)"))\
+        .di("Dividimos los dos lados entre ele.".replace("ele", dice("L", "ele")), R(r"H=\frac{\pi k\,r_1r_2\,(T_1-T_2)}{L}"))
+    L.paso("13. Truco para recordarlo (y para revisar)")\
+        .di("Un cilindro tiene área pi erre al cuadrado, es decir pi por erre por erre. Con la fórmula de pared de la hoja:",
+            F(r"H=kA\,\frac{T_H-T_C}{L}"), M(r"\text{cilindro: }H=\frac{\pi k\,r\cdot r\,(T_1-T_2)}{L}"))\
+        .di("En el cono, en vez de erre por erre, va erre uno por erre dos. Si los dos radios son iguales, sale el cilindro.".replace("erre uno por erre dos", dice("r₁·r₂", "erre uno por erre dos")),
+            M(r"r_1=r_2=r\;\Rightarrow\;H=\frac{\pi k\,r^2\,(T_1-T_2)}{L}"))\
+        .di("Pero ojo: esa fórmula no está en la hoja. En el examen hay que mostrar la integral; el truco solo sirve para revisar.",
+            OJO("Si escribe la fórmula del cono sin la integral, pierde los puntos del procedimiento."))
+    L.paso("14. Con números (práctica 1, problema 4)")\
+        .di("Todo en metros: los radios son cero coma cero uno y cero coma cero tres metros, y el largo cero coma dos.",
+            M(r"r_1=0{,}0100\ \text{m}\quad r_2=0{,}0300\ \text{m}\quad L=0{,}200\ \text{m}"))\
+        .di("Sustituimos en la fórmula que acabamos de sacar.",
+            M(r"H=\frac{\pi(205)(0{,}0100)(0{,}0300)(100-0)}{0{,}200}"))\
+        .di("Son noventa y seis coma seis watts.", R(r"H=96{,}6\ \text{W}"))
+    L.paso("15. Lo que se escribe en el examen")\
+        .di("Estos seis renglones bastan. Cada uno sale del anterior; no hay que inventar nada.",
+            LISTA(["$r(x)=r_1+b\\,x,\\quad b=\\frac{r_2-r_1}{L}$",
+                   "$A(x)=\\pi\\,r(x)^2$",
+                   r"$H=-kA\frac{dT}{dx}\;\Rightarrow\;\frac{H\,dx}{\pi r(x)^2}=-k\,dT$",
+                   "$H\\int_0^L\\frac{dx}{\\pi r(x)^2}=k\\,(T_1-T_2)$",
+                   r"$u=r(x),\ du=b\,dx\;\Rightarrow\;\int_0^L\frac{dx}{\pi r(x)^2}=\frac{L}{\pi r_1r_2}$",
+                   "$H=\\frac{\\pi k\\,r_1r_2\\,(T_1-T_2)}{L}$"]))\
+        .pregunta_rapida("Si se da vuelta el cono (la cara grande al vapor), ¿qué pasa con H?", ["No cambia", "Se duplica", "Se hace cero"], 0,
+                         "$r_1r_2=r_2r_1$: el producto de los radios es el mismo, así que $H$ no cambia. Lo que cambia es el perfil de temperatura.")
+    return L.usa(r"H=-kA\frac{dT}{dx}", r"H=kA\frac{T_H-T_C}{L}")

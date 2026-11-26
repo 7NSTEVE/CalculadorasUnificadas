@@ -88,6 +88,11 @@ def obtener(id: str) -> Leccion:
             lec = _CONSTRUCTORES[clave]()
             if lec.id != clave:
                 raise RuntimeError(f"La lección {clave} se llama {lec.id}")
+            # Preguntas conceptuales razonadas desde la hoja (conceptos.py) y ninguna cuenta de varias
+            # operaciones en un solo renglón (desglose.py)
+            from . import conceptos, desglose
+            conceptos.aplicar(lec)
+            desglose.aplicar(lec)
             _CACHE[clave] = lec
         return _CACHE[clave]
 

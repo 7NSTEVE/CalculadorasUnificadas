@@ -212,8 +212,9 @@ def q122() -> Leccion:
     res = [("A→B", rab), ("B→C", rbc), ("C→A", rca)]
     L = _des("Q122", "Ciclo de compresión-expansión: hallar γ, C_p, K y límite de Carnot",
              "Un ciclo con $0{,}300$ mol de gas ideal: $A\\to B$ compresión isobárica de $400$ K a $300$ K ($V_B=0{,}75V_A$, $p_A=3{,}6\\times 10^6$ Pa); $B\\to C$ expansión adiabática hasta $V_A$ y $267{,}2$ K; $C\\to A$ calentamiento isocórico. A) $\\gamma$. B) $C_p$. C) $K$ del ciclo. D) $K_{\\text{Carnot}}$. E) ¿Es posible operar entre esos dos focos?",
-             aviso="Los incisos D y E usan el refrigerador de Carnot (sección 20.6), que no entra en el III parcial. A, B y C sí entran.",
-             claves=["gamma", "refrigerador", "Carnot", "imposibilidad"],
+             aviso="Los incisos D y E usan el refrigerador de Carnot (sección 20.6), que no entra en el III parcial. A, B y C sí entran. "
+                   "Ojo: la conclusión E del solucionario oficial («el ciclo es imposible») es un error; aquí se explica por qué el ciclo sí es posible.",
+             claves=["gamma", "refrigerador", "Carnot", "posible", "segunda ley"],
              visual=visual_pv(g, [("A", "B", "isobarico"), ("B", "C", "adiabatico"), ("C", "A", "isocorico")],
                               uv="cm³", up="MPa", fv=1e6, fp=1e-6, valores=valores_visual(res)))
     L.paso("Qué nos dan y qué piden")\
@@ -243,17 +244,32 @@ def q122() -> Leccion:
     explica_proceso(L.paso("C3) Calentamiento isocórico C→A"), g, "C", "A", "isocorico", foco="CA")
     c = cierre_ciclo(L, res, refri=True, titulo="C) Coeficiente de rendimiento del ciclo", id_e="rc")
     deriva_carnot(L.paso("D) Carnot: de dónde sale su rendimiento (no entra en el parcial)"), refri=True)
-    L.paso("D y E) Límite de Carnot y comparación")\
-        .di("Los focos están a cuatrocientos y a doscientos sesenta y siete coma dos kelvin.", M(r"K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}=\frac{267{,}2}{132{,}8}"),
-            R(rf"K_{{\text{{Carnot}}}} = {tex(K_carnot, 3)}", "rd"))\
-        .di(f"El ciclo daría {n(c['K'], 3)}, mucho más que el máximo: no puede operar entre esos dos focos.",
-            R(r"K > K_{\text{Carnot}} \;\Rightarrow\; \text{no es posible (viola la 2.ª ley)}", "re"))
+    L.paso("D) El número de Carnot que pide el solucionario")\
+        .di("El solucionario toma la temperatura más baja y la más alta del ciclo como si fueran dos focos fijos.", M(r"K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}=\frac{267{,}2}{132{,}8}"),
+            R(rf"K_{{\text{{Carnot}}}} = {tex(K_carnot, 3)}", "rd"))
+    L.paso("E) ¿Es imposible el ciclo? No: esa comparación no aplica")\
+        .di(f"El ciclo da {n(c['K'], 3)}, más que {n(K_carnot, 3)}. El solucionario concluye que es imposible. Esa conclusión es un error.",
+            OJO("El solucionario oficial dice «imposible». Está mal: el ciclo sí se puede hacer."))\
+        .di("El límite de Carnot vale cuando el gas toma calor de un foco frío y lo bota en un foco caliente, cada uno a una sola temperatura.",
+            M(r"K\le\frac{T_C}{T_H-T_C}\quad\text{solo si todo el calor entra a }T_C\text{ y sale a }T_H"))\
+        .di("Aquí no pasa eso. El gas toma calor de C a A mientras se calienta hasta cuatrocientos kelvin.",
+            M(r"Q_{CA}>0\quad\text{entra entre }267{,}2\text{ K y }400\text{ K}"))\
+        .di("Y lo bota de A a B mientras se enfría de cuatrocientos a trescientos kelvin.",
+            M(r"Q_{AB}<0\quad\text{sale entre }400\text{ K y }300\text{ K}"))
+    L.paso("E) Conclusión correcta")\
+        .di("Toma calor más caliente que parte del que bota: no hay un foco frío y uno caliente separados. Comparar con Carnot no tiene sentido.")\
+        .di("Además, los tres procesos son reversibles y posibles para un gas ideal. Un ciclo hecho con ellos siempre se puede hacer.",
+            R(r"\text{El ciclo sí es posible: no viola la segunda ley}", "re"),
+            NOTA("Comprobación con entropía (fuera del parcial): sumar todos los pedacitos $\\frac{dQ}{T}$ del ciclo da "
+                 "$nC_p\\ln\\frac{300}{400}+nC_V\\ln\\frac{400}{267{,}2}=0$. Un ciclo imposible daría un número mayor que cero."))
     L.responde("A", rf"\gamma={tex(gamma, 3)}", gamma, "")\
      .responde("B", rf"C_p={tex(cp, 3)}\ \text{{J/(mol}}\cdot\text{{K)}}", cp, "J/(mol·K)")\
      .responde("C", rf"K={tex(c['K'], 4)}", c["K"], "")\
-     .responde("D", rf"K_{{\text{{Carnot}}}}={tex(K_carnot, 3)}", K_carnot, "")
+     .responde("D", rf"K_{{\text{{Carnot}}}}={tex(K_carnot, 3)}", K_carnot, "")\
+     .responde("E", r"\text{sí es posible (la comparación con Carnot no aplica)}")
     return L.oficial("III Parcial ordinario II-2024", 1.40, 29.1, 18.44, 2.01, tol=0.04,
-                     nota="El oficial redondeó γ=1,402 a 1,40 (Cp=29,10 → K=18,44); sin redondear da K≈17,9 (ambos muy por encima de K_Carnot=2,01).").usa(r"TV^{\gamma-1}=\text{cte}", r"C_P=C_V+R", r"K=\frac{|Q_C|}{|W|}")
+                     nota="El oficial redondeó γ=1,402 a 1,40 (Cp=29,10 → K=18,44); sin redondear da K≈17,9. "
+                          "En E el oficial concluye «imposible»: es un error, porque el ciclo es reversible y no tiene dos focos separados.").usa(r"TV^{\gamma-1}=\text{cte}", r"C_P=C_V+R", r"K=\frac{|Q_C|}{|W|}")
 
 # ============================================================================ Q123
 @leccion("Q123")

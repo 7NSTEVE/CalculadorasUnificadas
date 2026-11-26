@@ -440,7 +440,8 @@ def q115() -> Leccion:
     p.di("De d a a, la isoterma: su calor entre la temperatura.", V(foco="da"),
          M(rf"\Delta S_{{da}}=\frac{{Q_{{da}}}}{{T_a}}=\frac{{{tex(rda['Q'], 5, sci='no')}}}{{293}}={tex(ds_da, 3, u='J/K')}"))
     p.di("Revisión: el ciclo es reversible, la suma tiene que dar cero.",
-         M(rf"\sum\Delta S=({tex(ds_ab, 3)})+({tex(ds_bc, 3)})+0+({tex(ds_da, 3)})\approx 0"),
+         M(rf"\sum\Delta S=({tex(ds_ab, 3)})+({tex(ds_bc, 3)})+0+({tex(ds_da, 3)})"),
+         M(rf"=({tex(float(tex(ds_ab, 3).replace('{,}', '.')) + float(tex(ds_bc, 3).replace('{,}', '.')), 4)})+({tex(ds_da, 3)})\approx 0"),
          R(rf"\Delta S_{{ab}}=+{tex(ds_ab, 3, u='J/K')}\quad \Delta S_{{bc}}={tex(ds_bc, 3, u='J/K')}\quad \Delta S_{{cd}}=0\quad \Delta S_{{da}}={tex(ds_da, 3, u='J/K')}", "rb"))
     L.responde("Qab", rf"{tex(rab['Q'], 5, sci='no')}\ \text{{J}}", rab["Q"], "J")\
      .responde("Qbc", rf"{tex(rbc['Q'], 4)}\ \text{{J}}", rbc["Q"], "J")\

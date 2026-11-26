@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import Gas, cierre_ciclo, estado_T, explica_proceso, revisar_opciones, valores_visual, visual_pv
+from .ayudas import Gas, cierre_ciclo, estado_T, explica_proceso, receta_cono, revisar_opciones, valores_visual, visual_pv
 from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, TABLA, V
 from .formato import dice, n, nu, tex
 from .registro import leccion
@@ -301,12 +301,22 @@ def pr1_4() -> Leccion:
         .di("Paso dos: dividir los dos lados entre pi por el paréntesis al cuadrado. Hache es constante.".replace("Hache", dice("H", "Hache")), M(r"\frac{H}{\pi}\,\frac{dx}{(a+bx)^2}=-k\,dT"))\
         .di("Integramos toda la barra: equis va de cero a ele y la temperatura de te uno a te dos.".replace("equis", dice("x", "equis")).replace("a ele", "a " + dice("L", "ele")).replace("te uno a te dos", dice("T₁ a T₂", "te uno a te dos")), V(foco="barrido"),
             M(r"\frac{H}{\pi}\int_0^L\frac{dx}{(a+bx)^2}=-k\int_{T_1}^{T_2}dT"))
-    L.paso("2) La integral de la izquierda (regla 3)")\
-        .di("La sugerencia del enunciado es la regla tres de la tabla. Se evalúa arriba, con equis igual a ele, menos abajo, con equis igual a cero.".replace("equis igual a ele", dice("x = L", "equis igual a ele")).replace("equis igual a cero", dice("x = 0", "equis igual a cero")),
-            M(r"\int_0^L\frac{dx}{(a+bx)^2}=\Big[-\frac{1}{b(a+bx)}\Big]_0^L"))\
-        .di("Sustituimos los dos límites. Menos por menos da más.", M(r"=\left(-\frac{1}{b(a+bL)}\right)-\left(-\frac{1}{b(a+0)}\right)=\frac{1}{b\,a}-\frac{1}{b\,(a+bL)}"))\
-        .di("Como a es erre uno y a más be ele es erre dos, sacamos uno entre be de factor común.".replace("a es erre uno", dice("a = r₁", "a es erre uno")).replace("a más be ele es erre dos", dice("a + bL = r₂", "a más be ele es erre dos")).replace("uno entre be", dice("1/b", "uno entre be")),
-            M(r"=\frac{1}{b}\left(\frac{1}{r_1}-\frac{1}{r_2}\right)"), NOTA("Regla 3 de la lección **T-MAT2**: cambio de variable $u=a+bx$."))
+    L.paso("2) La integral de la izquierda: cambio de variable")\
+        .di("Abajo está el paréntesis al cuadrado. A ese paréntesis le ponemos un nombre nuevo: u. Es justo el radio en cada punto.",
+            M(r"u=a+bx=r(x)"))\
+        .di("Si equis crece un pedacito, u crece be veces ese pedacito, porque be es la pendiente. El número a no cambia.".replace("equis", dice("x", "equis")),
+            M(r"du=b\,dx\;\Rightarrow\;dx=\frac{du}{b}"))\
+        .di("Los límites también cambian. Donde equis vale cero, u vale erre uno; donde equis vale ele, u vale erre dos.".replace("erre uno", dice("r₁", "erre uno")).replace("erre dos", dice("r₂", "erre dos")),
+            M(r"x=0\;\Rightarrow\;u=a=r_1\qquad x=L\;\Rightarrow\;u=a+bL=r_2"))\
+        .di("Cambiamos todo a la letra u: el paréntesis por u, y de equis por de u entre be.".replace("de equis", dice("dx", "de equis")).replace("de u entre be", dice("du/b", "de u entre be")),
+            M(r"\int_0^L\frac{dx}{(a+bx)^2}=\int_{r_1}^{r_2}\frac{1}{u^2}\cdot\frac{du}{b}=\frac{1}{b}\int_{r_1}^{r_2}u^{-2}\,du"))
+    L.paso("2) La integral de la izquierda: regla de la potencia")\
+        .di("Uno entre u al cuadrado es u a la menos dos. Regla de la potencia: al exponente se le suma uno y se divide entre ese exponente nuevo.",
+            M(r"\int u^{-2}\,du=\frac{u^{-2+1}}{-2+1}=\frac{u^{-1}}{-1}=-\frac{1}{u}"))\
+        .di("Ahora los límites: lo de arriba menos lo de abajo.",
+            M(r"\frac{1}{b}\Big[-\frac{1}{u}\Big]_{r_1}^{r_2}=\frac{1}{b}\left[\left(-\frac{1}{r_2}\right)-\left(-\frac{1}{r_1}\right)\right]"))\
+        .di("Menos por menos da más, y ordenamos. Es lo mismo que dice la sugerencia del enunciado.",
+            M(r"=\frac{1}{b}\left(\frac{1}{r_1}-\frac{1}{r_2}\right)"), NOTA("La sugerencia del enunciado, $\\int\\frac{dx}{(a+bx)^2}=-\\frac{1}{b(a+bx)}$, sale de este mismo cambio de variable."))
     L.paso("2) Simplificar la resta de fracciones")\
         .di("Restamos las fracciones con el denominador común erre uno por erre dos.".replace("erre uno por erre dos", dice("r₁r₂", "erre uno por erre dos")),
             M(r"\frac{1}{r_1}-\frac{1}{r_2}=\frac{r_2}{r_1r_2}-\frac{r_1}{r_1r_2}=\frac{r_2-r_1}{r_1r_2}"))\
@@ -359,6 +369,7 @@ def pr1_4() -> Leccion:
             M(r"r_1=r_2=r\;\Rightarrow\;H=\frac{\pi k r^2(T_1-T_2)}{L}=kA\,\frac{T_1-T_2}{L}"), F(r"H=kA\,\frac{T_H-T_C}{L}"))\
         .di("Si se invierte la barra, el producto erre uno por erre dos es el mismo: hache no cambia. Lo que cambia es el perfil de temperatura.".replace("erre uno por erre dos", dice("r₁r₂", "erre uno por erre dos")).replace("hache", dice("H", "hache")),
             R(r"H\ \text{no cambia}\ (r_1r_2=r_2r_1)", "r5"))
+    receta_cono(L, r1, r2, lb)
     L.responde("3", rf"H={tex(H, 3)}\ \text{{W}}", H, "W").responde("3", rf"m={tex(mh, 3)}\ \text{{kg/h}}", mh, "kg/h")\
      .responde("4", rf"T(L/2)={tex(tmid, 3)}\ {C}", tmid, "°C").responde("4", rf"x={tex(x50 * 100, 3)}\ \text{{cm}}", x50 * 100, "cm")
     return L.usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}", r"Q=\pm mL")
@@ -485,8 +496,12 @@ def pr1_6() -> Leccion:
         .di("Sustituimos. Con cinco cifras en cada factor, para que el producto salga justo.", M(rf"W_{{AB}}=(2{{,}}00)(8{{,}}314)(400)\ln 3=({tex(2.0 * 8.314 * 400.0, 5)})({tex(math.log(3.0), 5)})"),
             M(rf"W_{{AB}}={tex(rab['W'], 4)}\ \text{{J}}", "wab", "verde"))
     L.paso("2) Trabajo de B a C integrando")\
-        .di("En la adiabática la presión es una constante dividida entre el volumen elevado a gama.", V(foco="BC"),
-            M(r"PV^{\gamma}=P_BV_B^{\gamma}\;\Rightarrow\;P=P_BV_B^{\gamma}\,V^{-\gamma}"))\
+        .di("En la adiabática, la casilla de la hoja dice que pe por ve a la gama no cambia: vale lo mismo que en B.".replace("pe por ve a la gama", dice("PVᵞ", "pe por ve a la gama")), V(foco="BC"),
+            F(r"pV^{\gamma}=\text{constante}"), M(r"PV^{\gamma}=P_BV_B^{\gamma}"))\
+        .di("Dividimos los dos lados entre ve a la gama para dejar sola la presión.".replace("ve a la gama", dice("Vᵞ", "ve a la gama")),
+            M(r"P=\frac{P_BV_B^{\gamma}}{V^{\gamma}}"))\
+        .di("Dividir entre ve a la gama es multiplicar por ve a la menos gama; así se integra con la regla de la potencia.".replace("ve a la gama", dice("Vᵞ", "ve a la gama")).replace("ve a la menos gama", dice("V⁻ᵞ", "ve a la menos gama")),
+            M(r"P=P_BV_B^{\gamma}\,V^{-\gamma}"))\
         .di("La ponemos en el trabajo de la hoja. La constante sale de la integral.", F(r"W=\int_{V_1}^{V_2}p\,dV"),
             M(r"W_{BC}=\int_{V_B}^{V_C}P_BV_B^{\gamma}\,V^{-\gamma}\,dV=P_BV_B^{\gamma}\int_{V_B}^{V_C}V^{-\gamma}\,dV"))\
         .di("Regla uno de la potencia con exponente menos gama: se suma uno y se divide entre el nuevo.".replace("gama", dice("γ", "gama")),
@@ -896,6 +911,7 @@ def pr2_d1() -> Leccion:
             M(r"L\,R(x)=L\left(R_1+\frac{R_2-R_1}{L}\,x\right)=R_1L+(R_2-R_1)\,x"),
             R(r"T(x)=T_1-(T_1-T_2)\,\frac{R_2\,x}{R_1L+(R_2-R_1)\,x}", "rc"))\
         .di("Revisión en los extremos.", M(r"x=0:\ T=T_1"), M(r"x=L:\ \frac{R_2L}{R_1L+R_2L-R_1L}=\frac{R_2L}{R_2L}=1\;\Rightarrow\;T=T_2"))
+    receta_cono(L, nr=("R₁", "R₂"))
     L.responde("b", r"H=\frac{\pi kR_1R_2(T_1-T_2)}{L}", None, "").responde("c", r"T(x)=T_1-(T_1-T_2)\frac{R_2x}{R_1L+(R_2-R_1)x}", None, "")
     return L.usa(r"H=-kA\frac{dT}{dx}")
 
@@ -1086,7 +1102,11 @@ def pr2_d5() -> Leccion:
         .di("Le sumamos uno.", M(rf"\gamma={tex(gm1, 4)}+1"), R(rf"\gamma={tex(gamma, 3)}", "ra"))
     L.paso("b) C_V y C_P desde la hoja")\
         .di("Juntamos las dos casillas de la hoja.", F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"))\
-        .di("Despejamos ce ve.".replace("ce ve", dice("C_V", "ce ve")), M(r"\gamma C_V=C_V+R\;\Rightarrow\;C_V=\frac{R}{\gamma-1}"))\
+        .di("Como ce pe es gama por ce ve, lo ponemos en la primera casilla.".replace("ce pe", dice("C_P", "ce pe")).replace("gama por ce ve", dice("γC_V", "gama por ce ve")),
+            M(r"\gamma C_V=C_V+R"))\
+        .di("Pasamos ce ve restando al lado izquierdo.".replace("ce ve", dice("C_V", "ce ve")), M(r"\gamma C_V-C_V=R"))\
+        .di("Sacamos ce ve de factor común.".replace("ce ve", dice("C_V", "ce ve")), M(r"C_V\,(\gamma-1)=R"))\
+        .di("Dividimos los dos lados entre gama menos uno.".replace("gama menos uno", dice("γ − 1", "gama menos uno")), M(r"C_V=\frac{R}{\gamma-1}"))\
         .di("Sustituimos.", M(rf"C_V=\frac{{8{{,}}314}}{{{tex(gm1, 4)}}}={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"), M(rf"C_P={tex(cv, 4)}+8{{,}}314={tex(cp, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"),
             R(rf"C_V={tex(cv, 3)}\qquad C_P={tex(cp, 3)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}", "rb"))
     L.paso("c) Trabajo de la expansión")\

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import revisar_opciones
+from .ayudas import receta_cono, revisar_opciones
 from .banco_recomendados import _esfera_hierro
 from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, Leccion, R, T, TABLA, V, s
 from .formato import dice, n, nu, tex
@@ -414,6 +414,7 @@ def q041() -> Leccion:
             F(r"H = \frac{dQ}{dt} \;\Rightarrow\; Q = H\,\Delta t"))\
         .di("El tiempo en segundos.", M(r"\Delta t=(5{,}00)(60)=300\ \text{s}"))\
         .di("Multiplicamos.", M(rf"Q = ({tex(H, 4)})(300)"), R(rf"Q = {tex(Q, 3, u='J', sci='si')}", "rb"))
+    receta_cono(L, a, b, h, eje="y", nr=("a", "b"), despues_de=0)
     L.responde("A", rf"H={tex(H, 4)}\ \text{{W}}", H, "W").responde("B", rf"Q={tex(Q, 3, sci='si')}\ \text{{J}}", Q, "J")
     return L.oficial("III Parcial extraordinario II-2024", 353.4, 1.06e5).usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}")
 
@@ -509,6 +510,7 @@ def q043() -> Leccion:
         .di("Las dos barras unen los mismos depósitos: el calor que sale del caliente se reparte entre ellas, así que los flujos se suman.", V(foco="total"),
             M(r"H_T = H_A + H_B"), M(rf"H_T = {tex(ha, 3)} + {tex(hb, 3)}"),
             R(rf"H_T = {tex(ht, 3, u='W')}", "rc"))
+    receta_cono(L, r0, r1, L_b, nr=("R₀", "R₁"), despues_de=0)
     L.responde("A", rf"H_A={tex(ha, 3)}\ \text{{W}}", ha, "W").responde("B", rf"H_B={tex(hb, 3)}\ \text{{W}}", hb, "W").responde("C", rf"H_T={tex(ht, 3)}\ \text{{W}}", ht, "W")
     return L.oficial("III Parcial extraordinario I-2025", 26.1, 1.70, 27.8).usa(r"H=-kA\frac{dT}{dx}", r"H=kA\frac{\Delta T}{L}")
 
@@ -549,8 +551,16 @@ def q044() -> Leccion:
     L.paso("A) Temperatura en la interfaz acero-cerámica")\
         .di("Las capas están en serie: el mismo flujo cruza las dos. Igualamos.", V(foco="perfil"),
             M(r"H=\frac{T_1-T_2}{R_1} = \frac{T_2-T_3}{R_2}"))\
-        .di("Multiplicamos en cruz y despejamos te dos.".replace("te dos", dice("T₂", "te dos")),
-            M(r"R_2(T_1-T_2)=R_1(T_2-T_3)\;\Rightarrow\;T_2 = \frac{R_2 T_1 + R_1 T_3}{R_1+R_2}"))\
+        .di("Multiplicamos en cruz: cada resistencia pasa a multiplicar al otro lado.",
+            M(r"R_2(T_1-T_2)=R_1(T_2-T_3)"))\
+        .di("Abrimos los paréntesis: cada resistencia multiplica a las dos temperaturas.",
+            M(r"R_2T_1-R_2T_2=R_1T_2-R_1T_3"))\
+        .di("Juntamos lo que tiene te dos a la derecha, y lo que no, a la izquierda. Cada término cambia de signo al pasar.".replace("te dos", dice("T₂", "te dos")),
+            M(r"R_2T_1+R_1T_3=R_1T_2+R_2T_2"))\
+        .di("Sacamos te dos de factor común.".replace("te dos", dice("T₂", "te dos")),
+            M(r"R_2T_1+R_1T_3=T_2\,(R_1+R_2)"))\
+        .di("Dividimos los dos lados entre la suma de resistencias.",
+            M(r"T_2 = \frac{R_2 T_1 + R_1 T_3}{R_1+R_2}"))\
         .di("Sustituimos.", M(rf"T_2 = \frac{{({tex(R2, 4)})(125{{,}}0)+({tex(R1, 4)})(40{{,}}0)}}{{{tex(R1, 4)}+{tex(R2, 4)}}}"))\
         .di("Arriba y abajo por separado.", M(rf"T_2=\frac{{{tex(R2 * t1, 4)}+{tex(R1 * t3, 4)}}}{{{tex(R1 + R2, 4)}}}=\frac{{{tex(R2 * t1 + R1 * t3, 4)}}}{{{tex(R1 + R2, 4)}}}"))\
         .di(f"La cerámica aísla mucho más, así que casi toda la caída ocurre en ella: {nu(t2, '°C', dec=1)}.",

@@ -338,3 +338,163 @@ def p26_3() -> Leccion:
         r"M=N_A m",
         r"T_K=T_{^\circ\text{C}}+273{,}15",
     )
+
+
+# ============================================================================ P26-4
+@leccion("P26-4")
+def p26_4() -> Leccion:
+    """Radiación neta + calorimetría: una esfera negra que se enfría (lo que el profe anunció: calorimetría o radiación)."""
+    from .ayudas import SIGMA
+    r, e, m, c = 0.0500, 0.900, 1.41, 900.0
+    tc, tsc, t = 200.0, 25.0, 60.0
+    A = 4.0 * math.pi * r ** 2
+    T, Ts = tc + T0, tsc + T0
+    pre = A * e * SIGMA
+    He, Ha = pre * T ** 4, pre * Ts ** 4
+    Hn = He - Ha
+    Q = Hn * t
+    dT = Q / (m * c)
+    L = Leccion(
+        "P26-4", "Radiación neta y calorimetría: una esfera negra que se enfría", tema="5.9", tipo="desarrollo", nivel=3,
+        fuente=_fuente_b(4),
+        enunciado=(
+            "Una esfera de aluminio pintada de negro ($e=0{,}900$), de radio $5{,}00$ cm y masa $1{,}41$ kg "
+            "($c=900$ J/(kg·K)), está a $200\\ ^\\circ$C dentro de una habitación cuyas paredes están a $25{,}0\\ ^\\circ$C. "
+            "a) Área de la esfera. b) Potencia que emite. c) Potencia que absorbe de las paredes. d) Potencia neta. "
+            "e) Si esa potencia neta se mantuviera, ¿cuánto bajaría la temperatura de la esfera en $1{,}00$ minuto?"),
+        claves=["radiación neta", "Stefan-Boltzmann", "calorimetría", "enfriamiento", "lo que dijo el profe"],
+        visual={"tipo": "radiacion", "T": round(T, 2), "Ts": round(Ts, 2), "e": e, "A": round(A, 5), "H": round(Hn, 1), "objeto": "esfera"},
+    )
+    L.paso("Qué nos dan y qué piden")\
+        .di("Una esfera caliente en un cuarto más frío: pierde energía por radiación, y esa energía sale de su calor.",
+            DATO("pintada de negro"),
+            LISTA(["$r=0{,}0500$ m, $e=0{,}900$, $m=1{,}41$ kg, $c=900$ J/(kg·K)",
+                   "Esfera a $200\\ ^\\circ$C; paredes a $25{,}0\\ ^\\circ$C",
+                   "Tiempo: $1{,}00$ min $=60{,}0$ s"]))
+    L.paso("a) Área de la esfera")\
+        .di("El área de una esfera es cuatro pi por el radio al cuadrado. Es geometría de colegio.", M(r"A=4\pi r^2"))\
+        .di("El radio en metros: cinco centímetros son cero coma cero cinco metros.", M(r"A=4\pi(0{,}0500)^2"))\
+        .di(f"Da {nu(A, 'm2', 4)}.", R(rf"A={tex(A, 5)}\ \text{{m}}^2", "ra"))
+    L.paso("b) Antes de elevar a la cuarta: kelvin")\
+        .di("En radiación las temperaturas van siempre en kelvin. La hoja da la conversión.", F(r"T_K=T_{^\circ\text{C}}+273{,}15"))\
+        .di("La esfera y las paredes.", M(r"T=200+273{,}15=473{,}15\ \text{K}"), M(r"T_s=25{,}0+273{,}15=298{,}15\ \text{K}"))\
+        .di("Si se usan grados Celsius dentro de la cuarta potencia, el resultado sale completamente mal.",
+            OJO("Nunca $(200)^4$: siempre $(473{,}15)^4$. Y nunca restar antes de elevar: $(473{,}15-298{,}15)^4$ está mal."))
+    L.paso("b) Potencia que emite la esfera")\
+        .di("La hoja da la potencia que emite un cuerpo a temperatura T.", F(r"H=Ae\sigma T^4"))\
+        .di("Sustituimos el área, la emisividad, sigma de la hoja y la temperatura en kelvin.".replace("sigma", dice("σ", "sigma")),
+            M(rf"H_{{\text{{emite}}}}=({tex(A, 5)})(0{{,}}900)(5{{,}}67\times 10^{{-8}})(473{{,}}15)^4"),
+            NOTA("Elevar a la cuarta es elevar al cuadrado dos veces: $473{,}15^2=223\\,871$ y luego $223\\,871^2$."))\
+        .di(f"Emite {nu(He, 'W', 4)}.", R(rf"H_{{\text{{emite}}}}={tex(He, 4)}\ \text{{W}}", "rb"))
+    L.paso("c) Potencia que absorbe de las paredes")\
+        .di("Las paredes también radian hacia la esfera, y la esfera absorbe con la misma emisividad. Misma fórmula, con la temperatura de las paredes.",
+            M(rf"H_{{\text{{absorbe}}}}=Ae\sigma T_s^4=({tex(A, 5)})(0{{,}}900)(5{{,}}67\times 10^{{-8}})(298{{,}}15)^4"))\
+        .di(f"Absorbe {nu(Ha, 'W', 4)}.", R(rf"H_{{\text{{absorbe}}}}={tex(Ha, 4)}\ \text{{W}}", "rc"))
+    L.paso("d) Potencia neta")\
+        .di("Lo que de verdad pierde es lo que emite menos lo que absorbe.", M(rf"H_{{\text{{neto}}}}={tex(He, 4)}-{tex(Ha, 4)}"))\
+        .di(f"Pierde {nu(Hn, 'W', 4)} cada segundo.", R(rf"H_{{\text{{neto}}}}={tex(Hn, 4)}\ \text{{W}}", "rd"))\
+        .di("Es exactamente la casilla de radiación neta de la hoja, con el área, la emisividad y sigma como factor común.".replace("sigma", dice("σ", "sigma")),
+            F(r"H=Ae\sigma\left(T^4-T_s^4\right)"), M(r"Ae\sigma T^4-Ae\sigma T_s^4=Ae\sigma\left(T^4-T_s^4\right)"))
+    L.paso("e) Energía que pierde en un minuto")\
+        .di("Hache es energía por segundo. La hoja lo dice: hache es de Q entre de te.".replace("Hache es", dice("H", "Hache") + " es").replace("hache es de Q entre de te", dice("H = dQ/dt", "hache es de Q entre de te")),
+            F(r"H=\frac{dQ}{dt}"))\
+        .di("Si la potencia casi no cambia en un minuto, la energía es potencia por tiempo.", M(r"Q=H\,\Delta t"),
+            M(rf"Q=({tex(Hn, 4)})(60{{,}}0)"))\
+        .di(f"Pierde {nu(Q, 'J', 4)}.", R(rf"Q={tex(Q, 4)}\ \text{{J}}", "re1"))
+    L.paso("e) Cuánto baja su temperatura")\
+        .di("Esa energía sale del calor sensible de la esfera. Casilla de la hoja.", F(r"Q=mc\Delta T"))\
+        .di("Despejamos delta te: dividimos los dos lados entre eme por ce.".replace("delta te", dice("ΔT", "delta te")).replace("eme por ce", dice("m·c", "eme por ce")),
+            M(r"\Delta T=\frac{Q}{mc}"))\
+        .di("Sustituimos.", M(rf"\Delta T=\frac{{{tex(Q, 4)}}}{{(1{{,}}41)(900)}}"))\
+        .di(f"Baja unos {nu(dT, '°C', 3)} en un minuto.", R(rf"\Delta T={tex(dT, 3)}\ ^\circ\text{{C}}\ \text{{(se enfría)}}", "re2"),
+            NOTA("Es una buena aproximación: en un minuto la temperatura cambia poco, así que la potencia neta casi no cambia."))
+    L.responde("a", rf"A={tex(A, 5)}\ \text{{m}}^2", A, "m2")\
+     .responde("b", rf"H_{{\text{{emite}}}}={tex(He, 4)}\ \text{{W}}", He, "W")\
+     .responde("c", rf"H_{{\text{{absorbe}}}}={tex(Ha, 4)}\ \text{{W}}", Ha, "W")\
+     .responde("d", rf"H_{{\text{{neto}}}}={tex(Hn, 4)}\ \text{{W}}", Hn, "W")\
+     .responde("e", rf"\Delta T={tex(dT, 3)}\ ^\circ\text{{C}}", dT, "°C")
+    return L.usa(r"H=Ae\sigma T^4", r"H=Ae\sigma(T^4-T_s^4)", r"T_K=T_{^\circ\text{C}}+273{,}15", r"H=\frac{dQ}{dt}", r"Q=mc\Delta T")
+
+
+# ============================================================================ P26-5
+@leccion("P26-5")
+def p26_5() -> Leccion:
+    """Radiación: despejar la temperatura (raíz cuarta) y fundir hielo con esa potencia."""
+    from .ayudas import SIGMA
+    r, lb, e, H = 0.0100, 0.300, 0.850, 1500.0
+    tsc = 20.0
+    mh, lf = 2.00, 3.34e5
+    A = 2.0 * math.pi * r * lb
+    pre = A * e * SIGMA
+    x = H / pre
+    Ts = tsc + T0
+    ts4 = Ts ** 4
+    t4 = x + ts4
+    raiz2 = math.sqrt(t4)
+    T = math.sqrt(raiz2)
+    tcel = T - T0
+    Q = mh * lf
+    tiempo = Q / H
+    L = Leccion(
+        "P26-5", "Calentador radiante: despejar la temperatura y fundir hielo", tema="5.9", tipo="desarrollo", nivel=3,
+        fuente=_fuente_b(5),
+        enunciado=(
+            "Un calentador radiante es una barra cilíndrica de $30{,}0$ cm de largo y $1{,}00$ cm de radio, con $e=0{,}850$; "
+            "radia solo por su superficie lateral. Debe entregar una potencia neta de $1500$ W a una habitación cuyas paredes están a $20{,}0\\ ^\\circ$C. "
+            "a) Área que radia. b) ¿A qué temperatura debe trabajar la barra? c) Si toda esa potencia se usara para fundir "
+            "$2{,}00$ kg de hielo a $0\\ ^\\circ$C ($L_f=3{,}34\\times 10^5$ J/kg), ¿cuánto tiempo tardaría? "
+            "d) Si la temperatura absoluta de la barra se duplicara, ¿por cuánto se multiplicaría la potencia que emite?"),
+        claves=["radiación neta", "raíz cuarta", "despejar temperatura", "calor latente", "lo que dijo el profe"],
+        visual={"tipo": "radiacion", "T": round(T, 1), "Ts": round(Ts, 2), "e": e, "A": round(A, 5), "H": H, "objeto": "calentador"},
+    )
+    L.paso("Qué nos dan y qué piden")\
+        .di("Aquí la incógnita es la temperatura: hay que despejarla de la radiación neta.", DATO("potencia neta de 1500 W"),
+            LISTA(["Barra: $L=0{,}300$ m, $r=0{,}0100$ m, $e=0{,}850$", "$H_{\\text{neto}}=1500$ W; paredes a $20{,}0\\ ^\\circ$C",
+                   "Hielo: $m=2{,}00$ kg a $0\\ ^\\circ$C, $L_f=3{,}34\\times 10^5$ J/kg"]))
+    L.paso("a) Área que radia: la superficie lateral")\
+        .di("Si se desenrolla la superficie lateral de un cilindro, queda un rectángulo: de alto el largo, y de ancho la vuelta completa, dos pi erre.".replace("dos pi erre", dice("2πr", "dos pi erre")),
+            M(r"A=(2\pi r)\,L"))\
+        .di("Sustituimos en metros.", M(r"A=2\pi(0{,}0100)(0{,}300)"))\
+        .di(f"Da {nu(A, 'm2', 4)}.", R(rf"A={tex(A, 4)}\ \text{{m}}^2", "ra"))
+    L.paso("b) La fórmula de la hoja y qué se despeja")\
+        .di("La potencia neta es la casilla de radiación neta. La incógnita es te, la temperatura de la barra.".replace("te, la", dice("T", "te") + ", la"),
+            F(r"H=Ae\sigma\left(T^4-T_s^4\right)"))\
+        .di("Las paredes, en kelvin.", F(r"T_K=T_{^\circ\text{C}}+273{,}15"), M(r"T_s=20{,}0+273{,}15=293{,}15\ \text{K}"))
+    L.paso("b) Despejar T sin saltos")\
+        .di("Primero dividimos los dos lados entre a, e, sigma: queda sola la resta de cuartas potencias.".replace("sigma", dice("σ", "sigma")),
+            M(r"\frac{H}{Ae\sigma}=T^4-T_s^4"))\
+        .di("Ahora pasamos te ese a la cuarta sumando al otro lado.".replace("te ese a la cuarta", dice("Tₛ⁴", "te ese a la cuarta")),
+            M(r"T^4=\frac{H}{Ae\sigma}+T_s^4"))\
+        .di("Y para quitar la cuarta potencia se saca raíz cuarta. Es lo mismo que raíz cuadrada dos veces.",
+            M(r"T=\sqrt[4]{\frac{H}{Ae\sigma}+T_s^4}=\sqrt{\sqrt{\frac{H}{Ae\sigma}+T_s^4}}"))
+    L.paso("b) Con números, una cuenta a la vez")\
+        .di("Primero los tres factores de abajo.", M(rf"Ae\sigma=({tex(A, 4)})(0{{,}}850)(5{{,}}67\times 10^{{-8}})"))\
+        .di(f"Dan {n(pre, 4)}.", M(rf"Ae\sigma={tex(pre, 4)}\ \text{{W/K}}^4"))\
+        .di("Dividimos la potencia entre ese número.", M(rf"\frac{{H}}{{Ae\sigma}}=\frac{{1500}}{{{tex(pre, 4)}}}"))\
+        .di(f"Da {n(x, 4)}.", M(rf"\frac{{H}}{{Ae\sigma}}={tex(x, 4)}\ \text{{K}}^4"))\
+        .di("La temperatura de las paredes a la cuarta.", M(r"T_s^4=(293{,}15)^4"), M(rf"T_s^4={tex(ts4, 4)}\ \text{{K}}^4"))
+    L.paso("b) Sumar y sacar la raíz cuarta")\
+        .di("Sumamos.", M(rf"T^4={tex(x, 4)}+{tex(ts4, 4)}"), M(rf"T^4={tex(t4, 4)}\ \text{{K}}^4"))\
+        .di("Primera raíz cuadrada.", M(rf"\sqrt{{{tex(t4, 4)}}}={tex(raiz2, 4)}"))\
+        .di("Segunda raíz cuadrada: esa es la temperatura en kelvin.", M(rf"T=\sqrt{{{tex(raiz2, 4)}}}"), R(rf"T={tex(T, 4)}\ \text{{K}}", "rb1"))\
+        .di("En grados Celsius restamos doscientos setenta y tres coma quince.", M(rf"T_{{^\circ\text{{C}}}}={tex(T, 4)}-273{{,}}15"),
+            R(rf"T={tex(tcel, 3)}\ ^\circ\text{{C}}", "rb2"), NOTA("Al rojo vivo: así se ven los calentadores de barra."))
+    L.paso("c) Tiempo para fundir el hielo")\
+        .di("El hielo ya está a cero grados: solo hay que fundirlo. Calor latente de la hoja.", F(r"Q=\pm mL"),
+            M(r"Q=(2{,}00)(3{,}34\times 10^5)"), M(rf"Q={tex(Q, 4)}\ \text{{J}}"))\
+        .di("Hache es energía por segundo; despejamos el tiempo: dividimos la energía entre la potencia.".replace("Hache", dice("H", "Hache")),
+            F(r"H=\frac{dQ}{dt}"), M(r"H=\frac{Q}{\Delta t}\;\Rightarrow\;\Delta t=\frac{Q}{H}"))\
+        .di("Sustituimos.", M(rf"\Delta t=\frac{{{tex(Q, 4)}}}{{1500}}"))\
+        .di(f"Son {nu(tiempo, 's', 4)}, unos siete minutos y medio.", R(rf"\Delta t={tex(tiempo, 4)}\ \text{{s}}={tex(tiempo / 60.0, 3)}\ \text{{min}}", "rc"))
+    L.paso("d) Si la temperatura absoluta se duplica")\
+        .di("La potencia que emite va con la cuarta potencia de la temperatura en kelvin.", F(r"H=Ae\sigma T^4"))\
+        .di("Ponemos dos te en vez de te. El dos también se eleva a la cuarta.".replace("dos te", dice("2T", "dos te")).replace("de te.", "de " + dice("T", "te") + "."),
+            M(r"H'=Ae\sigma\,(2T)^4=Ae\sigma\,(2^4)\,T^4"))\
+        .di("Dos a la cuarta es dieciséis.", M(r"2^4=2\cdot 2\cdot 2\cdot 2=16"), R(r"H'=16\,H", "rd"))\
+        .pregunta_rapida("Si la temperatura absoluta se triplica, la potencia emitida se multiplica por…", ["81", "9", "3"], 0,
+                         "$3^4=81$: la cuarta potencia hace que la radiación crezca muchísimo con la temperatura.")
+    L.responde("a", rf"A={tex(A, 4)}\ \text{{m}}^2", A, "m2")\
+     .responde("b", rf"T={tex(T, 4)}\ \text{{K}}={tex(tcel, 3)}\ ^\circ\text{{C}}", T, "K")\
+     .responde("c", rf"\Delta t={tex(tiempo, 4)}\ \text{{s}}", tiempo, "s")\
+     .responde("d", r"H'=16\,H", 16.0, "")
+    return L.usa(r"H=Ae\sigma(T^4-T_s^4)", r"H=Ae\sigma T^4", r"T_K=T_{^\circ\text{C}}+273{,}15", r"Q=\pm mL", r"H=\frac{dQ}{dt}")

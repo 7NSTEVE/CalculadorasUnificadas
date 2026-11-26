@@ -57,19 +57,19 @@ class TestBanco158YTeoria(unittest.TestCase):
         ids = set(registro.ids())
         esperados_e = {f"E{i}" for i in range(1, 22)}
         esperados_q = {f"Q{i:03d}" for i in range(1, 138)}
-        esperados_t = {"T-DIL", "T-CAL", "T-CON", "T-RAD", "T-GAS", "T-PV", "T-MAQ", "T-ENT", "T-MAT1", "T-MAT2", "T-MAT3"}
+        esperados_t = {"T-DIL", "T-CAL", "T-CON", "T-RAD", "T-GAS", "T-PV", "T-MAQ", "T-ENT", "T-MAT1", "T-MAT2", "T-MAT3", "T-CONO"}
         # Prácticas oficiales del II-2026: 6 de la primera, 14 de selección y 12 de desarrollo de la segunda
         esperados_p = ({f"PR1-{i}" for i in range(1, 7)} | {f"PR2-S{i}" for i in range(1, 15)}
                        | {f"PR2-D{i}" for i in range(1, 13)})
         # Blindaje II-2026 para las casillas nuevas del formulario (F1C3, F12C2, F5C3, F14C2)
-        esperados_b = {"P26-1", "P26-2", "P26-3"}
+        esperados_b = {"P26-1", "P26-2", "P26-3", "P26-4", "P26-5"}
 
         self.assertTrue(esperados_e.issubset(ids), f"Faltan E: {sorted(esperados_e - ids)}")
         self.assertTrue(esperados_q.issubset(ids), f"Faltan Q: {sorted(esperados_q - ids)}")
         self.assertTrue(esperados_t.issubset(ids), f"Faltan T: {sorted(esperados_t - ids)}")
         self.assertTrue(esperados_p.issubset(ids), f"Faltan prácticas: {sorted(esperados_p - ids)}")
         self.assertTrue(esperados_b.issubset(ids), f"Faltan blindaje II-2026: {sorted(esperados_b - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 3 + 3)
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4)  # + T-MAT1..3, T-CONO; blindaje P26-1..5
 
         faltas = {}
         for lid in sorted(ids):

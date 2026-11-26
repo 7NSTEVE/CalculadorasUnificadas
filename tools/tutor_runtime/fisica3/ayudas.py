@@ -482,3 +482,34 @@ def deriva_entropia(p: Paso, *casos: str, con_definicion: bool = True) -> None:
             p.di(voz_, F(base), M(res))
         else:
             p.di(voz_, M(res))
+
+
+def receta_cono(L: Leccion, r1: Optional[float] = None, r2: Optional[float] = None, largo: Optional[float] = None, *,
+                eje: str = "x", nr: Tuple[str, str] = ("r₁", "r₂"), u: str = "m", despues_de: int = 1) -> Paso:
+    """Paso 'Antes de calcular' para los conos truncados: geometría con números y la receta de siempre.
+
+    Para quien no entiende la geometría: el radio crece parejo (una recta), cada rebanada es un círculo
+    y la receta es siempre la misma. Remite a la lección T-CONO, que lo explica desde cero.
+    """
+    p = Paso("Antes de calcular: cómo se ve y la receta")
+    p.di("Si la forma no está clara, la lección T-CONO la explica desde cero con un dibujo y una tabla.",
+         NOTA("Lección **T-CONO**: el tronco de cono desde cero (geometría, receta y la integral sin saltos)."))
+    if r1 is not None and r2 is not None and largo is not None:
+        b = (r2 - r1) / largo
+        verbo = "crece" if b > 0 else "baja"
+        p.di(f"El radio {verbo} parejo, como una rampa: va de {nu(r1, u, 3, recorta=True)} a {nu(r2, u, 3, recorta=True)} en un largo de {nu(largo, u, 3, recorta=True)}.",
+             M(rf"\text{{cambio por cada {u}}}=\frac{{{tex(r2, 3)}-{tex(r1, 3)}}}{{{tex(largo, 3)}}}={tex(b, 3)}"))
+        cab = [f"{eje} ({u})", tex(0, dec=0), plano_corto(largo / 2), plano_corto(largo)]
+        fila = [f"radio ({u})", plano_corto(r1), plano_corto(r1 + b * largo / 2), plano_corto(r2)]
+        p.di("En el inicio, en la mitad y al final:", TABLA(cab, [fila]))
+    p.di(f"Cada rebanada es un círculo, así que el área cambia con {eje}. La receta es siempre la misma:".replace(f"con {eje}", "con " + dice(eje, {"x": "equis", "y": "ye", "r": "erre"}.get(eje, eje))),
+         LISTA([f"1. Radio: recta de {nr[0]} a {nr[1]}", r"2. Área: $A=\pi r^2$", r"3. Fourier de la hoja: $H=-kA\frac{dT}{d" + eje + "}$",
+                "4. Separar variables", "5. Integrar los dos lados", "6. Despejar $H$"]))
+    L.pasos.insert(min(despues_de, len(L.pasos)), p)
+    return p
+
+
+def plano_corto(x: float) -> str:
+    """Número corto para tablas de texto: 0,0275 · 0,1 · 1,5."""
+    s = f"{x:.4g}".replace(".", ",")
+    return s

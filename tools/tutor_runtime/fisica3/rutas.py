@@ -26,9 +26,45 @@ _CRITICOS: List[Tuple[str, List[Tuple[str, str]]]] = [
     ("Calorimetría y máquinas clave", [("E5", ""), ("Q038", ""), ("E17", ""), ("E21", ""), ("Q128", "")]),
 ]
 
+# Lo que anunció el profesor para el III parcial II-2026: "un ejercicio de calorimetría o radiación y uno de ciclos"
+_PROFE: List[Tuple[str, List[Tuple[str, str]]]] = [
+    ("1. Calorimetría (desarrollo)", [
+        ("T-CAL", "Teoría en cinco minutos"),
+        ("PR1-2", "Hielo a −20 °C + vapor: ¿se funde todo?"),
+        ("PR2-D7", "Fusión parcial: queda hielo y T = 0 °C"),
+        ("PR2-D12", "Calentador eléctrico: balance por etapas"),
+        ("PR1-1", "Cuatro cuerpos: ΣQ = 0 y masa de hierro"),
+        ("Q022", "Examen II-2023: hielo + vapor + hierro"),
+        ("PR2-D8", "Vapor que se condensa en agua"),
+        ("E6", "Hielo, agua y vapor juntos"),
+    ]),
+    ("2. Radiación (desarrollo)", [
+        ("T-RAD", "Teoría en cinco minutos"),
+        ("P26-4", "Nuevo: esfera negra que se enfría (neta + calor)"),
+        ("P26-5", "Nuevo: despejar T con raíz cuarta + fundir hielo"),
+        ("Q068", "Examen I-2026: radiación neta a 97 °C"),
+        ("Q070", "Cubo de agua que se enfría por radiación"),
+        ("E10", "Filamento de un bombillo"),
+        ("PR2-S10", "Selección: 300 K contra 600 K"),
+    ]),
+    ("3. Ciclos (desarrollo)", [
+        ("T-PV", "Teoría en cinco minutos"),
+        ("Q105", "Examen I-2026 ordinario: helio, 3 procesos"),
+        ("Q103", "Examen I-2026 extraordinario: N₂, refrigerador"),
+        ("Q110", "Reposición I-2026: refrigerador de helio"),
+        ("PR1-5", "Recta P = αV con integral"),
+        ("PR1-6", "Antihorario: consume trabajo"),
+        ("PR2-D6", "Cuatro procesos, diatómico"),
+        ("PR2-D4", "Triangular monoatómico"),
+        ("PR2-D11", "Información incompleta: hallar Cp y γ"),
+        ("PR2-D9", "Ciclo Otto completo"),
+        ("Q100", "Examen II-2025: dos isotermas y dos isocoras"),
+    ]),
+]
+
 # Las dos prácticas oficiales del II-2026, en el orden de los PDF
 _PRACTICAS: List[Tuple[str, List[Tuple[str, str]]]] = [
-    ("Antes de empezar: cálculo desde cero", [("T-MAT1", "Pendiente e integral"), ("T-MAT2", "Las cinco integrales del parcial"), ("T-MAT3", "Logaritmos y separar variables")]),
+    ("Antes de empezar: cálculo desde cero", [("T-CONO", "El tronco de cono desde cero"), ("T-MAT1", "Pendiente e integral"), ("T-MAT2", "Las cinco integrales del parcial"), ("T-MAT3", "Logaritmos y separar variables")]),
     ("Práctica del Parcial 3", [(f"PR1-{i}", "") for i in range(1, 7)]),
     ("Práctica del tercer examen · selección única", [(f"PR2-S{i}", "") for i in range(1, 15)]),
     ("Práctica del tercer examen · desarrollo y desafíos", [(f"PR2-D{i}", "") for i in range(1, 13)]),
@@ -38,6 +74,7 @@ _PRACTICAS: List[Tuple[str, List[Tuple[str, str]]]] = [
 # Top Estrategia II-2026: evidencia cruzada de Patrones.txt + auditoría de 17 exámenes + fórmulas nuevas
 _ESTRATEGIA_II_2026: List[Tuple[str, List[Tuple[str, str]]]] = [
     ("1. Conducción con integrales (alta probabilidad)", [
+        ("T-CONO", "El tronco de cono desde cero (empiece aquí)"),
         ("T-MAT2", "Las cinco integrales del parcial"),
         ("PR1-4", "Cono truncado + fusión de hielo"),
         ("PR2-D2", "Área lineal A₀(1+x/L) y gradiente"),
@@ -80,6 +117,12 @@ def _construye(bloques: List[Tuple[str, List[Tuple[str, str]]]]) -> List[Dict[st
 
 def publicas() -> List[Dict[str, Any]]:
     return [
+        {
+            "id": "profe_ii_2026",
+            "titulo": "Lo que dijo el profe: calorimetría o radiación + un ciclo",
+            "descripcion": "El profesor anunció un ejercicio de calorimetría o radiación y uno de ciclos. Aquí están los mejores de cada tema, del más directo al más largo.",
+            "items": _construye(_PROFE),
+        },
         {
             "id": "practicas",
             "titulo": "Prácticas del III parcial (II-2026)",

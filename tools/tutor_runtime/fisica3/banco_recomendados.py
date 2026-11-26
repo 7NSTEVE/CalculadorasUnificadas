@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import (ATM, R_GAS, R_LATM, SIGMA, TX_R, Gas, cierre_ciclo, estado_T, explica_proceso, qtx, tabla_estados,
+from .ayudas import (ATM, R_GAS, R_LATM, SIGMA, TX_R, Gas, cierre_ciclo, deriva_carnot, estado_T, explica_proceso, qtx, tabla_estados,
                      tabla_quw, valores_visual, visual_pv)
 from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, Leccion, R, T, TABLA, V, s
 from .formato import dice, n, nu, tex
@@ -821,6 +821,7 @@ def e17() -> Leccion:
     L.paso("b) Eficiencia")\
         .di("Lo que obtengo entre lo que pago: la eficiencia de la hoja.", F(r"e=\frac{W}{Q_H}=1-\left|\frac{Q_C}{Q_H}\right|"), M(r"e=\frac{120}{300}"))\
         .di("Cuarenta por ciento.", R(r"e=0{,}40=40\,\%", "rb"), V(foco="eficiencia"))
+    deriva_carnot(L.paso("c) De dónde sale el máximo: Carnot desde la hoja (no entra en el parcial)"))
     L.paso("c) Lo máximo posible: Carnot (no entra en el parcial)")\
         .di("Este inciso es de la sección veinte punto seis y no entra en el tercer parcial. Ninguna máquina entre esas dos temperaturas le gana a la de Carnot.", M(r"e_{\text{máx}}=1-\frac{T_C}{T_H}", "c", "azul"), V(foco="carnot"))\
         .di("Con temperaturas en kelvin.", M(r"e_{\text{máx}}=1-\frac{300}{630}=1-0{,}476"))\

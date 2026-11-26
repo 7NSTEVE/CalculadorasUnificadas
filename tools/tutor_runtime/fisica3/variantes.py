@@ -1160,4 +1160,8 @@ def generar_variante(id_o_tema: str, semilla: Optional[int] = None) -> Leccion:
     """Genera una variante paramétrica determinista lista para estudiar."""
     arq = arquetipo_de(id_o_tema)
     rng = random.Random(semilla) if semilla is not None else random.Random()
-    return ARQUETIPOS[arq](rng)
+    lec = ARQUETIPOS[arq](rng)
+    # Igual que en el banco: cada cuenta de varias operaciones se desglosa renglón por renglón
+    from . import desglose
+    desglose.aplicar(lec)
+    return lec

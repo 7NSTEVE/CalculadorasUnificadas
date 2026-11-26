@@ -378,7 +378,9 @@ def q029() -> Leccion:
         .di("El cilindro calienta el agua hasta hervirla, y una parte se va como vapor.", DATO("4,7 g"), LISTA(["Tazón Cu: $0{,}1460$ kg a $21{,}0\\ ^\\circ\\text{C}$", "Agua: $0{,}2230$ kg a $21{,}0\\ ^\\circ\\text{C}$", "Cilindro Cu: $0{,}3140$ kg, $T=?$", "Se evaporan $0{,}0047$ kg"]))\
         .di("Todo en kilogramos, para que cuadre con las constantes.", M(r"\Delta T=100-21{,}0=79{,}0\ ^\circ\text{C}", "dt"))
     L.paso("a) Temperatura de equilibrio")\
-        .di("Quedó agua líquida y salió vapor: solo pueden convivir a cien grados.", R(r"T_{eq}=100\ ^\circ\text{C}", "ra"), V(foco="flujo"))\
+        .di("Al final hay agua líquida y también vapor: los dos a la vez.", M(r"\text{agua líquida}+\text{vapor juntos al final}"))\
+        .di("A una atmósfera, el agua solo hierve a cien grados: líquido y vapor solo pueden convivir a esa temperatura.",
+            M(r"\text{líquido y vapor a }1\ \text{atm}\;\Rightarrow\;T=100\ ^\circ\text{C}"), R(r"T_{eq}=100\ ^\circ\text{C}", "ra"), V(foco="flujo"))\
         .por_que("A 1 atm, agua líquida y vapor coexisten únicamente a 100 °C. Es el dato escondido del problema.")
     L.paso("b) Calor que recibió el agua")\
         .di("Partimos de las dos ecuaciones de calorimetría del formulario: cambio de temperatura y cambio de fase.",

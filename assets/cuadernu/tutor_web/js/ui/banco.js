@@ -73,6 +73,9 @@ const limpia = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').t
 
 /** "ejercicio 16", "e16", "Q49", "pregunta 49" -> id del banco (o null). */
 export function idDeTexto(txt) {
+  // Un id exacto del banco abre su lección: "T-CONO", "pr1-4", "P26-4", "pr2-d9"
+  const exacto = String(txt || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (banco.mapa.has(exacto)) return exacto;
   const t = limpia(txt).trim();
   let m = /^(?:la\s+|el\s+)?(?:pregunta|q|item)\s*\.?\s*#?\s*0*(\d{1,3})$/.exec(t);
   if (m) { const id = `Q${String(m[1]).padStart(3, '0')}`; if (banco.mapa.has(id)) return id; }

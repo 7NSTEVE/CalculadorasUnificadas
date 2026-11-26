@@ -457,8 +457,10 @@ def q100() -> Leccion:
     explica_proceso(L.paso("B4) Calentamiento isocórico D→A"), g, "D", "A", "isocorico", foco="DA")
     c = cierre_ciclo(L, res, titulo="C y D) Trabajo neto, tipo de dispositivo y eficiencia", id_e="rcd")
     L.paso("C) ¿Motor o refrigerador?")\
-        .di("El trabajo neto es positivo y el ciclo va en sentido horario: el gas entrega trabajo, es un motor.", V(foco="ciclo"),
-            R(rf"W_{{\text{{neto}}}}={tex(c['W'], 4, u='J')}>0\;\Rightarrow\;\text{{motor}}", "rc"))
+        .di("Miramos el signo del trabajo neto que acabamos de sumar.", V(foco="ciclo"),
+            M(rf"W_{{\text{{neto}}}}={tex(c['W'], 4, u='J')}>0"))\
+        .di("Es positivo y el ciclo va en sentido horario: el gas entrega trabajo. Es un motor, y se pide su eficiencia.",
+            R(rf"W_{{\text{{neto}}}}>0\;\Rightarrow\;\text{{motor}}", "rc"))
     L.responde("Wnet", rf"W_{{\text{{neto}}}}={tex(c['W'], 4)}\ \text{{J}}", c["W"], "J").responde("e", rf"e={tex(c['e'], 4)}", c["e"], "")
     return L.oficial("III Parcial ordinario II-2025", 2192.0, 0.2587).usa(r"pV=nRT", r"W=nRT\ln\frac{V_2}{V_1}", r"e=\frac{W}{Q_H}")
 
