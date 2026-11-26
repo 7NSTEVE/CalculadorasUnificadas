@@ -130,7 +130,9 @@ def q067() -> Leccion:
              claves=["termo Dewar", "emisividad"],
              visual={"tipo": "radiacion", "T": 360, "e": 0.05, "objeto": "termo"})
     L.paso("Comparar antes y después de platear")\
-        .di("Como el flujo es proporcional a la emisividad, la nueva pérdida es cero coma cero cinco de la original.", DATO("0,05"),
+        .di("La radiación de la hoja es proporcional a la emisividad.", DATO("0,05"), F(r"H = Ae\sigma T^4"))\
+        .di("Dividimos la pérdida plateada entre la original: el área, sigma y la temperatura son los mismos y se cancelan.",
+            M(r"\frac{H_{\text{plateada}}}{H_{\text{negra}}} = \frac{\cancel{A}\,(0{,}05)\,\cancel{\sigma T^4}}{\cancel{A}\,(1)\,\cancel{\sigma T^4}}"),
             M(r"\frac{H_{\text{plateada}}}{H_{\text{negra}}} = \frac{0{,}05}{1} = 0{,}05 = 5\,\%"),
             R(r"H_{\text{plateada}} = 5\,\%\ \text{de } H_{\text{negra}}"))\
         .di("Ojo con la preposición: se reduce a cinco por ciento, que es reducir en un noventa y cinco por ciento.",

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import (ATM, R_GAS, R_LATM, SIGMA, TX_R, Gas, explica_proceso, qtx, tabla_estados, tabla_quw, valores_visual, visual_pv)
+from .ayudas import (ATM, R_GAS, R_LATM, SIGMA, TX_R, Gas, cierre_ciclo, estado_T, explica_proceso, qtx, tabla_estados,
+                     tabla_quw, valores_visual, visual_pv)
 from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, Leccion, R, T, TABLA, V, s
 from .formato import dice, n, nu, tex
 from .registro import leccion
@@ -87,6 +88,9 @@ def _lata(id: str, fuente: dict) -> Leccion:
         .di(f"Nos dieron {s('α')} del aluminio, pero el volumen usa {s('β')}. Partimos de las dos ecuaciones de dilatación del formulario.",
             F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; V = V_0(1+\alpha\Delta T)^3 \approx V_0(1+3\alpha\Delta T)"),
             F(r"\Delta V=\beta V_0\,\Delta T"))\
+        .di("¿De dónde sale el tres? Se abre el cubo: los términos con alfa delta te al cuadrado o al cubo son pequeñísimos y se desprecian.".replace("alfa delta te", dice("αΔT", "alfa delta te")),
+            M(r"(1+\alpha\Delta T)^3=1+3\alpha\Delta T+3(\alpha\Delta T)^2+(\alpha\Delta T)^3\approx 1+3\alpha\Delta T"),
+            M(r"\alpha\Delta T=(2{,}4\times10^{-5})(60)=1{,}44\times10^{-3}\;\Rightarrow\;(\alpha\Delta T)^2\approx 2\times10^{-6}\ \text{(despreciable)}"))\
         .di("Comparando las dos expresiones, en un sólido isotrópico beta es tres veces alfa.", M(r"\beta_{Al}=3\alpha_{Al}=3\,(2{,}4\times10^{-5})"), M(rf"\beta_{{Al}}={tex(bal, 2)}\ \text{{K}}^{{-1}}", "bal"))\
         .di("La lata es un hueco, pero el hueco se dilata como si fuera macizo.", NOTA("El hueco crece igual que el material: mismo $\\beta$ del aluminio."))\
         .por_que("Un volumen tiene largo, ancho y alto; cada uno crece con $\\Delta L=\\alpha L_0\\Delta T$. Al expandir $(1+\\alpha\\Delta T)^3\\approx 1+3\\alpha\\Delta T$ sale $\\beta=3\\alpha$.")\
@@ -172,6 +176,7 @@ def _cinta(id: str, fuente: dict, aviso: str = "") -> Leccion:
     L.paso("b) Cuánto se juntan las marcas de la cinta")\
         .di("Ahora la cinta también se enfría: cada marca de un centímetro se encoge como acero.", V(foco="cinta"), M(r"\ell = \ell_0\,(1+\alpha_{ac}\,\Delta T)"))\
         .di("Un centímetro se convierte en esto.", M(r"\ell = 1{,}00\,\left[1+(1{,}1\times10^{-5})(-30)\right]"))\
+        .di("Primero el producto: uno coma uno por diez a la menos cinco, por menos treinta, da menos cero coma cero cero cero treinta y tres.", M(r"(1{,}1\times10^{-5})(-30)=-3{,}3\times10^{-4}=-0{,}00033"), M(r"\ell=1{,}00\,(1-0{,}00033)"))\
         .di("Un pelito menos que un centímetro.", R(rf"\ell = {tex(cm, dec=5, u='cm')}", "rb"))
     L.paso("c) Barra fría medida con cinta fría")\
         .di("La lectura es cuántas marcas caben en la barra: largo real entre separación real.", V(foco="lectura"), M(r"\text{lectura} = \frac{L}{\ell}", "lec", "azul"))\
@@ -228,6 +233,7 @@ def _cubo_frio(id: str, fuente: dict, aviso: str = "", cagua=4186.0, ccu=387.0, 
         .di(f"Es poquito: {nu(mcond * 1000, 'g', 3)}.", M(rf"m_{{\text{{cond}}}} = {tex(mcond, 4, u='kg')} = {tex(mcond * 1000, 3, u='g')}", "mc"))
     L.paso("Composición final")\
         .di("Ese vapor ahora es agua: lo sumamos al agua y lo quitamos del vapor.",
+            M(rf"m_{{\text{{agua}}}}=200{{,}}0+{tex(mcond * 1000, 3)}={tex(200 + mcond * 1000, dec=1)}\ \text{{g}}\qquad m_{{\text{{vapor}}}}=300{{,}}0-{tex(mcond * 1000, 3)}={tex(300 - mcond * 1000, dec=1)}\ \text{{g}}"),
             TABLA(["Sustancia", "Antes", "Después"], [["agua", "$200{,}0$ g", f"${tex(200 + mcond * 1000, dec=1)}$ g"], ["vapor", "$300{,}0$ g", f"${tex(300 - mcond * 1000, dec=1)}$ g"]], resaltar=[[0, 2], [1, 2]]), V(foco="final"))\
         .di("No queda hielo: nada llegó a cero grados.", OJO("Error típico: plantear $\\sum Q=0$ con $T_f$ de incógnita sin revisar si sobra vapor."))
     L.responde("a", r"T_f=100\ ^\circ\text{C}", 100.0, "°C").responde("b", rf"\text{{agua }}{tex(200 + mcond * 1000, dec=1)}\ \text{{g}}", 200 + mcond * 1000, "g").responde("b", rf"\text{{vapor }}{tex(300 - mcond * 1000, dec=1)}\ \text{{g}}", 300 - mcond * 1000, "g")
@@ -271,7 +277,7 @@ def e6() -> Leccion:
         .di("El agua que ya era líquida sube cincuenta y cinco grados.", M(r"Q_3=(0{,}1500)(4190)(100-45)"), V(etapa=2))\
         .di("Da esto.", M(rf"Q_3={tex(q3, 5, u='J', sci='no')}", "q3", "rojo"))
     L.paso("Comparar con lo que da el vapor")\
-        .di("Sumamos todo lo que se pide.", M(rf"Q_{{\text{{pide}}}}=Q_1+Q_2+Q_3={tex(tot, 6, u='J', sci='no')}", "pide"))\
+        .di("Sumamos todo lo que se pide.", M(rf"Q_{{\text{{pide}}}}=Q_1+Q_2+Q_3"), M(rf"Q_{{\text{{pide}}}}={tex(q1, 5, sci='no')}+{tex(q2, 5, sci='no')}+{tex(q3, 5, sci='no')}={tex(tot, 6, u='J', sci='no')}", "pide"))\
         .di("Y lo máximo que da el vapor.", M(rf"Q_{{\text{{vapor}}}}=m_vL_v=(0{{,}}1250)(2{{,}}256\times10^6)={tex(disp, 4, u='J')}", "da"), V(foco="comparar"))\
         .di("El vapor puede dar más de lo que se pide: sobra vapor y todo queda a cien grados.", R(r"T_f=100\ ^\circ\text{C}", "ra"))
     L.paso("Cuánto vapor se condensa")\
@@ -313,13 +319,13 @@ def e7() -> Leccion:
         .di("Fundir el hielo.", M(rf"Q_1=(0{{,}}200)(3{{,}}35\times10^5)={tex(q1, 5, u='J', sci='no')}", "q1"), V(etapa=0))\
         .di("Calentar esa agua diez grados.", M(rf"Q_2=(0{{,}}200)(4190)(10)={tex(q2, 4, u='J', sci='no')}", "q2"), V(etapa=1))\
         .di("Calentar el aluminio diez grados.", M(rf"Q_3=(0{{,}}150)(900)(10)={tex(q3, 4, u='J', sci='no')}", "q3"), V(etapa=2))\
-        .di("En total.", M(rf"Q_{{\text{{gana}}}}=Q_1+Q_2+Q_3={tex(tot, 5, u='J', sci='no')}", "tot", "rojo"))\
+        .di("En total, sumamos los tres.", M(rf"Q_{{\text{{gana}}}}=Q_1+Q_2+Q_3={tex(q1, 5, sci='no')}+{tex(q2, 4, sci='no')}+{tex(q3, 4, sci='no')}={tex(tot, 5, u='J', sci='no')}", "tot", "rojo"))\
         .pregunta_rapida("¿Se usa el calor específico del hielo (2090)?", ["Sí, para calentarlo", "No, el hielo ya está a 0 °C"], 1, "El hielo no sube de temperatura como hielo: de una vez se funde.")
     L.paso("Calor que cede el agua caliente")\
         .di("Baja de noventa y cinco a diez: ochenta y cinco grados.", M(r"Q_{\text{cede}}=m\,c_{\text{agua}}\,(95-10)"))\
         .di("Igualamos con lo que se necesita.", M(rf"m\,(4190)(85)={tex(tot, 5, sci='no')}", "ig"))
     L.paso("Despejar la masa")\
-        .di("Lo que multiplica pasa a dividir.", M(rf"m=\frac{{{tex(tot, 5, sci='no')}}}{{(4190)(85)}}"))\
+        .di("Lo que multiplica pasa a dividir. Abajo multiplicamos primero.", M(rf"m=\frac{{{tex(tot, 5, sci='no')}}}{{(4190)(85)}}=\frac{{{tex(tot, 5, sci='no')}}}{{356\,150}}"))\
         .di(f"Se necesitan {nu(m, 'kg', 3)} de agua.", R(rf"m={tex(m, 3, u='kg')}"))\
         .di("Son unos doscientos quince gramos, razonable: parecido a la masa de hielo.", OJO("Error típico: olvidar el aluminio o usar $c_{hielo}$ en vez de $L_f$."))
     L.responde("", rf"m={tex(m, 3)}\ \text{{kg}}", m, "kg").usa(r"Q=mc\Delta T", r"Q=mL_f")
@@ -586,8 +592,16 @@ def e13() -> Leccion:
         .di("Promedio de los cuadrados.", M(rf"(v^2)_{{med}}=\frac{{319\,v^2}}{{20}}={tex(v2, 4)}\,v^2", "v2m"))\
         .di("Y la raíz.", R(rf"v_{{rms}}=\sqrt{{{tex(v2, 4)}}}\,v={tex(math.sqrt(v2), 3)}\,v", "rb"))\
         .por_que("La rms siempre es mayor que el promedio porque al elevar al cuadrado las rápidas pesan más.")
+    L.paso("c) De dónde sale la presión (desde la hoja)")\
+        .di("La fórmula de presión con las rapideces no viene en la hoja: la armamos con dos casillas que sí vienen. Primero, el gas ideal.", F(r"pV=nRT"), V(foco="presion"))\
+        .di("Los moles son partículas entre el número de Avogadro, y erre es Avogadro por ka be. Por eso ene erre es ene por ka be.".replace("ka be", dice("k_B", "ka be")).replace("ene erre es ene por", dice("nR = N k_B", "ene erre es ene por")),
+            M(r"n=\frac{N}{N_A}\qquad R=N_Ak_B\;\Rightarrow\;nR=Nk_B\;\Rightarrow\;pV=Nk_BT"),
+            NOTA("Se comprueba con las constantes de la hoja: $(6{,}022\\times10^{23})(1{,}38\\times10^{-23})=8{,}31$."))\
+        .di("Segunda casilla: la energía cinética media de una partícula. Despejamos ka be te.".replace("ka be te", dice("k_B T", "ka be te")),
+            F(r"\frac{1}{2}m(v^2)_{\text{med}}=\frac{3k_BT}{2}"), M(r"k_BT=\frac{1}{3}m\,(v^2)_{med}"))\
+        .di("Lo ponemos en la primera: presión por volumen es un tercio de ene por la masa por el promedio de los cuadrados.".replace("ene por", dice("N", "ene") + " por"),
+            M(r"pV=N\,k_BT=\frac{1}{3}N\,m_0\,(v^2)_{med}", "pv", "azul"))
     L.paso("c) Presión sobre las paredes")\
-        .di("De la teoría cinética, presión por volumen es un tercio de masa por el promedio de los cuadrados.", M(r"pV=\frac{1}{3}N\,m_0\,(v^2)_{med}", "pv", "azul"), V(foco="presion"))\
         .di("Despejamos la presión.", M(r"p=\frac{N\,m_0\,(v^2)_{med}}{3V}"))\
         .di("Sustituimos: veinte por quince coma noventa y cinco es trescientos diecinueve.", M(rf"p=\frac{{20\,m_0\,({tex(v2, 4)}\,v^2)}}{{3V}}=\frac{{319\,m_0v^2}}{{3V}}"))\
         .di("Dividimos entre tres.", R(rf"p={tex(s2 / 3, 4)}\,\frac{{m_0v^2}}{{V}}", "rc"))\
@@ -684,19 +698,23 @@ def _rectangulo(id: str, fuente: dict, incisos: str = "recomendado") -> Leccion:
                 visual=visual_pv(g, pr, valores=valores_visual(lista)))
     L.paso("Qué nos dan y qué piden")\
         .di("Un ciclo que en el diagrama es un rectángulo, recorrido en el sentido del reloj.", DATO("dos moles"),
-            LISTA(["$n=2$ mol, gas **diatómico**: $C_V=\\frac52R$, $C_P=\\frac72R$", "Presiones: $1{,}22\\times10^5$ y $2{,}03\\times10^5$ Pa", "Volúmenes: $0{,}0700$ y $0{,}0900$ m³"]), V(foco="ciclo"))\
-        .di("Sentido del reloj quiere decir que es una máquina: entrega trabajo.", NOTA("Horario: máquina térmica ($W>0$). Antihorario: refrigerador ($W<0$)."))
+            LISTA(["$n=2$ mol, gas **diatómico**", "Presiones: $1{,}22\\times10^5$ y $2{,}03\\times10^5$ Pa", "Volúmenes: $0{,}0700$ y $0{,}0900$ m³"]), V(foco="ciclo"))\
+        .di("Sentido del reloj quiere decir que es una máquina: entrega trabajo.", NOTA("Horario: máquina térmica ($W>0$). Antihorario: refrigerador ($W<0$)."))\
+        .di("Diatómico: de la hoja, la capacidad a volumen constante.", F(r"C_V=\frac{5}{2}R"),
+            M(rf"C_V=\frac{{5}}{{2}}(8{{,}}314)={tex(g.cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))
     L.paso("La idea")\
         .di("El trabajo neto es el área encerrada. El calor absorbido es la suma de los calores positivos.", V(foco="neto"), M(r"W_{neto}=\text{área del rectángulo}"), M(r"e=\frac{W_{neto}}{Q_H}", "ef", "azul"))\
         .por_que("En un ciclo el gas vuelve a su estado inicial: $\\Delta U=0$ y por la primera ley $W_{neto}=Q_{neto}$.")
     L.paso("a) Trabajo neto")\
         .di("Base por altura.", M(r"W_{neto}=(p_{alta}-p_{baja})(V_{der}-V_{izq})"))\
         .di("Sustituimos.", M(r"=(2{,}03\times10^5-1{,}22\times10^5)(0{,}0900-0{,}0700)"))\
-        .di(f"Da {nu(W, 'J', 4)}.", R(rf"W_{{neto}}=(8{{,}}1\times10^4)(0{{,}}0200)={tex(W, 4, u='J')}", "ra"))
-    L.paso("Temperaturas de los cuatro estados")\
-        .di("Las necesitamos para el calor. Gas ideal en cada punto.", F(r"T=\frac{pV}{nR}"))\
-        .di("Empezamos por A.", M(rf"T_A=\frac{{(1{{,}}22\times10^5)(0{{,}}0900)}}{{(2)(8{{,}}314)}}={tex(g.t('A'), dec=1, u='K')}"))\
-        .di("Igual con B, C y D.", tabla_estados(g, "ABCD"), V(foco="estados"))
+        .di("Restamos dentro de cada paréntesis.", M(r"=(8{,}1\times10^4)(0{,}0200)"))\
+        .di(f"Da {nu(W, 'J', 4)}.", R(rf"W_{{neto}}={tex(W, 4, u='J')}", "ra"))
+    p = L.paso("Temperaturas de los cuatro estados")
+    estado_T(p, g, "A", primero=True, voz="Las necesitamos para el calor. Despejamos la temperatura del gas ideal y la calculamos en A.")
+    for k in "BCD":
+        estado_T(p, g, k)
+    p.di("Las cuatro juntas.", tabla_estados(g, "ABCD"), V(foco="estados"))
     p = L.paso("Proceso A → B (isobárico)")
     explica_proceso(p, g, "A", "B", "isobarico")
     p = L.paso("Proceso B → C (isocórico)")
@@ -725,7 +743,6 @@ def _rectangulo(id: str, fuente: dict, incisos: str = "recomendado") -> Leccion:
 def e15() -> Leccion:
     return _rectangulo("E15", _f(15, 5))
 
-
 # ============================================================================ E16
 @leccion("E16")
 def e16() -> Leccion:
@@ -738,28 +755,32 @@ def e16() -> Leccion:
     pr = [("A", "B", "isotermico"), ("B", "C", "isocorico"), ("C", "A", "adiabatico")]
     res = {a + b: g.proceso(a, b, t) for a, b, t in pr}
     lista = [(a + "→" + b, res[a + b]) for a, b, _ in pr]
-    W = sum(r["W"] for r in res.values())
-    QH = res["AB"]["Q"]
-    e = W / QH
     L = Leccion("E16", "Ciclo isotérmica · isocórica · adiabática", tema="6.11", nivel=4, fuente=_f(16, 5), claves=["ciclo", "isotérmico", "adiabático", "eficiencia"],
                 enunciado="3,20 mol de gas ideal diatómico recorren: A→B expansión isotérmica a 680 K de 0,064 a 0,256 m³; B→C isocórico con presión que disminuye; C→A compresión adiabática. a) $p$, $V$, $T$ en A, B y C. b) $\\Delta U$, $W$ y $Q$ de cada proceso y del ciclo. c) Eficiencia.",
                 visual=visual_pv(g, pr, valores=valores_visual(lista)))
     L.paso("Qué nos dan y qué piden")\
         .di("Tres procesos que forman un ciclo. Anotamos lo que sabemos de cada punto.", DATO("680 K"),
             TABLA(["", "$p$", "$V$ (m³)", "$T$ (K)"], [["A", "?", "$0{,}064$", "$680$"], ["B", "?", "$0{,}256$", "$680$"], ["C", "?", "$0{,}256$", "?"]]), V(foco="ciclo"))\
-        .di("B y C tienen el mismo volumen, y A y B la misma temperatura. Con eso se arma todo.", NOTA("Diatómico: $C_V=\\frac52R$, $C_P=\\frac72R$, $\\gamma=\\frac{C_P}{C_V}=1{,}40$"))\
-        .sale_de(("$\\gamma=1{,}40$", "$\\frac{7/2\\,R}{5/2\\,R}=\\frac75$"), ("$V_C=0{,}256$", "B→C es isocórico: mismo volumen que B"))
+        .di("B y C tienen el mismo volumen, y A y B la misma temperatura. Con eso se arma todo.")\
+        .sale_de(("$V_C=0{,}256$", "B→C es isocórico: mismo volumen que B"))
+    L.paso("Constantes del gas diatómico")\
+        .di("De la hoja: la capacidad a volumen constante del diatómico, y la de presión constante, que es una erre más.", F(r"C_V=\frac{5}{2}R"), F(r"C_P=C_V+R"))\
+        .di("Sumamos y ponemos el número de ce ve.".replace("ce ve", s("C_V", "ce ve")), M(r"C_P=\frac{5}{2}R+R=\frac{7}{2}R"),
+            M(rf"C_V=\frac{{5}}{{2}}(8{{,}}314)={tex(g.cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
+        .di("Gama es el cociente de las dos: las erres se cancelan.", F(r"\gamma=\frac{C_P}{C_V}"), M(r"\gamma=\frac{\frac{7}{2}R}{\frac{5}{2}R}=\frac{7}{5}=1{,}40"))
     L.paso("Presiones en A y en B")\
         .di("Gas ideal en el punto A.", F(r"pV=nRT\;\Rightarrow\;p=\frac{nRT}{V}"), V(foco="A"))\
         .di("Sustituimos.", M(r"p_A=\frac{(3{,}20)(8{,}314)(680)}{0{,}064}"), M(rf"p_A={tex(g.p('A'), 4, u='Pa')}", "pa", "verde"))\
         .di("En B cambia solo el volumen, que es cuatro veces mayor: la presión es cuatro veces menor.", M(rf"p_B=\frac{{(3{{,}}20)(8{{,}}314)(680)}}{{0{{,}}256}}={tex(g.p('B'), 4, u='Pa')}", "pb", "verde"), V(foco="B"))
-    L.paso("Temperatura en C (con la adiabática)")\
-        .di("De C a A es adiabático: usamos la relación de temperatura y volumen.", F(r"TV^{\gamma-1}=\text{cte}"), V(foco="CA"))\
+    L.paso("Temperatura en C: despeje con la adiabática")\
+        .di("De C a A es adiabático: usamos la relación de temperatura y volumen de la hoja.", F(r"TV^{\gamma-1}=\text{cte}"), V(foco="CA"))\
         .di("La escribimos entre C y A.", M(r"T_CV_C^{\gamma-1}=T_AV_A^{\gamma-1}"))\
-        .di("Despejamos te ce.".replace("te ce", s("T_C", "te ce")), M(r"T_C=T_A\left(\frac{V_A}{V_C}\right)^{\gamma-1}", "tc", "azul"))\
+        .di("Dividimos los dos lados entre el volumen de C elevado a gama menos uno, para dejar sola la temperatura de C.", M(r"T_C=T_A\,\frac{V_A^{\gamma-1}}{V_C^{\gamma-1}}"))\
+        .di("Dos potencias con el mismo exponente se pueden dividir dentro de un solo paréntesis.", M(r"T_C=T_A\left(\frac{V_A}{V_C}\right)^{\gamma-1}", "tc", "azul"))
+    L.paso("Temperatura en C: los números")\
         .di("Sustituimos: gama menos uno es cero coma cuatro.", M(r"T_C=680\left(\frac{0{,}064}{0{,}256}\right)^{0{,}40}=680\,(0{,}25)^{0{,}40}"))\
-        .di(f"Da {nu(Tc, 'K', dec=1)}.", M(rf"T_C={tex(Tc, dec=1, u='K')}", "rtc", "verde"))\
-        .despacio((rf"(0{{,}}25)^{{0{{,}}40}}={tex(0.25 ** 0.4, 5)}", "en la calculadora: 0,25 ^ 0,4"))
+        .di("En la calculadora, cero coma veinticinco elevado a cero coma cuatro.", M(rf"T_C=680\,({tex(0.25 ** 0.4, 5)})"))\
+        .di(f"Da {nu(Tc, 'K', dec=1)}.", M(rf"T_C={tex(Tc, dec=1, u='K')}", "rtc", "verde"))
     L.paso("Presión en C y tabla de estados")\
         .di("Gas ideal en C.", M(rf"p_C=\frac{{(3{{,}}20)(8{{,}}314)({tex(Tc, dec=1)})}}{{0{{,}}256}}={tex(g.p('C'), 4, u='Pa')}", "pc", "verde"), V(foco="C"))\
         .di("Ya está el inciso a.", tabla_estados(g, "ABC", resaltar=[[0, 1], [1, 1], [2, 1], [2, 3]]), V(foco="estados"))
@@ -769,19 +790,13 @@ def e16() -> Leccion:
     explica_proceso(p, g, "B", "C", "isocorico")
     p = L.paso("b) Proceso C → A (adiabático)")
     explica_proceso(p, g, "C", "A", "adiabatico")
-    L.paso("b) Tabla del ciclo")\
-        .di("Reunimos todo. Delta U del ciclo da cero, como debe ser.".replace("Delta U", s("ΔU")), tabla_quw(lista), V(foco="barras"))\
-        .di("El trabajo neto es igual al calor neto.", M(rf"W_{{neto}}=Q_{{neto}}={tex(W, 4, u='J')}", "wn", "verde"))
-    L.paso("c) Eficiencia")\
-        .di("Solo absorbe calor de A a B.", M(rf"Q_H=Q_{{AB}}={tex(QH, 4, u='J')}"), V(foco="AB"))\
-        .di("Trabajo neto entre calor absorbido.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{tex(W, 4)}}}{{{tex(QH, 4)}}}"))\
-        .di(f"La eficiencia es {n(e * 100, 3)} por ciento.", R(rf"e={tex(e, 3)}={tex(e * 100, 3)}\,\%", "rc"))
+    c = cierre_ciclo(L, lista, titulo="b) y c) Ciclo completo y eficiencia", id_e="rc")
+    W, e = c["W"], c["e"]
     for k in "ABC":
         L.responde("a", rf"p_{k}={tex(g.p(k), 4)}\ \text{{Pa}}", g.p(k), "Pa")
     L.responde("a", rf"T_C={tex(Tc, dec=1)}\ \text{{K}}", Tc, "K").responde("b", rf"W_{{neto}}={tex(W, 4)}\ \text{{J}}", W, "J").responde("c", rf"e={tex(e * 100, 3)}\,\%", e * 100, "%")
     L.usa(r"pV=nRT", r"TV^{\gamma-1}=\text{cte}", r"W=nRT\ln(V_2/V_1)", r"\Delta U=nC_V\Delta T", r"e=W/Q_H")
     return L
-
 
 # ============================================================================ E17
 @leccion("E17")
@@ -829,32 +844,32 @@ def e18() -> Leccion:
     pr = [("A", "B", "isotermico"), ("B", "C", "isobarico"), ("C", "D", "isotermico"), ("D", "A", "isocorico")]
     res = {a + b: g.proceso(a, b, t) for a, b, t in pr}
     lista = [(a + "→" + b, res[a + b]) for a, b, _ in pr]
-    W = sum(r["W"] for r in res.values())
-    Qc = res["CD"]["Q"] + res["DA"]["Q"]
-    K = Qc / abs(W)
     L = Leccion("E18", "Refrigerador de cuatro etapas", tema="6.14", nivel=5, fuente=_f(18, 6), claves=["refrigerador", "coeficiente de desempeño", "ciclo"],
                 enunciado="Un refrigerador usa 2,5 mol de gas diatómico: compresión isotérmica a 800 K de 0,160 m³ a la mitad; compresión isobárica hasta 0,060 m³; expansión isotérmica hasta el volumen inicial; proceso isocórico hasta la presión inicial. a) Diagrama p-V, b) tabla de $T$, $p$, $V$, c) $W$ y $Q$ de cada etapa, d) coeficiente de desempeño.",
                 visual=visual_pv(g, pr, valores=valores_visual(lista)))
     L.paso("Qué nos dan y qué piden")\
         .di("Cuatro etapas. Le ponemos una letra al inicio de cada una, en orden.", DATO("800 K"),
             LISTA(["A→B: isotérmica a $800$ K, de $0{,}160$ a $0{,}080$ m³", "B→C: isobárica hasta $0{,}060$ m³", "C→D: isotérmica hasta $0{,}160$ m³", "D→A: isocórica, cierra el ciclo"]))\
-        .di("La mitad de cero coma ciento sesenta es cero coma cero ochenta.", M(r"V_B=\frac{0{,}160}{2}=0{,}080\ \text{m}^3"))
+        .di("La mitad de cero coma ciento sesenta es cero coma cero ochenta.", M(r"V_B=\frac{0{,}160}{2}=0{,}080\ \text{m}^3"))\
+        .di("Diatómico: de la hoja, la capacidad a volumen constante.", F(r"C_V=\frac{5}{2}R"),
+            M(rf"C_V=\frac{{5}}{{2}}(8{{,}}314)={tex(g.cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))
     L.paso("a) El diagrama p-V")\
         .di("Primero sube comprimiéndose por una isoterma.", V(foco="AB"))\
         .di("Luego camina hacia la izquierda a presión constante.", V(foco="BC"))\
         .di("Baja por otra isoterma, más fría, hasta el volumen inicial.", V(foco="CD"))\
         .di("Y sube derecho, a volumen constante, hasta cerrar.", V(foco="DA"), NOTA("Se recorre **antihorario**: es un refrigerador."))
     L.paso("b) Estado A")\
-        .di("Volumen y temperatura ya están; falta la presión.", F(r"p=\frac{nRT}{V}"), V(foco="A"))\
+        .di("Volumen y temperatura ya están; falta la presión. La despejamos del gas ideal.", F(r"pV=nRT\;\Rightarrow\;p=\frac{nRT}{V}"), V(foco="A"))\
         .di("Sustituimos.", M(rf"p_A=\frac{{(2{{,}}5)(8{{,}}314)(800)}}{{0{{,}}160}}={tex(g.p('A'), 4, u='Pa')}", "pa", "verde"))
     L.paso("b) Estado B")\
         .di("Misma temperatura y la mitad del volumen: la presión se duplica.", M(rf"p_B=\frac{{(2{{,}}5)(8{{,}}314)(800)}}{{0{{,}}080}}={tex(g.p('B'), 4, u='Pa')}", "pb", "verde"), V(foco="B"))
     L.paso("b) Estado C")\
-        .di("De B a C la presión no cambia. Con gas ideal, la temperatura baja igual que el volumen.", M(r"\frac{V_B}{T_B}=\frac{V_C}{T_C}\;\Rightarrow\;T_C=T_B\,\frac{V_C}{V_B}", "ch"), V(foco="C"))\
-        .di("Sustituimos.", M(r"T_C=800\left(\frac{0{,}060}{0{,}080}\right)=600\ \text{K}", "tc", "verde"))\
-        .despacio((r"p=\frac{nRT}{V}\ \text{constante}\Rightarrow\frac{T}{V}\ \text{constante}", "ley de Charles"))
+        .di("De B a C la presión no cambia.", M(rf"p_C=p_B={tex(g.p('C'), 4, u='Pa')}"), V(foco="C"))\
+        .di("Del gas ideal, a presión constante la temperatura baja igual que el volumen.", F(r"pV=nRT"), M(r"\frac{V_B}{T_B}=\frac{V_C}{T_C}\;\Rightarrow\;T_C=T_B\,\frac{V_C}{V_B}", "ch"))\
+        .di("Sustituimos.", M(r"T_C=800\left(\frac{0{,}060}{0{,}080}\right)=800\,(0{,}75)=600\ \text{K}", "tc", "verde"))
     L.paso("b) Estado D y tabla")\
-        .di("De C a D la temperatura no cambia: seiscientos kelvin, y el volumen vuelve a cero coma ciento sesenta.", M(rf"p_D=\frac{{(2{{,}}5)(8{{,}}314)(600)}}{{0{{,}}160}}={tex(g.p('D'), 4, u='Pa')}", "pd", "verde"), V(foco="D"))\
+        .di("De C a D la temperatura no cambia, y el volumen vuelve al inicial.", M(r"T_D=T_C=600\ \text{K}"), M(r"V_D=V_A=0{,}160\ \text{m}^3"), V(foco="D"))\
+        .di("La presión con el gas ideal.", M(rf"p_D=\frac{{(2{{,}}5)(8{{,}}314)(600)}}{{0{{,}}160}}={tex(g.p('D'), 4, u='Pa')}", "pd", "verde"))\
         .di("Resumen.", tabla_estados(g, "ABCD", dt=0), V(foco="estados"))
     p = L.paso("c) Etapa A → B (isotérmica)")
     explica_proceso(p, g, "A", "B", "isotermico", dec_T=0)
@@ -864,20 +879,15 @@ def e18() -> Leccion:
     explica_proceso(p, g, "C", "D", "isotermico", dec_T=0)
     p = L.paso("c) Etapa D → A (isocórica)")
     explica_proceso(p, g, "D", "A", "isocorico", dec_T=0)
-    L.paso("c) Tabla del ciclo")\
-        .di("Reunimos las cuatro etapas.", tabla_quw(lista), V(foco="barras"))\
-        .di("El trabajo neto salió negativo: hay que meterle trabajo. Confirma que es refrigerador.", M(rf"W_{{neto}}={tex(W, 4, u='J')}", "wn", "verde"))
-    L.paso("d) Coeficiente de desempeño")\
-        .di("El calor que saca de lo frío es el que el gas absorbe: los calores positivos.", M(rf"Q_C=Q_{{CD}}+Q_{{DA}}={tex(res['CD']['Q'], 5)}+{tex(res['DA']['Q'], 5)}"), M(rf"Q_C={tex(Qc, 5, u='J', sci='no')}", "qc"))\
-        .di("Beneficio entre costo.", F(r"K=\frac{|Q_C|}{|W|}"), M(rf"K=\frac{{{tex(Qc, 5, sci='no')}}}{{{tex(abs(W), 5, sci='no')}}}"))\
-        .di(f"El coeficiente es {n(K, 3)}.", R(rf"K={tex(K, 3)}", "rd"))\
+    c = cierre_ciclo(L, lista, refri=True, titulo="c) y d) Ciclo completo y coeficiente de desempeño", id_e="rd")
+    W, K = c["W"], c["K"]
+    L.paso("d) Ojo con los nombres")\
         .di("Puede ser mayor que uno: no es una eficiencia.", OJO("En un refrigerador $Q_C$ es lo que el gas **absorbe**, y $Q_H$ lo que entrega."))
     for k in "ABCD":
         L.responde("b", rf"p_{k}={tex(g.p(k), 4)}\ \text{{Pa}}", g.p(k), "Pa")
     L.responde("c", rf"W_{{neto}}={tex(W, 4)}\ \text{{J}}", W, "J").responde("d", rf"K={tex(K, 3)}", K, "")
     L.usa(r"pV=nRT", r"W=nRT\ln(V_2/V_1)", r"W=p(V_2-V_1)", r"K=|Q_C|/|W|")
     return L
-
 
 # ============================================================================ E19
 @leccion("E19")
@@ -903,11 +913,13 @@ def e19() -> Leccion:
     rcd["Q"] = rcd["W"]
     rda = {"W": 0.0, "U": nm * cv * (Ta - Tc)}
     rda["Q"] = rda["U"]
-    res = {"ab": rab, "bc": rbc, "cd": rcd, "da": rda}
     lista = [("a→b", rab), ("b→c", rbc), ("c→d", rcd), ("d→a", rda)]
-    W = sum(r["W"] for r in res.values())
-    QH = rbc["Q"] + rcd["Q"]
-    e = W / QH
+    sTa, sTb, sTc = tex(Ta, dec=2), tex(Tb, dec=2), tex(Tc, dec=2)
+    dab = round(Tb, 2) - round(Ta, 2)
+    dbc = round(Tc, 2) - round(Tb, 2)
+    dda = round(Ta, 2) - round(Tc, 2)
+    nrt = nm * R_GAS * Tc
+    lnv = math.log(Va / Vc)
     pr = [("a", "b", "adiabatico"), ("b", "c", "isobarico"), ("c", "d", "isotermico"), ("d", "a", "isocorico")]
     vis = visual_pv(g, pr, valores=valores_visual(lista), uv="L", up="atm", fv=1000, fp=1 / ATM)
     vis["estados"] = {"a": [Va, pa], "b": [Vb, pb], "c": [Vc, pb], "d": [Va, pd]}
@@ -915,52 +927,74 @@ def e19() -> Leccion:
                 enunciado="Una máquina trabaja con 5 moles de gas monoatómico en el ciclo abcda: a→b adiabático de 1,5 a 30,0 atm; b→c isobárico; c→d isotérmico; d→a isocórico. $V_c=2V_b$ y $T_a=20{,}0\\ ^\\circ\\text{C}$. a) $V$ y $T$ en a, b, c, d. b) $Q$, $W$ y $\\Delta U$ de cada proceso. c) Eficiencia.",
                 visual=vis)
     L.paso("Qué nos dan y qué piden")\
-        .di("Del dibujo leemos presiones y tipos de proceso. Hay que pasar la temperatura a kelvin.", DATO("5 moles"),
+        .di("Del dibujo leemos presiones y tipos de proceso.", DATO("5 moles"),
             TABLA(["", "$p$ (atm)", "$V$", "$T$"], [["a", "$1{,}5$", "?", "$293{,}15$ K"], ["b", "$30{,}0$", "?", "?"], ["c", "$30{,}0$", "$2V_b$", "?"], ["d", "?", "$=V_a$", "$=T_c$"]]), V(foco="ciclo"))\
-        .di("Monoatómico: gama es cinco tercios.", NOTA("$C_V=\\frac32R=12{,}47$, $C_P=\\frac52R=20{,}79\\ \\frac{\\text{J}}{\\text{mol}\\cdot\\text{K}}$, $\\gamma=\\frac53$"))\
+        .di("La temperatura de a se pasa a kelvin con la hoja.", F(r"T_K=T_{^\circ\text{C}}+273{,}15"), M(r"T_a=20{,}0+273{,}15=293{,}15\ \text{K}"))\
         .sale_de(("$V_d=V_a$", "d→a es vertical: isocórico"), ("$T_d=T_c$", "c→d es isotérmico"))
+    L.paso("Constantes del gas monoatómico")\
+        .di("De la hoja: la capacidad a volumen constante del monoatómico, y la de presión constante, que es una erre más.", F(r"C_V=\frac{3}{2}R"), F(r"C_P=C_V+R"))\
+        .di("Con erre igual a ocho coma tres uno cuatro.",
+            M(rf"C_V=\frac{{3}}{{2}}(8{{,}}314)={tex(cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"),
+            M(rf"C_P=\frac{{3}}{{2}}R+R=\frac{{5}}{{2}}R=\frac{{5}}{{2}}(8{{,}}314)={tex(cp, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
+        .di("Gama es el cociente de las dos: las erres se cancelan.", F(r"\gamma=\frac{C_P}{C_V}"), M(r"\gamma=\frac{\frac{5}{2}R}{\frac{3}{2}R}=\frac{5}{3}"))
     L.paso("a) Volumen en a")\
-        .di("Presión en atmósferas: conviene la erre de litro atmósfera.".replace("erre de litro atmósfera", dice("R en L·atm", "erre de litro atmósfera")), F(r"V_a=\frac{nRT_a}{p_a}"), V(foco="a"))\
+        .di("Presión en atmósferas: conviene la erre de litro atmósfera de la hoja.".replace("erre de litro atmósfera", dice("R en L·atm", "erre de litro atmósfera")), F(r"pV=nRT\;\Rightarrow\;V=\frac{nRT}{p}"), V(foco="a"))\
         .di("Sustituimos.", M(r"V_a=\frac{(5)(0{,}08206)(293{,}15)}{1{,}5}"), M(rf"V_a={tex(Va, 4, u='L')}", "va", "verde"))
-    L.paso("a) Volumen en b (adiabática)")\
+    L.paso("a) Volumen en b: despeje con la adiabática")\
         .di("De a a b es adiabático y conocemos las dos presiones.", F(r"pV^\gamma=\text{cte}"), M(r"p_aV_a^\gamma=p_bV_b^\gamma", "ad"), V(foco="ab"))\
-        .di("Despejamos el cociente de volúmenes.", M(r"\left(\frac{V_b}{V_a}\right)^{\gamma}=\frac{p_a}{p_b}"))\
-        .di("Para quitar el exponente elevamos a uno entre gama, que es tres quintos.", M(r"V_b=V_a\left(\frac{p_a}{p_b}\right)^{1/\gamma}=V_a\left(\frac{1{,}5}{30{,}0}\right)^{3/5}", "vb", "azul"))\
-        .di("Calculamos.", M(rf"V_b=({tex(Va, 4)})(0{{,}}050)^{{0{{,}}6}}=({tex(Va, 4)})({tex(0.05 ** 0.6, 4)})={tex(Vb, 4, u='L')}", "vbn", "verde"))
+        .di("Dividimos los dos lados entre la presión de b.", M(r"V_b^\gamma=V_a^\gamma\,\frac{p_a}{p_b}"))\
+        .di("Para quitar el exponente gama, elevamos los dos lados a uno sobre gama: al multiplicar los exponentes queda uno.",
+            M(r"\left(V_b^{\gamma}\right)^{1/\gamma}=V_b^{\gamma\cdot\frac{1}{\gamma}}=V_b^{1}=V_b"),
+            M(r"V_b=V_a\left(\frac{p_a}{p_b}\right)^{1/\gamma}", "vb", "azul"))
+    L.paso("a) Volumen en b: los números")\
+        .di("Uno sobre gama es tres quintos, o sea cero coma seis.", M(r"\frac{1}{\gamma}=\frac{3}{5}=0{,}6"),
+            M(r"V_b=V_a\left(\frac{1{,}5}{30{,}0}\right)^{0{,}6}=V_a\,(0{,}050)^{0{,}6}"))\
+        .di("En la calculadora, cero coma cero cinco elevado a cero coma seis.", M(rf"V_b=({tex(Va, 4)})({tex(0.05 ** 0.6, 4)})={tex(Vb, 4, u='L')}", "vbn", "verde"))
     L.paso("a) Temperatura en b")\
-        .di("Ya tenemos presión y volumen: gas ideal.", M(r"T_b=\frac{p_bV_b}{nR}"))\
+        .di("Ya tenemos presión y volumen: despejamos la temperatura del gas ideal.", F(r"pV=nRT\;\Rightarrow\;T=\frac{pV}{nR}"))\
         .di("Sustituimos.", M(rf"T_b=\frac{{(30{{,}}0)({tex(Vb, 4)})}}{{(5)(0{{,}}08206)}}={tex(Tb, dec=1, u='K')}", "tb", "verde"), V(foco="b"))
     L.paso("a) Estados c y d")\
-        .di("El volumen se duplica a presión constante, entonces la temperatura también se duplica.", M(rf"V_c=2V_b={tex(Vc, 4, u='L')}"), M(rf"T_c=2T_b={tex(Tc, 5, u='K')}", "tc", "verde"), V(foco="c"))\
-        .di("En d: misma temperatura que ce y mismo volumen que a.".replace("que ce", "que " + dice("c", "ce")), M(rf"p_d=\frac{{nRT_d}}{{V_d}}=\frac{{(5)(0{{,}}08206)({tex(Tc, 5)})}}{{{tex(Va, 4)}}}={tex(pd, 4, u='atm')}", "pd"), V(foco="d"))\
+        .di("De b a c la presión no cambia y el volumen se duplica.", M(rf"V_c=2V_b=2\,({tex(Vb, 4)})={tex(Vc, 4, u='L')}"), V(foco="c"))\
+        .di("Del gas ideal, a presión constante el volumen y la temperatura van juntos: la temperatura también se duplica.", F(r"pV=nRT"),
+            M(r"\frac{V_c}{T_c}=\frac{V_b}{T_b}\;\Rightarrow\;T_c=T_b\,\frac{V_c}{V_b}=2T_b"),
+            M(rf"T_c=2\,({tex(Tb, dec=2)})={tex(Tc, dec=1, u='K')}", "tc", "verde"))\
+        .di("En d: misma temperatura que ce y mismo volumen que a.".replace("que ce", "que " + dice("c", "ce")),
+            M(rf"T_d=T_c={tex(Tc, dec=1, u='K')}"), M(rf"V_d=V_a={tex(Va, 4, u='L')}"),
+            M(rf"p_d=\frac{{nRT_d}}{{V_d}}=\frac{{(5)(0{{,}}08206)({tex(Tc, dec=1)})}}{{{tex(Va, 4)}}}={tex(pd, 4, u='atm')}", "pd"), V(foco="d"))\
         .di("Tabla de estados.", TABLA(["", "$p$ (atm)", "$V$ (L)", "$T$ (K)"], [["a", "$1{,}5$", f"${tex(Va, 4)}$", f"${tex(Ta, dec=1)}$"], ["b", "$30{,}0$", f"${tex(Vb, 4)}$", f"${tex(Tb, dec=1)}$"], ["c", "$30{,}0$", f"${tex(Vc, 4)}$", f"${tex(Tc, dec=1)}$"], ["d", f"${tex(pd, 4)}$", f"${tex(Va, 4)}$", f"${tex(Tc, dec=1)}$"]]), V(foco="estados"))
     L.paso("b) a → b, adiabático")\
         .di("No hay calor, así que partimos de la primera ley del formulario con Q igual a cero.", F(r"\Delta U = Q - W"), M(r"Q_{ab}=0"), V(foco="ab"))\
-        .di("Delta U con las temperaturas.".replace("Delta U", s("ΔU")), F(r"\Delta U = nC_V\Delta T"), M(rf"\Delta U_{{ab}}=nC_V(T_b-T_a)=(5)(12{{,}}471)({tex(Tb, dec=1)}-{tex(Ta, dec=1)})"), M(rf"\Delta U_{{ab}}={tex(rab['U'], 4, u='J')}", "uab", "verde"))\
-        .di("Despejando de la primera ley, el trabajo es lo mismo con signo contrario: lo comprimen.", M(rf"W_{{ab}}=0-\Delta U_{{ab}}=-\Delta U_{{ab}}={tex(rab['W'], 4, u='J')}", "wab", "verde"))
-    L.paso("b) b → c, isobárico")\
-        .di("El calor a presión constante lleva ce pe.".replace("ce pe", s("C_P")), F(r"Q_{bc}=nC_P(T_c-T_b)"), V(foco="bc"))\
-        .di("Sustituimos.", M(rf"=(5)(20{{,}}785)({tex(Tc, dec=1)}-{tex(Tb, dec=1)})={tex(rbc['Q'], 4, u='J')}", "qbc", "verde"))\
-        .di("Delta U, siempre con ce ve.".replace("Delta U", s("ΔU")).replace("ce ve", s("C_V")), M(rf"\Delta U_{{bc}}=(5)(12{{,}}471)({tex(Tc - Tb, dec=1)})={tex(rbc['U'], 4, u='J')}", "ubc"))\
-        .di("Y el trabajo es la resta.", M(rf"W_{{bc}}=Q_{{bc}}-\Delta U_{{bc}}={tex(rbc['W'], 4, u='J')}", "wbc", "verde"))
+        .di("Delta U con las temperaturas.".replace("Delta U", s("ΔU")), F(r"\Delta U = nC_V\Delta T"), M(rf"\Delta U_{{ab}}=nC_V(T_b-T_a)=(5)(12{{,}}471)({sTb}-{sTa})"))\
+        .di("Multiplicamos los dos primeros y restamos las temperaturas.", M(rf"\Delta U_{{ab}}=({tex(nm * cv, 5)})({tex(dab, dec=2)})"), M(rf"\Delta U_{{ab}}={tex(rab['U'], 5, u='J')}", "uab", "verde"))\
+        .di("Despejando de la primera ley, el trabajo es lo mismo con signo contrario: lo comprimen.", M(rf"W_{{ab}}=0-\Delta U_{{ab}}=-\Delta U_{{ab}}={tex(rab['W'], 5, u='J')}", "wab", "verde"))
+    L.paso("b) b → c, isobárico: calor")\
+        .di("El calor a presión constante sale de la hoja con ce pe.".replace("ce pe", s("C_P")), F(r"dQ=nC_p\,dT"), V(foco="bc"))\
+        .di("Sumamos todos los pedacitos: la integral de de te es el cambio total de la temperatura.".replace("de de te", "de " + s("dT", "de te"), 1),M(r"Q_{bc}=nC_P\int_{T_b}^{T_c}dT=nC_P(T_c-T_b)"))\
+        .di("Sustituimos.", M(rf"Q_{{bc}}=(5)(20{{,}}785)({sTc}-{sTb})=({tex(nm * cp, 6)})({tex(dbc, dec=2)})"))\
+        .di("Da casi cien mil joules.", M(rf"Q_{{bc}}={tex(rbc['Q'], 6, u='J', sci='no')}", "qbc", "verde"))
+    L.paso("b) b → c, isobárico: energía y trabajo")\
+        .di("Delta U, siempre con ce ve.".replace("Delta U", s("ΔU")).replace("ce ve", s("C_V")), F(r"\Delta U = nC_V\Delta T"),
+            M(rf"\Delta U_{{bc}}=(5)(12{{,}}471)({tex(dbc, dec=2)})={tex(rbc['U'], 5, u='J')}", "ubc"))\
+        .di("El trabajo se despeja de la primera ley: el calor menos el cambio de energía.", F(r"\Delta U = Q - W\;\Rightarrow\;W=Q-\Delta U"),
+            M(rf"W_{{bc}}={tex(rbc['Q'], 6, sci='no')}-{tex(rbc['U'], 5)}={tex(rbc['W'], 5, u='J')}", "wbc", "verde"))
     L.paso("b) c → d, isotérmico")\
         .di("Temperatura constante: delta U es cero y el calor es igual al trabajo.".replace("delta U", s("ΔU")), M(r"\Delta U_{cd}=0\;\Rightarrow\;Q_{cd}=W_{cd}"), V(foco="cd"))\
         .di("Los volúmenes pueden ir en litros porque se dividen.", F(r"W_{cd}=nRT_c\ln\left(\frac{V_d}{V_c}\right)"))\
-        .di("Sustituimos con la erre en joules.".replace("erre en joules", dice("R en joules", "erre en joules")), M(rf"=(5)(8{{,}}314)({tex(Tc, dec=1)})\ln\left(\frac{{{tex(Va, 4)}}}{{{tex(Vc, 4)}}}\right)={tex(rcd['W'], 4, u='J')}", "wcd", "verde"))
+        .di("Sustituimos con la erre en joules.".replace("erre en joules", dice("R en joules", "erre en joules")), M(rf"=(5)(8{{,}}314)({sTc})\ln\left(\frac{{{tex(Va, 5)}}}{{{tex(Vc, 5)}}}\right)"))\
+        .di("Multiplicamos adelante y sacamos el logaritmo.", M(rf"=({tex(nrt, 5)})({tex(lnv, 6)})"), M(rf"W_{{cd}}=Q_{{cd}}={tex(rcd['W'], 5, u='J')}", "wcd", "verde"))
     L.paso("b) d → a, isocórico")\
         .di("Volumen constante: trabajo cero.", M(r"W_{da}=0"), V(foco="da"))\
-        .di("El calor es el cambio de energía interna; se enfría, sale negativo.", M(rf"Q_{{da}}=\Delta U_{{da}}=(5)(12{{,}}471)({tex(Ta, dec=1)}-{tex(Tc, dec=1)})={tex(rda['Q'], 4, u='J')}", "qda", "verde"))
-    L.paso("b) Tabla del ciclo")\
-        .di("La suma de delta U da cero: todo cuadra.".replace("delta U", s("ΔU")), tabla_quw(lista), V(foco="barras"))
-    L.paso("c) Eficiencia")\
-        .di("Absorbe calor en dos procesos: be ce y ce de.".replace("be ce y ce de", dice("bc y cd", "be ce y ce de")), M(rf"Q_H=Q_{{bc}}+Q_{{cd}}={tex(QH, 4, u='J')}", "qh"))\
-        .di("Trabajo neto entre calor absorbido.", M(rf"e=\frac{{{tex(W, 4)}}}{{{tex(QH, 4)}}}"), R(rf"e={tex(e, 3)}={tex(e * 100, 3)}\,\%", "rc"), V(foco="neto"))\
-        .di("Cuidado al mezclar unidades: litros y atmósferas solo en estados; energía en joules.", OJO("$R=0{,}08206$ para hallar $V$ y $T$; $R=8{,}314$ para energías."))
+        .di("El calor es el cambio de energía interna; se enfría, sale negativo.", F(r"\Delta U = nC_V\Delta T"),
+            M(rf"Q_{{da}}=\Delta U_{{da}}=(5)(12{{,}}471)({sTa}-{sTc})=({tex(nm * cv, 5)})({tex(dda, dec=2)})"))\
+        .di("Da unos ciento tres mil joules que salen.", M(rf"Q_{{da}}={tex(rda['Q'], 6, u='J', sci='no')}", "qda", "verde"))
+    c = cierre_ciclo(L, lista, titulo="c) Ciclo completo y eficiencia", id_e="rc")
+    W, e = c["W"], c["e"]
+    L.paso("Cuidado con las unidades")\
+        .di("Litros y atmósferas solo en los estados; las energías, en joules.", OJO("$R=0{,}08206$ para hallar $V$ y $T$; $R=8{,}314$ para energías."))
     L.responde("a", rf"V_a={tex(Va, 4)}\ \text{{L}}", Va, "L").responde("a", rf"V_b={tex(Vb, 4)}\ \text{{L}}", Vb, "L").responde("a", rf"T_b={tex(Tb, dec=1)}\ \text{{K}}", Tb, "K").responde("a", rf"T_c={tex(Tc, dec=1)}\ \text{{K}}", Tc, "K")
     L.responde("b", rf"W_{{neto}}={tex(W, 4)}\ \text{{J}}", W, "J").responde("c", rf"e={tex(e * 100, 3)}\,\%", e * 100, "%")
     L.usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"W=nRT\ln(V_2/V_1)", r"\Delta U=Q-W", r"\Delta U=nC_V\Delta T", r"e=\frac{W}{Q_H}")
     return L
-
 
 # ============================================================================ E20
 @leccion("E20")
@@ -974,15 +1008,17 @@ def e20() -> Leccion:
             M(r"W_A=5W_B", "w"), M(r"Q_{H,A}=3Q_{H,B}", "h"), M(r"|Q_{C,A}|=2|Q_{C,B}|", "c"), V(foco="dos"))\
         .di("Piden las dos eficiencias.", M(r"e_A=\;?\qquad e_B=\;?"))
     L.paso("La idea: balance en cada máquina")\
-        .di("En las dos, el trabajo es lo que entra menos lo que se descarga.", M(r"W_B=Q_{H,B}-|Q_{C,B}|", "bb", "azul"), M(r"W_A=Q_{H,A}-|Q_{C,A}|", "ba", "azul"))
+        .di("La hoja da la eficiencia de dos formas. Las igualamos.", F(r"e=\frac{W}{Q_H}=1-\left|\frac{Q_C}{Q_H}\right|"), M(r"\frac{W}{Q_H}=1-\frac{|Q_C|}{Q_H}"))\
+        .di("Multiplicamos los dos lados por el calor que entra: el trabajo es lo que entra menos lo que se descarga.", M(r"W=Q_H-|Q_C|"))\
+        .di("Lo escribimos para cada máquina.", M(r"W_B=Q_{H,B}-|Q_{C,B}|", "bb", "azul"), M(r"W_A=Q_{H,A}-|Q_{C,A}|", "ba", "azul"))
     L.paso("Meter las comparaciones en A")\
         .di("Cambiamos todo lo de A por lo de B.", M(r"5W_B=3Q_{H,B}-2|Q_{C,B}|", "e1"))\
         .di("Y el trabajo de B por su balance.", M(r"5\left(Q_{H,B}-|Q_{C,B}|\right)=3Q_{H,B}-2|Q_{C,B}|"))\
         .di("Abrimos el paréntesis.", M(r"5Q_{H,B}-5|Q_{C,B}|=3Q_{H,B}-2|Q_{C,B}|"))\
         .di("Juntamos: calores que entran a la izquierda, descargados a la derecha.", M(r"5Q_{H,B}-3Q_{H,B}=5|Q_{C,B}|-2|Q_{C,B}|"), M(r"2Q_{H,B}=3|Q_{C,B}|", "rel"))\
-        .di("Despejamos el cociente.", M(r"\frac{|Q_{C,B}|}{Q_{H,B}}=\frac{2}{3}", "co", "verde"))
+        .di("Despejamos el cociente: dividimos los dos lados entre tres y entre el calor que entra.", M(r"\frac{|Q_{C,B}|}{Q_{H,B}}=\frac{2}{3}", "co", "verde"))
     L.paso("Eficiencia de B")\
-        .di("Directo del formulario.", F(r"e=1-\left|\frac{Q_C}{Q_H}\right|"), M(r"e_B=1-\frac{2}{3}"))\
+        .di("La segunda forma de la hoja.", F(r"e=1-\left|\frac{Q_C}{Q_H}\right|"), M(r"e_B=1-\frac{2}{3}"))\
         .di("Un tercio.", R(r"e_B=\frac{1}{3}=33{,}3\,\%", "rb"))
     L.paso("Eficiencia de A")\
         .di("Cinco veces el trabajo entre tres veces el calor.", M(r"e_A=\frac{W_A}{Q_{H,A}}=\frac{5W_B}{3Q_{H,B}}=\frac{5}{3}\,e_B"))\
@@ -991,7 +1027,6 @@ def e20() -> Leccion:
     L.responde("", r"e_A=55{,}6\,\%", ea * 100, "%").responde("", r"e_B=33{,}3\,\%", eb * 100, "%").usa(r"e=1-|Q_C/Q_H|")
     return L
 
-
 # ============================================================================ E21
 @leccion("E21")
 def e21() -> Leccion:
@@ -999,26 +1034,33 @@ def e21() -> Leccion:
     rs = [(91, 8.5), (93, 9.0), (95, 9.8), (97, 10.5)]
     es = {o: 1 - r ** (-(g - 1)) for o, r in rs}
     inc = (es[97] - es[91]) / es[91] * 100
+    rtx = {8.5: "8{,}5", 9.0: "9{,}0", 9.8: "9{,}8", 10.5: "10{,}5"}
+    rvoz = {8.5: "ocho coma cinco", 9.0: "nueve", 9.8: "nueve coma ocho", 10.5: "diez coma cinco"}
     L = Leccion("E21", "Motor Otto y octanaje de la gasolina", tema="6.14", nivel=2, fuente=_f(21, 8), claves=["ciclo Otto", "relación de compresión"],
                 enunciado="Relación de compresión máxima según octanaje: 91→8,5; 93→9,0; 95→9,8; 97→10,5. Calcule la eficiencia teórica máxima (Otto) con cada gasolina y el incremento porcentual entre usar 91 y usar 97.",
                 visual={"tipo": "otto", "gamma": g, "puntos": [[r, round(es[o], 4), str(o)] for o, r in rs]})
     L.paso("Qué nos dan y qué piden")\
         .di("Cuatro gasolinas, cada una aguanta una compresión máxima.", TABLA(["Octano", "$r$"], [["91", "$8{,}5$"], ["93", "$9{,}0$"], ["95", "$9{,}8$"], ["97", "$10{,}5$"]]))\
-        .di("La fórmula del ciclo Otto está en el formulario.", F(r"e_{otto}=1-\frac{1}{r^{\gamma-1}}", "f"), V(foco="curva"))\
-        .di("La mezcla es casi aire, que es diatómico: gama es uno coma cuatro.", M(r"\gamma-1=0{,}40", "gm"))\
-        .sale_de(("$\\gamma=1{,}40$", "aire ≈ N₂ y O₂, gases diatómicos: $\\frac{7/2}{5/2}$"))
-    L.paso("Octano 91")\
-        .di("Ponemos ocho coma cinco.", M(r"e_{91}=1-\frac{1}{8{,}5^{0{,}40}}"), V(foco=0))\
-        .di("La potencia primero.", M(rf"8{{,}}5^{{0{{,}}40}}={tex(8.5 ** 0.4, 4)}\;\Rightarrow\;\frac{{1}}{{{tex(8.5 ** 0.4, 4)}}}={tex(8.5 ** -0.4, 4)}"))\
-        .di(f"Queda {n(es[91] * 100, 3)} por ciento.", R(rf"e_{{91}}=1-{tex(8.5 ** -0.4, 4)}={tex(es[91], 4)}", "r91"))
-    L.paso("Los otros tres")\
-        .di("Igual, cambiando la compresión.", M(rf"e_{{93}}=1-\frac{{1}}{{9{{,}}0^{{0{{,}}40}}}}={tex(es[93], 4)}", "r93"), V(foco=1))\
-        .di("Noventa y cinco.", M(rf"e_{{95}}=1-\frac{{1}}{{9{{,}}8^{{0{{,}}40}}}}={tex(es[95], 4)}", "r95"), V(foco=2))\
-        .di("Noventa y siete.", M(rf"e_{{97}}=1-\frac{{1}}{{10{{,}}5^{{0{{,}}40}}}}={tex(es[97], 4)}", "r97"), V(foco=3))\
-        .di("En tabla.", TABLA(["Octano", "$r$", "$e$"], [[str(o), f"${tex(r, 3, recorta=True)}$", f"${tex(es[o] * 100, 3)}\\,\\%$"] for o, r in rs], resaltar=[[0, 2], [3, 2]]))
+        .di("La fórmula del ciclo Otto está en el formulario.", F(r"e_{otto}=1-\frac{1}{r^{\gamma-1}}", "f"), V(foco="curva"))
+    L.paso("Cuánto vale gama")\
+        .di("La mezcla es casi aire, que es diatómico. De la hoja, la capacidad a volumen constante y la de presión constante, que es una erre más.",
+            F(r"C_V=\frac{5}{2}R"), F(r"C_P=C_V+R"), M(r"C_P=\frac{5}{2}R+R=\frac{7}{2}R"))\
+        .di("Gama es el cociente: las erres se cancelan.", F(r"\gamma=\frac{C_P}{C_V}"), M(r"\gamma=\frac{\frac{7}{2}R}{\frac{5}{2}R}=\frac{7}{5}=1{,}40"))\
+        .di("El exponente de la fórmula es gama menos uno.", M(r"\gamma-1=1{,}40-1=0{,}40", "gm"))
+    for i, (o, r) in enumerate(rs):
+        pot = r ** (g - 1)
+        inv = 1 / pot
+        L.paso(f"Octano {o}")\
+            .di(f"Ponemos {rvoz[r]}.", M(rf"e_{{{o}}}=1-\frac{{1}}{{{rtx[r]}^{{0{{,}}40}}}}"), V(foco=i))\
+            .di("La potencia primero, en la calculadora.", M(rf"{rtx[r]}^{{0{{,}}40}}={tex(pot, 5)}"))\
+            .di("Luego uno entre ese número.", M(rf"\frac{{1}}{{{tex(pot, 5)}}}={tex(inv, 4)}"))\
+            .di(f"Y se lo restamos a uno: {n(es[o] * 100, 3)} por ciento.", R(rf"e_{{{o}}}=1-{tex(inv, 4)}={tex(es[o], 4)}", f"r{o}"))
+    L.paso("Las cuatro en tabla")\
+        .di("Más compresión, más eficiencia.", TABLA(["Octano", "$r$", "$e$"], [[str(o), f"${tex(r, 3, recorta=True)}$", f"${tex(es[o] * 100, 3)}\\,\\%$"] for o, r in rs], resaltar=[[0, 2], [3, 2]]))
     L.paso("Incremento porcentual de 91 a 97")\
         .di("Porcentual significa comparado con el valor inicial.", M(r"\%=\frac{e_{97}-e_{91}}{e_{91}}\times100"))\
         .di("Sustituimos.", M(rf"=\frac{{{tex(es[97], 4)}-{tex(es[91], 4)}}}{{{tex(es[91], 4)}}}\times100"))\
+        .di("Primero la resta de arriba.", M(rf"=\frac{{{tex(round(es[97], 4) - round(es[91], 4), 3)}}}{{{tex(es[91], 4)}}}\times100"))\
         .di(f"Aumenta {n(inc, 3)} por ciento.", R(rf"{tex(inc, 3)}\,\%", "ri"), V(foco="todo"))\
         .di("No confundas con la resta directa, que son puntos porcentuales.", OJO(rf"La resta simple da ${tex((es[97] - es[91]) * 100, 3)}$ puntos porcentuales; el incremento **relativo** es ${tex(inc, 3)}\,\%$."))
     for o, _ in rs:

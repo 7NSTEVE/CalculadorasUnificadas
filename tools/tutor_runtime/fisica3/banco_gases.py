@@ -174,7 +174,10 @@ def q076() -> Leccion:
             M(r"V\ \text{fijo},\ p\downarrow\;\Rightarrow\;K_{\text{tr}}=\tfrac{3}{2}pV\downarrow"),
             R(r"K_{\text{tr}}\ \text{disminuye}", "rb"))
     L.paso("C y D) Fuga más rápida y mayor aumento de temperatura")\
-        .di("Con igual energía cinética media tienen igual temperatura, pero el helio es más rápido y escapa antes por el agujero.",
+        .di("Con igual energía cinética media tienen igual temperatura. La rapidez eficaz de la hoja depende de la masa molar.",
+            F(r"v_{\text{rms}}=\sqrt{\frac{3RT}{M}}"))\
+        .di("Misma temperatura y el helio tiene masa molar mucho menor: su rapidez es mayor y escapa antes por el agujero.",
+            M(r"M_{\text{He}}<M_{\text{O}_2}\;\Rightarrow\;v_{\text{rms,He}}>v_{\text{rms,O}_2}"),
             R(r"\text{C) Baja más rápido en: helio}", "rc"))\
         .di("El helio es monoatómico y tiene menor capacidad calorífica que el oxígeno diatómico, así que con el mismo calor se calienta más.",
             M(r"\Delta T = \frac{Q}{nC_V}\qquad C_{V,\text{He}}=\frac{3}{2}R < C_{V,\text{O}_2}=\frac{5}{2}R"),
@@ -195,8 +198,8 @@ def q077() -> Leccion:
               "D": "Porque las moléculas de CO₂ se mueven más rápidamente."}, "B",
              claves=["grados de libertad", "capacidad calorífica", "poliatómico"])
     L.paso("Equipartición y grados de libertad")\
-        .di("En un gas ideal, la capacidad calorífica molar solo depende de los grados de libertad activos.", DATO("poliatómico"),
-            F(r"C_V = \frac{f}{2}\,R"))\
+        .di("Generalizando las dos casillas de la hoja: cada forma activa de moverse aporta medio erre.", DATO("poliatómico"),
+            M(r"C_V = \frac{f}{2}\,R\qquad (f:\ \text{formas de moverse})"))\
         .di("El helio solo traslada energía; el dióxido de carbono además rota y vibra, así que absorbe más energía por grado.",
             LISTA(["He monoatómico: solo traslación ($f=3$, $C_V=\\tfrac{3}{2}R$)",
                    "$\\text{CO}_2$ poliatómico: traslación + rotación + vibración ($f>3$)"]),
@@ -219,13 +222,22 @@ def q078() -> Leccion:
               "C": "La rapidez cuadrática media de las moléculas del gas.", "D": "Todas las anteriores son correctas."}, "B",
              claves=["presión microscópica", "energía cinética media"],
              visual={"tipo": "gas", "modo": "temperatura"})
-    L.paso("Relación entre presión y energía cinética media")\
-        .di("Partimos de la ley del gas ideal y la energía cinética total de la hoja: al igualar ene erre te queda pe ve igual a dos tercios de ka.", V(foco="presion"), DATO("directamente proporcional"),
-            F(r"pV=nRT"), F(r"K=\frac{3}{2}nRT"),
-            M(r"pV = \frac{2}{3}K = \frac{2}{3}N\,K_{\text{med}} \;\Rightarrow\; p = \frac{2}{3}\frac{N}{V}\,K_{\text{med}}"))\
-        .di("Ojo con la rapidez eficaz: la presión va con el cuadrado de la rapidez, no con la rapidez lineal.",
-            F(r"\frac{1}{2}m(v^2)_{\text{med}}=\frac{3k_B T}{2}"),
-            M(r"p = \frac{1}{3}\frac{N m}{V}\,v_{\text{rms}}^2 \;\Rightarrow\; p \propto K_{\text{med}}\ \ (\text{y } p \propto v_{\text{rms}}^2)"))
+    L.paso("Presión y energía cinética, desde la hoja")\
+        .di("Partimos de dos casillas de la hoja: el gas ideal y la energía cinética total.", V(foco="presion"), DATO("directamente proporcional"),
+            F(r"pV=nRT"), F(r"K=\frac{3}{2}nRT"))\
+        .di("De la segunda despejamos ene erre te: el tres medios pasa al otro lado como dos tercios.".replace("ene erre te", dice("nRT", "ene erre te")),
+            M(r"nRT=\frac{2}{3}K"))\
+        .di("Lo ponemos en el gas ideal en lugar de ene erre te.".replace("ene erre te", dice("nRT", "ene erre te")), M(r"pV=\frac{2}{3}K"))\
+        .di("La energía total es el número de moléculas por la energía media de cada una.", M(r"K=N\,K_{\text{med}}\;\Rightarrow\;pV=\frac{2}{3}N\,K_{\text{med}}"))\
+        .di("Dividimos entre el volumen: la presión es directamente proporcional a la energía cinética media.", M(r"p=\frac{2}{3}\,\frac{N}{V}\,K_{\text{med}}"))
+    L.paso("¿Y la rapidez eficaz?")\
+        .di("La hoja da la energía media de una molécula y la rapidez eficaz.", F(r"\frac{1}{2}m(v^2)_{\text{med}}=\frac{3k_B T}{2}"), F(r"v_{\text{rms}}=\sqrt{\frac{3k_BT}{m}}"))\
+        .di("Despejando las dos, el promedio de la rapidez al cuadrado es la rapidez eficaz al cuadrado.",
+            M(r"(v^2)_{\text{med}}=\frac{3k_BT}{m}=v_{\text{rms}}^2\;\Rightarrow\;K_{\text{med}}=\frac{1}{2}m\,v_{\text{rms}}^2"))\
+        .di("Lo metemos en la presión: aparece la rapidez al cuadrado, no la rapidez sola.",
+            M(r"p=\frac{2}{3}\,\frac{N}{V}\left(\frac{1}{2}m\,v_{\text{rms}}^2\right)=\frac{1}{3}\,\frac{N m}{V}\,v_{\text{rms}}^2"))\
+        .di("Por eso la presión va con la energía media, y con el cuadrado de la rapidez eficaz.",
+            M(r"p \propto K_{\text{med}}\qquad p \propto v_{\text{rms}}^2"))
     revisar_opciones(L, {
         "A": ("La A no: a igual temperatura, la presión no depende de la masa molar.", "$pV=nRT$."),
         "C": ("La C es la trampa: es proporcional al cuadrado de la rapidez eficaz, no a ella sola.", "$p\\propto v_{\\text{rms}}^2$, no $v_{\\text{rms}}$."),

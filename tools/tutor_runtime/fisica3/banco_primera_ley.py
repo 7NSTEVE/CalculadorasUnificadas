@@ -177,10 +177,10 @@ def q089() -> Leccion:
     L.paso("Comparar delta U y Q entre las dos curvas")\
         .di("Como ambos procesos arrancan en A y llegan al mismo punto B, el cambio de energía interna es idéntico.", DATO("inician en A y acaban en B"),
             M(r"\Delta U_1 = U_B - U_A = \Delta U_2"))\
-        .di("La curva uno pasa por presiones más altas, así que encierra mayor área bajo la curva: hace más trabajo.",
-            M(r"W_1 > W_2"))\
-        .di("Con la primera ley, si delta U es igual y doble ve uno es mayor, entonces cu uno es mayor.",
-            F(r"Q = \Delta U + W \;\Rightarrow\; Q_1 > Q_2"),
+        .di("El trabajo de la hoja es el área bajo la curva. La curva uno pasa por presiones más altas, así que encierra más área: hace más trabajo.",
+            F(r"W=\int_{V_1}^{V_2}p\,dV"), M(r"W_1 > W_2"))\
+        .di("Despejamos el calor de la primera ley. Si delta U es igual y el trabajo uno es mayor, el calor uno es mayor.",
+            F(r"\Delta U = Q - W"), M(r"Q = \Delta U + W \;\Rightarrow\; Q_1 > Q_2"),
             R(r"\Delta U_1 = \Delta U_2 \quad\text{y}\quad Q_1 > Q_2"))
     revisar_opciones(L, {
         "A": ("La A falla: la energía interna no depende de la trayectoria.", "$\\Delta U_1 = \\Delta U_2$."),
@@ -218,14 +218,18 @@ def q091() -> Leccion:
              "En un proceso donde un gas en un recipiente de volumen constante experimenta una disminución en su temperatura, se cumple que:",
              {"A": "ΔS ≠ 0, ΔU ≠ 0, W = 0, Q ≠ 0", "B": "ΔS = 0, ΔU ≠ 0, W = 0, Q ≠ 0",
               "C": "ΔS ≠ 0, ΔU = 0, W = 0, Q ≠ 0", "D": "ΔS ≠ 0, ΔU ≠ 0, W ≠ 0, Q ≠ 0"}, "A",
-             aviso="En el Superexamen se pegó por error una figura de otra pregunta; este ejercicio es puramente conceptual sobre un enfriamiento isocórico.",
+             aviso="En el Superexamen se pegó por error una figura de otra pregunta; este ejercicio es puramente conceptual sobre un enfriamiento isocórico. La parte de entropía (ΔS) no entra en el III parcial: el corte llega hasta la sección 20.5.",
              claves=["isocórico", "primera ley", "entropía"])
-    L.paso("Revisar las cuatro variables a volumen constante")\
-        .di("Si el volumen no cambia, el gas no se expande ni se comprime: el trabajo es exactamente cero.", DATO("volumen constante"),
-            LISTA(["$V=\\text{cte} \\Rightarrow W = 0$",
-                   "$\\Delta T < 0 \\Rightarrow \\Delta U = nC_V\\Delta T < 0 \\;(\\neq 0)$",
-                   "$Q = \\Delta U + W = \\Delta U < 0 \\;(\\neq 0)$",
-                   "$\\Delta S = nC_V\\ln(T_f/T_i) < 0 \\;(\\neq 0)$"]))\
+    L.paso("Trabajo, energía interna y calor, desde la hoja")\
+        .di("Si el volumen no cambia, el gas no se expande ni se comprime: en el trabajo de la hoja no hay cambio de volumen.", DATO("volumen constante"),
+            F(r"W=\int_{V_1}^{V_2}p\,dV"), M(r"V=\text{cte}\;\Rightarrow\;dV=0\;\Rightarrow\;W=0"))\
+        .di("La temperatura baja, así que la energía interna baja.", F(r"\Delta U=nC_V\Delta T"),
+            M(r"\Delta T<0\;\Rightarrow\;\Delta U<0\;\;(\neq 0)"))\
+        .di("Despejamos el calor de la primera ley: con trabajo cero, el calor es igual al cambio de energía interna.", F(r"\Delta U=Q-W"),
+            M(r"Q=\Delta U+W=\Delta U<0\;\;(\neq 0)"))
+    L.paso("Entropía (no entra en el III parcial)")\
+        .di("Este pedazo no entra en el parcial. El gas suelta calor, y el cambio de entropía es el calor que entra entre la temperatura: sale negativo.",
+            M(r"dS=\frac{dQ}{T},\quad dQ<0\;\Rightarrow\;\Delta S<0\;\;(\neq 0)"))\
         .di("Solo el trabajo es cero; las otras tres cantidades cambian.",
             R(r"\Delta S \neq 0,\;\Delta U \neq 0,\;W = 0,\;Q \neq 0"))
     revisar_opciones(L, {

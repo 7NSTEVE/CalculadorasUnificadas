@@ -54,6 +54,7 @@ def q118() -> Leccion:
               "B": "Primero aumenta y luego disminuye a medida que la temperatura ambiente aumenta.",
               "C": "Disminuye a medida que la temperatura ambiente aumenta.",
               "D": "Aumenta a medida que la temperatura ambiente aumenta."}, "C",
+             aviso="El ciclo de Carnot (sección 20.6) no entra en el III parcial; aquí solo sirve para ver la tendencia. Lo que sí entra es K = |Q_C|/|W| de la hoja.",
              claves=["refrigerador", "temperatura ambiente", "Carnot"],
              visual={"tipo": "maquina", "modo": "refrigerador", "QH": 500, "QC": 400, "W": 100, "TH": 300, "TC": 270})
     L.paso("Más calor afuera cuesta más trabajo bombear")\
@@ -311,6 +312,7 @@ def q125() -> Leccion:
               "B": "A tiene mayor eficiencia que B, ya que ninguna máquina puede superar la eficiencia de una máquina reversible entre los mismos focos.",
               "C": "Ambas tienen la misma eficiencia, porque operan entre los mismos focos.",
               "D": "Como motor A es mejor, pero como refrigerador B tiene mejor rendimiento."}, "B",
+             aviso="Comparar una máquina reversible con una irreversible usa el ciclo de Carnot (sección 20.6), que no entra en el III parcial: el corte llega hasta la 20.5.",
              claves=["teorema de Carnot", "reversible", "segunda ley"],
              visual={"tipo": "maquina", "QH": 1000, "QC": 500, "W": 500, "TH": 700, "TC": 350})
     L.paso("Teorema de Carnot")\
@@ -360,12 +362,20 @@ def q127() -> Leccion:
               "B": "Porque siempre existe fricción en los componentes mecánicos.",
               "C": "Porque el calor es una forma de energía menos útil que el trabajo mecánico.",
               "D": "Porque convertir todo el calor en trabajo reduciría la entropía del universo, lo cual no ocurre espontáneamente."}, "D",
+             aviso="La entropía (sección 20.7) no entra en el III parcial. Lo que sí entra es la segunda ley de Kelvin-Planck (20.5), que es el primer paso.",
              claves=["segunda ley", "entropía del universo", "Kelvin-Planck"])
-    L.paso("Verlo con entropía")\
-        .di("En un ciclo el gas vuelve a su estado inicial, así que su entropía no cambia.", DATO("segunda ley"),
-            M(r"\Delta S_{\text{máquina}} = 0 \qquad \Delta S_{\text{foco caliente}} = -\frac{Q_H}{T_H} < 0"))\
-        .di("Si no se entregara calor a un foco frío, la entropía total del universo bajaría, violando la segunda ley.",
-            F(r"\Delta S_{\text{universo}} = -\frac{Q_H}{T_H} < 0 \quad (\text{imposible})"))
+    L.paso("Primero con la hoja: Kelvin-Planck")\
+        .di("La eficiencia de la hoja. Si no se cede calor al foco frío, el calor que sale es cero.", DATO("segunda ley"),
+            F(r"e=\frac{W}{Q_H}=1-\left|\frac{Q_c}{Q_H}\right|"), M(r"|Q_c|=0\;\Rightarrow\;e=1\;\Rightarrow\;W=Q_H"))\
+        .di("La primera ley no lo prohíbe: la energía se conservaría. Lo prohíbe la segunda ley: ninguna máquina cíclica convierte todo el calor en trabajo.",
+            M(r"\text{segunda ley: }|Q_c|>0\;\Rightarrow\;e<1"))
+    L.paso("Verlo con entropía (no entra en el III parcial)")\
+        .di("El cambio de entropía es el calor que entra entre la temperatura. El foco caliente no cambia de temperatura, así que la te sale de la suma.".replace("la te", "la " + dice("T", "te")),
+            M(r"dS=\frac{dQ}{T}\;\Rightarrow\;\Delta S=\int\frac{dQ}{T}=\frac{1}{T}\int dQ=\frac{Q}{T}"))\
+        .di("El foco caliente pierde ese calor; el gas da la vuelta completa y su entropía no cambia.",
+            M(r"\Delta S_{\text{foco caliente}} = -\frac{Q_H}{T_H} < 0 \qquad \Delta S_{\text{máquina}} = 0"))\
+        .di("Sin foco frío que reciba calor, nada lo compensa: la entropía del universo bajaría, y eso no ocurre solo. Es la D.",
+            M(r"\Delta S_{\text{universo}} = -\frac{Q_H}{T_H} < 0 \quad (\text{imposible})"))
     revisar_opciones(L, {
         "A": ("La A es falsa: convertir todo en trabajo sí conservaría energía.", "No viola la 1.ª ley."),
         "B": ("La B falla: incluso sin fricción sigue siendo imposible.", "No es un problema de fricción."),

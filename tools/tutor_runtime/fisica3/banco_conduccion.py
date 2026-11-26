@@ -353,8 +353,10 @@ def q040() -> Leccion:
                      "capas": [{"n": "Placa 1", "e": 1, "k": 4, "kt": "k₁"}, {"n": "Placa 2", "e": 1, "k": 2, "kt": "k₂"},
                                {"n": "Placa 3", "e": 1, "k": 1, "kt": "k₃"}, {"n": "Placa 4", "e": 1, "k": 1.33, "kt": "k₄"}]})
     L.paso("Caída de temperatura en cada placa")\
-        .di("Como están en serie, el flujo de calor es idéntico en las cuatro placas.", DATO("igual espesor"),
-            F(r"H = \frac{k A\,\Delta T}{d} \;\Rightarrow\; k = \frac{H d}{A\,\Delta T} \propto \frac{1}{\Delta T}"))\
+        .di("Como están en serie, el flujo de calor es idéntico en las cuatro placas. Partimos de la conducción de la hoja.", DATO("igual espesor"),
+            F(r"H = \frac{k A\,\Delta T}{d}"))\
+        .di("Despejamos ka. El flujo, el área y el espesor son iguales en las cuatro, así que ka va al revés de la caída de temperatura.".replace("ka", dice("k", "ka")),
+            M(r"k = \frac{H d}{A\,\Delta T} \;\Rightarrow\; k \propto \frac{1}{\Delta T}"))\
         .di("A mayor caída de temperatura, peor conductor es el material.",
             OJO("No te confundas: **más** caída de temperatura significa **menor** conductividad $k$."))\
         .di("Restamos las temperaturas de cada interfaz.", V(foco="perfil"),
@@ -429,21 +431,23 @@ def q042() -> Leccion:
     L.paso("Flujo de calor desde la varilla de plata")\
         .di("De la plata conocemos todo: conductividad, largo y sus dos temperaturas.", DATO("22,2 °C"),
             M(rf"A = \frac{{\pi d^2}}{{4}} = \frac{{\pi(0{{,}}15)^2}}{{4}} = {tex(A, 3, u='m^2', sci='si')}"))\
-        .di(f"Calculamos el flujo de calor: da {nu(H, 'W', 3)}.",
-            F(r"H = \frac{k_3 A\,(T_{23}-T_C)}{L_3}"),
-            M(rf"H = \frac{{(406{{,}}0)({tex(A, 3, sci='si')})(22{{,}}2-0)}}{{0{{,}}20}} = {tex(H, 3, u='W')}"))\
+        .di("Usamos la ley de Fourier de la hoja en la plata.", F(r"H = kA\,\frac{T_H-T_C}{L}"), M(r"H = \frac{k_3 A\,(T_{23}-T_C)}{L_3}"))\
+        .di(f"Sustituimos; arriba multiplicamos y luego dividimos. Da {nu(H, 'W', 3)}.",
+            M(rf"H = \frac{{(406{{,}}0)({tex(A, 3, sci='si')})(22{{,}}2-0)}}{{0{{,}}20}} = \frac{{{tex(k3 * A * (t23 - tc), 4)}}}{{0{{,}}20}} = {tex(H, 3, u='W')}"))\
         .por_que("Están en serie y aisladas lateralmente, así que ese mismo flujo cruza las tres varillas.")
     L.paso("A) Temperatura en la unión aluminio-acero")\
-        .di("Usamos el mismo flujo en el tramo de aluminio y despejamos la temperatura de unión.", V(foco="perfil"),
-            M(r"H = \frac{k_1 A\,(T_H - T_{12})}{L_1} \;\Rightarrow\; T_{12} = T_H - \frac{H L_1}{k_1 A}"))\
-        .di(f"Sustituimos y resulta {nu(t12, '°C', dec=1)}.",
-            M(rf"T_{{12}} = 100{{,}}0 - \frac{{({tex(H, 3)})(0{{,}}15)}}{{(205{{,}}0)({tex(A, 3, sci='si')})}}"),
+        .di("Usamos el mismo flujo en el tramo de aluminio.", V(foco="perfil"), M(r"H = \frac{k_1 A\,(T_H - T_{12})}{L_1}"))\
+        .di("Despejamos: multiplicamos por ele uno, dividimos entre ka uno por A, y pasamos te doce.".replace("ele uno", dice("L₁", "ele uno")).replace("ka uno por A", dice("k₁A", "ka uno por A")).replace("te doce", dice("T₁₂", "te doce")),
+            M(r"\frac{H L_1}{k_1 A}=T_H - T_{12}\;\Rightarrow\; T_{12} = T_H - \frac{H L_1}{k_1 A}"))\
+        .di(f"Sustituimos; primero la fracción y luego la resta. Resulta {nu(t12, '°C', dec=1)}.",
+            M(rf"T_{{12}} = 100{{,}}0 - \frac{{({tex(H, 3)})(0{{,}}15)}}{{(205{{,}}0)({tex(A, 3, sci='si')})}} = 100{{,}}0-\frac{{{tex(H * L1, 4)}}}{{{tex(k1 * A, 4)}}} = 100{{,}}0-{tex(H * L1 / (k1 * A), 4)}"),
             R(rf"T_{{12}} = {tex(t12, dec=1, u='°C')}", "ra"))
     L.paso("B) Largo de la varilla de acero")\
-        .di("Ahora despejamos la longitud de la barra central de acero.",
+        .di("El mismo flujo cruza el acero; ahí la incógnita es el largo.", M(r"H = \frac{k_2 A\,(T_{12}-T_{23})}{L_2}"))\
+        .di("Despejamos: multiplicamos por ele dos y dividimos entre hache.".replace("ele dos", dice("L₂", "ele dos")).replace("hache", dice("H", "hache")),
             M(r"L_2 = \frac{k_2 A\,(T_{12}-T_{23})}{H}"))\
         .di(f"Con el salto entre las dos uniones obtenemos {nu(L2, 'm', 3)}.",
-            M(rf"L_2 = \frac{{(50{{,}}2)({tex(A, 3, sci='si')})({tex(t12, dec=1)}-22{{,}}2)}}{{{tex(H, 3)}}}"),
+            M(rf"L_2 = \frac{{(50{{,}}2)({tex(A, 3, sci='si')})({tex(t12, dec=1)}-22{{,}}2)}}{{{tex(H, 3)}}}=\frac{{{tex(k2 * A * (t12 - t23), 4)}}}{{{tex(H, 3)}}}"),
             R(rf"L_2 = {tex(L2, 3, u='m')}\ \ (\approx 5{{,}}0\ \text{{cm}})", "rb"))
     L.responde("A", rf"T_{{12}}={tex(t12, dec=1)}\ ^\circ\text{{C}}", t12, "°C").responde("B", rf"L_2={tex(L2, 3)}\ \text{{m}}", L2, "m")
     return L.oficial("III Parcial ordinario II-2024", 67.0, 0.050).usa(r"H=kA\frac{\Delta T}{L}")
@@ -590,22 +594,26 @@ def q047() -> Leccion:
     L.paso("A) Temperatura en la frontera")\
         .di("El área de la ventana es once metros cuadrados y el flujo es igual en ambas láminas.", DATO("1,46 x 104 W"),
             M(r"A = (5{,}00)(2{,}20) = 11{,}0\ \text{m}^2"))\
-        .di("Con el vidrio del lado exterior, despejamos la temperatura de la unión.", V(foco="perfil"),
-            F(r"H = \frac{k_v A\,(T_f - T_{\text{ext}})}{\Delta x_v} \;\Rightarrow\; T_f = T_{\text{ext}} + \frac{H\,\Delta x_v}{k_v A}"))\
-        .di(f"Sustituimos y obtenemos {nu(tf, '°C', dec=1)}.",
-            M(rf"T_f = 5{{,}}0 + \frac{{(1{{,}}46\times 10^4)(0{{,}}00400)}}{{(0{{,}}960)(11{{,}}0)}} = {tex(tf, dec=2, u='°C')}"),
+        .di("Con el vidrio del lado exterior: ley de Fourier de la hoja en el vidrio.", V(foco="perfil"),
+            F(r"H = kA\,\frac{T_H-T_C}{L}"), M(r"H = \frac{k_v A\,(T_f - T_{\text{ext}})}{\Delta x_v}"))\
+        .di("Despejamos: multiplicamos por el espesor, dividimos entre ka A y pasamos la temperatura exterior sumando.".replace("ka A", dice("kA", "ka A")),
+            M(r"\frac{H\,\Delta x_v}{k_v A}=T_f - T_{\text{ext}}\;\Rightarrow\; T_f = T_{\text{ext}} + \frac{H\,\Delta x_v}{k_v A}"))\
+        .di(f"Sustituimos; la fracción primero. Obtenemos {nu(tf, '°C', dec=1)}.",
+            M(rf"T_f = 5{{,}}0 + \frac{{(1{{,}}46\times 10^4)(0{{,}}00400)}}{{(0{{,}}960)(11{{,}}0)}} = 5{{,}}0+\frac{{{tex(H * dv, 4)}}}{{{tex(kv * A, 4)}}} = 5{{,}}0+{tex(dt_v, 4)} = {tex(tf, dec=2, u='°C')}"),
             R(rf"T_f = {tex(tf, dec=1, u='°C')}", "ra"),
             NOTA("Si el vidrio se colocara del lado interior, $T_f=24{,}5\\ ^\\circ\\text{C}$; $k_{pc}$ y ambos gradientes quedan iguales."))
     L.paso("B) Conductividad del policarbonato")\
         .di("En el policarbonato cae el resto de la temperatura.",
             M(rf"\Delta T_{{pc}} = 30{{,}}0 - {tex(tf, dec=2)} = {tex(dt_p, dec=2, u='°C')}"))\
-        .di(f"Despejamos su conductividad: sale {nu(kp, 'W/(m·K)', 3)}.",
-            M(rf"k_{{pc}} = \frac{{H\,\Delta x_{{pc}}}}{{A\,\Delta T_{{pc}}}} = \frac{{(1{{,}}46\times 10^4)(0{{,}}00300)}}{{(11{{,}}0)({tex(dt_p, dec=2)})}}"),
+        .di(f"De Fourier despejamos la conductividad: multiplicamos por el espesor y dividimos entre A por delta te. Sale {nu(kp, 'W/(m·K)', 3)}.".replace("A por delta te", dice("AΔT", "A por delta te")),
+            M(r"H=\frac{k_{pc}A\,\Delta T_{pc}}{\Delta x_{pc}}\;\Rightarrow\;k_{pc} = \frac{H\,\Delta x_{pc}}{A\,\Delta T_{pc}}"),
+            M(rf"k_{{pc}} = \frac{{(1{{,}}46\times 10^4)(0{{,}}00300)}}{{(11{{,}}0)({tex(dt_p, dec=2)})}}=\frac{{{tex(H * dp, 4)}}}{{{tex(A * dt_p, 5)}}}"),
             R(rf"k_{{pc}} = {tex(kp, 3, u='W/(m·K)')}", "rb"))
     L.paso("C) Gradientes de temperatura")\
-        .di("El gradiente en cada lámina es el cambio de temperatura entre su espesor.",
-            M(rf"\left|\frac{{\Delta T}}{{\Delta x}}\right|_v = \frac{{H}}{{k_v A}} = {tex(gv, 4, u='K/m')}"),
-            M(rf"\left|\frac{{\Delta T}}{{\Delta x}}\right|_{{pc}} = \frac{{H}}{{k_{{pc}} A}} = {tex(gp, 4, u='K/m')}"),
+        .di("El gradiente en cada lámina es el cambio de temperatura entre su espesor; de Fourier, es hache entre ka A.".replace("hache entre ka A", dice("H/(kA)", "hache entre ka A")),
+            M(r"H=kA\,\frac{\Delta T}{\Delta x}\;\Rightarrow\;\left|\frac{\Delta T}{\Delta x}\right|=\frac{H}{kA}"),
+            M(rf"\left|\frac{{\Delta T}}{{\Delta x}}\right|_v = \frac{{H}}{{k_v A}} = \frac{{1{{,}}46\times10^4}}{{(0{{,}}960)(11{{,}}0)}} = {tex(gv, 4, u='K/m')}"),
+            M(rf"\left|\frac{{\Delta T}}{{\Delta x}}\right|_{{pc}} = \frac{{H}}{{k_{{pc}} A}} = \frac{{1{{,}}46\times10^4}}{{({tex(kp, 4)})(11{{,}}0)}} = {tex(gp, 4, u='K/m')}"),
             R(rf"\nabla T_v = {tex(gv, 4, u='K/m')}\qquad \nabla T_{{pc}} = {tex(gp, 4, u='K/m')}", "rc"))
     L.responde("A", rf"T_f={tex(tf, dec=1)}\ ^\circ\text{{C}}", tf, "°C")\
      .responde("B", rf"k_{{pc}}={tex(kp, 3)}\ \text{{W/(m}}\cdot\text{{K)}}", kp, "W/(m·K)")\
@@ -630,7 +638,8 @@ def q048() -> Leccion:
             LISTA(["$A = (3{,}00)(4{,}00) = 12{,}0\\ \\text{m}^2$", "$L = 0{,}200$ m", "$\\Delta T = 25{,}00-5{,}00 = 20{,}0\\ ^\\circ\\text{C}$"]))\
         .di("Sustituimos en la fórmula de conducción plana.", V(foco="flujo"),
             F(r"H = \frac{k A\,\Delta T}{L}"),
-            M(rf"H = \frac{{(0{{,}}800)(12{{,}}0)(20{{,}}0)}}{{0{{,}}200}}"),
+            M(rf"H = \frac{{(0{{,}}800)(12{{,}}0)(20{{,}}0)}}{{0{{,}}200}}"))\
+        .di("Multiplicamos arriba: da ciento noventa y dos. Luego dividimos entre cero coma dos.", M(r"H = \frac{192}{0{,}200}"),
             R(rf"H = {tex(H, 3, u='W')}"))
     revisar_opciones(L, {
         "A": ("La A es diez veces menor por un fallo de potencia de diez.", "Error de decimal."),
@@ -710,9 +719,11 @@ def q051() -> Leccion:
              claves=["pared plana", "ley de Fourier"],
              visual={"tipo": "conduccion", "geo": "pared", "L": d, "T1": t1, "T2": t2, "uT": "°C"})
     L.paso("Aplicar Fourier")\
-        .di("Igual que en Q048: el área es doce metros cuadrados y el salto térmico es veinte grados.", DATO("20,0 cm"),
-            F(r"H = \frac{k A\,(T_1-T_2)}{L}"),
-            M(rf"H = \frac{{(0{{,}}800)(12{{,}}0)(30{{,}}0-10{{,}}0)}}{{0{{,}}200}}"),
+        .di("El área es alto por ancho, y el grosor pasa a metros.", DATO("20,0 cm"),
+            LISTA(["$A = (4{,}00)(3{,}00) = 12{,}0\\ \\text{m}^2$", "$L = 20{,}0\\ \\text{cm} = 0{,}200$ m", "$T_1-T_2 = 30{,}0-10{,}0 = 20{,}0\\ ^\\circ\\text{C}$"]))\
+        .di("Sustituimos en la conducción de la hoja.", F(r"H = \frac{k A\,(T_1-T_2)}{L}"),
+            M(rf"H = \frac{{(0{{,}}800)(12{{,}}0)(30{{,}}0-10{{,}}0)}}{{0{{,}}200}}=\frac{{(0{{,}}800)(12{{,}}0)(20{{,}}0)}}{{0{{,}}200}}"))\
+        .di("Multiplicamos arriba: da ciento noventa y dos. Luego dividimos entre cero coma dos.", M(r"H = \frac{192}{0{,}200}"),
             R(rf"H = {tex(H, 3, u='W')}"))
     revisar_opciones(L, {
         "A": ("La A es diez veces menor.", "Error de decimal."),
@@ -792,14 +803,15 @@ def q054() -> Leccion:
     L.paso("(a) Temperatura en la unión entre las barras 2 y 3")\
         .di("La rama inferior tiene las barras dos y tres en serie, así que comparten el mismo flujo.", V(foco=1), DATO("unión entre las barras 2 y 3"),
             M(r"H_2 = H_3 \;\Rightarrow\; \frac{k A\,(2T - T_u)}{L} = \frac{2k A\,(T_u - T)}{L}"))\
-        .di("Cancelamos ka, A y ele, y despejamos la temperatura de unión.",
-            M(r"2T - T_u = 2T_u - 2T \;\Rightarrow\; 3T_u = 4T"),
-            R(r"T_u = \frac{4}{3}\,T", "ra"))
+        .di("Cancelamos ka, A y ele, que están en los dos lados, y abrimos el paréntesis.",
+            M(r"2T - T_u = 2(T_u - T)=2T_u - 2T"))\
+        .di("Las te u a un lado y las te al otro: sumamos te u y dos te a los dos lados.".replace("te u", dice("Tᵤ", "te u")).replace("dos te", dice("2T", "dos te")),
+            M(r"2T+2T = 2T_u+T_u \;\Rightarrow\; 4T = 3T_u"), R(r"T_u = \frac{4}{3}\,T", "ra"))
     L.paso("(b) Flujo total sumando las dos ramas")\
-        .di("Calculamos el flujo de la rama superior con ka uno igual a un tercio de ka.", V(foco=0),
-            M(r"H_1 = \frac{(k/3)(2A)(2T-T)}{2L} = \frac{1}{3}\frac{kAT}{L}"))\
-        .di("En la rama inferior sustituimos la temperatura de unión en la barra dos.",
-            M(r"H_{23} = \frac{kA\,(2T - \frac{4}{3}T)}{L} = \frac{2}{3}\frac{kAT}{L}"))\
+        .di("Flujo de la rama superior, con ka uno igual a un tercio de ka; los dos de arriba y de abajo se cancelan.", V(foco=0),
+            M(r"H_1 = \frac{(k/3)(2A)(2T-T)}{2L} = \frac{2}{3\cdot2}\cdot\frac{kAT}{L} = \frac{1}{3}\frac{kAT}{L}"))\
+        .di("En la rama inferior sustituimos la temperatura de unión en la barra dos. Dos te menos cuatro tercios de te son dos tercios de te.".replace("Dos te menos cuatro tercios de te son dos tercios de te", dice("2T − 4T/3 = 2T/3", "Dos te menos cuatro tercios de te son dos tercios de te")),
+            M(r"2T-\frac{4}{3}T=\frac{6}{3}T-\frac{4}{3}T=\frac{2}{3}T"), M(r"H_{23} = \frac{kA\,(2T - \frac{4}{3}T)}{L} = \frac{2}{3}\frac{kAT}{L}"))\
         .di("Sumamos las dos ramas en paralelo y sale uno exacto.", V(foco="total"),
             M(r"H_{\text{total}} = H_1 + H_{23} = \left(\frac{1}{3}+\frac{2}{3}\right)\frac{kAT}{L}"),
             R(r"H_{\text{total}} = \frac{k A T}{L}", "rb"))

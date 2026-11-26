@@ -140,8 +140,11 @@ const POR_DEFECTO = {
   tema: 'light', letra: 'manuscrita', vel: 1, voz: 'es-MX-DaliaNeural', motorVoz: 'auto', vozLocal: '',
   servidorVozLocal: 'http://127.0.0.1:8880/v1/audio/speech', vozLocalHttp: 'es-default', vozKokoro: 'ef_dora',
   narracion: true, foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-2.5-flash',
-  zoom: 1, autoSeguir: false, sinSaltos: false,
+  zoom: 1, autoSeguir: false, sinSaltos: true,
 };
+// Los despejes intermedios se muestran siempre por defecto. Antes venían apagados y se guardaban
+// apagados junto con cualquier otro ajuste; esta marca los enciende una sola vez (luego se respeta lo que elija).
+const MARCA_SIN_SALTOS = 'tutor.ajustes.sinSaltos.encendido';
 
 export const ajustes = (() => {
   let g = {};
@@ -149,6 +152,13 @@ export const ajustes = (() => {
   const s = { ...POR_DEFECTO };
   for (const k of Object.keys(POR_DEFECTO)) if (typeof g[k] === typeof POR_DEFECTO[k]) s[k] = g[k];
   if (VOCES_LEGADO[s.voz]) s.voz = VOCES_LEGADO[s.voz];
+  try {
+    if (!localStorage.getItem(MARCA_SIN_SALTOS)) {
+      s.sinSaltos = true;
+      localStorage.setItem(MARCA_SIN_SALTOS, '1');
+      localStorage.setItem(CLAVE_AJUSTES, JSON.stringify(s));
+    }
+  } catch { s.sinSaltos = true; }
   return s;
 })();
 

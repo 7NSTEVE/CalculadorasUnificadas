@@ -6,7 +6,7 @@ import math
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, OPCION, Leccion, Paso, R, T, TABLA, V
-from .formato import dice, n, nu, tex
+from .formato import _redondea, dice, n, nu, tex
 
 # ---------------------------------------------------------------- constantes (formulario II-2026)
 R_GAS = 8.314
@@ -260,35 +260,54 @@ def _dec_suma(vals: Sequence[float], total: float, cifras: int) -> int:
     return min(4, max(0, d1, d2))
 
 
-def _suma_tex(vals: Sequence[float], cifras: int, u: str = "J") -> str:
+def _rd(v: float, d: int) -> float:
+    """Redondeo igual al de tex (mitad hacia arriba), para que las sumas escritas cuadren con lo que se ve."""
+    return float(_redondea(v, d))
+
+
+def _suma_tex(vals: Sequence[float], cifras: int, u: str = "J", d: Optional[int] = None) -> str:
     """'(a)+(b)+(c)=total' con decimales coherentes (la suma escrita da exactamente el total escrito)."""
-    d = _dec_suma(vals, sum(vals), cifras)
-    redondeados = [round(v, d) for v in vals]
+    if d is None:
+        d = _dec_suma(vals, sum(vals), cifras)
+    redondeados = [_rd(v, d) for v in vals]
     total = sum(redondeados)
     return "+".join(f"({tex(v, dec=d)})" for v in redondeados) + f"={tex(total, dec=d, u=u)}"
 
 
 def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, refri: bool = False, cifras: int = 4,
                  titulo: str = "", id_e: str = "re", solo_totales: bool = False) -> Dict[str, float]:
-    """Paso final de un ciclo: suma de trabajos, calores que entran y salen, y e (o K), todo sustituido."""
+    """Paso final de un ciclo: suma de trabajos, calores que entran y salen, y e (o K), todo sustituido.
+
+    Todas las sumas usan los mismos decimales, y se suben si hace falta para que el trabajo neto escrito
+    sea exactamente el calor neto escrito (si no, el redondeo haría que no cuadren por una unidad).
+    """
     ws = [(_sub(k), r["W"]) for k, r in res]
     wnet = sum(w for _, w in ws)
     qin = [(_sub(k), r["Q"]) for k, r in res if r["Q"] > 1e-9]
     qout = [(_sub(k), r["Q"]) for k, r in res if r["Q"] < -1e-9]
     qh = sum(q for _, q in qin)
     qc = sum(q for _, q in qout)
+    vw, vin, vout = [w for _, w in ws], [q for _, q in qin], [q for _, q in qout]
+    d = _dec_suma(vw + vin + vout, wnet, cifras)
+    while True:
+        wr = sum(_rd(w, d) for w in vw)
+        qhr = sum(_rd(q, d) for q in vin)
+        qcr = sum(_rd(q, d) for q in vout)
+        if abs(wr - (qhr + qcr)) < 0.5 * 10 ** (-d) or d >= 3:
+            break
+        d += 1
     p = L.paso(titulo or ("Coeficiente de rendimiento" if refri else "Trabajo neto, calores y eficiencia"))
     p.di("Primero la tabla de los procesos, para ver los signos.", tabla_quw(res, cifras=cifras), V(foco="ciclo"))
     p.di("El trabajo neto es la suma de los trabajos de cada proceso.",
          M(r"W_{\text{neto}}=" + "+".join(f"W_{{{k}}}" for k, _ in ws)),
-         M("=" + _suma_tex([w for _, w in ws], cifras)))
+         M("=" + _suma_tex(vw, cifras, d=d)))
     ent, sal = ("Q_C", "Q_H") if refri else ("Q_H", "Q_C")
     p.di("Los calores positivos son los que entran al gas; los negativos, los que salen." + (" En el refrigerador, el que entra viene del foco frío." if refri else ""),
-         M(ent + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qin) + "=" + _suma_tex([q for _, q in qin], cifras)),
-         M(sal + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qout) + "=" + _suma_tex([q for _, q in qout], cifras)))
+         M(ent + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qin) + "=" + _suma_tex(vin, cifras, d=d)),
+         M(sal + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qout) + "=" + _suma_tex(vout, cifras, d=d)))
     p.di("Revisión con la primera ley: en un ciclo la energía interna vuelve a su valor, así que el trabajo neto es el calor neto.",
          F(r"\Delta U=Q-W"), M(r"\Delta U_{\text{ciclo}}=0\;\Rightarrow\;W_{\text{neto}}=Q_{\text{neto}}"),
-         M(r"Q_{\text{neto}}=" + _suma_tex([qh, qc], cifras)))
+         M(r"Q_{\text{neto}}=" + _suma_tex([qhr, qcr], cifras, d=d)))
     out = {"W": wnet, "QH": qh, "QC": qc}
     if solo_totales:
         return out
@@ -296,17 +315,17 @@ def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, ref
         K = abs(qh) / abs(wnet)
         p.di("En el refrigerador sirve el calor que se le saca al foco frío; lo que se paga es el trabajo.",
              F(r"K=\frac{|Q_C|}{|W|}"),
-             M(rf"K=\frac{{{tex(abs(qh), cifras)}}}{{{tex(abs(wnet), cifras)}}}"),
+             M(rf"K=\frac{{{tex(abs(qhr), dec=d)}}}{{{tex(abs(wr), dec=d)}}}"),
              R(rf"K={tex(K, 3)}", id_e))
         out["K"] = K
     else:
         e = wnet / qh
         p.di("La eficiencia es lo que se obtiene entre lo que se paga.",
              F(r"e=\frac{W}{Q_H}=1-\left|\frac{Q_C}{Q_H}\right|"),
-             M(rf"e=\frac{{{tex(wnet, cifras)}}}{{{tex(qh, cifras)}}}"),
+             M(rf"e=\frac{{{tex(wr, dec=d)}}}{{{tex(qhr, dec=d)}}}"),
              R(rf"e={tex(e, 3)}={tex(e * 100, 3)}\,\%", id_e))
         p.di("Y la misma cuenta con los calores, para comprobar.",
-             M(rf"e=1-\frac{{{tex(abs(qc), cifras)}}}{{{tex(qh, cifras)}}}={tex(1 - abs(qc) / qh, 3)}"))
+             M(rf"e=1-\frac{{{tex(abs(qcr), dec=d)}}}{{{tex(qhr, dec=d)}}}={tex(1 - abs(qc) / qh, 3)}"))
         out["e"] = e
     return out
 

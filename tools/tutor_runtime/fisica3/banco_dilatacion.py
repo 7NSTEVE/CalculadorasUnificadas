@@ -150,9 +150,13 @@ def q005() -> Leccion:
         .di("Piden comparar los alfas.", M(r"\alpha_1\ \;?\ \;\alpha_2"))
     L.paso("Igualar los crecimientos")\
         .di("Usamos la dilatación lineal en las dos.", F(r"\Delta L=\alpha L\,\Delta T"), M(r"\alpha_1L_1\Delta T_1=\alpha_2L_2\Delta T_2"))\
-        .di("Despejamos el cociente de alfas.", M(r"\frac{\alpha_2}{\alpha_1}=\frac{L_1\,\Delta T_1}{L_2\,\Delta T_2}", "coc", "azul"))\
-        .di("Arriba hay dos cosas más pequeñas, abajo dos más grandes: el cociente es menor que uno.", M(r"\frac{L_1}{L_2}<1\qquad \frac{\Delta T_1}{\Delta T_2}<1"), R(r"\frac{\alpha_2}{\alpha_1}<1 \;\Rightarrow\; \alpha_2<\alpha_1"))\
-        .despacio((r"\alpha_1L_1\Delta T_1=\alpha_2L_2\Delta T_2", "partimos de la igualdad"), (r"\frac{\alpha_1L_1\Delta T_1}{\alpha_1L_2\Delta T_2}=\frac{\alpha_2L_2\Delta T_2}{\alpha_1L_2\Delta T_2}", "dividimos los dos lados entre lo mismo"), (r"\frac{L_1\Delta T_1}{L_2\Delta T_2}=\frac{\alpha_2}{\alpha_1}", "se cancela y queda el cociente"))\
+        .di("Dividimos los dos lados entre lo mismo: alfa uno, por ele dos, por delta te dos.",
+            M(r"\frac{\alpha_1L_1\Delta T_1}{\alpha_1L_2\Delta T_2}=\frac{\alpha_2L_2\Delta T_2}{\alpha_1L_2\Delta T_2}"))\
+        .di("Se cancela lo que está arriba y abajo, y queda el cociente de alfas.",
+            M(r"\frac{\alpha_2}{\alpha_1}=\frac{L_1\,\Delta T_1}{L_2\,\Delta T_2}=\frac{L_1}{L_2}\cdot\frac{\Delta T_1}{\Delta T_2}", "coc", "azul"))
+    L.paso("¿Mayor o menor que uno?")\
+        .di("En cada fracción lo de arriba es lo más pequeño: las dos son menores que uno.", M(r"\frac{L_1}{L_2}<1\qquad \frac{\Delta T_1}{\Delta T_2}<1"))\
+        .di("Un número menor que uno por otro menor que uno da algo todavía menor que uno.", R(r"\frac{\alpha_2}{\alpha_1}<1 \;\Rightarrow\; \alpha_2<\alpha_1"))\
         .por_que("La barra 1 tiene menos largo y menos calentamiento, pero crece igual. Eso solo puede pasar si su material se dilata más.")
     revisar_opciones(L, {
         "A": ("La A no: es al revés.", "El cociente $\\alpha_2/\\alpha_1$ es menor que 1."),
@@ -182,7 +186,8 @@ def q006() -> Leccion:
     L.paso("A) Enfriar la barra: despejar ΔT")\
         .di("El diámetro se dilata como cualquier longitud.", F(r"\Delta D=\alpha D_0\,\Delta T"))\
         .di("Despejamos el cambio de temperatura.", M(r"\Delta T=\frac{\Delta D}{\alpha D_0}"))\
-        .di("La barra debe perder cero coma cero uno centímetros, por eso el signo menos.", M(r"\Delta T=\frac{-0{,}01}{(12{,}0\times10^{-6})(2{,}46)}"), M(rf"\Delta T={tex(dA, dec=1)}\ ^\circ\text{{C}}", "dta"))\
+        .di("La barra debe perder cero coma cero uno centímetros, por eso el signo menos.", M(r"\Delta T=\frac{-0{,}01}{(12{,}0\times10^{-6})(2{,}46)}"))\
+        .di("Abajo multiplicamos; luego dividimos.", M(r"(12{,}0\times10^{-6})(2{,}46)=2{,}952\times10^{-5}"), M(r"\Delta T=\frac{-0{,}01}{2{,}952\times10^{-5}}"), M(rf"\Delta T={tex(dA, dec=1)}\ ^\circ\text{{C}}", "dta"))\
         .por_que("Aquí $D_0$ es el diámetro de lo que cambia: la barra, 2,46 cm.")
     L.paso("A) Temperatura final y la trampa")\
         .di("Sumamos a los veinticinco grados del inicio.", M(rf"T_f=25{{,}}0+({tex(dA, dec=1)})"), R(rf"T_f={tex(Ta, dec=1)}\ ^\circ\text{{C}}", "ra"))\
@@ -215,8 +220,12 @@ def q007() -> Leccion:
         .di("Piden comparar los alfas.", M(r"\alpha_1\ \;?\ \;\alpha_2"))
     L.paso("Igualar los crecimientos")\
         .di("Escribimos la dilatación de cada una y las igualamos.", F(r"\Delta L=\alpha L\,\Delta T"), M(r"\alpha_1L_1\,\Delta T=\alpha_2L_2\,\Delta T", "ig"))\
-        .di("El cambio de temperatura es el mismo: se cancela.", M(r"\alpha_1L_1\,\cancel{\Delta T}=\alpha_2L_2\,\cancel{\Delta T}"), M(r"\frac{\alpha_2}{\alpha_1}=\frac{L_1}{L_2}", "coc", "azul"))\
-        .di("Como la uno es más larga, ese cociente es mayor que uno.", R(r"\frac{L_1}{L_2}>1 \;\Rightarrow\; \alpha_2>\alpha_1"))\
+        .di("El cambio de temperatura es el mismo: se cancela.", M(r"\alpha_1L_1\,\cancel{\Delta T}=\alpha_2L_2\,\cancel{\Delta T}"), M(r"\alpha_1L_1=\alpha_2L_2"))\
+        .di("Dividimos los dos lados entre alfa uno por ele dos, y se cancela lo que está arriba y abajo.",
+            M(r"\frac{\alpha_1L_1}{\alpha_1L_2}=\frac{\alpha_2L_2}{\alpha_1L_2}\;\Rightarrow\;\frac{L_1}{L_2}=\frac{\alpha_2}{\alpha_1}", "coc", "azul"))\
+        .di("La barra uno es la más larga, así que arriba hay un número mayor que abajo.", M(r"L_1>L_2\;\Rightarrow\;\frac{L_1}{L_2}>1"))\
+        .di("Ese cociente es el de los alfas: entonces alfa dos es mayor que alfa uno.".replace("alfa dos", dice("α₂", "alfa dos")).replace("alfa uno", dice("α₁", "alfa uno")),
+            R(r"\frac{\alpha_2}{\alpha_1}=\frac{L_1}{L_2}>1 \;\Rightarrow\; \alpha_2>\alpha_1"))\
         .por_que("La barra corta necesita un material que se dilate más para crecer lo mismo que la larga.")
     revisar_opciones(L, {
         "B": ("La B no: con alfas iguales, la larga crecería más.", "Con $\\alpha$ iguales no crecerían igual."),
@@ -329,6 +338,8 @@ def q010() -> Leccion:
         .di("Partimos de la dilatación lineal del formulario en las tres dimensiones del cilindro: dos veces el radio y una vez el largo.",
             F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; V = \pi R^2 L = \pi R_0^2 L_0(1+\alpha\Delta T)^3 \approx V_0(1+3\alpha\Delta T)"),
             F(r"\Delta V = \beta V_0\,\Delta T \quad\text{con}\quad \beta = 3\alpha"))\
+        .di("¿De dónde sale el tres? Se abre el cubo; con alfa delta te igual a cero coma cero cero dos, su cuadrado y su cubo son despreciables.".replace("alfa delta te", dice("αΔT", "alfa delta te")),
+            M(r"(1+\alpha\Delta T)^3=1+3\alpha\Delta T+3(\alpha\Delta T)^2+(\alpha\Delta T)^3\approx 1+3\alpha\Delta T"))\
         .di("Dividimos entre el volumen inicial.", M(r"\frac{\Delta V}{V_0}=3\alpha\,\Delta T=3(0{,}0020)"), R(r"\frac{\Delta V}{V_0}=0{,}0060=0{,}60\,\%", "rc"))\
         .sale_de(("$3\\alpha$", "al expandir $(1+\\alpha\\Delta T)^3 \\approx 1+3\\alpha\\Delta T$ desde $\\Delta L=\\alpha L_0\\Delta T$"))
     L.paso("d) Volumen a 100 °C")\
@@ -416,10 +427,10 @@ def q013() -> Leccion:
     L.paso("Despejar x")\
         .di("Pasamos la base al otro lado.", M(r"x^2=\left(\frac{L_0}{2}\right)^2(1{,}0009)^2-\left(\frac{L_0}{2}\right)^2"))\
         .di("Factor común: ele cero medios al cuadrado.".replace("ele cero", dice("L₀", "ele cero")), M(r"x^2=\left(\frac{L_0}{2}\right)^2\left[(1{,}0009)^2-1\right]"))\
-        .di("Sacamos raíz.", M(r"x=\frac{L_0}{2}\sqrt{(1{,}0009)^2-1}"))\
-        .despacio((r"(1{,}0009)^2=1{,}00180081", ""), (r"1{,}00180081-1=0{,}00180081", ""), (r"\sqrt{0{,}00180081}=0{,}042436", ""))
+        .di("Sacamos raíz.", M(r"x=\frac{L_0}{2}\sqrt{(1{,}0009)^2-1}"))
     L.paso("Resultado")\
-        .di("La raíz da cero coma cero cuarenta y dos.", M(r"x=\frac{L_0}{2}(0{,}04244)"), R(rf"x={tex(x, 3, sci='no')}\,L_0"), V(foco="altura"))\
+        .di("Adentro de la raíz, sin redondear: el cuadrado, menos uno.", M(r"(1{,}0009)^2=1{,}00180081"), M(r"1{,}00180081-1=0{,}00180081"))\
+        .di("La raíz da cero coma cero cuarenta y dos.", M(r"\sqrt{0{,}00180081}=0{,}04244"), M(r"x=\frac{L_0}{2}(0{,}04244)"), R(rf"x={tex(x, 3, sci='no')}\,L_0"), V(foco="altura"))\
         .di("Sube dos por ciento del largo, aunque la barra creció menos de una milésima.", NOTA("Un crecimiento pequeñito levanta mucho el centro."))
     L.responde("", rf"x={tex(x, 2, sci='no')}\,L_0", x, "L0").oficial("folleto, sección 3.1", 0.021, tol=0.03).usa(r"\Delta L=\alpha L_0\Delta T")
     return L
@@ -438,14 +449,16 @@ def q014() -> Leccion:
         .di("No piden alfa: con alfa por delta T basta.".replace("alfa por delta T", dice("αΔT", "alfa por delta te")), M(r"\alpha\,\Delta T=\frac{\Delta L}{L_0}=0{,}00092", "adt", "azul"))
     L.paso("a) Cambio de área")\
         .di("Partimos de la dilatación lineal del formulario: el radio crece como uno más alfa por delta te, así que el área transversal queda al cuadrado.",
-            F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; A = \pi R_0^2(1+\alpha\Delta T)^2 \approx A_0(1+2\alpha\Delta T)"),
-            M(r"\Delta A = 2\alpha A_0\,\Delta T"), V(foco="calentar"))\
+            F(r"\Delta L = \alpha L_0\,\Delta T \;\Rightarrow\; A = \pi R_0^2(1+\alpha\Delta T)^2 \approx A_0(1+2\alpha\Delta T)"), V(foco="calentar"))\
+        .di("¿De dónde sale el dos? Se abre el cuadrado; alfa delta te al cuadrado es pequeñísimo y se desprecia.".replace("alfa delta te", dice("αΔT", "alfa delta te")),
+            M(r"(1+\alpha\Delta T)^2=1+2\alpha\Delta T+(\alpha\Delta T)^2\approx 1+2\alpha\Delta T"), M(r"A-A_0=A_0(1+2\alpha\Delta T)-A_0\;\Rightarrow\;\Delta A = 2\alpha A_0\,\Delta T"))\
         .di("Dividimos entre el área inicial.", M(r"\frac{\Delta A}{A_0}=2\,\alpha\,\Delta T=2(0{,}00092)"), R(r"\frac{\Delta A}{A_0}=0{,}00184=0{,}184\,\%", "ra"))\
         .sale_de(("$2\\alpha$", "despreciando $(\\alpha\\Delta T)^2 \\ll \\alpha\\Delta T$ en $(1+\\alpha\\Delta T)^2$ desde $\\Delta L=\\alpha L_0\\Delta T$"))
     L.paso("b) Densidad: qué cambia y qué no")\
         .di("La densidad es masa entre volumen. La masa no cambia al calentar.", M(r"\rho=\frac{m}{V}"))\
         .di("Para el volumen multiplicamos área por largo desde la dilatación lineal: queda al cubo y aparece tres alfa delta te.".replace("alfa delta te", dice("αΔT", "alfa delta te")),
-            M(r"V = \pi R_0^2 L_0(1+\alpha\Delta T)^3 \approx V_0(1+3\alpha\,\Delta T)"),
+            M(r"V = \pi R_0^2 L_0(1+\alpha\Delta T)^3"),
+            M(r"(1+\alpha\Delta T)^3=1+3\alpha\Delta T+3(\alpha\Delta T)^2+(\alpha\Delta T)^3\approx 1+3\alpha\Delta T\;\Rightarrow\;V\approx V_0(1+3\alpha\,\Delta T)"),
             M(r"V=V_0(1+3\times0{,}00092)=V_0(1{,}00276)", "v"))\
         .por_que("El metal no gana ni pierde átomos, solo se separan más; el factor $3\\alpha$ sale de expandir $(1+\\alpha\\Delta T)^3$.")
     L.paso("b) Cambio de densidad")\
