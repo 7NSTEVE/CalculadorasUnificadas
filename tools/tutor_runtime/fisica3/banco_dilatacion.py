@@ -368,7 +368,9 @@ def q012() -> Leccion:
         .di("Dos a la cuarta es dieciséis: dieciséis cuartos menos un cuarto son quince cuartos.", M(r"=\beta T+\left(\frac{16}{4}-\frac{1}{4}\right)\gamma T^4=\beta T+\frac{15}{4}\gamma T^4", "r1", "azul"))\
         .despacio((r"\beta(2T)-\beta T=\beta T", "primer término"), (r"(2T)^4=16T^4", "se eleva el 2 y la T"), (r"\frac{16\gamma T^4}{4}-\frac{\gamma T^4}{4}=\frac{15}{4}\gamma T^4", "segundo término"))
     L.paso("a) Longitud a 2T")\
-        .di("El largo nuevo es el inicial más lo que creció.", M(r"L_1=L_0+\Delta L_1"), R(r"L_1=L_0\left(1+\beta T+\frac{15}{4}\gamma T^4\right)", "ra"))
+        .di("El largo nuevo es el inicial más lo que creció.", M(r"L_1=L_0+\Delta L_1"))\
+        .di("Ponemos lo que creció, que acabamos de integrar.", M(r"L_1=L_0+L_0\left(\beta T+\frac{15}{4}\gamma T^4\right)"))\
+        .di("Sacamos ele cero de factor común.".replace("ele cero", dice("L₀", "ele cero")), R(r"L_1=L_0\left(1+\beta T+\frac{15}{4}\gamma T^4\right)", "ra"))
     L.paso("b) Tramo 2: ahora se parte de L₁")\
         .di("La barra ya mide ele uno, y de ahí sigue creciendo.".replace("ele uno", dice("L₁", "ele uno")), M(r"\Delta L_2=L_1\int_{2T}^{3T}(3\beta+2\gamma T'^3)\,dT'"))\
         .di("Integramos: tres beta te, más dos gama te a la cuarta entre cuatro.", M(r"=L_1\left[3\beta T'+\frac{2\gamma T'^4}{4}\right]_{2T}^{3T}"))\

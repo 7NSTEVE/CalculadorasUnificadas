@@ -251,6 +251,10 @@ def q038() -> Leccion:
             M(r"T_h - T_c = H\left(\frac{L}{k_1 A}+\frac{L}{k_2 A}\right) \;\Rightarrow\; H_{\text{serie}} = \frac{k_1 k_2}{k_1+k_2}\frac{A\Delta T}{L}"))\
         .di("En la configuración dos están en paralelo: cada barra conecta directo ambos depósitos y sumamos sus flujos.",
             M(r"H_{\text{paralelo}} = H_1 + H_2 = k_1 A\frac{\Delta T}{L} + k_2 A\frac{\Delta T}{L} = (k_1+k_2)\frac{A\Delta T}{L}"))\
+        .di("Dividimos los dos flujos: se cancelan el área, la diferencia de temperatura y el largo.",
+            M(r"\frac{H_{\text{serie}}}{H_{\text{paralelo}}}=\frac{\frac{k_1k_2}{k_1+k_2}}{k_1+k_2}=\frac{k_1k_2}{(k_1+k_2)^2}"))\
+        .di("Sustituimos las conductividades del cobre y la plata.",
+            M(rf"\frac{{H_{{\text{{serie}}}}}}{{H_{{\text{{paralelo}}}}}}=\frac{{(385)(406)}}{{(385+406)^2}}=\frac{{156\,310}}{{625\,681}}={tex(razon_sp, 3)}"))\
         .di("En serie el flujo es aproximadamente la cuarta parte que en paralelo: siempre es menor.",
             R(r"H_1 < H_2 \quad \text{(menor)}", "ra"))\
         .por_que("En serie el flujo es el mismo y se suman las caídas de temperatura; en paralelo hay dos rutas directas entre $T_h$ y $T_c$.")
