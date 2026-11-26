@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import ATM, R_GAS, Gas, explica_proceso, revisar_opciones, tabla_estados, tabla_quw, valores_visual, visual_pv
+from .ayudas import ATM, R_GAS, Gas, explica_proceso, revisar_opciones, tabla_estados, tabla_quw, valores_visual, visual_pv, estado_T, estado_p, cierre_ciclo, deriva_carnot
 from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, TABLA, V
-from .formato import n, nu, tex
+from .formato import dice, n, nu, tex
 from .indice_superexamen import fuente, nivel, tema
 from .registro import leccion
 
@@ -168,53 +168,63 @@ def q121() -> Leccion:
 @leccion("Q122")
 def q122() -> Leccion:
     n_mol, ta, tb, tc, pa = 0.300, 400.0, 300.0, 267.2, 3.6e6
-    # p_C = (T_C/T_A)*p_A -> gamma = ln(T_C/T_A)/ln(0.75) (método oficial)
-    pc = (tc / ta) * pa
-    gamma = math.log(tc / ta) / math.log(0.75)
-    cp = gamma * R_GAS / (gamma - 1.0)
-    cv = cp - R_GAS
-    qc = n_mol * cv * (ta - tc)
-    qh = n_mol * cp * (tb - ta)
-    K = abs(qc) / (abs(qh) - abs(qc))
+    rt = tc / tb
+    gm1 = math.log(rt) / math.log(0.75)
+    gamma = 1.0 + gm1
+    cv = R_GAS / gm1
+    cp = cv + R_GAS
     K_carnot = tc / (ta - tc)
     g = Gas(n_mol, cv=cv)
     g.pone("A", p=pa, t=ta)
     g.pone("B", p=pa, t=tb)
     g.pone("C", v=g.v("A"), t=tc)
+    rab = g.proceso("A", "B", "isobarico")
+    rbc = g.proceso("B", "C", "adiabatico")
+    rca = g.proceso("C", "A", "isocorico")
+    res = [("A→B", rab), ("B→C", rbc), ("C→A", rca)]
     L = _des("Q122", "Ciclo de compresión-expansión: hallar γ, C_p, K y límite de Carnot",
              "Un ciclo con $0{,}300$ mol de gas ideal: $A\\to B$ compresión isobárica de $400$ K a $300$ K ($V_B=0{,}75V_A$, $p_A=3{,}6\\times 10^6$ Pa); $B\\to C$ expansión adiabática hasta $V_A$ y $267{,}2$ K; $C\\to A$ calentamiento isocórico. A) $\\gamma$. B) $C_p$. C) $K$ del ciclo. D) $K_{\\text{Carnot}}$. E) ¿Es posible operar entre esos dos focos?",
+             aviso="Los incisos D y E usan el refrigerador de Carnot (sección 20.6), que no entra en el III parcial. A, B y C sí entran.",
              claves=["gamma", "refrigerador", "Carnot", "imposibilidad"],
              visual=visual_pv(g, [("A", "B", "isobarico"), ("B", "C", "adiabatico"), ("C", "A", "isocorico")],
-                              uv="cm³", up="MPa", fv=1e6, fp=1e-6))
-    L.paso("A y B) Hallar γ y C_p")\
-        .di("Partimos de la ley del gas ideal en el tramo isocórico (presión proporcional a temperatura) y de la ecuación adiabática del formulario entre B y C.", DATO("75 % de su volumen"),
-            F(r"pV = nRT \qquad pV^\gamma = \text{constante}"),
-            M(rf"p_C = \frac{{T_C}}{{T_A}}\,p_A = 0{{,}}668\,p_A = {tex(pc, 3, u='Pa', sci='si')}"),
-            M(rf"(0{{,}}75)^\gamma = 0{{,}}668 \;\Rightarrow\; \gamma = \frac{{\ln(0{{,}}668)}}{{\ln(0{{,}}75)}} = {tex(gamma, 3)}"))\
-        .di(f"Despejamos ce pe desde las dos ecuaciones del formulario ce pe igual a ce uve más erre y gama igual a ce pe entre ce uve: da {nu(cp, 'J/(mol·K)', 3)}.",
-            F(r"C_P = C_V + R,\quad \gamma = \frac{C_P}{C_V} \;\Rightarrow\; C_P\left(1 - \frac{1}{\gamma}\right) = R \;\Rightarrow\; C_p = \frac{\gamma R}{\gamma - 1}"),
-            R(rf"\gamma = {tex(gamma, 3)}\qquad C_p = {tex(cp, 3, u='J/(mol·K)')}", "rab"))
-    L.paso("C) Coeficiente de rendimiento del ciclo")\
-        .di("El calor que entra ocurre en el tramo isocórico y el que sale en el isobárico.",
-            M(rf"Q_C = Q_{{CA}} = nC_V(T_A-T_C) = (0{{,}}300)({tex(cv, 4)})(400-267{{,}}2) = {tex(qc, 4, u='J')}"),
-            M(rf"Q_H = Q_{{AB}} = nC_p(T_B-T_A) = (0{{,}}300)({tex(cp, 4)})(300-400) = {tex(qh, 4, u='J')}"))\
-        .di(f"Calculamos el rendimiento: da {n(K, 4)}.",
-            F(r"K = \frac{|Q_C|}{|Q_H|-|Q_C|}"),
-            R(rf"K = \frac{{{tex(qc, 4)}}}{{{tex(abs(qh), 4)}-{tex(qc, 4)}}} = {tex(K, 4)}", "rc"))
+                              uv="cm³", up="MPa", fv=1e6, fp=1e-6, valores=valores_visual(res)))
+    L.paso("Qué nos dan y qué piden")\
+        .di("No dicen si el gas es mono o diatómico: gama hay que sacarla de la adiabática.".replace("gama", dice("γ", "gama")), DATO("75 % de su volumen"),
+            LISTA(["$n=0{,}300$ mol, $p_A=3{,}6\\times10^6$ Pa", "$A$: $400$ K · $B$: $300$ K, $V_B=0{,}75V_A$", "$C$: $267{,}2$ K, $V_C=V_A$"]))
+    L.paso("A) γ con la adiabática B→C")\
+        .di("La hoja da la relación de temperatura y volumen en la adiabática.", V(foco="BC"), F(r"TV^{\gamma-1}=\text{cte}"))\
+        .di("La igualamos entre B y C, y juntamos las razones.", M(r"T_BV_B^{\gamma-1}=T_CV_C^{\gamma-1}\;\Rightarrow\;\left(\frac{V_B}{V_C}\right)^{\gamma-1}=\frac{T_C}{T_B}"))\
+        .di("Como ve ce es ve a, la razón de volúmenes es cero coma setenta y cinco.".replace("ve ce es ve a", dice("V_C = V_A", "ve ce es ve a")), M(rf"(0{{,}}75)^{{\gamma-1}}=\frac{{267{{,}}2}}{{300}}={tex(rt, 4)}"))\
+        .di("Sacamos logaritmo a los dos lados para bajar el exponente.", M(rf"(\gamma-1)\ln(0{{,}}75)=\ln({tex(rt, 4)})\;\Rightarrow\;\gamma-1=\frac{{{tex(math.log(rt), 4)}}}{{{tex(math.log(0.75), 4)}}}={tex(gm1, 4)}"))\
+        .di(f"Gama vale {n(gamma, 3)}: es un gas diatómico.".replace("Gama", dice("γ", "Gama")), R(rf"\gamma={tex(gamma, 4)}", "ra"))
+    L.paso("A) Otra forma: con las presiones (como el solucionario)")\
+        .di("De C a A el volumen no cambia: del gas ideal, la presión va en proporción a la temperatura.", V(foco="CA"), F(r"pV=nRT"),
+            M(r"\frac{p_C}{T_C}=\frac{p_A}{T_A}\;\Rightarrow\;p_C=p_A\,\frac{T_C}{T_A}=p_A\,\frac{267{,}2}{400}=0{,}668\,p_A"))\
+        .di("En la adiabática de B a C usamos la relación de presión y volumen; pe be es pe a.".replace("pe be es pe a", dice("p_B = p_A", "pe be es pe a")), F(r"pV^\gamma=\text{cte}"),
+            M(r"p_BV_B^{\gamma}=p_CV_C^{\gamma}\;\Rightarrow\;\left(\frac{V_B}{V_C}\right)^{\gamma}=\frac{p_C}{p_B}\;\Rightarrow\;(0{,}75)^{\gamma}=0{,}668"))\
+        .di("Con logaritmos sale la misma gama.".replace("gama", dice("γ", "gama")), M(rf"\gamma=\frac{{\ln(0{{,}}668)}}{{\ln(0{{,}}75)}}=\frac{{{tex(math.log(tc / ta), 4)}}}{{{tex(math.log(0.75), 4)}}}={tex(math.log(tc / ta) / math.log(0.75), 4)}"))
+    L.paso("B) C_p desde las dos casillas de la hoja")\
+        .di("La hoja trae dos relaciones entre las capacidades.", F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"))\
+        .di("Ponemos ce pe igual a gama ce ve en la primera.".replace("ce pe", dice("C_P", "ce pe")).replace("gama ce ve", dice("γC_V", "gama ce ve")), M(r"\gamma C_V=C_V+R\;\Rightarrow\;C_V(\gamma-1)=R\;\Rightarrow\;C_V=\frac{R}{\gamma-1}"))\
+        .di("Sustituimos.", M(rf"C_V=\frac{{8{{,}}314}}{{{tex(gm1, 4)}}}={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
+        .di("Y ce pe es ce ve más erre.".replace("ce pe es ce ve más erre", dice("C_P = C_V + R", "ce pe es ce ve más erre")), M(rf"C_P={tex(cv, 4)}+8{{,}}314"),
+            R(rf"C_p={tex(cp, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}", "rb"))
+    explica_proceso(L.paso("C1) Compresión isobárica A→B"), g, "A", "B", "isobarico", foco="AB")
+    explica_proceso(L.paso("C2) Expansión adiabática B→C"), g, "B", "C", "adiabatico", foco="BC")
+    explica_proceso(L.paso("C3) Calentamiento isocórico C→A"), g, "C", "A", "isocorico", foco="CA")
+    c = cierre_ciclo(L, res, refri=True, titulo="C) Coeficiente de rendimiento del ciclo", id_e="rc")
+    deriva_carnot(L.paso("D) Carnot: de dónde sale su rendimiento (no entra en el parcial)"), refri=True)
     L.paso("D y E) Límite de Carnot y comparación")\
-        .di(f"Partiendo del rendimiento K del formulario, en un refrigerador reversible de Carnot la razón de calores iguala la de temperaturas; el máximo es {n(K_carnot, 3)}.",
-            F(r"K = \frac{|Q_c|}{|Q_H| - |Q_c|} \;\xrightarrow{\;|Q_c/Q_H| = T_C/T_H\;}\; K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}"),
-            NOTA("Aviso II-2026: $K_{\\text{Carnot}}=T_C/(T_H-T_C)$ no viene impresa directamente; se obtiene desde $K=|Q_c|/(|Q_H|-|Q_c|)$."),
+        .di("Los focos están a cuatrocientos y a doscientos sesenta y siete coma dos kelvin.", M(r"K_{\text{Carnot}} = \frac{T_C}{T_H - T_C} = \frac{267{,}2}{400 - 267{,}2}=\frac{267{,}2}{132{,}8}"),
             R(rf"K_{{\text{{Carnot}}}} = {tex(K_carnot, 3)}", "rd"))\
-        .di(f"Como {n(K, 4)} supera el límite de Carnot, este ciclo no puede operar entre dos focos fijos a esas temperaturas.",
-            R(r"K > K_{\text{Carnot}} \;\Rightarrow\; \text{no es posible (viola la 2.ª ley)}"))
+        .di(f"El ciclo daría {n(c['K'], 3)}, mucho más que el máximo: no puede operar entre esos dos focos.",
+            R(r"K > K_{\text{Carnot}} \;\Rightarrow\; \text{no es posible (viola la 2.ª ley)}", "re"))
     L.responde("A", rf"\gamma={tex(gamma, 3)}", gamma, "")\
      .responde("B", rf"C_p={tex(cp, 3)}\ \text{{J/(mol}}\cdot\text{{K)}}", cp, "J/(mol·K)")\
-     .responde("C", rf"K={tex(K, 4)}", K, "")\
+     .responde("C", rf"K={tex(c['K'], 4)}", c["K"], "")\
      .responde("D", rf"K_{{\text{{Carnot}}}}={tex(K_carnot, 3)}", K_carnot, "")
     return L.oficial("III Parcial ordinario II-2024", 1.40, 29.1, 18.44, 2.01, tol=0.04,
-                     nota="El oficial redondeó γ=1,402 a 1,40 (Cp=29,10 → K=18,44); sin redondear da K=17,83 (ambos muy por encima de K_Carnot=2,01).").usa(r"pV^\gamma=\text{cte}", r"K=\frac{|Q_C|}{|W|}")
-
+                     nota="El oficial redondeó γ=1,402 a 1,40 (Cp=29,10 → K=18,44); sin redondear da K≈17,9 (ambos muy por encima de K_Carnot=2,01).").usa(r"TV^{\gamma-1}=\text{cte}", r"C_P=C_V+R", r"K=\frac{|Q_C|}{|W|}")
 
 # ============================================================================ Q123
 @leccion("Q123")
@@ -349,36 +359,36 @@ def q128() -> Leccion:
     rbc = g.proceso("B", "C", "isobarico")
     rca = g.proceso("C", "A", "isocorico")
     res = [("A→B", rab), ("B→C", rbc), ("C→A", rca)]
-    wnet = rab["W"] + rbc["W"] + rca["W"]
-    qh = rab["Q"] + rca["Q"]
-    qc = rbc["Q"]
     ecar = 1.0 - g.t("C") / g.t("A")
     L = _des("Q128", "Ciclo isotérmico-isobárico-isocórico (1 mol monoatómico) y Carnot",
              "Una muestra de $1{,}00$ mol de gas ideal monoatómico recorre: $A(5\\ \\text{atm}, 10\\ \\text{L})\\to B(1\\ \\text{atm}, 50\\ \\text{L})$ isotérmico; $B\\to C(1\\ \\text{atm}, 10\\ \\text{L})$ isobárico; $C\\to A$ isocórico. A) Trabajo neto. B) Calor absorbido $Q_H$. C) Calor expulsado $Q_C$. D) Eficiencia de Carnot entre las temperaturas extremas.",
+             aviso="El inciso D es Carnot (sección 20.6): no entra en el III parcial. A, B y C sí entran.",
              claves=["ciclo", "monoatómico", "Carnot"],
              visual=visual_pv(g, [("A", "B", "isotermico"), ("B", "C", "isobarico"), ("C", "A", "isocorico")],
                               uv="L", up="atm", fv=1e3, fp=1.0 / ATM, valores=valores_visual(res)))
-    L.paso("Estados y temperaturas del ciclo")\
-        .di("Como pe por ve vale igual en A y en B, ambos están en la misma isoterma caliente; C está cinco veces más frío.", DATO("expansión isotérmica"),
-            tabla_estados(g, ["A", "B", "C"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Tres procesos: una isoterma, una compresión a presión constante y un calentamiento a volumen constante.", DATO("expansión isotérmica"),
+            LISTA(["$n=1{,}00$ mol, monoatómico: $C_V=\\frac{3}{2}R$", "$A$: $5$ atm y $10$ L", "$B$: $1$ atm y $50$ L", "$C$: $1$ atm y $10$ L"]))\
+        .di("En unidades del SI.", M(r"5\ \text{atm}=5(101\,325)=5{,}066\times10^5\ \text{Pa}"), M(r"1\ \text{atm}=1{,}013\times10^5\ \text{Pa}"), M(r"10\ \text{L}=0{,}010\ \text{m}^3"), M(r"50\ \text{L}=0{,}050\ \text{m}^3"))
+    p = L.paso("Temperaturas de los tres estados")
+    estado_T(p, g, "A", primero=True, voz="Despejamos la temperatura del gas ideal y la calculamos en A.")
+    estado_T(p, g, "B", voz="En B sale la misma: A y B están en la misma isoterma.")
+    estado_T(p, g, "C", voz="Y en C, cinco veces más frío.")
     explica_proceso(L.paso("A1) Expansión isotérmica A→B"), g, "A", "B", "isotermico", foco="AB")
     explica_proceso(L.paso("A2) Compresión isobárica B→C"), g, "B", "C", "isobarico", foco="BC")
     explica_proceso(L.paso("A3) Calentamiento isocórico C→A"), g, "C", "A", "isocorico", foco="CA")
-    L.paso("A, B, C y D) Totales del ciclo y Carnot")\
-        .di(f"Sumamos trabajos y calores: trabajo neto {nu(wnet, 'J', 4)}, calor entrante {nu(qh, 'J', 5)} y calor cedido {nu(qc, 'J', 5)}.", V(foco="ciclo"),
-            tabla_quw(res),
-            R(rf"W_{{\text{{neto}}}} = {tex(wnet, 4, u='J')}\quad Q_H = {tex(qh, 5, u='J', sci='no')}\quad Q_C = {tex(qc, 5, u='J', sci='no')}", "rabc"))\
-        .di("Partimos de la eficiencia del formulario y aplicamos el límite reversible de Carnot entre la temperatura mínima en C y la máxima en A: da exactamente ochenta por ciento.",
-            F(r"e = 1 - \left|\frac{Q_c}{Q_H}\right|"),
-            M(r"\text{Carnot (reversible): } \left|\frac{Q_c}{Q_H}\right| = \frac{T_C}{T_A} \;\Rightarrow\; e_{\text{Carnot}} = 1 - \frac{T_C}{T_A} = 1 - \frac{p_C}{p_A} = 1 - \frac{1}{5}"),
-            NOTA("Aviso II-2026: $1-T_C/T_H$ no está impresa en el formulario oficial; se obtiene sustituyendo $|Q_c/Q_H|=T_C/T_H$ en $e=1-|Q_c/Q_H|$."),
-            R(rf"e_{{\text{{Carnot}}}} = {tex(ecar, dec=2)} = 80\,\%", "rd"))
-    L.responde("A", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J")\
-     .responde("B", rf"Q_H={tex(qh, 5, sci='no')}\ \text{{J}}", qh, "J")\
-     .responde("C", rf"Q_C={tex(qc, 5, sci='no')}\ \text{{J}}", qc, "J")\
+    c = cierre_ciclo(L, res, titulo="A, B y C) Trabajo neto y calores", id_e="re")
+    deriva_carnot(L.paso("D) Carnot: de dónde sale su eficiencia (no entra en el parcial)"))
+    L.paso("D) Eficiencia de Carnot entre las temperaturas extremas")\
+        .di("La temperatura más alta es la de A y la más baja la de C.", V(foco="ciclo"), M(rf"T_H=T_A={tex(g.t('A'), 4, u='K')}\qquad T_C={tex(g.t('C'), 4, u='K')}"))\
+        .di("Sustituimos.", M(rf"e_{{\text{{Carnot}}}}=1-\frac{{{tex(g.t('C'), 4)}}}{{{tex(g.t('A'), 4)}}}=1-0{{,}}200"),
+            R(rf"e_{{\text{{Carnot}}}} = {tex(ecar, dec=2)} = 80\,\%", "rd"))\
+        .di("La real es menor, como debe ser.", M(rf"e={tex(c['e'], 3)}<e_{{\text{{Carnot}}}}={tex(ecar, dec=2)}"))
+    L.responde("A", rf"W_{{\text{{neto}}}}={tex(c['W'], 4)}\ \text{{J}}", c["W"], "J")\
+     .responde("B", rf"Q_H={tex(c['QH'], 5, sci='no')}\ \text{{J}}", c["QH"], "J")\
+     .responde("C", rf"Q_C={tex(c['QC'], 5, sci='no')}\ \text{{J}}", c["QC"], "J")\
      .responde("D", rf"e_{{\text{{Carnot}}}}={tex(ecar, dec=2)}", ecar, "")
-    return L.oficial("III Parcial extraordinario I-2025", 4099.0, 14229.0, -10130.0, 0.80).usa(r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
-
+    return L.oficial("III Parcial extraordinario I-2025", 4099.0, 14229.0, -10130.0, 0.80).usa(r"pV=nRT", r"W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
 
 # ============================================================================ Q129
 @leccion("Q129")

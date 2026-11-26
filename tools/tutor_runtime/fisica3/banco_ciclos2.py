@@ -128,30 +128,33 @@ def q109() -> Leccion:
     rbc = g.proceso("B", "C", "adiabatico")
     rca = g.proceso("C", "A", "isobarico")
     res = [("A→B", rab), ("B→C", rbc), ("C→A", rca)]
-    wnet = rab["W"] + rbc["W"] + rca["W"]
-    ef = wnet / rca["Q"]
     L = _des("Q109", "Ciclo de 0,378 mol diatómico (isocórico, adiabático, isobárico)",
              "Un gas diatómico ($0{,}378$ mol) parte en $A$ ($4{,}30$ atm, $9{,}00$ L): $A\\to B$ enfriamiento isocórico; $B\\to C$ compresión adiabática a un tercio del volumen ($3{,}00$ L); $C\\to A$ expansión isobárica. A) Diagrama. B) Tabla $(p,V,T)$. C) $Q$ y $W$. D) Eficiencia.",
              claves=["diatómico", "adiabático", "eficiencia"],
              visual=visual_pv(g, [("A", "B", "isocorico"), ("B", "C", "adiabatico"), ("C", "A", "isobarico")],
                               uv="L", up="atm", fv=1e3, fp=1.0 / ATM, valores=valores_visual(res)))
-    L.paso("A y B) Estados del ciclo")\
-        .di("Como C a A es isobárico, pe C vale cuatro coma treinta atmósferas; con la curva adiabática B a C sacamos pe B.", DATO("un tercio del volumen"),
-            M(rf"p_B = p_C\left(\frac{{V_C}}{{V_B}}\right)^{{1{{,}}4}} = 4{{,}}30\left(\frac{{3}}{{9}}\right)^{{1{{,}}4}} = {tex(pb / ATM, 3, u='atm')}"),
-            tabla_estados(g, ["A", "B", "C"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Tres procesos: enfriar a volumen constante, comprimir sin calor y expandir a presión constante.", DATO("un tercio del volumen"),
+            LISTA(["$n=0{,}378$ mol, diatómico: $\\gamma=1{,}40$", "$A$: $4{,}30$ atm y $9{,}00$ L", "$C$: misma presión que $A$ (proceso $C\\to A$ isobárico) y $3{,}00$ L", "$B$: volumen de $A$, sobre la adiabática que llega a $C$"]))\
+        .di("En unidades del SI.", M(r"p_A=p_C=(4{,}30)(101\,325)=4{,}357\times10^5\ \text{Pa}"), M(r"V_A=9{,}00\times10^{-3}\ \text{m}^3\qquad V_C=3{,}00\times10^{-3}\ \text{m}^3"))
+    p = L.paso("B) Temperaturas de A y C")
+    estado_T(p, g, "A", primero=True, voz="Despejamos la temperatura del gas ideal y la calculamos en A.", dec=0)
+    estado_T(p, g, "C", dec=0)
+    L.paso("B) Estado B con la adiabática")\
+        .di("B tiene el volumen de A y está en la misma adiabática que C. La hoja da la relación de presión y volumen.", V(foco="BC"), F(r"pV^\gamma=\text{cte}"))\
+        .di("La igualamos entre B y C y despejamos pe be.".replace("pe be", dice("p_B", "pe be")), M(r"p_BV_B^{\gamma}=p_CV_C^{\gamma}\;\Rightarrow\;p_B=p_C\left(\frac{V_C}{V_B}\right)^{\gamma}"))\
+        .di("Sustituimos en atmósferas: la razón de volúmenes es un tercio.", M(rf"p_B=4{{,}}30\left(\frac{{3{{,}}00}}{{9{{,}}00}}\right)^{{1{{,}}40}}=4{{,}}30\,({tex((1.0 / 3.0) ** 1.4, 4)})={tex(pb / ATM, 4, u='atm')}"))\
+        .di("En pascales.", M(rf"p_B=({tex(pb / ATM, 4)})(101\,325)={tex(pb, 4, u='Pa')}"))
+    estado_T(L.paso("B) Temperatura de B"), g, "B", voz="Y la temperatura de B con el gas ideal.", dec=0)
     explica_proceso(L.paso("C1) Enfriamiento isocórico A→B"), g, "A", "B", "isocorico", foco="AB", dec_T=0)
     explica_proceso(L.paso("C2) Compresión adiabática B→C"), g, "B", "C", "adiabatico", foco="BC", dec_T=0)
     explica_proceso(L.paso("C3) Expansión isobárica C→A"), g, "C", "A", "isobarico", foco="CA", dec_T=0)
-    L.paso("D) Eficiencia del motor")\
-        .di(f"El trabajo neto es positivo ({nu(wnet, 'J', 4)}), así que funciona como motor con eficiencia de {n(ef * 100, 3)} por ciento.", V(foco="ciclo"),
-            tabla_quw(res),
-            R(rf"e = \frac{{{tex(wnet, 4)}}}{{{tex(rca['Q'], 4)}}} = {tex(ef * 100, 3)}\,\%", "rd"))
+    c = cierre_ciclo(L, res, titulo="D) Eficiencia del motor", id_e="rd")
     L.responde("TA", rf"T_A={tex(g.t('A'), dec=0)}\ \text{{K}}", g.t("A"), "K")\
      .responde("TB", rf"T_B={tex(g.t('B'), dec=0)}\ \text{{K}}", g.t("B"), "K")\
      .responde("TC", rf"T_C={tex(g.t('C'), dec=0)}\ \text{{K}}", g.t("C"), "K")\
-     .responde("e", rf"e={tex(ef, 3)}", ef, "")
-    return L.oficial("Reposición II-2025", 1248.0, 268.0, 416.0, 0.158).usa(r"pV^\gamma=\text{cte}", r"e=\frac{W}{Q_H}")
-
+     .responde("e", rf"e={tex(c['e'], 3)}", c["e"], "")
+    return L.oficial("Reposición II-2025", 1248.0, 268.0, 416.0, 0.158).usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"e=\frac{W}{Q_H}")
 
 # ============================================================================ Q110
 @leccion("Q110")

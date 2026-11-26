@@ -380,8 +380,17 @@ def _texto_de_paso(paso: Dict[str, Any]) -> str:
     return "\n".join(partes)
 
 
+_RE_TEXTO = re.compile(r"\\(?:text|mathrm)\{([^{}]*)\}")
+
+
+def _normaliza_tex(blob: str) -> str:
+    r"""Quita envoltorios que no cambian la fórmula: \text{...} y espacios finos."""
+    return _RE_TEXTO.sub(r"\1", blob).replace("\\,", "").replace("\\!", "")
+
+
 def _celdas_en_texto(blob: str) -> List[str]:
     halladas: List[str] = []
+    blob = blob + "\n" + _normaliza_tex(blob)
     for cid, pat in _REGLAS_CELDAS:
         if pat.search(blob):
             halladas.append(cid)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from .ayudas import ATM, R_GAS, R_LATM, T0, Gas, explica_proceso, revisar_opciones, tabla_estados, tabla_quw, valores_visual, visual_pv
+from .ayudas import ATM, R_GAS, R_LATM, T0, Gas, explica_proceso, revisar_opciones, tabla_estados, tabla_quw, valores_visual, visual_pv, estado_T, estado_V, estado_p, cierre_ciclo, deriva_entropia
 from .dsl import DATO, F, LISTA, M, NOTA, OJO, Leccion, R, T, TABLA, V, s
 from .formato import dice, n, nu, tex
 from .indice_superexamen import fuente, nivel, tema
@@ -36,27 +36,40 @@ def q092() -> Leccion:
     res = [("1→2", r12), ("2→3", r23)]
     L = _des("Q092", "Calentamiento isocórico seguido de expansión isobárica",
              "Un gas ideal diatómico ($2{,}50$ mol) inicia a $1{,}00$ atm y $20{,}0\\ ^\\circ$C. Se calienta isocóricamente con $1{,}52\\times 10^4$ J y luego se expande isobáricamente al triple de su volumen. A) Diagrama $p$-$V$. B) Estados $(p,V,T)$. C) $W, Q, \\Delta U$. D) $\\Delta S$ de cada proceso.",
+             aviso="El inciso D (entropía) no entra en el III parcial: el corte llega hasta la sección 20.5. Los incisos A, B y C sí entran.",
              claves=["isocórico", "isobárico", "gas diatómico"],
              visual=visual_pv(g, [("1", "2", "isocorico"), ("2", "3", "isobarico")],
                               uv="L", up="atm", fv=1e3, fp=1.0 / ATM, valores=valores_visual(res)))
-    L.paso("A y B) Hallar presión, volumen y temperatura en los 3 estados")\
-        .di("Empezamos en doscientos noventa y tres coma quince kelvin y hallamos el volumen inicial.", DATO("2,50 moles"),
-            M(rf"V_1 = \frac{{nRT_1}}{{p_1}} = {tex(g.v('1') * 1e3, 3, u='L')}"))\
-        .di("El calor isocórico sube la temperatura hasta quinientos ochenta y cinco coma siete kelvin y duplica la presión; luego triplicar volumen a presión fija triplica la temperatura.",
-            M(rf"T_2 = T_1 + \frac{{Q_{{12}}}}{{nC_V}} = {tex(t2, dec=1, u='K')}\qquad T_3 = 3T_2 = {tex(g.t('3'), dec=1, u='K')}"),
-            tabla_estados(g, ["1", "2", "3"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3))
-    explica_proceso(L.paso("C1) Calentamiento isocórico 1→2"), g, "1", "2", "isocorico", foco="12")
-    explica_proceso(L.paso("C2) Expansión isobárica 2→3"), g, "2", "3", "isobarico", foco="23")
+    L.paso("Qué nos dan y qué piden")\
+        .di("Dos procesos: primero se calienta sin cambiar el volumen y después se expande a presión constante.", DATO("2,50 moles"),
+            LISTA(["$n=2{,}50$ mol, diatómico", "$1$: $1{,}00$ atm $=101\\,325$ Pa, $20{,}0\\ ^\\circ$C $=293{,}15$ K", "$1\\to2$: $V$ constante, $Q_{12}=1{,}52\\times10^4$ J", "$2\\to3$: $p$ constante, $V_3=3V_1$"]))\
+        .di("Diatómico: de la hoja, la capacidad a volumen constante.", F(r"C_V=\frac{5}{2}R"), M(rf"C_V=\frac{{5}}{{2}}(8{{,}}314)={tex(g.cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))
+    estado_V(L.paso("B) Estado 1"), g, "1", primero=True, voz="Despejamos el volumen del gas ideal y lo calculamos en 1.", dec_T=2)
+    L.paso("B) Estado 2: el calor a volumen constante")\
+        .di("A volumen constante, el calor de la hoja va con ce ve.".replace("ce ve", dice("C_V", "ce ve")), V(foco="12"), F(r"Q=nC_V\,\Delta T"))\
+        .di("Despejamos la temperatura final.", M(r"Q_{12}=nC_V(T_2-T_1)\;\Rightarrow\;T_2=T_1+\frac{Q_{12}}{nC_V}"))\
+        .di("Sustituimos.", M(rf"T_2=293{{,}}15+\frac{{1{{,}}52\times10^4}}{{(2{{,}}50)({tex(g.cv, 5)})}}=293{{,}}15+{tex(q12 / (g.n * g.cv), 4)}"))\
+        .di(f"Te dos vale {nu(t2, 'K', 4)}.".replace("Te dos", dice("T₂", "Te dos")), M(rf"T_2={tex(t2, 4, u='K')}", "t2", "verde"))\
+        .di("El volumen no cambia.", M(rf"V_2=V_1={tex(g.v('1'), 4, u='m^3')}"))
+    estado_p(L.paso("B) Presión de 2"), g, "2", voz="Con el gas ideal, la presión de 2.", primero=True)
+    L.paso("B) Estado 3: expansión a presión constante")\
+        .di("La presión se queda y el volumen se triplica.", V(foco="23"), M(rf"p_3=p_2={tex(g.p('2'), 4, u='Pa')}\qquad V_3=3V_1={tex(g.v('3'), 4, u='m^3')}"))\
+        .di("Del gas ideal, a presión constante volumen y temperatura van juntos.", F(r"pV=nRT"), M(r"\frac{V_3}{T_3}=\frac{V_2}{T_2}\;\Rightarrow\;T_3=T_2\,\frac{V_3}{V_2}=3T_2"))\
+        .di("Sustituimos.", M(rf"T_3=3({tex(t2, 4)})={tex(g.t('3'), 4, u='K')}"))
+    explica_proceso(L.paso("C) Calentamiento isocórico 1→2"), g, "1", "2", "isocorico", foco="12", dec_T=2)
+    explica_proceso(L.paso("C) Expansión isobárica 2→3"), g, "2", "3", "isobarico", foco="23", dec_T=1)
+    cierre_ciclo(L, res, titulo="C) Resumen de los dos procesos", solo_totales=True)
+    deriva_entropia(L.paso("D) Entropía: de dónde salen las fórmulas (no entra en el parcial)"), "cv", "cp")
     L.paso("D) Cambio de entropía en cada etapa")\
-        .di(f"Usamos la fórmula logarítmica en cada proceso: salen {nu(ds12, 'J/K', 4)} y {nu(ds23, 'J/K', 4)}.",
-            M(rf"\Delta S_{{12}} = nC_V\ln\frac{{T_2}}{{T_1}} = {tex(ds12, 4, u='J/K')}"),
-            M(rf"\Delta S_{{23}} = nC_p\ln\frac{{T_3}}{{T_2}} = nC_p\ln 3 = {tex(ds23, 4, u='J/K')}"),
+        .di("A volumen constante.", V(foco="12"), M(rf"\Delta S_{{12}} = nC_V\ln\left(\frac{{T_2}}{{T_1}}\right)=(2{{,}}50)({tex(g.cv, 5)})\ln\left(\frac{{{tex(t2, 4)}}}{{293{{,}}15}}\right)"))\
+        .di("Calculamos.", M(rf"\Delta S_{{12}}=({tex(g.n * g.cv, 4)})({tex(math.log(t2 / g.t('1')), 4)})={tex(ds12, 4, u='J/K')}"))\
+        .di("A presión constante, con la temperatura que se triplica.", V(foco="23"), M(rf"\Delta S_{{23}} = nC_p\ln\left(\frac{{T_3}}{{T_2}}\right)=(2{{,}}50)({tex(g.cp, 5)})\ln 3"))\
+        .di("Calculamos.", M(rf"\Delta S_{{23}}=({tex(g.n * g.cp, 4)})({tex(math.log(3.0), 4)})={tex(ds23, 4, u='J/K')}"),
             R(rf"\Delta S_{{12}}={tex(ds12, 4, u='J/K')}\qquad \Delta S_{{23}}={tex(ds23, 4, u='J/K')}", "rd"))
     L.responde("T2", rf"T_2={tex(t2, dec=1)}\ \text{{K}}", t2, "K")\
      .responde("Q23", rf"Q_{{23}}={tex(r23['Q'] / 1e3, 4)}\ \text{{kJ}}", r23["Q"], "J")\
      .responde("dS23", rf"\Delta S_{{23}}={tex(ds23, 4)}\ \text{{J/K}}", ds23, "J/K")
-    return L.usa(r"pV=nRT", r"Q=nC_V\Delta T", r"Q=nC_p\Delta T")
-
+    return L.usa(r"pV=nRT", r"Q=nC_V\Delta T", r"W=p(V_2-V_1)")
 
 # ============================================================================ Q093
 @leccion("Q093")
@@ -399,28 +412,33 @@ def q100() -> Leccion:
     rcd = g.proceso("C", "D", "isotermico")
     rda = g.proceso("D", "A", "isocorico")
     res = [("A→B", rab), ("B→C", rbc), ("C→D", rcd), ("D→A", rda)]
-    wnet = sum(r["W"] for _, r in res)
-    qh = rab["Q"] + rda["Q"]
-    ef = wnet / qh
     L = _des("Q100", "Ciclo de Stirling (dos isotermas y dos isocoras, 1,50 mol)",
              "Con $1{,}50$ mol de gas monoatómico: $A(0{,}0100\\ \\text{m}^3, 400{,}0\\ \\text{K})\\to B(3V_A)$ isotérmico; $B\\to C$ isocórico hasta $5p_C=p_A$; $C\\to D(V_A)$ isotérmico; $D\\to A$ isocórico. A) Diagrama $p$-$V$. B) $W$ y $Q$ por proceso. C) $W_{\\text{neto}}$ y tipo de dispositivo. D) Eficiencia.",
              claves=["Stirling", "isotermas e isocoras", "monoatómico"],
              visual=visual_pv(g, [("A", "B", "isotermico"), ("B", "C", "isocorico"), ("C", "D", "isotermico"), ("D", "A", "isocorico")],
                               uv="L", up="kPa", fv=1e3, fp=1e-3, valores=valores_visual(res)))
-    L.paso("A) Tabla de los cuatro estados")\
-        .di("Como cinco pe C igual a pe A y el volumen se triplica, la temperatura baja de cuatrocientos a doscientos cuarenta kelvin.", DATO("5PC = PA"),
-            tabla_estados(g, ["A", "B", "C", "D"], up="kPa", uv="L", fp=1e-3, fv=1e3, cp=4, cv=3))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Dos isotermas y dos isocoras: es un ciclo de Stirling.", DATO("5PC = PA"),
+            LISTA(["$n=1{,}50$ mol, monoatómico: $C_V=\\frac{3}{2}R$", "$A$: $V_A=0{,}0100$ m³, $T_A=400{,}0$ K", "$B$: $V_B=3V_A=0{,}0300$ m³, misma temperatura", "$C$: $V_C=V_B$, $p_C=\\frac{p_A}{5}$ · $D$: $V_D=V_A$, $T_D=T_C$"]))
+    p = L.paso("A) Estados A y B")
+    estado_p(p, g, "A", primero=True, voz="Despejamos la presión del gas ideal y la calculamos en A.")
+    p.di("De A a B la temperatura no cambia: pe por ve se conserva.".replace("pe por ve", dice("pV", "pe por ve")), V(foco="AB"),
+         M(r"p_AV_A=p_BV_B\;\Rightarrow\;p_B=p_A\,\frac{V_A}{V_B}=\frac{p_A}{3}"), M(rf"p_B=\frac{{{tex(g.p('A'), 4)}}}{{3}}={tex(g.p('B'), 4, u='Pa')}"))
+    p = L.paso("A) Estados C y D")
+    p.di("La presión de C es la quinta parte de la de A.", V(foco="BC"), M(rf"p_C=\frac{{p_A}}{{5}}=\frac{{{tex(g.p('A'), 4)}}}{{5}}={tex(g.p('C'), 4, u='Pa')}"))
+    estado_T(p, g, "C", primero=True, voz="Despejamos la temperatura del gas ideal y la calculamos en C.")
+    p.di("D está en la misma isoterma que C, con el volumen de A.", V(foco="CD"), M(rf"T_D=T_C={tex(g.t('D'), 4, u='K')}\qquad V_D=V_A=0{{,}}0100\ \text{{m}}^3"))
+    estado_p(p, g, "D")
     explica_proceso(L.paso("B1) Expansión isotérmica A→B"), g, "A", "B", "isotermico", foco="AB")
     explica_proceso(L.paso("B2) Enfriamiento isocórico B→C"), g, "B", "C", "isocorico", foco="BC")
     explica_proceso(L.paso("B3) Compresión isotérmica C→D"), g, "C", "D", "isotermico", foco="CD")
     explica_proceso(L.paso("B4) Calentamiento isocórico D→A"), g, "D", "A", "isocorico", foco="DA")
-    L.paso("C y D) Trabajo neto, tipo de dispositivo y eficiencia")\
-        .di(f"El trabajo neto es positivo, {nu(wnet, 'J', 4)}: opera como máquina térmica con eficiencia de {n(ef * 100, 4)} por ciento.", V(foco="ciclo"),
-            tabla_quw(res),
-            R(rf"W_{{\text{{neto}}}}={tex(wnet, 4, u='J')}\ (\text{{motor}})\qquad e = \frac{{{tex(wnet, 4)}}}{{{tex(qh, 4)}}} = {tex(ef * 100, 4)}\,\%", "rcd"))
-    L.responde("Wnet", rf"W_{{\text{{neto}}}}={tex(wnet, 4)}\ \text{{J}}", wnet, "J").responde("e", rf"e={tex(ef, 4)}", ef, "")
-    return L.oficial("III Parcial ordinario II-2025", 2192.0, 0.2587).usa(r"W=nRT\ln\frac{V_2}{V_1}", r"e=\frac{W}{Q_H}")
-
+    c = cierre_ciclo(L, res, titulo="C y D) Trabajo neto, tipo de dispositivo y eficiencia", id_e="rcd")
+    L.paso("C) ¿Motor o refrigerador?")\
+        .di("El trabajo neto es positivo y el ciclo va en sentido horario: el gas entrega trabajo, es un motor.", V(foco="ciclo"),
+            R(rf"W_{{\text{{neto}}}}={tex(c['W'], 4, u='J')}>0\;\Rightarrow\;\text{{motor}}", "rc"))
+    L.responde("Wnet", rf"W_{{\text{{neto}}}}={tex(c['W'], 4)}\ \text{{J}}", c["W"], "J").responde("e", rf"e={tex(c['e'], 4)}", c["e"], "")
+    return L.oficial("III Parcial ordinario II-2025", 2192.0, 0.2587).usa(r"pV=nRT", r"W=nRT\ln\frac{V_2}{V_1}", r"e=\frac{W}{Q_H}")
 
 # ============================================================================ Q101
 @leccion("Q101")

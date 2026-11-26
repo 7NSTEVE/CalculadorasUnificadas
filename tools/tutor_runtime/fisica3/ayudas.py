@@ -251,6 +251,22 @@ def _sub(k: str) -> str:
     return k.replace("→", "").replace(" ", "")
 
 
+def _dec_suma(vals: Sequence[float], total: float, cifras: int) -> int:
+    """Decimales para escribir una suma: los sumandos y el total con los mismos decimales, sin perder cifras del total."""
+    m = max([abs(v) for v in vals] + [abs(total), 1e-12])
+    d1 = cifras - 1 - int(math.floor(math.log10(m)))
+    d2 = cifras - 1 - int(math.floor(math.log10(max(abs(total), 1e-12))))
+    return min(4, max(0, d1, d2))
+
+
+def _suma_tex(vals: Sequence[float], cifras: int, u: str = "J") -> str:
+    """'(a)+(b)+(c)=total' con decimales coherentes (la suma escrita da exactamente el total escrito)."""
+    d = _dec_suma(vals, sum(vals), cifras)
+    redondeados = [round(v, d) for v in vals]
+    total = sum(redondeados)
+    return "+".join(f"({tex(v, dec=d)})" for v in redondeados) + f"={tex(total, dec=d, u=u)}"
+
+
 def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, refri: bool = False, cifras: int = 4,
                  titulo: str = "", id_e: str = "re", solo_totales: bool = False) -> Dict[str, float]:
     """Paso final de un ciclo: suma de trabajos, calores que entran y salen, y e (o K), todo sustituido."""
@@ -264,20 +280,20 @@ def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, ref
     p.di("Primero la tabla de los procesos, para ver los signos.", tabla_quw(res, cifras=cifras), V(foco="ciclo"))
     p.di("El trabajo neto es la suma de los trabajos de cada proceso.",
          M(r"W_{\text{neto}}=" + "+".join(f"W_{{{k}}}" for k, _ in ws)),
-         M("=" + "+".join(f"({tex(w, cifras)})" for _, w in ws) + f"={tex(wnet, cifras, u='J')}"))
+         M("=" + _suma_tex([w for _, w in ws], cifras)))
     ent, sal = ("Q_C", "Q_H") if refri else ("Q_H", "Q_C")
     p.di("Los calores positivos son los que entran al gas; los negativos, los que salen." + (" En el refrigerador, el que entra viene del foco frío." if refri else ""),
-         M(ent + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qin) + "=" + "+".join(f"({tex(q, cifras)})" for _, q in qin) + f"={tex(qh, cifras, u='J')}"),
-         M(sal + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qout) + "=" + "+".join(f"({tex(q, cifras)})" for _, q in qout) + f"={tex(qc, cifras, u='J')}"))
+         M(ent + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qin) + "=" + _suma_tex([q for _, q in qin], cifras)),
+         M(sal + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qout) + "=" + _suma_tex([q for _, q in qout], cifras)))
     p.di("Revisión con la primera ley: en un ciclo la energía interna vuelve a su valor, así que el trabajo neto es el calor neto.",
-         F(r"\Delta U_{\text{ciclo}}=0=Q-W\;\Rightarrow\;W_{\text{neto}}=Q_{\text{neto}}"),
-         M(rf"Q_{{\text{{neto}}}}=({tex(qh, cifras)})+({tex(qc, cifras)})={tex(qh + qc, cifras, u='J')}"))
+         F(r"\Delta U=Q-W"), M(r"\Delta U_{\text{ciclo}}=0\;\Rightarrow\;W_{\text{neto}}=Q_{\text{neto}}"),
+         M(r"Q_{\text{neto}}=" + _suma_tex([qh, qc], cifras)))
     out = {"W": wnet, "QH": qh, "QC": qc}
     if solo_totales:
         return out
     if refri:
         K = abs(qh) / abs(wnet)
-        p.di("En el refrigerador lo que sirve es el calor que el gas le saca al foco frío, que es el que entra al gas; lo que se paga es el trabajo.",
+        p.di("En el refrigerador sirve el calor que se le saca al foco frío; lo que se paga es el trabajo.",
              F(r"K=\frac{|Q_C|}{|W|}"),
              M(rf"K=\frac{{{tex(abs(qh), cifras)}}}{{{tex(abs(wnet), cifras)}}}"),
              R(rf"K={tex(K, 3)}", id_e))
@@ -296,9 +312,9 @@ def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, ref
 
 def deriva_carnot(p: Paso, *, refri: bool = False) -> None:
     """Escribe, desde la hoja, por qué |Q_C|/|Q_H| = T_C/T_H en un ciclo de Carnot (no viene impreso)."""
-    p.di("La eficiencia de Carnot no viene en la hoja; la armamos desde la eficiencia general, que sí viene.",
+    p.di("Carnot no viene en la hoja; lo armamos desde lo que sí viene.",
          F(r"e=1-\left|\frac{Q_C}{Q_H}\right|"))
-    p.di("En Carnot el calor entra y sale solo en las isotermas, donde el calor es igual al trabajo isotérmico.",
+    p.di("El calor entra y sale solo en las isotermas, donde es igual al trabajo isotérmico.",
          F(r"\Delta U=Q-W=0\;\Rightarrow\;Q=W=nRT\ln\left(\frac{V_2}{V_1}\right)"),
          M(r"Q_H=nRT_H\ln\left(\frac{V_b}{V_a}\right)\qquad |Q_C|=nRT_C\ln\left(\frac{V_c}{V_d}\right)"))
     p.di("Las otras dos son adiabáticas y cumplen la relación de la hoja.",

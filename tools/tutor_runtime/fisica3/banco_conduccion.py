@@ -191,39 +191,47 @@ def q036() -> Leccion:
 @leccion("Q037")
 def q037() -> Leccion:
     k_ac, r1, r2, t1, t2, lc = 50.2, 0.033, 0.042, 80.0, 20.0, 1.5
-    h_ac = 2.0 * math.pi * k_ac * lc * (t1 - t2) / math.log(r2 / r1)
+    lnr = math.log(r2 / r1)
+    num = 2.0 * math.pi * k_ac * lc * (t1 - t2)
+    h_ac = num / lnr
     k_cu = 385.0
     razon = k_cu / k_ac
     L = _des("Q037", "Tubería cilíndrica de acero y comparación con cobre",
              "Una tubería cilíndrica de conductividad $k$, radios $R_1$ y $R_2$, longitud $L$, lleva agua a $T_1$ y afuera está a $T_2<T_1$. A) Expresión de $H$. B) Para acero ($k=50{,}2$ W/m·K, $R_1=3{,}3$ cm, $R_2=4{,}2$ cm, $T_1=80\\ ^\\circ$C, $T_2=20\\ ^\\circ$C, $L=1{,}5$ m), calcule $H$. C) Compare cualitativamente con cobre ($k_{\\text{Cu}}=385$ W/m·K).",
              claves=["conducción cilíndrica", "integral", "tubería"],
              visual={"tipo": "conduccion", "geo": "cilindro", "r1": r1, "r2": r2, "L": lc, "T1": t1, "T2": t2, "k": k_ac, "uT": "°C", "etq1": "R₁", "etq2": "R₂"})
-    L.paso("A) Ley de Fourier en un cascarón cilíndrico")\
-        .di("El calor sale radialmente desde el radio interior al exterior.", V(foco="dr"), DATO("tubería cilíndrica"),
-            F(r"H = -k A(r)\,\frac{dT}{dr}", "f"))\
-        .di("El área lateral de un cilindro de radio erre y largo ele es dos pi erre ele.".replace("erre", dice("r", "erre")).replace("ele", dice("L", "ele")),
-            M(r"A(r) = 2\pi r L"))\
-        .di("Separamos variables e integramos desde el interior hasta el exterior.", V(foco="barrido"),
-            M(r"H\int_{R_1}^{R_2}\frac{dr}{r} = -2\pi k L\int_{T_1}^{T_2}dT"))\
-        .di("La integral de uno entre erre es el logaritmo natural.",
-            M(r"H\ln\left(\frac{R_2}{R_1}\right) = 2\pi k L\,(T_1-T_2)"),
-            R(r"H = \frac{2\pi k L\,(T_1-T_2)}{\ln(R_2/R_1)}", "ra"))\
+    L.paso("A) Fourier en un cascarón cilíndrico")\
+        .di("El calor sale radialmente desde el radio interior al exterior. Partimos de la ley de Fourier de la hoja.", V(foco="dr"), DATO("tubería cilíndrica"),
+            F(r"H = -kA\,\frac{dT}{dr}", "f"))\
+        .di("El área que cruza el calor a un radio erre es la pared lateral del cilindro.".replace("erre", dice("r", "erre")),
+            M(r"A(r) = 2\pi r L"), M(r"H = -k\,(2\pi rL)\,\frac{dT}{dr}"))\
         .por_que("En estado estacionario la misma corriente $H$ cruza cada capa cilíndrica, aunque el área crezca con $r$.")
+    L.paso("A) Separar variables e integrar")\
+        .di("Dejamos el radio de un lado y la temperatura del otro.", M(r"H\,\frac{dr}{r} = -2\pi kL\,dT"))\
+        .di("Integramos desde el radio interior hasta el exterior.", V(foco="barrido"),
+            M(r"H\int_{R_1}^{R_2}\frac{dr}{r} = -2\pi k L\int_{T_1}^{T_2}dT"))\
+        .di("A la izquierda sale un logaritmo; a la derecha, la resta de temperaturas.",
+            M(r"\int_{R_1}^{R_2}\frac{dr}{r}=\ln\left(\frac{R_2}{R_1}\right)\qquad -2\pi kL\,(T_2-T_1)=2\pi kL\,(T_1-T_2)"))\
+        .di("Juntamos y despejamos hache.".replace("hache", dice("H", "hache")),
+            M(r"H\ln\left(\frac{R_2}{R_1}\right) = 2\pi k L\,(T_1-T_2)"),
+            R(r"H = \frac{2\pi k L\,(T_1-T_2)}{\ln(R_2/R_1)}", "ra"))
     L.paso("B) Calcular el flujo en el tubo de acero")\
-        .di("Pasamos los radios a metros o usamos la razón directo, porque las unidades se cancelan.",
-            LISTA(["$k=50{,}2\\ \\text{W/(m}\\cdot\\text{K)}$, $L=1{,}5$ m", "$R_1=3{,}3$ cm, $R_2=4{,}2$ cm", "$\\Delta T = 80-20 = 60\\ ^\\circ\\text{C}$"]))\
+        .di("Los datos; los radios pueden quedar en centímetros porque en el logaritmo se cancelan.",
+            LISTA(["$k=50{,}2\\ \\text{W/(m}\\cdot\\text{K)}$, $L=1{,}5$ m", "$R_1=3{,}3$ cm, $R_2=4{,}2$ cm", "$T_1-T_2 = 80-20 = 60\\ ^\\circ\\text{C}$"]))\
         .di("Sustituimos en la expresión de la parte A.", V(foco="flujo"),
             M(r"H = \frac{2\pi(50{,}2)(1{,}5)(80-20)}{\ln(4{,}2/3{,}3)}"))\
-        .di(f"El logaritmo da {n(math.log(r2 / r1), 4)} y el flujo sale {nu(h_ac / 1e3, 'kW', 4)}.",
+        .di("Arriba multiplicamos todo.", M(rf"2\pi(50{{,}}2)(1{{,}}5)(60)={tex(num, 5)}"))\
+        .di("Abajo, el logaritmo de la razón de radios.", M(rf"\ln\left(\frac{{4{{,}}2}}{{3{{,}}3}}\right)=\ln({tex(r2 / r1, 4)})={tex(lnr, 4)}"))\
+        .di(f"Dividimos: el flujo sale {nu(h_ac / 1e3, 'kW', 4)}.", M(rf"H=\frac{{{tex(num, 5)}}}{{{tex(lnr, 4)}}}"),
             R(rf"H = {tex(h_ac, 4, u='W', sci='si')} = {tex(h_ac / 1e3, 4, u='kW')}", "rb"))
     L.paso("C) Comparación con el cobre")\
-        .di("Como el flujo es proporcional a la conductividad, solo comparamos las conductividades.", V(foco="perfil"),
-            M(rf"\frac{{H_{{\text{{Cu}}}}}}{{H_{{\text{{acero}}}}}} = \frac{{k_{{\text{{Cu}}}}}}{{k_{{\text{{acero}}}}}} = \frac{{385}}{{50{{,}}2}} \approx {tex(razon, 3)}"))\
-        .di(f"El tubo de cobre perdería calor casi {n(razon, 2)} veces más rápido que el de acero.",
-            R(rf"H_{{\text{{Cu}}}} \approx {tex(razon, 3)}\,H_{{\text{{acero}}}}\ \ (\text{{mucho mayor}})"))
+        .di("Con la misma geometría y temperaturas, el flujo es proporcional a la conductividad.", V(foco="perfil"),
+            M(r"\frac{H_{\text{Cu}}}{H_{\text{acero}}}=\frac{2\pi k_{\text{Cu}}L\,\Delta T/\ln(R_2/R_1)}{2\pi k_{\text{acero}}L\,\Delta T/\ln(R_2/R_1)}=\frac{k_{\text{Cu}}}{k_{\text{acero}}}"))\
+        .di("Sustituimos las conductividades.", M(rf"\frac{{k_{{\text{{Cu}}}}}}{{k_{{\text{{acero}}}}}} = \frac{{385}}{{50{{,}}2}} = {tex(razon, 3)}"))\
+        .di(f"El tubo de cobre perdería calor unas {n(razon, 2)} veces más rápido que el de acero.",
+            R(rf"H_{{\text{{Cu}}}} \approx {tex(razon, 3)}\,H_{{\text{{acero}}}}\ \ (\text{{mucho mayor}})", "rc"))
     L.responde("B", rf"H={tex(h_ac / 1e3, 4)}\ \text{{kW}}", h_ac, "W").responde("C", rf"H_{{\text{{Cu}}}}/H_{{\text{{acero}}}}={tex(razon, 3)}", razon, "")
     return L.usa(r"H=-kA\frac{dT}{dx}")
-
 
 # ============================================================================ Q038
 @leccion("Q038")
@@ -340,7 +348,8 @@ def q040() -> Leccion:
 @leccion("Q041")
 def q041() -> Leccion:
     k, h, a, b, t1, t2 = 50.0, 2.00, 0.100, 0.450, 100.0, 0.0
-    H = math.pi * k * a * b * (t1 - t2) / h
+    num = math.pi * k * a * b * (t1 - t2)
+    H = num / h
     Q = H * (5.0 * 60.0)
     pts = [[round(h * i / 40, 4), round(t1 - (t1 - t2) * (1 / a - 1 / (a + (b - a) * i / 40)) / (1 / a - 1 / b), 2)] for i in range(41)]
     L = _des("Q041", "Conducción en un cono truncado sólido",
@@ -348,29 +357,31 @@ def q041() -> Leccion:
              claves=["cono truncado", "área variable", "integral"],
              visual={"tipo": "conduccion", "geo": "pared", "L": h, "T1": t1, "T2": t2, "eje": "y", "uT": "°C",
                      "forma": "0.22 + 0.78 * u", "pts": pts, "etA": "π r(y)²"})
-    L.paso("A) Radio y área a altura y")\
-        .di("El radio crece linealmente desde a en la base hasta be arriba.", V(foco="dx"), DATO("cono truncado"),
-            M(r"r(y) = a + \frac{b-a}{h}\,y \;\Rightarrow\; dy = \frac{h}{b-a}\,dr"))\
-        .di("El área transversal es un círculo de radio erre.", M(r"A(r) = \pi r^2"))\
-        .di("Metemos todo en la ley de Fourier y separamos variables.", V(foco="barrido"),
-            F(r"H = -k\pi r^2 \frac{dT}{dy}"),
-            M(r"\frac{H h}{\pi(b-a)}\int_a^b \frac{dr}{r^2} = -k\int_{T_1}^{T_2}dT"))
-    L.paso("Resolver la integral y calcular H")\
-        .di("La integral de uno entre erre cuadrado da la resta de inversos.",
-            M(r"\frac{H h}{\pi(b-a)}\left(\frac{1}{a}-\frac{1}{b}\right) = k\,(T_1-T_2)"))\
-        .di("El factor be menos a se cancela y queda una fórmula muy limpia.",
-            M(r"\frac{1}{a}-\frac{1}{b} = \frac{b-a}{ab} \;\Rightarrow\; H = \frac{\pi k a b\,(T_1-T_2)}{h}", "fh", "azul"))\
-        .di(f"Sustituimos los datos y sale {nu(H, 'W', 4)}.", V(foco="perfil"),
-            M(rf"H = \frac{{\pi(50{{,}}0)(0{{,}}100)(0{{,}}450)(100-0)}}{{2{{,}}00}}"),
-            R(rf"H = {tex(H, 4, u='W')}", "ra"))
+    L.paso("A) Fourier con el área del cono")\
+        .di("El calor sube por el cono; partimos de la ley de Fourier de la hoja.", V(foco="dx"), DATO("cono truncado"), F(r"H = -kA\,\frac{dT}{dy}"))\
+        .di("El radio crece en línea recta desde a abajo hasta be arriba.".replace("be arriba", dice("b arriba", "be arriba")), M(r"r(y) = a + \frac{b-a}{h}\,y"))\
+        .di("El área transversal es un círculo de ese radio.", M(r"A = \pi r^2"), M(r"H = -k\,\pi r^2\,\frac{dT}{dy}"))
+    L.paso("A) Cambiar la variable a r y separar")\
+        .di("Derivamos el radio: así cambiamos de ye a erre.".replace("ye a erre", dice("y a r", "ye a erre")), M(r"dr=\frac{b-a}{h}\,dy\;\Rightarrow\;dy=\frac{h}{b-a}\,dr"))\
+        .di("Separamos: la geometría a la izquierda, la temperatura a la derecha.", M(r"H\,\frac{dy}{\pi r^2}=-k\,dT"))\
+        .di("Ponemos de ye en términos de de erre.".replace("de ye", dice("dy", "de ye")).replace("de erre", dice("dr", "de erre")), M(r"\frac{Hh}{\pi(b-a)}\,\frac{dr}{r^2}=-k\,dT"))
+    L.paso("A) Integrar y despejar H")\
+        .di("Integramos de abajo hacia arriba.", V(foco="barrido"), M(r"\frac{Hh}{\pi(b-a)}\int_a^b\frac{dr}{r^2}=-k\int_{T_1}^{T_2}dT"))\
+        .di("La integral de uno entre erre cuadrado.".replace("erre", dice("r", "erre")), M(r"\int_a^b\frac{dr}{r^2}=\left[-\frac{1}{r}\right]_a^b=\frac{1}{a}-\frac{1}{b}=\frac{b-a}{ab}"))\
+        .di("La de la temperatura.", M(r"-k\int_{T_1}^{T_2}dT=-k\,(T_2-T_1)=k\,(T_1-T_2)"))\
+        .di("Juntamos: el factor be menos a se cancela.".replace("be menos a", dice("(b − a)", "be menos a")), M(r"\frac{Hh}{\pi(b-a)}\cdot\frac{b-a}{ab}=k\,(T_1-T_2)\;\Rightarrow\;\frac{Hh}{\pi ab}=k\,(T_1-T_2)"))\
+        .di("Despejamos hache.".replace("hache", dice("H", "hache")), M(r"H = \frac{\pi k a b\,(T_1-T_2)}{h}", "fh", "azul"))
+    L.paso("A) Sustituir los datos")\
+        .di("Sustituimos.", V(foco="perfil"), M(r"H = \frac{\pi(50{,}0)(0{,}100)(0{,}450)(100-0)}{2{,}00}"))\
+        .di("Multiplicamos arriba.", M(rf"H=\frac{{{tex(num, 4)}}}{{2{{,}}00}}"))\
+        .di(f"Y dividimos: {nu(H, 'W', 4)}.", R(rf"H = {tex(H, 4, u='W')}", "ra"))
     L.paso("B) Calor en 5,00 minutos")\
-        .di("Partimos de la definición de corriente de calor del formulario; con H constante en cinco minutos (trescientos segundos) despejamos Q.",
-            F(r"H = \frac{dQ}{dt} \;\Rightarrow\; Q = H\,\Delta t"),
-            M(r"Q = (353{,}4\ \text{W})(5{,}00 \times 60\ \text{s})"),
-            R(rf"Q = {tex(Q, 3, u='J', sci='si')}", "rb"))
+        .di("De la hoja, la corriente de calor es calor por tiempo; con hache constante se despeja Q.".replace("hache", dice("H", "hache")),
+            F(r"H = \frac{dQ}{dt} \;\Rightarrow\; Q = H\,\Delta t"))\
+        .di("El tiempo en segundos.", M(r"\Delta t=(5{,}00)(60)=300\ \text{s}"))\
+        .di("Multiplicamos.", M(rf"Q = ({tex(H, 4)})(300)"), R(rf"Q = {tex(Q, 3, u='J', sci='si')}", "rb"))
     L.responde("A", rf"H={tex(H, 4)}\ \text{{W}}", H, "W").responde("B", rf"Q={tex(Q, 3, sci='si')}\ \text{{J}}", Q, "J")
     return L.oficial("III Parcial extraordinario II-2024", 353.4, 1.06e5).usa(r"H=-kA\frac{dT}{dx}", r"H=\frac{dQ}{dt}")
-
 
 # ============================================================================ Q042
 @leccion("Q042")
@@ -414,45 +425,59 @@ def q042() -> Leccion:
 def q043() -> Leccion:
     th, tc, L_b = 80.0, 20.0, 0.20
     r0, r1, ka, kb = 0.0120, 0.0060, 385.0, 50.0
-    ha = math.pi * ka * r0 * r1 * (th - tc) / L_b
-    hb = kb * math.pi * r1 ** 2 * (th - tc) / L_b
+    num_a = math.pi * ka * r0 * r1 * (th - tc)
+    ha = num_a / L_b
+    ab = math.pi * r1 ** 2
+    hb = kb * ab * (th - tc) / L_b
     ht = ha + hb
     L = _des("Q043", "Dos barras en paralelo: cobre cónico y acero cilíndrico",
              "Dos barras de largo $L=0{,}20$ m conectan en paralelo $T_H=80{,}0\\ ^\\circ$C y $T_C=20{,}0\\ ^\\circ$C. Barra A (cobre, $k_A=385$): radio lineal de $R_0=1{,}20$ cm a $R_1=0{,}60$ cm. Barra B (acero, $k_B=50$): radio constante $R_1=0{,}60$ cm. A) $H_A$. B) $H_B$. C) $H_{\\text{total}}$.",
              claves=["paralelo", "cono truncado", "cobre y acero"],
              visual={"tipo": "conduccion", "geo": "paralelo", "L": L_b, "T1": th, "T2": tc, "uT": "°C",
                      "barras": [{"n": "A: Cu cónica", "A": 2, "forma": "1 - 0.5 * u"}, {"n": "B: Acero", "A": 1}]})
-    L.paso("A) Flujo por la barra cónica de cobre")\
-        .di("Como el radio varía linealmente de erre cero a erre uno, partimos de la forma diferencial de Fourier del formulario.", V(foco=0), DATO("radio varía linealmente"),
-            F(r"H_A = -k_A A(x)\frac{dT}{dx}"),
-            M(r"R(x) = R_0 - \frac{R_0-R_1}{L}x \qquad A(x) = \pi R(x)^2"))\
-        .di("Separamos variables e integramos con el cambio de variable u igual al radio.",
-            M(r"H_A\int_0^L \frac{dx}{\pi R(x)^2} = -k_A\int_{T_H}^{T_C} dT \;\Rightarrow\; \frac{H_A L}{\pi(R_0-R_1)}\left(\frac{1}{R_1}-\frac{1}{R_0}\right) = k_A(T_H-T_C)"),
-            M(r"H_A = \frac{\pi k_A R_0 R_1\,(T_H-T_C)}{L}"))\
-        .di(f"Sustituimos en metros y da {nu(ha, 'W', 3)}.",
-            M(rf"H_A = \frac{{\pi(385)(0{{,}}0120)(0{{,}}0060)(80{{,}}0-20{{,}}0)}}{{0{{,}}20}}"),
-            R(rf"H_A = {tex(ha, 3, u='W')}", "ra"))
+    L.paso("A) Fourier en la barra cónica")\
+        .di("El radio de la barra A cambia a lo largo de ella; partimos de la forma diferencial de Fourier de la hoja.", V(foco=0), DATO("radio varía linealmente"),
+            F(r"H_A = -k_A A(x)\,\frac{dT}{dx}"))\
+        .di("El radio baja en línea recta de erre cero a erre uno, y el área es un círculo.".replace("erre cero", dice("R₀", "erre cero")).replace("erre uno", dice("R₁", "erre uno")),
+            M(r"R(x) = R_0 - \frac{R_0-R_1}{L}\,x \qquad A(x) = \pi R(x)^2"))
+    L.paso("A) Cambio de variable al radio")\
+        .di("Derivamos el radio para pasar de equis a erre.".replace("equis a erre", dice("x a R", "equis a erre")), M(r"dR=-\frac{R_0-R_1}{L}\,dx\;\Rightarrow\;dx=-\frac{L}{R_0-R_1}\,dR"))\
+        .di("Separamos variables.", M(r"H_A\,\frac{dx}{\pi R^2}=-k_A\,dT"))\
+        .di("Integramos toda la barra: cuando equis vale cero el radio es erre cero, y al final es erre uno.".replace("equis", dice("x", "equis")).replace("erre cero", dice("R₀", "erre cero")).replace("erre uno", dice("R₁", "erre uno")),
+            M(r"H_A\int_0^L\frac{dx}{\pi R^2}=-k_A\int_{T_H}^{T_C}dT"))
+    L.paso("A) Resolver las integrales")\
+        .di("La de la izquierda, con el cambio de variable; el signo menos invierte los límites.",
+            M(r"\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi(R_0-R_1)}\int_{R_1}^{R_0}\frac{dR}{R^2}=\frac{L}{\pi(R_0-R_1)}\left(\frac{1}{R_1}-\frac{1}{R_0}\right)"))\
+        .di("Como uno entre erre uno menos uno entre erre cero es la resta sobre el producto, se cancela.".replace("erre uno", dice("R₁", "erre uno")).replace("erre cero", dice("R₀", "erre cero")),
+            M(r"\frac{1}{R_1}-\frac{1}{R_0}=\frac{R_0-R_1}{R_0R_1}\;\Rightarrow\;\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi R_0R_1}"))\
+        .di("La de la derecha.", M(r"-k_A\int_{T_H}^{T_C}dT=k_A\,(T_H-T_C)"))\
+        .di("Igualamos y despejamos.", M(r"H_A\,\frac{L}{\pi R_0R_1}=k_A(T_H-T_C)\;\Rightarrow\;H_A = \frac{\pi k_A R_0 R_1\,(T_H-T_C)}{L}"))
+    L.paso("A) Sustituir")\
+        .di("Radios en metros.", M(rf"H_A = \frac{{\pi(385)(0{{,}}0120)(0{{,}}0060)(80{{,}}0-20{{,}}0)}}{{0{{,}}20}}"))\
+        .di("Multiplicamos arriba.", M(rf"H_A=\frac{{{tex(num_a, 4)}}}{{0{{,}}20}}"))\
+        .di(f"Da {nu(ha, 'W', 3)}.", R(rf"H_A = {tex(ha, 3, u='W')}", "ra"))
     L.paso("B) Flujo por la barra cilíndrica de acero")\
-        .di("La barra B tiene área constante: usamos directamente la ley de Fourier.", V(foco=1),
-            F(r"H_B = \frac{k_B\,\pi R_1^2\,(T_H-T_C)}{L}"))\
-        .di(f"Sustituimos y da {nu(hb, 'W', 3)}.",
-            M(rf"H_B = \frac{{(50)\,\pi(0{{,}}0060)^2(60{{,}}0)}}{{0{{,}}20}}"),
-            R(rf"H_B = {tex(hb, 3, u='W')}", "rb"))
+        .di("La barra B tiene área constante: la ley de Fourier de la hoja para una barra uniforme.", V(foco=1),
+            F(r"H = kA\,\frac{T_H-T_C}{L}"))\
+        .di("Su área es un círculo de radio erre uno.".replace("erre uno", dice("R₁", "erre uno")), M(rf"A_B=\pi R_1^2=\pi(0{{,}}0060)^2={tex(ab, 4, u='m^2')}"))\
+        .di("Sustituimos.", M(rf"H_B = \frac{{(50)({tex(ab, 4)})(60{{,}}0)}}{{0{{,}}20}}"))\
+        .di(f"Da {nu(hb, 'W', 3)}.", R(rf"H_B = {tex(hb, 3, u='W')}", "rb"))
     L.paso("C) Flujo total en paralelo")\
-        .di("Como las dos barras unen los mismos depósitos en paralelo, los flujos se suman.", V(foco="total"),
-            M(rf"H_T = H_A + H_B = {tex(ha, 3)} + {tex(hb, 3)}"),
+        .di("Las dos barras unen los mismos depósitos: el calor que sale del caliente se reparte entre ellas, así que los flujos se suman.", V(foco="total"),
+            M(r"H_T = H_A + H_B"), M(rf"H_T = {tex(ha, 3)} + {tex(hb, 3)}"),
             R(rf"H_T = {tex(ht, 3, u='W')}", "rc"))
     L.responde("A", rf"H_A={tex(ha, 3)}\ \text{{W}}", ha, "W").responde("B", rf"H_B={tex(hb, 3)}\ \text{{W}}", hb, "W").responde("C", rf"H_T={tex(ht, 3)}\ \text{{W}}", ht, "W")
-    return L.oficial("III Parcial extraordinario I-2025", 26.1, 1.70, 27.8).usa(r"H=-kA\frac{dT}{dx}")
-
+    return L.oficial("III Parcial extraordinario I-2025", 26.1, 1.70, 27.8).usa(r"H=-kA\frac{dT}{dx}", r"H=kA\frac{\Delta T}{L}")
 
 # ============================================================================ Q044
 @leccion("Q044")
 def q044() -> Leccion:
     r1, r2, r3 = 0.0500, 0.0800, 0.1000
     t1, t3, k1, k2 = 125.0, 40.0, 50.0, 1.50
-    R1 = (1.0 / r1 - 1.0 / r2) / (4.0 * math.pi * k1)
-    R2 = (1.0 / r2 - 1.0 / r3) / (4.0 * math.pi * k2)
+    g1 = 1.0 / r1 - 1.0 / r2
+    g2 = 1.0 / r2 - 1.0 / r3
+    R1 = g1 / (4.0 * math.pi * k1)
+    R2 = g2 / (4.0 * math.pi * k2)
     H = (t1 - t3) / (R1 + R2)
     t2 = t1 - H * R1
     L = _des("Q044", "Reactor esférico de acero con revestimiento cerámico",
@@ -460,26 +485,35 @@ def q044() -> Leccion:
              claves=["esfera compuesta", "dos capas", "reactor"],
              visual={"tipo": "conduccion", "geo": "esfera2", "r1": r1, "r2": r2, "r3": r3,
                      "T1": t1, "T2": round(t2, 1), "T3": t3, "k1": k1, "k2": k2, "n1": "acero", "n2": "cerámica", "uT": "°C"})
-    L.paso("Fourier en cada cascarón esférico")\
-        .di("Partimos de la ecuación diferencial de Fourier del formulario con el área esférica cuatro pi erre al cuadrado e integramos cada capa.", V(foco="dr"), DATO("cascarón esférico"),
-            F(r"H = -k(4\pi r^2)\frac{dT}{dr} \;\Rightarrow\; H\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{4\pi r^2} = -k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT", "f"),
-            M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}}{4\pi k}"))\
-        .di("Para abreviar el despeje llamamos R uno y R dos al factor geométrico de cada capa.",
-            M(rf"R_1 = \frac{{\frac{{1}}{{0{{,}}05}}-\frac{{1}}{{0{{,}}08}}}}{{4\pi(50{{,}}0)}} = {tex(R1, 4, u='K/W')}"),
-            M(rf"R_2 = \frac{{\frac{{1}}{{0{{,}}08}}-\frac{{1}}{{0{{,}}10}}}}{{4\pi(1{{,}}50)}} = {tex(R2, 4, u='K/W')}"))
+    L.paso("Fourier en un cascarón esférico")\
+        .di("El calor sale en dirección radial. Partimos de la ley de Fourier de la hoja.", V(foco="dr"), DATO("cascarón esférico"), F(r"H = -kA\,\frac{dT}{dr}", "f"))\
+        .di("El área de una esfera de radio erre es cuatro pi erre cuadrado.".replace("radio erre", "radio " + dice("r", "erre")).replace("pi erre cuadrado", dice("4πr²", "pi erre cuadrado")),
+            M(r"A=4\pi r^2\;\Rightarrow\;H = -k\,(4\pi r^2)\,\frac{dT}{dr}"))\
+        .di("Separamos e integramos una capa, de su radio interno al externo.",
+            M(r"H\int_{r_{\text{int}}}^{r_{\text{ext}}}\frac{dr}{r^2} = -4\pi k\int_{T_{\text{int}}}^{T_{\text{ext}}} dT"))\
+        .di("La integral de uno entre erre cuadrado es la resta de inversos.".replace("erre", dice("r", "erre")),
+            M(r"H\left(\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}\right)=4\pi k\,(T_{\text{int}}-T_{\text{ext}})"))
+    L.paso("Factor geométrico de cada capa")\
+        .di("Despejamos la caída de temperatura de una capa.", M(r"T_{\text{int}} - T_{\text{ext}} = H\,\frac{\frac{1}{r_{\text{int}}}-\frac{1}{r_{\text{ext}}}}{4\pi k}"))\
+        .di("Para no arrastrar la fracción, llamamos R uno y R dos a ese factor en cada capa.",
+            M(rf"R_1 = \frac{{\frac{{1}}{{0{{,}}05}}-\frac{{1}}{{0{{,}}08}}}}{{4\pi(50{{,}}0)}} = \frac{{{tex(g1, 4)}}}{{{tex(4 * math.pi * k1, 4)}}} = {tex(R1, 4, u='K/W')}"),
+            M(rf"R_2 = \frac{{\frac{{1}}{{0{{,}}08}}-\frac{{1}}{{0{{,}}10}}}}{{4\pi(1{{,}}50)}} = \frac{{{tex(g2, 4)}}}{{{tex(4 * math.pi * k2, 4)}}} = {tex(R2, 4, u='K/W')}"))
     L.paso("A) Temperatura en la interfaz acero-cerámica")\
-        .di("Como el flujo es el mismo en ambas capas en serie, igualamos las expresiones de hache.", V(foco="perfil"),
-            M(r"\frac{T_1-T_2}{R_1} = \frac{T_2-T_3}{R_2} \;\Rightarrow\; T_2 = \frac{R_2 T_1 + R_1 T_3}{R_1+R_2}"))\
+        .di("Las capas están en serie: el mismo flujo cruza las dos. Igualamos.", V(foco="perfil"),
+            M(r"H=\frac{T_1-T_2}{R_1} = \frac{T_2-T_3}{R_2}"))\
+        .di("Multiplicamos en cruz y despejamos te dos.".replace("te dos", dice("T₂", "te dos")),
+            M(r"R_2(T_1-T_2)=R_1(T_2-T_3)\;\Rightarrow\;T_2 = \frac{R_2 T_1 + R_1 T_3}{R_1+R_2}"))\
+        .di("Sustituimos.", M(rf"T_2 = \frac{{({tex(R2, 4)})(125{{,}}0)+({tex(R1, 4)})(40{{,}}0)}}{{{tex(R1, 4)}+{tex(R2, 4)}}}"))\
+        .di("Arriba y abajo por separado.", M(rf"T_2=\frac{{{tex(R2 * t1, 4)}+{tex(R1 * t3, 4)}}}{{{tex(R1 + R2, 4)}}}=\frac{{{tex(R2 * t1 + R1 * t3, 4)}}}{{{tex(R1 + R2, 4)}}}"))\
         .di(f"La cerámica aísla mucho más, así que casi toda la caída ocurre en ella: {nu(t2, '°C', dec=1)}.",
-            M(rf"T_2 = \frac{{({tex(R2, 4)})(125{{,}}0)+({tex(R1, 4)})(40{{,}}0)}}{{{tex(R1, 4)}+{tex(R2, 4)}}}"),
             R(rf"T_2 = {tex(t2, dec=1, u='°C')}", "ra"))
     L.paso("B) Flujo estacionario total")\
-        .di(f"Dividimos el salto total entre la resistencia total: sale {nu(H, 'W', 3)}.", V(foco="listo"),
-            M(rf"H = \frac{{T_1-T_3}}{{R_1+R_2}} = \frac{{125{{,}}0-40{{,}}0}}{{{tex(R1 + R2, 4)}}}"),
-            R(rf"H = {tex(H, 3, u='W')}", "rb"))
+        .di("Sumamos las dos caídas: el salto total entre la suma de los factores.", V(foco="listo"),
+            M(r"T_1-T_3=H(R_1+R_2)\;\Rightarrow\;H = \frac{T_1-T_3}{R_1+R_2}"))\
+        .di("Sustituimos.", M(rf"H = \frac{{125{{,}}0-40{{,}}0}}{{{tex(R1 + R2, 4)}}} = \frac{{85{{,}}0}}{{{tex(R1 + R2, 4)}}}"))\
+        .di(f"Da {nu(H, 'W', 3)}.", R(rf"H = {tex(H, 3, u='W')}", "rb"))
     L.responde("A", rf"T_2={tex(t2, dec=1)}\ ^\circ\text{{C}}", t2, "°C").responde("B", rf"H={tex(H, 3)}\ \text{{W}}", H, "W")
     return L.oficial("III Parcial ordinario I-2025", 118.0, 588.0).usa(r"H=-kA\frac{dT}{dx}")
-
 
 # ============================================================================ Q045
 @leccion("Q045")
@@ -662,21 +696,21 @@ def q052() -> Leccion:
              visual={"tipo": "conduccion", "geo": "serie", "T": [th, tu, tc], "uT": "°C",
                      "capas": [{"n": "Cobre", "e": l_cu, "k": k_cu}, {"n": "Acero", "e": l_ac, "k": k_ac}]})
     L.paso("(a) Flujo de calor desde el tramo de cobre")\
-        .di("Convertimos el área a metros cuadrados: cuatro centímetros cuadrados son cuatro por diez a la menos cuatro.", DATO("4.00 cm2"),
-            M(r"A = 4{,}00\times 10^{-4}\ \text{m}^2"))\
-        .di(f"Aplicamos Fourier en el cobre y obtenemos {nu(H, 'W', 3)}.", V(foco="flujo"),
-            F(r"H = \frac{k_{\text{Cu}} A\,(T_H - T_u)}{L_1}"),
-            M(rf"H = \frac{{(385)(4{{,}}00\times 10^{{-4}})(100-65{{,}}0)}}{{1{{,}}00}}"),
-            R(rf"H = {tex(H, 3, u='W')}", "ra"))
+        .di("Convertimos el área a metros cuadrados: un centímetro cuadrado es diez a la menos cuatro metros cuadrados.", DATO("4.00 cm2"),
+            M(r"A = 4{,}00\ \text{cm}^2=4{,}00\times 10^{-4}\ \text{m}^2"))\
+        .di("Del cobre conocemos todo: sus dos temperaturas y su largo. Usamos la ley de Fourier de la hoja.", V(foco="flujo"),
+            F(r"H = kA\,\frac{T_H - T_C}{L}"))\
+        .di("En el cobre, los extremos están a cien y a sesenta y cinco grados.", M(r"H = k_{\text{Cu}} A\,\frac{T_H - T_u}{L_1}"),
+            M(rf"H = (385)(4{{,}}00\times 10^{{-4}})\,\frac{{100-65{{,}}0}}{{1{{,}}00}}=(0{{,}}154)(35{{,}}0)"))\
+        .di(f"Da {nu(H, 'W', 3)}.", R(rf"H = {tex(H, 3, u='W')}", "ra"))
     L.paso("(b) Longitud del tramo de acero")\
         .di("En serie, ese mismo flujo atraviesa el acero.", V(foco="perfil"),
-            M(r"H = \frac{k_{\text{ac}} A\,(T_u - T_C)}{L_2} \;\Rightarrow\; L_2 = \frac{k_{\text{ac}} A\,(T_u - T_C)}{H}"))\
-        .di(f"Sustituimos y da {nu(l_ac, 'm', 3)}.",
-            M(rf"L_2 = \frac{{(50{{,}}2)(4{{,}}00\times 10^{{-4}})(65{{,}}0-0)}}{{5{{,}}39}}"),
-            R(rf"L_2 = {tex(l_ac, 3, u='m')}", "rb"))
+            M(r"H = k_{\text{ac}} A\,\frac{T_u - T_C}{L_2}"))\
+        .di("Despejamos el largo.", M(r"L_2 = \frac{k_{\text{ac}} A\,(T_u - T_C)}{H}"))\
+        .di("Sustituimos.", M(rf"L_2 = \frac{{(50{{,}}2)(4{{,}}00\times 10^{{-4}})(65{{,}}0-0)}}{{{tex(H, 3)}}}=\frac{{{tex(k_ac * A * (tu - tc), 4)}}}{{{tex(H, 3)}}}"))\
+        .di(f"Da {nu(l_ac, 'm', 3)}.", R(rf"L_2 = {tex(l_ac, 3, u='m')}", "rb"))
     L.responde("a", rf"H={tex(H, 3)}\ \text{{W}}", H, "W").responde("b", rf"L_2={tex(l_ac, 3)}\ \text{{m}}", l_ac, "m")
     return L.oficial("Folleto resuelto 3.3-1", 5.39, 0.242).usa(r"H=kA\frac{\Delta T}{L}")
-
 
 # ============================================================================ Q053
 @leccion("Q053")
@@ -687,18 +721,23 @@ def q053() -> Leccion:
              claves=["paralelo", "simbólico", "folleto"],
              visual={"tipo": "conduccion", "geo": "paralelo", "L": 1.0, "T1": 200, "T2": 100, "uT": "K",
                      "barras": [{"n": "k₁ · A₁=2A", "A": 2}, {"n": "k₂ · A₂=A", "A": 1}]})
-    L.paso("Flujo por cada barra en paralelo")\
-        .di("Ambas barras ven la misma diferencia de temperatura: dos te menos te igual a te.", V(foco="total"), DATO("una al lado de la otra"),
-            M(r"\Delta T = T_1 - T_2 = 2T - T = T"))\
-        .di("En paralelo los flujos se suman.", F(r"H_{\text{total}} = H_1 + H_2"))\
-        .di("Con el criterio de la solución del folleto, área uno es dos A y área dos es A.",
-            M(r"H_1 = \frac{k_1(2A)\,T}{L} \qquad H_2 = \frac{k_2(A)\,T}{L}"))\
-        .di("Sumamos y sacamos factor común.",
+    L.paso("Qué nos dan y qué piden")\
+        .di("Dos barras una al lado de la otra, entre los mismos dos depósitos. Todo queda en letras.", V(foco="total"), DATO("una al lado de la otra"),
+            LISTA(["Barra 1: $k_1$, área $A_1=2A$, largo $L$", "Barra 2: $k_2$, área $A_2=A$, largo $L$", "Extremos: $T_1=2T$ y $T_2=T$"]))\
+        .di("Las dos barras ven la misma diferencia de temperatura.", M(r"\Delta T = T_1 - T_2 = 2T - T = T"))
+    L.paso("Fourier en cada barra")\
+        .di("Cada barra tiene área constante: usamos la ley de Fourier de la hoja.", F(r"H = kA\,\frac{T_H-T_C}{L}"))\
+        .di("Barra uno, con área dos A.", V(foco=0), M(r"H_1 = k_1(2A)\,\frac{2T-T}{L}=\frac{2k_1AT}{L}"))\
+        .di("Barra dos, con área A.", V(foco=1), M(r"H_2 = k_2(A)\,\frac{2T-T}{L}=\frac{k_2AT}{L}"))
+    L.paso("Flujo total en paralelo")\
+        .di("El calor que sale del depósito caliente se reparte entre las dos barras: los flujos se suman.", V(foco="total"),
+            M(r"H_{\text{total}} = H_1 + H_2"))\
+        .di("Sustituimos.", M(r"H_{\text{total}} = \frac{2k_1AT}{L}+\frac{k_2AT}{L}"))\
+        .di("Sacamos factor común A te entre ele.".replace("A te entre ele", dice("AT/L", "A te entre ele")),
             R(r"H_{\text{total}} = \frac{(2k_1+k_2)\,A T}{L}", "ra"),
             NOTA("Si se usa literalmente $A_2=2A$, entonces $H_{\\text{total}}=\\frac{2(k_1+k_2)AT}{L}$."))
     L.responde("", r"H_{\text{total}}=\frac{(2k_1+k_2)AT}{L}", None, "")
     return L.usa(r"H=kA\frac{\Delta T}{L}")
-
 
 # ============================================================================ Q054
 @leccion("Q054")
@@ -732,23 +771,31 @@ def q054() -> Leccion:
 @leccion("Q055")
 def q055() -> Leccion:
     k, lc, a, b, ta, tb = 238.0, 0.1, 0.2, 1.0, 80.0, 20.0
-    H = math.pi * k * lc * (ta - tb) / math.log(b / a)
+    lnr = math.log(b / a)
+    num = math.pi * k * lc * (ta - tb)
+    H = num / lnr
     L = _des("Q055", "Flujo radial en un semicilindro hueco de aluminio",
              "Calcule el flujo de calor entre las caras curvas de un medio cilindro hueco de aluminio ($k=238{,}0$ W/m·°C, espesor axial $L=0{,}1$ m, radio interior $a=0{,}2$ m a $80\\ ^\\circ$C y exterior $b=1{,}0$ m a $20\\ ^\\circ$C).",
              claves=["semicilindro", "conducción radial", "aluminio"],
              visual={"tipo": "conduccion", "geo": "cilindro", "r1": a, "r2": b, "L": lc, "T1": ta, "T2": tb, "k": k, "uT": "°C", "etq1": "a", "etq2": "b"})
-    L.paso("Área de medio cilindro y ley de Fourier")\
-        .di("Es la mitad de un tubo cilíndrico, así que el área radial es pi erre ele, no dos pi.", V(foco="dr"), DATO("caras curvas"),
-            M(r"A(r) = \frac{1}{2}(2\pi r L) = \pi r L"),
-            F(r"H = -k(\pi r L)\frac{dT}{dr}"))\
-        .di("Separamos variables e integramos del radio interno al externo.", V(foco="barrido"),
-            M(r"H\int_a^b \frac{dr}{r} = -\pi k L\int_{T_a}^{T_b}dT \;\Rightarrow\; H = \frac{\pi k L\,(T_a-T_b)}{\ln(b/a)}"))\
-        .di(f"Sustituimos y obtenemos {nu(H, 'W', 4)}.", V(foco="flujo"),
-            M(r"H = \frac{\pi(238{,}0)(0{,}1)(80-20)}{\ln(1{,}0/0{,}2)}"),
-            R(rf"H = {tex(H, 4, u='W')}", "ra"))
+    L.paso("Qué nos dan y qué piden")\
+        .di("Medio tubo de aluminio: el calor va de la cara curva interna, a ochenta grados, a la externa, a veinte.", DATO("caras curvas"),
+            LISTA(["$k=238{,}0$ W/(m·°C), espesor axial $L=0{,}1$ m", "Radio interno $a=0{,}2$ m a $80\\ ^\\circ$C", "Radio externo $b=1{,}0$ m a $20\\ ^\\circ$C"]))
+    L.paso("Fourier con el área de medio cilindro")\
+        .di("Partimos de la ley de Fourier de la hoja, en dirección radial.", V(foco="dr"), F(r"H = -kA\,\frac{dT}{dr}"))\
+        .di("Es la mitad de un tubo: el área a un radio erre es la mitad de dos pi erre ele.".replace("radio erre", "radio " + dice("r", "erre")).replace("dos pi erre ele", dice("2πrL", "dos pi erre ele")),
+            M(r"A(r) = \frac{1}{2}(2\pi r L) = \pi r L"), M(r"H = -k(\pi r L)\,\frac{dT}{dr}"))
+    L.paso("Separar variables e integrar")\
+        .di("El radio a un lado, la temperatura al otro.", M(r"H\,\frac{dr}{r} = -\pi kL\,dT"))\
+        .di("Integramos del radio interno al externo.", V(foco="barrido"), M(r"H\int_a^b \frac{dr}{r} = -\pi k L\int_{T_a}^{T_b}dT"))\
+        .di("Sale un logaritmo a la izquierda y la resta de temperaturas a la derecha.", M(r"H\ln\left(\frac{b}{a}\right)=\pi kL\,(T_a-T_b)"))\
+        .di("Despejamos hache.".replace("hache", dice("H", "hache")), M(r"H = \frac{\pi k L\,(T_a-T_b)}{\ln(b/a)}"))
+    L.paso("Sustituir los datos")\
+        .di("Sustituimos.", V(foco="flujo"), M(r"H = \frac{\pi(238{,}0)(0{,}1)(80-20)}{\ln(1{,}0/0{,}2)}"))\
+        .di("Arriba multiplicamos; abajo, el logaritmo de cinco.", M(rf"\pi(238{{,}}0)(0{{,}}1)(60)={tex(num, 5)}"), M(rf"\ln\left(\frac{{1{{,}}0}}{{0{{,}}2}}\right)=\ln 5={tex(lnr, 4)}"))\
+        .di(f"Dividimos: {nu(H, 'W', 4)}.", M(rf"H=\frac{{{tex(num, 5)}}}{{{tex(lnr, 4)}}}"), R(rf"H = {tex(H, 4, u='W')}", "ra"))
     L.responde("", rf"H={tex(H, 4)}\ \text{{W}}", H, "W")
     return L.oficial("Folleto resuelto 3.3-4", 2787.0).usa(r"H=-kA\frac{dT}{dx}")
-
 
 # ============================================================================ Q056
 @leccion("Q056")
@@ -808,20 +855,25 @@ def q058() -> Leccion:
              claves=["cuña", "área variable", "simbólico"],
              visual={"tipo": "conduccion", "geo": "pared", "L": 1.0, "T1": 100, "T2": 0, "eje": "x", "uT": "°C",
                      "forma": "0.35 + 0.65 * u", "etA": "C·y(x)"})
+    L.paso("Qué nos dan y qué piden")\
+        .di("Una cuña: su altura cambia a lo largo, así que el área que cruza el calor también cambia.", DATO("conductividad térmica k0"),
+            LISTA(["Conductividad $k_0$, largo $L$, profundidad $C$", "En $x=0$: altura $B$ y $T=100\\ ^\\circ$C", "En $x=L$: altura $A$ y $T=0\\ ^\\circ$C"]))
     L.paso("Área transversal en función de x")\
-        .di("La altura crece linealmente de B a A a lo largo de la distancia ele.", V(foco="dx"), DATO("conductividad térmica k0"),
-            M(r"y(x) = B + \frac{A-B}{L}\,x \;\Rightarrow\; dx = \frac{L}{A-B}\,dy"))\
-        .di("El área transversal es la profundidad C por la altura ye.", M(r"A_{\text{trans}}(y) = C\,y"))
-    L.paso("Integrar Fourier y obtener H")\
-        .di("Sustituimos en Fourier y pasamos las variables de geometría a la izquierda.", V(foco="barrido"),
-            F(r"H = -k_0 (C y)\frac{dT}{dx} \;\Rightarrow\; \frac{H L}{C(A-B)}\int_B^A \frac{dy}{y} = -k_0\int_{100}^{0}dT"))\
-        .di("La integral de uno entre ye da el logaritmo de A entre B.",
-            M(r"\frac{H L}{C(A-B)}\ln\left(\frac{A}{B}\right) = 100\,k_0"))\
-        .di("Despejamos el flujo de calor.",
-            R(r"H = \frac{100\,k_0 C\,(A-B)}{L\ln(A/B)}", "ra"))
+        .di("La altura crece en línea recta de B a A a lo largo de ele.".replace("ele", dice("L", "ele")), V(foco="dx"), M(r"y(x) = B + \frac{A-B}{L}\,x"))\
+        .di("El área transversal es la profundidad por la altura.", M(r"A_{\text{trans}} = C\,y"))\
+        .di("Derivamos la altura para cambiar de variable.", M(r"dy=\frac{A-B}{L}\,dx\;\Rightarrow\;dx = \frac{L}{A-B}\,dy"))
+    L.paso("Fourier y separar variables")\
+        .di("Partimos de la ley de Fourier de la hoja.", F(r"H = -kA\,\frac{dT}{dx}"), M(r"H = -k_0\,(C y)\,\frac{dT}{dx}"))\
+        .di("Separamos: la geometría a la izquierda.", M(r"H\,\frac{dx}{C\,y}=-k_0\,dT"))\
+        .di("Ponemos de equis en términos de de ye.".replace("de equis", dice("dx", "de equis")).replace("de ye", dice("dy", "de ye")), M(r"\frac{HL}{C(A-B)}\,\frac{dy}{y}=-k_0\,dT"))
+    L.paso("Integrar y despejar H")\
+        .di("Integramos de un extremo al otro: la altura va de B a A y la temperatura de cien a cero.", V(foco="barrido"),
+            M(r"\frac{HL}{C(A-B)}\int_B^A\frac{dy}{y}=-k_0\int_{100}^{0}dT"))\
+        .di("Las dos integrales.", M(r"\int_B^A\frac{dy}{y}=\ln\left(\frac{A}{B}\right)\qquad -k_0\int_{100}^{0}dT=-k_0(0-100)=100\,k_0"))\
+        .di("Juntamos.", M(r"\frac{HL}{C(A-B)}\ln\left(\frac{A}{B}\right) = 100\,k_0"))\
+        .di("Despejamos el flujo de calor.", R(r"H = \frac{100\,k_0 C\,(A-B)}{L\ln(A/B)}", "ra"))
     L.responde("", r"H=\frac{100\,k_0 C(A-B)}{L\ln(A/B)}", None, "")
     return L.usa(r"H=-kA\frac{dT}{dx}")
-
 
 # ============================================================================ Q059
 @leccion("Q059")
