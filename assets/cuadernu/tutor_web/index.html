@@ -36,6 +36,7 @@
     <section id="vista-inicio" class="vista" aria-label="Inicio"></section>
     <section id="vista-biblioteca" class="vista" aria-label="Banco de ejercicios" hidden></section>
     <section id="vista-formulario" class="vista" aria-label="Estudio del formulario oficial" hidden></section>
+    <section id="vista-preparacion" class="vista" aria-label="Preparación Extraordinario y Reposición" hidden></section>
 
     <section id="vista-pizarra" class="vista vista-pizarra" aria-label="Pizarra" hidden>
       <div id="tablero" class="tablero" tabindex="0" aria-label="Hoja de la pizarra">
@@ -105,6 +106,7 @@
         </button>
       </div>
       <div class="trans-der">
+        <button type="button" id="btn-resumen-atencion" class="btn btn-suave" popovertarget="resumen-atencion" title="Resumen rápido de 3 líneas para retomar el hilo">¿En qué iba?</button>
         <button type="button" id="btn-despacio" class="btn btn-suave" title="Abrir los pasos intermedios">Más despacio</button>
         <button type="button" id="btn-origen" class="btn btn-suave" title="De dónde sale cada cosa">¿De dónde salió?</button>
         <button type="button" id="btn-porque" class="btn btn-suave" title="La razón de este paso">¿Por qué?</button>
@@ -135,6 +137,7 @@
   </div>
 
   <div id="ajustes" popover="auto" class="hoja-ajustes" aria-label="Ajustes"></div>
+  <div id="resumen-atencion" popover="auto" class="hoja-resumen-atencion" aria-label="Resumen rápido de enfoque"></div>
 
   <dialog id="visor" class="visor" aria-label="Imagen ampliada"><img id="visor-img" alt=""><button type="button" id="visor-cerrar" class="btn">Cerrar</button></dialog>
 

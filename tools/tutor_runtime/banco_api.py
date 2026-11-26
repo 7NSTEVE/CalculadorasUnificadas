@@ -15,8 +15,10 @@ from fastapi.responses import Response
 
 from .fisica3 import registro, rutas, simbolos, variantes
 from .fisica3.dsl import revisar
-from .fisica3.formulario_ii_2026 import catalogo_formulario, mapear_formulario_leccion
+from .fisica3.formulario_ii_2026 import catalogo_formulario
+from .fisica3.formularios_p1_p2 import mapear_formulario_por_parcial
 from .fisica3.guia_formulario_ii_2026 import guia_completa
+from .fisica3.preparacion_examenes import filtrar_leccion_corte_20_5, preparacion_completa
 from .documentos import MAX_PDF
 from .pdf_rag import fold_accents
 from .verificador_fisico import auditar_leccion
@@ -194,7 +196,7 @@ def crear_router(
             lec = variantes.generar_variante(id[:60], semilla=semilla)
             j = lec.a_json()
             j["auditoria_fisica"] = auditar_leccion(j)
-            j["formulario_mapa"] = mapear_formulario_leccion(j)
+            j["formulario_mapa"] = mapear_formulario_por_parcial(j)
             j["simbolos"] = simbolos.mapa_leccion(j)
             for c in (j["formulario_mapa"] or {}).get("celdas") or []:
                 c["simbolos"] = simbolos.simbolos_de(c.get("tex", ""), simbolos.grupo_celda(c.get("id", "")))
@@ -205,15 +207,17 @@ def crear_router(
         return await asyncio.to_thread(_arma)
 
     @r.get("/banco/{id}")
-    async def api_leccion(id: str, request: Request) -> Dict[str, Any]:
+    async def api_leccion(id: str, request: Request, corte: str = "") -> Dict[str, Any]:
         revisa_token(request)
         try:
             lec = await asyncio.to_thread(registro.obtener, id)
         except KeyError:
             raise HTTPException(status_code=404, detail="Ese ejercicio no está en el banco")
         j = lec.a_json()
+        if corte.strip() == "20.5":
+            j = filtrar_leccion_corte_20_5(j)
         j["auditoria_fisica"] = await asyncio.to_thread(auditar_leccion, j)
-        j["formulario_mapa"] = await asyncio.to_thread(mapear_formulario_leccion, j)
+        j["formulario_mapa"] = await asyncio.to_thread(mapear_formulario_por_parcial, j)
         j["simbolos"] = await asyncio.to_thread(simbolos.mapa_leccion, j)
         for c in (j["formulario_mapa"] or {}).get("celdas") or []:
             c["simbolos"] = simbolos.simbolos_de(c.get("tex", ""), simbolos.grupo_celda(c.get("id", "")))
@@ -222,6 +226,11 @@ def crear_router(
             if rec:
                 j["recorte"] = rec
         return j
+
+    @r.get("/preparacion")
+    async def api_preparacion(request: Request) -> Dict[str, Any]:
+        revisa_token(request)
+        return await asyncio.to_thread(preparacion_completa)
 
     @r.get("/formulario")
     async def api_formulario(request: Request) -> Dict[str, Any]:
@@ -242,6 +251,16 @@ def crear_router(
         if documentos is None:
             raise HTTPException(status_code=503, detail="Documentos no disponibles")
         b = await asyncio.to_thread(documentos.hoja_formulario_png)
+        return Response(content=b, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
+
+    @r.get("/formulario/p{parcial}/hoja.png")
+    async def api_formulario_parcial_hoja(parcial: int, request: Request) -> Response:
+        revisa_token(request)
+        if documentos is None:
+            raise HTTPException(status_code=503, detail="Documentos no disponibles")
+        if parcial not in (1, 2, 3):
+            raise HTTPException(status_code=404, detail="Formulario no disponible")
+        b = await asyncio.to_thread(documentos.hoja_formulario_parcial_png, parcial)
         return Response(content=b, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
 
     # -------------------------------------------------------- documentos

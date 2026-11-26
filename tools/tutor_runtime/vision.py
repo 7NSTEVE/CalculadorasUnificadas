@@ -289,6 +289,13 @@ def emparejar_texto_con_banco(texto: str, documentos: Any = None) -> Dict[str, A
     }
 
 
+def _cadena_modelos_visuales(visual_director: Any, modelo: Optional[str] = None) -> List[str]:
+    from .gemini_engines import VISUAL_MODEL_CHAIN, VISUAL_MODEL_DEFAULT, normalizar_modelo_visual
+
+    primario = normalizar_modelo_visual(modelo or getattr(visual_director, "primary_model", VISUAL_MODEL_DEFAULT))
+    return [primario] + [m for m in VISUAL_MODEL_CHAIN if m != primario]
+
+
 def _transcribir_con_gemini(img_bytes: bytes, mime: str, visual_director: Any) -> str:
     """Usa Gemini Vision SOLO para transcribir el texto/números de una imagen si el OCR local fue pobre."""
     if visual_director is None or not getattr(visual_director, "configured", False):
@@ -296,21 +303,26 @@ def _transcribir_con_gemini(img_bytes: bytes, mime: str, visual_director: Any) -
     client = getattr(visual_director, "_client", None)
     if client is None:
         return ""
-    try:
-        from google.genai import types
+    from google.genai import types
 
-        prompt = (
-            "Transcribe únicamente el texto, código de problema (ej. Q057, Ejercicio 8), números, "
-            "unidades y fórmulas que aparecen en esta imagen. No resuelvas el ejercicio ni agregues comentarios."
-        )
-        resp = client.models.generate_content(
-            model=getattr(visual_director, "primary_model", "gemini-2.5-flash"),
-            contents=[prompt, types.Part.from_bytes(data=img_bytes, mime_type=mime or "image/png")],
-            config=types.GenerateContentConfig(temperature=0.0, max_output_tokens=600),
-        )
-        return " ".join((resp.text or "").split())
-    except Exception:
-        return ""
+    prompt = (
+        "Transcribe únicamente el texto, código de problema (ej. Q057, Ejercicio 8), números, "
+        "unidades y fórmulas que aparecen en esta imagen. No resuelvas el ejercicio ni agregues comentarios."
+    )
+    img_part = types.Part.from_bytes(data=img_bytes, mime_type=mime or "image/png")
+    for model_name in _cadena_modelos_visuales(visual_director):
+        try:
+            resp = client.models.generate_content(
+                model=model_name,
+                contents=[prompt, img_part],
+                config=types.GenerateContentConfig(temperature=0.0, max_output_tokens=600),
+            )
+            txt = " ".join((resp.text or "").split())
+            if txt:
+                return txt
+        except Exception:
+            continue
+    return ""
 
 
 def _emparejar_dhash_cache(img_bytes: bytes, documentos: Any) -> Optional[Dict[str, Any]]:
@@ -607,18 +619,27 @@ async def generar_leccion_ia(
     if imagen_bytes:
         partes.append(types.Part.from_bytes(data=imagen_bytes, mime_type=mime or "image/png"))
 
-    modelo_usar = modelo or getattr(visual_director, "primary_model", "gemini-2.5-flash")
-    resp = await asyncio.to_thread(
-        client.models.generate_content,
-        model=modelo_usar,
-        contents=partes,
-        config=types.GenerateContentConfig(
-            system_instruction=_LECCION_IA_PROMPT,
-            response_mime_type="application/json",
-            temperature=0.2,
-        ),
-    )
-    txt = (resp.text or "{}").strip()
-    m = re.search(r"\{[\s\S]*\}", txt)
-    parsed = json.loads(m.group(0) if m else txt)
-    return _normalizar_leccion_ia(parsed, titulo_hint=titulo_hint, enunciado_hint=texto_ocr)
+    ultimo_err: Optional[Exception] = None
+    for modelo_usar in _cadena_modelos_visuales(visual_director, modelo):
+        try:
+            resp = await asyncio.wait_for(
+                asyncio.to_thread(
+                    client.models.generate_content,
+                    model=modelo_usar,
+                    contents=partes,
+                    config=types.GenerateContentConfig(
+                        system_instruction=_LECCION_IA_PROMPT,
+                        response_mime_type="application/json",
+                        temperature=0.2,
+                    ),
+                ),
+                timeout=35.0,
+            )
+            txt = (resp.text or "{}").strip()
+            m = re.search(r"\{[\s\S]*\}", txt)
+            parsed = json.loads(m.group(0) if m else txt)
+            return _normalizar_leccion_ia(parsed, titulo_hint=titulo_hint, enunciado_hint=texto_ocr)
+        except Exception as exc:
+            ultimo_err = exc
+            continue
+    raise ultimo_err or RuntimeError("Ningún modelo Gemini respondió a tiempo")

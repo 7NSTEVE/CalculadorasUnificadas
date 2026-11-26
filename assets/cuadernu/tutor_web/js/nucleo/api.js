@@ -136,10 +136,16 @@ const VOCES_LEGADO = {
   Puck: 'es-CR-JuanNeural',
   Fenrir: 'es-CO-GonzaloNeural',
 };
+const MODELOS_LEGADO = {
+  'gemini-2.5-flash': 'gemini-4-hydrogen',
+  'gemini-2.5-pro': 'gemini-4-hydrogen',
+  'gemini-2.5-flash-lite': 'gemini-3.5-flash-lite',
+  'gemini-3.1-pro-preview': 'gemini-4-hydrogen',
+};
 const POR_DEFECTO = {
   tema: 'light', letra: 'manuscrita', vel: 1, voz: 'es-MX-DaliaNeural', motorVoz: 'auto', vozLocal: '',
   servidorVozLocal: 'http://127.0.0.1:8880/v1/audio/speech', vozLocalHttp: 'es-default', vozKokoro: 'ef_dora',
-  narracion: true, foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-2.5-flash',
+  narracion: true, foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-4-hydrogen',
   zoom: 1, autoSeguir: false, sinSaltos: true, simbolos: true,
 };
 // Los despejes intermedios se muestran siempre por defecto. Antes venían apagados y se guardaban
@@ -152,6 +158,10 @@ export const ajustes = (() => {
   const s = { ...POR_DEFECTO };
   for (const k of Object.keys(POR_DEFECTO)) if (typeof g[k] === typeof POR_DEFECTO[k]) s[k] = g[k];
   if (VOCES_LEGADO[s.voz]) s.voz = VOCES_LEGADO[s.voz];
+  if (MODELOS_LEGADO[s.modelo]) {
+    s.modelo = MODELOS_LEGADO[s.modelo];
+    try { localStorage.setItem(CLAVE_AJUSTES, JSON.stringify(s)); } catch { /* modo privado */ }
+  }
   try {
     if (!localStorage.getItem(MARCA_SIN_SALTOS)) {
       s.sinSaltos = true;

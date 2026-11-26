@@ -25,7 +25,8 @@ Accion = Dict[str, Any]
 _VOZ_SIMBOLO = {
     "ΔU": "delta U", "ΔT": "delta T", "ΔL": "delta L", "ΔV": "delta V", "ΔS": "delta S", "Δp": "delta pe",
     "ΔA": "delta A", "Δx": "delta equis", "α": "alfa", "β": "beta", "γ": "gama", "σ": "sigma", "η": "eta", "π": "pi",
-    "ρ": "ro", "ε": "épsilon", "W": "doble ve", "Q": "cu", "H": "hache", "k": "ka", "K": "ka", "R": "erre", "n": "ene",
+    "ρ": "ro", "ε": "épsilon", "ω": "omega", "φ": "fi", "ϕ": "fi", "θ": "zeta", "λ": "lambda", "μ": "mu", "τ": "tau",
+    "κ": "kapa", "ℓ": "ele", "W": "doble ve", "Q": "cu", "H": "hache", "k": "ka", "K": "ka", "R": "erre", "n": "ene",
     "T": "te", "V": "ve", "p": "pe", "A": "a", "B": "be", "C": "ce", "D": "de", "L": "ele", "e": "e", "r": "erre",
     "m": "eme", "c": "ce", "N": "ene", "M": "eme", "v": "ve", "x": "equis", "y": "ye", "h": "hache", "t": "te", "a": "a", "b": "be",
     "f": "efe", "d": "de", "s": "ese", "F": "efe", "Y": "ye",
@@ -163,12 +164,13 @@ class Leccion:
     def __init__(self, id: str, titulo: str, *, tema: str, tipo: str = "desarrollo", nivel: int = 3,
                  fuente: Optional[Dict[str, Any]] = None, enunciado: str = "", opciones: Optional[Dict[str, str]] = None,
                  correcta: str = "", visual: Optional[Dict[str, Any]] = None, aviso: str = "", claves: Sequence[str] = (),
-                 alias: Sequence[str] = ()) -> None:
+                 alias: Sequence[str] = (), parcial: int = 3) -> None:
         self.id = id
         self.titulo = titulo
         self.tema = tema
         self.tipo = tipo
         self.nivel = nivel
+        self.parcial = int(parcial)
         self.fuente = fuente or {}
         self.enunciado = " ".join(enunciado.split()) if enunciado else ""
         self.opciones = opciones or {}
@@ -262,10 +264,10 @@ class Leccion:
             pasos.append(d)
         return {
             "id": self.id, "titulo": self.titulo, "tema": self.tema, "tipo": self.tipo, "nivel": self.nivel,
-            "fuente": self.fuente, "enunciado": self.enunciado, "opciones": self.opciones, "correcta": self.correcta,
-            "visual": self.visual, "aviso": self.aviso, "claves": self.claves, "alias": self.alias,
-            "pasos": pasos, "respuestas": self.respuestas, "practica": self.practica, "formulas": self.formulas,
-            "cotejo": self.cotejo(),
+            "parcial": self.parcial, "fuente": self.fuente, "enunciado": self.enunciado, "opciones": self.opciones,
+            "correcta": self.correcta, "visual": self.visual, "aviso": self.aviso, "claves": self.claves,
+            "alias": self.alias, "pasos": pasos, "respuestas": self.respuestas, "practica": self.practica,
+            "formulas": self.formulas, "cotejo": self.cotejo(),
         }
 
 

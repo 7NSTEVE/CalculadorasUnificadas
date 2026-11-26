@@ -288,7 +288,7 @@ export class Lateral {
       const info = document.createElement('div');
       info.className = 'form-cab-info';
       const tit = document.createElement('strong');
-      tit.textContent = 'Formulario oficial II-2026';
+      tit.textContent = mapa.titulo || 'Formulario oficial II-2026';
       const sub = document.createElement('span');
       sub.textContent = n === 0
         ? 'Hoja de referencia del examen'
@@ -300,16 +300,19 @@ export class Lateral {
       const accCab = document.createElement('div');
       accCab.className = 'form-cab-acc';
 
-      const btnEst = document.createElement('button');
-      btnEst.type = 'button';
-      btnEst.className = 'btn btn-suave form-btn-zoom';
-      btnEst.textContent = 'Estudiar';
-      btnEst.title = 'Abrir la guía interactiva de esta fórmula';
-      btnEst.addEventListener('click', () => {
-        const pasoIds = (mapa.por_paso && mapa.por_paso[this.pasoActual]) || [];
-        const celdaId = pasoIds[0] || (mapa.celdas[0] && mapa.celdas[0].id) || null;
-        bus.emit('formulario:estudiar', { celdaId });
-      });
+      if (!mapa.parcial || mapa.parcial === 3) {
+        const btnEst = document.createElement('button');
+        btnEst.type = 'button';
+        btnEst.className = 'btn btn-suave form-btn-zoom';
+        btnEst.textContent = 'Estudiar';
+        btnEst.title = 'Abrir la guía interactiva de esta fórmula';
+        btnEst.addEventListener('click', () => {
+          const pasoIds = (mapa.por_paso && mapa.por_paso[this.pasoActual]) || [];
+          const celdaId = pasoIds[0] || (mapa.celdas[0] && mapa.celdas[0].id) || null;
+          bus.emit('formulario:estudiar', { celdaId });
+        });
+        accCab.append(btnEst);
+      }
 
       const btnZoom = document.createElement('button');
       btnZoom.type = 'button';
@@ -317,7 +320,7 @@ export class Lateral {
       btnZoom.textContent = 'Ampliar';
       btnZoom.addEventListener('click', () => this._abrirHojaGrande(mapa));
 
-      accCab.append(btnEst, btnZoom);
+      accCab.append(btnZoom);
       cab.append(info, accCab);
       p.appendChild(cab);
 

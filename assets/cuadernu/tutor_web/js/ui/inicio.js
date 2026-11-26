@@ -9,6 +9,7 @@ const ICO = {
   reloj: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v4.6l3.5 2.1-1 1.7L11 12.8V7h2Z',
   hoja: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 7V3.5L18.5 9H13Z',
   formula: 'M4 4h16v3H9.2l4.8 5-4.8 5H20v3H4v-2.6L9.4 12 4 6.6V4Z',
+  enfoque: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14Zm0 3.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z',
   idea: 'M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2ZM9 19h6v1.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 20.5V19Z',
 };
 
@@ -72,6 +73,7 @@ export class Inicio {
       acc.className = 'accesos';
       const nEj = banco.lecciones.filter((l) => l.tipo !== 'teoria').length;
       acc.append(
+        boton('acceso', `${svg(ICO.enfoque)}<span><strong>Extraordinario y Reposición</strong><small>Modo enfoque pasos cortos · 42 extra + 22 reposición</small></span>`, () => acciones.preparacion()),
         boton('acceso', `${svg(ICO.libro)}<span><strong>Banco de ejercicios</strong><small>${nEj} resueltos paso a paso</small></span>`, () => acciones.biblioteca()),
         boton('acceso', `${svg(ICO.formula)}<span><strong>Estudiar el formulario</strong><small>42 casillas: uso, trampas y patrones</small></span>`, () => acciones.estudiarFormulario()),
         boton('acceso', `${svg(ICO.reloj)}<span><strong>Simulacro II-2026</strong><small>Predictivo (17 pts) o rápido</small></span>`, () => acciones.simulacro()),

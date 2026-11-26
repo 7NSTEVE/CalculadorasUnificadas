@@ -157,10 +157,21 @@ export function armarAjustes(el, acciones) {
     vloc.addEventListener('change', () => { guardarAjuste('vozLocal', vloc.value); acciones.cambioVoz(); });
 
     const modelo = document.createElement('select');
-    for (const [v, t] of acciones.modelos()) {
+    const grupos = new Map();
+    for (const [v, t, grp] of acciones.modelos()) {
       const o = document.createElement('option');
       o.value = v; o.textContent = t; o.selected = ajustes.modelo === v;
-      modelo.appendChild(o);
+      if (grp) {
+        if (!grupos.has(grp)) {
+          const og = document.createElement('optgroup');
+          og.label = grp;
+          grupos.set(grp, og);
+          modelo.appendChild(og);
+        }
+        grupos.get(grp).appendChild(o);
+      } else {
+        modelo.appendChild(o);
+      }
     }
     modelo.addEventListener('change', () => { guardarAjuste('modelo', modelo.value); acciones.cambioModelo(modelo.value); });
 

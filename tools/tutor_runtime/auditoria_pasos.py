@@ -12,7 +12,9 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from fisica3 import registro  # noqa: E402
 from fisica3.formulario_ii_2026 import (  # noqa: E402
-    _POR_ID, _celdas_en_texto, mapear_formulario_leccion, verificar_origen_formulario)
+    _POR_ID, _celdas_en_texto, verificar_origen_formulario)
+from fisica3.formularios_p1_p2 import (  # noqa: E402
+    _HOJAS_PARCIAL, _celdas_en_texto_parcial, mapear_formulario_por_parcial, verificar_origen_formulario_parcial)
 
 # Fórmulas que NO están en la hoja: si aparecen, la lección tiene que mostrar de dónde salen
 FUERA = (
@@ -60,7 +62,8 @@ def auditar(lid):
            "fuera": (lec.tema in FUERA_PARCIAL) or lid in SOLO_CARNOT, "cotejo": (lec.cotejo() or {}).get("estado")}
     if tipo == "teoria":
         return out
-    m = mapear_formulario_leccion(d)
+    parcial = int(d.get("parcial") or 3)
+    m = mapear_formulario_por_parcial(d)
     base = [c["id"] for c in m["celdas"] if not c.get("es_constante")]
     out["celdas"] = base
     pasos = d.get("pasos") or []
@@ -82,7 +85,12 @@ def auditar(lid):
         for i, (a, c) in enumerate(zip(lineas, cls)):
             tex = str(a.get("tex") or "")
             if c == "F":
-                cids = [x for x in _celdas_en_texto(tex) if not _POR_ID[x][1]]
+                if parcial in (1, 2):
+                    info_p = _HOJAS_PARCIAL[parcial]
+                    es_c_map = {cid: es_c for cid, _, _, es_c, *_ in info_p["celdas"]}
+                    cids = [x for x in _celdas_en_texto_parcial(tex, info_p["reglas"]) if not es_c_map.get(x)]
+                else:
+                    cids = [x for x in _celdas_en_texto(tex) if not _POR_ID[x][1]]
                 if not cids:
                     out["avisos"].append(f"p{n}: fórmula que no es casilla de la hoja: {tex[:90]}")
             if c == "R" and not es_resumen:
@@ -100,11 +108,15 @@ def auditar(lid):
         if lineas and not es_resumen and habla < 4 * len(lineas) and habla < 25:
             out["avisos"].append(f"p{n} «{tit[:40]}»: poca explicación hablada ({habla} palabras para {len(lineas)} renglones)")
     texto = "\n".join(blob)
-    for desc, pat, base_pat in FUERA:
-        if pat.search(texto) and (base_pat is None or not base_pat.search(texto)):
-            out["faltas"].append("formulario: " + desc)
-    for f in verificar_origen_formulario(d):
-        out["faltas"].append("formulario: " + f)
+    if parcial == 3:
+        for desc, pat, base_pat in FUERA:
+            if pat.search(texto) and (base_pat is None or not base_pat.search(texto)):
+                out["faltas"].append("formulario: " + desc)
+        for f in verificar_origen_formulario(d):
+            out["faltas"].append("formulario: " + f)
+    else:
+        for f in verificar_origen_formulario_parcial(d):
+            out["faltas"].append("formulario: " + f)
     if tipo != "seleccion" and total_mate < 6:
         out["faltas"].append(f"muy resumida: solo {total_mate} renglones de matemática en {len(pasos)} pasos")
     if tipo == "seleccion" and total_mate < 3:

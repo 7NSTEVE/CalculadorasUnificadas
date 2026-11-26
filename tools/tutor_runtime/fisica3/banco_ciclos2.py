@@ -50,17 +50,17 @@ def q107() -> Leccion:
         .di("La energía interna.", M(rf"\Delta U_{{12}}=\frac{{5}}{{2}}(2{PV}-{PV})=\frac{{5}}{{2}}{PV}"))\
         .di("El calor, por la primera ley.", F(r"\Delta U=Q-W"), R(rf"Q_{{12}}=\Delta U_{{12}}+W_{{12}}=+\frac{{5}}{{2}}{PV}", "q12"))
     L.paso("A) Proceso 2→3 (presión constante 2p₀)")\
-        .di("Trabajo a presión constante.", V(foco="23"), F(r"W=p(V_2-V_1)"), M(rf"W_{{23}}=2p_0(2V_0-V_0)=+2{PV}"))\
-        .di("Energía interna.", M(rf"\Delta U_{{23}}=\frac{{5}}{{2}}(4{PV}-2{PV})=+5{PV}"))\
-        .di("Calor.", R(rf"Q_{{23}}=5{PV}+2{PV}=+7{PV}", "q23"))
+        .di("A presión constante dos pe cero usamos la casilla de trabajo isobárico de la hoja.", V(foco="23"), F(r"W=p(V_2-V_1)"), M(rf"W_{{23}}=2p_0(2V_0-V_0)=+2{PV}"))\
+        .di("Para la energía interna aplicamos la relación cinco medios delta pe ve que acabamos de derivar.", M(rf"\Delta U_{{23}}=\frac{{5}}{{2}}(4{PV}-2{PV})=+5{PV}"))\
+        .di("Con la primera ley sumamos energía interna y trabajo para obtener el calor que entra.", R(rf"Q_{{23}}=5{PV}+2{PV}=+7{PV}", "q23"))
     L.paso("A) Proceso 3→4 (volumen constante 2V₀)")\
-        .di("Otra vez sin trabajo.", V(foco="34"), M(r"W_{34}=0"))\
-        .di("La presión baja a la mitad.", M(rf"\Delta U_{{34}}=\frac{{5}}{{2}}(2{PV}-4{PV})=-5{PV}"))\
-        .di("Calor que sale.", R(rf"Q_{{34}}=-5{PV}", "q34"))
+        .di("Al ser isocórico no hay desplazamiento de volumen y el trabajo es cero.", V(foco="34"), M(r"W_{34}=0"))\
+        .di("La presión baja a la mitad, así que la energía interna disminuye en cinco pe cero ve cero.", M(rf"\Delta U_{{34}}=\frac{{5}}{{2}}(2{PV}-4{PV})=-5{PV}"))\
+        .di("Sin trabajo, todo ese cambio sale como calor hacia el exterior.", R(rf"Q_{{34}}=-5{PV}", "q34"))
     L.paso("A) Proceso 4→1 (presión constante p₀)")\
-        .di("Se comprime: trabajo negativo.", V(foco="41"), M(rf"W_{{41}}=p_0(V_0-2V_0)=-{PV}"))\
-        .di("Energía interna.", M(rf"\Delta U_{{41}}=\frac{{5}}{{2}}({PV}-2{PV})=-\frac{{5}}{{2}}{PV}"))\
-        .di("Calor.", R(rf"Q_{{41}}=-\frac{{5}}{{2}}{PV}-{PV}=-\frac{{7}}{{2}}{PV}", "q41"))
+        .di("En la compresión isobárica el volumen final es menor, así que el trabajo resulta negativo.", V(foco="41"), M(rf"W_{{41}}=p_0(V_0-2V_0)=-{PV}"))\
+        .di("Evaluamos el cambio de energía interna entre cuatro y uno con nuestra expresión en pe ve.", M(rf"\Delta U_{{41}}=\frac{{5}}{{2}}({PV}-2{PV})=-\frac{{5}}{{2}}{PV}"))\
+        .di("Sumando ambos términos negativos por la primera ley obtenemos el calor cedido en la compresión.", R(rf"Q_{{41}}=-\frac{{5}}{{2}}{PV}-{PV}=-\frac{{7}}{{2}}{PV}", "q41"))
     L.paso("B) Calor absorbido y calor expulsado")\
         .di("Ordenamos todo en una tabla.", TABLA(["Proceso", "$W$", "$\\Delta U$", "$Q$"],
                                                   [["$1\\to2$", "$0$", "$+\\tfrac{5}{2}p_0V_0$", "$+\\tfrac{5}{2}p_0V_0$"], ["$2\\to3$", "$+2p_0V_0$", "$+5p_0V_0$", "$+7p_0V_0$"],
@@ -105,8 +105,8 @@ def q108() -> Leccion:
         .di("Solo es positivo el de A a B: es el único calor que entra.", R(rf"Q_H=Q_{{AB}}={tex(qh, 4, u='J')}", "qh"))\
         .di("La cátedra pone mil novecientos noventa y nueve coma cinco por redondear las temperaturas.", NOTA("La oficial da $1999{,}5$ J: es el mismo valor redondeado."))
     L.paso("C) Eficiencia")\
-        .di("El trabajo neto es la suma de los tres.", M(rf"W_{{\text{{neto}}}}={tex(rab['W'], 3)}+({tex(rbc['W'], 3)})+({tex(rca['W'], 3)})={tex(wnet, 3, u='J')}"))\
-        .di("Entre el calor que entra.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{tex(wnet, 3)}}}{{{tex(qh, 4)}}}"), R(rf"e={tex(ef, 2)}={tex(ef * 100, 2)}\,\%", "re"))
+        .di("Sumamos los tres trabajos del inciso anterior para hallar el trabajo neto entregado en un ciclo completo.", M(rf"W_{{\text{{neto}}}}={tex(rab['W'], 3)}+({tex(rbc['W'], 3)})+({tex(rca['W'], 3)})={tex(wnet, 3, u='J')}"))\
+        .di("Aplicamos la casilla de eficiencia de la hoja dividiendo ese trabajo neto entre el calor absorbido.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{tex(wnet, 3)}}}{{{tex(qh, 4)}}}"), R(rf"e={tex(ef, 2)}={tex(ef * 100, 2)}\,\%", "re"))
     L.paso("D) Entropía de A a B")\
         .di("La entropía se arma con calor entre temperatura.", M(r"dS=\frac{dQ}{T}"), F(r"dQ=nC_p\,dT"))\
         .di("A presión constante, se integra y sale un logaritmo.", M(r"\Delta S_{AB}=\int_{T_A}^{T_B}\frac{nC_p\,dT}{T}=nC_p\ln\frac{T_B}{T_A}"))\

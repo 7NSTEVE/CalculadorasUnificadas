@@ -32,6 +32,8 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "superexamen": (("superexamen_tercer_parcial_fisica_general_iii.pdf",), "Superexamen", "superexamen"),
     "recomendados": (("ejercicios_recomendados_3_iis2026.pdf",), "Ejercicios Recomendados 3", "recomendados"),
     "formulario": (("documentos-ii-2026_ecuaciones_tercer_parcial_fg3.pdf",), "Formulario del III Parcial", "hoja"),
+    "formulario_p1": (("documentos-ii-2026_ecuaciones_importantes_parcial_1.pdf",), "Formulario del I Parcial", "hoja"),
+    "formulario_p2": (("documentos-ii-2026_ecuaciones_segundo_parcial_fg3(1).pdf", "documentos-ii-2026_ecuaciones_segundo_parcial_fg3.pdf"), "Formulario del II Parcial", "hoja"),
     "programa": (("documentos-ii-2026_fi2103_fisica_general_iii_2026-ii (2).pdf", "documentos-ii-2026_fi2103_fisica_general_iii_2026-ii.pdf"), "Programa del curso FI2103 II-2026", "hoja"),
     "23-II-O": (("banco-de-examenes_ii-2023_ii_examen_parcial_ordinario.pdf",), "III Parcial ordinario II-2023", "examen"),
     "23-II-E": (("banco-de-examenes_ii-2023_ii_examen_extraordinario.pdf",), "III Parcial extraordinario II-2023", "examen"),
@@ -57,6 +59,24 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
 
 # Prácticas del II-2026: cada problema tiene su lección PR1-N, PR2-SN (selección) o PR2-DN (desarrollo).
 PRACTICAS = {"26-II-P1": "PR1", "26-II-P2": "PR2"}
+
+# Reposición Parcial 1 y Parcial 2: enlace directo (examen, número) -> ID de lección RP-*.
+REPOSICION_MAPA: Dict[Tuple[str, str], str] = {
+    ("23-II-R", "1"): "RP-23II-1",
+    ("23-II-R", "2"): "RP-23II-2",
+    ("24-I-R", "1"): "RP-24I-1",
+    ("24-I-R", "2"): "RP-24I-2",
+    ("24-II-R", "1"): "RP-24II-1",
+    ("24-II-R", "2"): "RP-24II-2",
+    ("25-II-R", "1"): "RP-25II-1",
+    ("25-II-R", "2"): "RP-25II-2",
+    ("26-I-R", "1"): "RP-26I-1",
+    ("26-I-R", "2"): "RP-26I-2",
+    ("26-I-R", "3"): "RP-26I-3",
+    ("26-I-R", "4"): "RP-26I-4",
+    ("26-I-R", "7"): "RP-26I-7",
+    ("26-I-R", "8"): "RP-26I-8",
+}
 
 # Problemas del Superexamen cuya figura está cambiada en ese PDF: se recortan del examen original.
 FIGURA_CAMBIADA = {"Q038", "Q048", "Q083", "Q091", "Q095"}
@@ -535,6 +555,7 @@ class Documentos:
         self._titulo: Dict[str, str] = {k: v[1] for k, v in FUENTES.items()}
         self._cruce: Optional[Dict[Tuple[str, str], str]] = None
         self._formulario_png: Optional[bytes] = None
+        self._formularios_parcial_png: Dict[int, bytes] = {}
 
     # ------------------------------------------------------------ archivos
 
@@ -706,6 +727,63 @@ class Documentos:
                     pass
             return b
 
+    def hoja_formulario_parcial_png(self, parcial: int) -> bytes:
+        """Renderiza la hoja oficial del Parcial 1, 2 o 3 recortada a sus celdas."""
+        if parcial == 3:
+            return self.hoja_formulario_png()
+        if parcial not in (1, 2):
+            raise KeyError(f"parcial {parcial}")
+        with self._c:
+            if parcial in self._formularios_parcial_png:
+                return self._formularios_parcial_png[parcial]
+            cache_f = self.cache / f"formulario_ii_2026_p{parcial}_v1.png" if self.cache is not None else None
+            if cache_f is not None and cache_f.is_file():
+                data = cache_f.read_bytes()
+                self._formularios_parcial_png[parcial] = data
+                return data
+
+            from PIL import Image, ImageDraw
+            from .fisica3.formularios_p1_p2 import _HOJAS_PARCIAL, catalogo_formulario_parcial
+
+            info = _HOJAS_PARCIAL[parcial]
+            doc_id = f"formulario_p{parcial}"
+            b: bytes
+            try:
+                doc = self._abre(doc_id)
+                page = doc[0]
+                r = page.rect
+                x0, y0, x1, y1 = info["crop_norm"]
+                clip = fitz.Rect(r.width * x0, r.height * y0, r.width * x1, r.height * y1)
+                px = page.get_pixmap(matrix=fitz.Matrix(200.0 / 72.0, 200.0 / 72.0), clip=clip, alpha=False)
+                im = Image.frombytes("RGB", (px.width, px.height), px.samples)
+                buf = io.BytesIO()
+                im.save(buf, "PNG", optimize=True)
+                b = buf.getvalue()
+            except (KeyError, OSError, RuntimeError):
+                w, h = info["aspecto"]
+                im = Image.new("RGB", (w, h), "white")
+                dr = ImageDraw.Draw(im)
+                dr.text((36, 20), info["titulo"], fill=(22, 33, 63))
+                for c in catalogo_formulario_parcial(parcial)["celdas"]:
+                    cx0, cy0, cx1, cy1 = c["caja"]
+                    box = [int(cx0 * w), int(cy0 * h), int(cx1 * w), int(cy1 * h)]
+                    dr.rectangle(box, outline=(180, 190, 205), width=2)
+                    dr.text((box[0] + 8, box[1] + 10), f"{c['id']}: {c['nombre']}", fill=(35, 45, 70))
+                buf = io.BytesIO()
+                im.save(buf, "PNG", optimize=True)
+                b = buf.getvalue()
+
+            self._formularios_parcial_png[parcial] = b
+            if cache_f is not None:
+                try:
+                    cache_f.parent.mkdir(parents=True, exist_ok=True)
+                    tmp = cache_f.with_suffix(".parcial")
+                    tmp.write_bytes(b)
+                    tmp.replace(cache_f)
+                except OSError:
+                    pass
+            return b
+
     def _pinta(self, id: str, p: Problema) -> bytes:
         from PIL import Image, ImageDraw
 
@@ -847,6 +925,9 @@ class Documentos:
         if id in PRACTICAS:
             lid = f"{PRACTICAS[id]}-{clave}"
             return lid if registro.existe(lid) else None
+        rp = REPOSICION_MAPA.get((id, str(clave)))
+        if rp and registro.existe(rp):
+            return rp
         q = self.cruce().get((id, str(clave).lower()))
         return q if q and registro.existe(q) else None
 

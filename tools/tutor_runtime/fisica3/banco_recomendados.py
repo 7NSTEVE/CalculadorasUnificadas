@@ -707,10 +707,10 @@ def _rectangulo(id: str, fuente: dict, incisos: str = "recomendado") -> Leccion:
         .di("El trabajo neto es el área encerrada. El calor absorbido es la suma de los calores positivos.", V(foco="neto"), M(r"W_{neto}=\text{área del rectángulo}"), M(r"e=\frac{W_{neto}}{Q_H}", "ef", "azul"))\
         .por_que("En un ciclo el gas vuelve a su estado inicial: $\\Delta U=0$ y por la primera ley $W_{neto}=Q_{neto}$.")
     L.paso("a) Trabajo neto")\
-        .di("Base por altura.", M(r"W_{neto}=(p_{alta}-p_{baja})(V_{der}-V_{izq})"))\
-        .di("Sustituimos.", M(r"=(2{,}03\times10^5-1{,}22\times10^5)(0{,}0900-0{,}0700)"))\
-        .di("Restamos dentro de cada paréntesis.", M(r"=(8{,}1\times10^4)(0{,}0200)"))\
-        .di(f"Da {nu(W, 'J', 4)}.", R(rf"W_{{neto}}={tex(W, 4, u='J')}", "ra"))
+        .di("Sumando el trabajo isobárico de expansión y el de compresión desde la hoja queda el área del rectángulo: base por altura.", F(r"W=p(V_2-V_1)"), M(r"W_{neto}=(p_{alta}-p_{baja})(V_{der}-V_{izq})"))\
+        .di("Sustituimos las dos presiones en pascales y los dos volúmenes en metros cúbicos.", M(r"=(2{,}03\times10^5-1{,}22\times10^5)(0{,}0900-0{,}0700)"))\
+        .di("Resolvemos primero las dos restas dentro de cada paréntesis.", M(r"=(8{,}1\times10^4)(0{,}0200)"))\
+        .di(f"Al multiplicar ambos factores obtenemos un trabajo neto de {nu(W, 'J', 4)}.", R(rf"W_{{neto}}={tex(W, 4, u='J')}", "ra"))
     p = L.paso("Temperaturas de los cuatro estados")
     estado_T(p, g, "A", primero=True, voz="Las necesitamos para el calor. Despejamos la temperatura del gas ideal y la calculamos en A.")
     for k in "BCD":

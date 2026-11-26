@@ -219,10 +219,10 @@ def q096() -> Leccion:
         .di("En la adiabática no hay calor, así que el trabajo es menos el cambio de energía interna.", V(foco="AB"), F(r"\Delta U=Q-W"), M(r"\Delta U_{AB}=0-W_{AB}\;\Rightarrow\;W_{AB}=-\Delta U_{AB}"))\
         .di("El gas se comprime: el trabajo sale negativo.", M(rf"W_{{AB}}={tex(wab, 4, u='J')}", "wab"))
     L.paso("D) Despejar γ con el trabajo adiabático")\
-        .di("El formulario da el trabajo adiabático con gama.", F(r"W=\frac{1}{\gamma-1}\left(p_1V_1-p_2V_2\right)"))\
-        .di("Primero el paréntesis, con A como uno y B como dos.", M(rf"p_AV_A-p_BV_B=(101\,325)(0{{,}}20)-(303\,975)(0{{,}}09)={tex(num, 4, u='J')}"))\
-        .di("Despejamos gama menos uno.".replace("gama menos uno", dice("γ−1", "gama menos uno")), M(r"\gamma-1=\frac{p_AV_A-p_BV_B}{W_{AB}}"), M(rf"\gamma-1=\frac{{{tex(num, 4)}}}{{{tex(wab, 4)}}}={tex(gamma - 1, 3)}"))\
-        .di(f"Gama vale {n(gamma, 3)}.".replace("Gama", s("γ", "gama")), R(rf"\gamma={tex(gamma, 3)}", "rd"))
+        .di("Usamos la casilla de trabajo adiabático del formulario oficial, que relaciona el trabajo con los extremos de presión y volumen.", F(r"W=\frac{1}{\gamma-1}\left(p_1V_1-p_2V_2\right)"))\
+        .di("Evaluamos primero el paréntesis con A como estado uno y B como estado dos, usando pascales y metros cúbicos.", M(rf"p_AV_A-p_BV_B=(101\,325)(0{{,}}20)-(303\,975)(0{{,}}09)={tex(num, 4, u='J')}"))\
+        .di("Despejamos gama menos uno dividiendo esa diferencia entre el trabajo adiabático negativo obtenido antes.".replace("gama menos uno", dice("γ−1", "gama menos uno")), M(r"\gamma-1=\frac{p_AV_A-p_BV_B}{W_{AB}}"), M(rf"\gamma-1=\frac{{{tex(num, 4)}}}{{{tex(wab, 4)}}}={tex(gamma - 1, 3)}"))\
+        .di(f"Sumamos uno a ese cociente y obtenemos que gama vale {n(gamma, 3)}.".replace("gama", s("γ", "gama")), R(rf"\gamma={tex(gamma, 3)}", "rd"))
     L.paso("Ojo con un atajo que no sirve aquí")\
         .di("Si se usara pe por ve a la gama constante con los números redondeados de la figura, saldría otro valor.".replace("pe por ve a la gama", dice("pVᵞ", "pe ve a la gama")),
             M(rf"\gamma=\frac{{\ln(3{{,}}0/1{{,}}0)}}{{\ln(0{{,}}20/0{{,}}09)}}={tex(gamma_pv, 3)}"))\

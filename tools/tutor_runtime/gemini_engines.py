@@ -27,16 +27,41 @@ from google.genai import types
 from .secrets_dpapi import sanitize_text
 from .sympy_verifier import build_verified_integral_plan, verify_student_step
 
+VISUAL_MODEL_DEFAULT = "gemini-4-hydrogen"
+
 VISUAL_MODEL_CHAIN = [
-    "gemini-2.5-flash",
+    "gemini-4-hydrogen",
     "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
     "gemini-3.5-flash",
-    "gemini-3-flash-preview",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemma-4-31b-it",
 ]
+
+LEGACY_VISUAL_MODEL_UPGRADE = {
+    "gemini-2.5-flash": VISUAL_MODEL_DEFAULT,
+    "gemini-2.5-pro": VISUAL_MODEL_DEFAULT,
+    "gemini-2.5-flash-lite": "gemini-3.5-flash-lite",
+    "gemini-2.0-flash": VISUAL_MODEL_DEFAULT,
+}
+
+_VALID_MODEL_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$")
+
+
+def normalizar_modelo_visual(modelo: Optional[str]) -> str:
+    """Normaliza un ID de modelo visual y sustituye modelos heredados (2.5/2.0) por Gemini 4 Hydrogen."""
+    m = (modelo or "").strip()
+    if m.startswith("models/"):
+        m = m[7:]
+    if not m or not _VALID_MODEL_ID_RE.match(m):
+        return VISUAL_MODEL_DEFAULT
+    return LEGACY_VISUAL_MODEL_UPGRADE.get(m, m)
+
 
 TTS_MODEL_CHAIN = [
     "gemini-3.8-flash-lite-tts",
-    "gemini-2.5-flash-preview-tts",
     "gemini-3.8-flash-tts",
 ]
 
@@ -52,7 +77,7 @@ VALID_GEMINI_VOICES = {
 }
 
 LIVE_AUDIO_MODEL_PRIMARY = "gemini-3.8-live"
-LIVE_AUDIO_MODEL_FALLBACK = "gemini-2.5-flash-native-audio-preview-09-2025"
+LIVE_AUDIO_MODEL_FALLBACK = "gemini-3.8-live-extended-thinking"
 
 _CUE_RE = re.compile(r"<cue\s+id=['\"]([A-Za-z0-9_\-]+)['\"]\s*/?>")
 
@@ -781,9 +806,9 @@ def _try_extract_integral_from_text(text: str) -> Optional[Dict[str, Any]]:
 class GeminiVisualDirector:
     """Fast cloud multimodal director generating SymPy-grounded cuadernu.tutor.v1.1 beats."""
 
-    def __init__(self, api_key: str, primary_model: str = "gemini-2.5-flash") -> None:
+    def __init__(self, api_key: str, primary_model: str = VISUAL_MODEL_DEFAULT) -> None:
         self._api_key = (api_key or "").strip()
-        self.primary_model = primary_model
+        self.primary_model = normalizar_modelo_visual(primary_model)
         self._client = genai.Client(api_key=self._api_key) if self._api_key else None
 
     @property
@@ -858,20 +883,24 @@ class GeminiVisualDirector:
 
         from .fisica3.formulario_ii_2026 import FORMULARIO_PROMPT_TXT
 
-        chain = [self.primary_model] + [m for m in VISUAL_MODEL_CHAIN if m != self.primary_model]
+        primario = normalizar_modelo_visual(self.primary_model)
+        chain = [primario] + [m for m in VISUAL_MODEL_CHAIN if m != primario]
         last_err = ""
         for model_name in chain:
             t0 = time.perf_counter()
             try:
-                resp = await asyncio.to_thread(
-                    self._client.models.generate_content,
-                    model=model_name,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=_DIRECTOR_SYSTEM_PROMPT + "\n\n" + FORMULARIO_PROMPT_TXT,
-                        response_mime_type="application/json",
-                        temperature=0.25,
+                resp = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        self._client.models.generate_content,
+                        model=model_name,
+                        contents=contents,
+                        config=types.GenerateContentConfig(
+                            system_instruction=_DIRECTOR_SYSTEM_PROMPT + "\n\n" + FORMULARIO_PROMPT_TXT,
+                            response_mime_type="application/json",
+                            temperature=0.25,
+                        ),
                     ),
+                    timeout=28.0,
                 )
                 latency_ms = int((time.perf_counter() - t0) * 1000)
                 parsed = _extract_json_object(resp.text or "{}")

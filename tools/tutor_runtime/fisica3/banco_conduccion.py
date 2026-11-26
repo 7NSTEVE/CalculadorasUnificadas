@@ -156,10 +156,10 @@ def _tubo(q: str, titulo: str, enunciado: str, *, k: float, lc: float, r1: float
         .di(f"En todo el tubo: {nu(H / 1e3, 'kW', 4)}. Lo guardamos con cinco cifras, porque se sigue usando.", M(rf"H={tex(H, 5, u='W')}"))
     if por_longitud:
         L.paso("A) Por cada metro de tubo")\
-            .di("Dividimos entre el largo.", M(rf"\frac{{H}}{{L}}=\frac{{{tex(H, 5)}}}{{{_nm(lc)}}}"), R(rf"\frac{{H}}{{L}}={tex(HL, 4, u='W/m')}={tex(HL / 1e3, 4, u='kW/m')}", "ra"))
+            .di("Como nos piden el flujo de calor por unidad de longitud, dividimos el flujo total entre el largo del tubo.", M(rf"\frac{{H}}{{L}}=\frac{{{tex(H, 5)}}}{{{_nm(lc)}}}"), R(rf"\frac{{H}}{{L}}={tex(HL, 4, u='W/m')}={tex(HL / 1e3, 4, u='kW/m')}", "ra"))
     L.paso(f"B) Energía en {dt_txt}")\
-        .di("Flujo por tiempo, en segundos.", F(r"Q=H\,\Delta t"), M(rf"Q=({tex(H, 5)})({_nm(dt_s)})"))\
-        .di("Queda.", R(rf"Q={tex(Q, 4, u='J')}", "rb"))
+        .di("Partimos de la definición de flujo de calor de la hoja y despejamos la energía multiplicando por el tiempo en segundos.", F(r"H=\frac{dQ}{dt}"), M(rf"Q=H\,\Delta t=({tex(H, 5)})({_nm(dt_s)})"))\
+        .di("El producto nos da la energía total transferida en joules durante ese intervalo.", R(rf"Q={tex(Q, 4, u='J')}", "rb"))
     L.paso(f"C) Temperatura en r = {_nm(rm * 100, 3)} cm")\
         .di("Repetimos la integral, pero solo hasta ese radio.", V(foco="punto"), M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(rm)}}}\frac{{dr}}{{r}}=-2\pi kL\int_{{{_nm(t1)}}}^{{T}}dT"))\
         .di("Las dos integrales salen igual que antes: un logaritmo y una resta.", M(rf"H\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}=-2\pi kL\,(T-{_nm(t1)})"))\
@@ -356,8 +356,8 @@ def q040() -> Leccion:
                      "capas": [{"n": "Placa 1", "e": 1, "k": 4, "kt": "k₁"}, {"n": "Placa 2", "e": 1, "k": 2, "kt": "k₂"},
                                {"n": "Placa 3", "e": 1, "k": 1, "kt": "k₃"}, {"n": "Placa 4", "e": 1, "k": 1.33, "kt": "k₄"}]})
     L.paso("Caída de temperatura en cada placa")\
-        .di("Como están en serie, el flujo de calor es idéntico en las cuatro placas. Partimos de la conducción de la hoja.", DATO("igual espesor"),
-            F(r"H = \frac{k A\,\Delta T}{d}"))\
+        .di("Como están en serie, el flujo de calor es idéntico en las cuatro placas. Partimos de la casilla de conducción estacionaria de la hoja.", DATO("igual espesor"),
+            F(r"H = kA\frac{T_H - T_C}{L}"), M(r"H = \frac{k A\,\Delta T}{d}"))\
         .di("Despejamos ka. El flujo, el área y el espesor son iguales en las cuatro, así que ka va al revés de la caída de temperatura.".replace("ka", dice("k", "ka")),
             M(r"k = \frac{H d}{A\,\Delta T} \;\Rightarrow\; k \propto \frac{1}{\Delta T}"))\
         .di("A mayor caída de temperatura, peor conductor es el material.",
@@ -712,8 +712,8 @@ def q050() -> Leccion:
         .di("Despejamos.", M(r"H=\frac{1000\,A\,(200)}{\ln(1{,}1)}=\frac{1000(4{,}00)(200)}{0{,}09531}"))\
         .di(f"Son {nu(H / 1e6, 'MW', 3)}: muchísimo, porque la lámina es delgada y conduce muy bien.", R(rf"H={tex(H, 3, u='W')}={tex(H / 1e6, 3, u='MW')}", "ra"))
     L.paso("B) Energía en cinco minutos")\
-        .di("Flujo es energía por segundo: se multiplica por el tiempo en segundos.", F(r"H=\frac{dQ}{dt}\;\Rightarrow\;Q=H\,\Delta t"), M(r"\Delta t=5\ \text{min}=300\ \text{s}"))\
-        .di("Multiplicamos.", M(rf"Q=({tex(H, 4)})(300)"), R(rf"Q={tex(Q, 3, u='J')}={tex(Q / 1e9, 3, u='GJ')}", "rb"))
+        .di("Partimos de la definición de flujo de calor de la hoja: despejamos el calor multiplicando por los cinco minutos pasados a segundos.", F(r"H=\frac{dQ}{dt}\;\Rightarrow\;Q=H\,\Delta t"), M(r"\Delta t=5\ \text{min}=300\ \text{s}"))\
+        .di("Multiplicamos la potencia estacionaria en watts por trescientos segundos para obtener la energía total en gigajoules.", M(rf"Q=({tex(H, 4)})(300)"), R(rf"Q={tex(Q, 3, u='J')}={tex(Q / 1e9, 3, u='GJ')}", "rb"))
     L.paso("C) Temperatura a la mitad del grosor")\
         .di("Integramos solo hasta la mitad, y igual a cero coma cero cien.".replace("y igual a", dice("y =", "ye igual a")), V(foco="punto"), M(r"\frac{H}{A}\int_0^{0{,}0100}\frac{dy}{200+1000y}=-\int_{300}^{T}dT"))\
         .di("A la mitad, u llega a doscientos diez.", M(r"\frac{H}{A}\cdot\frac{1}{1000}\ln\frac{210}{200}=300-T"))\
@@ -736,7 +736,7 @@ def q051() -> Leccion:
     L.paso("Aplicar Fourier")\
         .di("El área es alto por ancho, y el grosor pasa a metros.", DATO("20,0 cm"),
             LISTA(["$A = (4{,}00)(3{,}00) = 12{,}0\\ \\text{m}^2$", "$L = 20{,}0\\ \\text{cm} = 0{,}200$ m", "$T_1-T_2 = 30{,}0-10{,}0 = 20{,}0\\ ^\\circ\\text{C}$"]))\
-        .di("Sustituimos en la conducción de la hoja.", F(r"H = \frac{k A\,(T_1-T_2)}{L}"),
+        .di("Sustituimos el área, el grosor y el salto de temperatura en la casilla de conducción estacionaria de la hoja.", F(r"H = kA\frac{T_H-T_C}{L}"),
             M(rf"H = \frac{{(0{{,}}800)(12{{,}}0)(30{{,}}0-10{{,}}0)}}{{0{{,}}200}}=\frac{{(0{{,}}800)(12{{,}}0)(20{{,}}0)}}{{0{{,}}200}}"))\
         .di("Multiplicamos arriba: da ciento noventa y dos. Luego dividimos entre cero coma dos.", M(r"H = \frac{192}{0{,}200}"),
             R(rf"H = {tex(H, 3, u='W')}"))

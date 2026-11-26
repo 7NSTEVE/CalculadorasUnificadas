@@ -12,6 +12,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from .fisica3.formulario_ii_2026 import verificar_origen_formulario
+from .fisica3.formularios_p1_p2 import verificar_origen_formulario_parcial
 from .pdf_rag import fold_accents
 from .verificador_numerico import verificar_ecuacion_tex
 
@@ -76,6 +77,7 @@ def auditar_leccion(lec: Dict[str, Any]) -> Dict[str, Any]:
     ctx = fold_accents(ctx_raw).lower()
     enun = fold_accents(str(lec.get("enunciado") or "")).lower()
     tema = str(lec.get("tema") or "").lower()
+    parcial = int(lec.get("parcial") or (lec.get("fuente") or {}).get("parcial") or 3)
     todo_mate = " \n ".join(mates)
 
     niveles: List[Dict[str, Any]] = []
@@ -143,7 +145,7 @@ def auditar_leccion(lec: Dict[str, Any]) -> Dict[str, Any]:
     # ------------------------------------------------------------------
     tiene_unidades = bool(
         re.search(
-            r"(?:\\text\{(?:m|cm|mm|kg|g|s|K|J|kJ|MJ|W|kW|MW|Pa|kPa|MPa|atm|L|mL|mol|cal|°C|C)\}|°C|\^\\circ\s*C|\\%|%)",
+            r"(?:\\text\{(?:m|cm|mm|kg|g|s|K|J|kJ|MJ|W|kW|MW|Pa|kPa|MPa|atm|L|mL|mol|cal|Hz|rad|N|kN|MN|m/s|N/m|kg/m|kg/s|L/s|rad/s|°C|C)\}|°C|\^\\circ\s*C|\\%|%)",
             todo_mate,
         )
     )
@@ -183,48 +185,52 @@ def auditar_leccion(lec: Dict[str, Any]) -> Dict[str, Any]:
     # Nivel 6: Aplicabilidad física de las ecuaciones (CRÍTICO)
     # ------------------------------------------------------------------
     alertas_ley: List[str] = []
-    # 6a. Usar W = P*(Vf - Vi) o W = P*Delta V en un proceso puramente isotérmico o adiabático
-    es_solo_iso = ("isoterm" in enun) and ("isobar" not in enun) and ("presion constante" not in enun)
-    es_solo_adiab = ("adiabat" in enun) and ("isobar" not in enun) and ("presion constante" not in enun)
-    usa_w_isobarico = any(
-        re.search(r"W\s*=\s*[pP]\s*(?:\\Delta\s*V|\\left\(\s*V_?[f2]\s*[-−]\s*V_?[i1]|\(\s*V_?[f2]\s*[-−]\s*V_?[i1])", m)
-        for m in mates
-    )
-    usa_w_isoterm = any(re.search(r"\\ln\s*(?:\\left)?\(", m) for m in mates)
-    usa_w_adiab = any(re.search(r"\\gamma\s*[-−]\s*1|C_?\{?V\}?", m) for m in mates)
-    if es_solo_iso and usa_w_isobarico and not usa_w_isoterm and ("no aplica" not in ctx and "incorrect" not in ctx):
-        alertas_ley.append("Se usó W = P ΔV (solo válida a presión constante) en una expansión/compresión isotérmica; debe usarse W = nRT ln(Vf/Vi).")
-    if es_solo_adiab and usa_w_isobarico and not usa_w_adiab and ("no aplica" not in ctx and "incorrect" not in ctx):
-        alertas_ley.append("Se usó W = P ΔV en un proceso adiabático; debe usarse W = (p₁V₁ − p₂V₂)/(γ − 1) o W = −n C_V ΔT.")
+    if parcial == 3:
+        # 6a. Usar W = P*(Vf - Vi) o W = P*Delta V en un proceso puramente isotérmico o adiabático
+        es_solo_iso = ("isoterm" in enun) and ("isobar" not in enun) and ("presion constante" not in enun)
+        es_solo_adiab = ("adiabat" in enun) and ("isobar" not in enun) and ("presion constante" not in enun)
+        usa_w_isobarico = any(
+            re.search(r"W\s*=\s*[pP]\s*(?:\\Delta\s*V|\\left\(\s*V_?[f2]\s*[-−]\s*V_?[i1]|\(\s*V_?[f2]\s*[-−]\s*V_?[i1])", m)
+            for m in mates
+        )
+        usa_w_isoterm = any(re.search(r"\\ln\s*(?:\\left)?\(", m) for m in mates)
+        usa_w_adiab = any(re.search(r"\\gamma\s*[-−]\s*1|C_?\{?V\}?", m) for m in mates)
+        if es_solo_iso and usa_w_isobarico and not usa_w_isoterm and ("no aplica" not in ctx and "incorrect" not in ctx):
+            alertas_ley.append("Se usó W = P ΔV (solo válida a presión constante) en una expansión/compresión isotérmica; debe usarse W = nRT ln(Vf/Vi).")
+        if es_solo_adiab and usa_w_isobarico and not usa_w_adiab and ("no aplica" not in ctx and "incorrect" not in ctx):
+            alertas_ley.append("Se usó W = P ΔV en un proceso adiabático; debe usarse W = (p₁V₁ − p₂V₂)/(γ − 1) o W = −n C_V ΔT.")
 
-    # 6b. Conducción con A(x)/A(y) o k(r)/k(T) variable sin integración
-    conduccion_var = bool(re.search(r"\b(?:a\([xyr]\)|k\([rt]\)|conductividad\s+variable|area\s+(?:transversal\s+)?variable|piramidal)\b", enun))
-    if conduccion_var and not any(r"\int" in m or r"\ln" in m for m in mates):
-        alertas_ley.append("Conducción con área o conductividad variable requiere separar variables e integrar (no H = kAΔT/L constante).")
+        # 6b. Conducción con A(x)/A(y) o k(r)/k(T) variable sin integración
+        conduccion_var = bool(re.search(r"\b(?:a\([xyr]\)|k\([rt]\)|conductividad\s+variable|area\s+(?:transversal\s+)?variable|piramidal)\b", enun))
+        if conduccion_var and not any(r"\int" in m or r"\ln" in m for m in mates):
+            alertas_ley.append("Conducción con área o conductividad variable requiere separar variables e integrar (no H = kAΔT/L constante).")
 
-    # 6c. Eficiencia térmica imposible e >= 1 o e <= 0
-    for m in mates:
-        m_norm = m.replace("{,}", ",")
-        for mp in _RE_EFIC_PCT.finditer(m_norm):
-            val = float(mp.group(1).replace(",", "."))
-            if val <= 0 or val >= 100:
-                alertas_ley.append(f"Eficiencia térmica fuera de (0 %, 100 %): {val} %.")
-        for md in _RE_EFIC_DEC.finditer(m_norm):
-            val = float(md.group(1).replace(",", "."))
-            if val <= 0 or val >= 1.0:
-                if not re.search(r"e\s*=\s*2[.,]71", m_norm):
-                    alertas_ley.append(f"Eficiencia térmica fuera de (0, 1): {val}.")
+        # 6c. Eficiencia térmica imposible e >= 1 o e <= 0
+        for m in mates:
+            m_norm = m.replace("{,}", ",")
+            for mp in _RE_EFIC_PCT.finditer(m_norm):
+                val = float(mp.group(1).replace(",", "."))
+                if val <= 0 or val >= 100:
+                    alertas_ley.append(f"Eficiencia térmica fuera de (0 %, 100 %): {val} %.")
+            for md in _RE_EFIC_DEC.finditer(m_norm):
+                val = float(md.group(1).replace(",", "."))
+                if val <= 0 or val >= 1.0:
+                    if not re.search(r"e\s*=\s*2[.,]71", m_norm):
+                        alertas_ley.append(f"Eficiencia térmica fuera de (0, 1): {val}.")
 
-    # 6d. Cumplimiento del formulario oficial III Parcial FI2103 II-2026 (toda fórmula derivada debe partir de la hoja base)
-    for falta_form in verificar_origen_formulario(lec):
-        alertas_ley.append(f"Formulario II-2026: {falta_form}.")
+        # 6d. Cumplimiento del formulario oficial III Parcial FI2103 II-2026 (toda fórmula derivada debe partir de la hoja base)
+        for falta_form in verificar_origen_formulario(lec):
+            alertas_ley.append(f"Formulario II-2026: {falta_form}.")
+    else:
+        for falta_form in verificar_origen_formulario_parcial(lec):
+            alertas_ley.append(f"Formulario Parcial {parcial} II-2026: {falta_form}.")
 
     if alertas_ley:
         for al in alertas_ley:
             alertas.append(f"Nivel 6 (Aplicabilidad física): {al}")
         niveles.append(_nivel(6, "Aplicabilidad y formulario II-2026", "alerta", " ".join(alertas_ley)))
     else:
-        niveles.append(_nivel(6, "Aplicabilidad y formulario II-2026", "comprobado", "Leyes coherentes con el régimen físico y derivadas a partir del formulario oficial II-2026."))
+        niveles.append(_nivel(6, "Aplicabilidad y formulario II-2026", "comprobado", f"Leyes coherentes con el régimen físico y derivadas a partir del formulario oficial Parcial {parcial} II-2026."))
 
     # ------------------------------------------------------------------
     # Nivel 7: Signos y convenciones físicas

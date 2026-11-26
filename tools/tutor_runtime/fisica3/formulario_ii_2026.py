@@ -307,7 +307,7 @@ _REGLAS_CELDAS: Tuple[Tuple[str, re.Pattern[str]], ...] = (
     ("F5C3", re.compile(r"M\s*=\s*N_A\s*m|m\s*=\s*\\frac\{M\}\{N_A\}|N\s*=\s*n\s*N_A", re.I)),
     # Fila 6: Trabajo termodinámico
     ("F6C1", re.compile(r"W\s*=\s*\\int|\\int_\{?V_?1\}?\^\{?V_?2\}?\s*p\s*(?:\\,)?\s*dV|\\frac\{p_[A-Za-z0-9]\s*\+\s*p_[A-Za-z0-9]\}\{2\}\s*(?:\\,)?\(V", re.I)),
-    ("F6C2", re.compile(r"W(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*p(?:_\{?[A-Za-z0-9]+\}?)?\s*(?:\\,)?\s*\(\s*V_?[A-Za-z0-9]\s*[-−]\s*V_?[A-Za-z0-9]\s*\)|p\s*(?:\\,)?\s*\\Delta\s*V", re.I)),
+    ("F6C2", re.compile(r"W(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*p(?:_\{?[A-Za-z0-9]+\}?)?\s*(?:\\,)?\s*(?:\\left)?\(\s*V_?[A-Za-z0-9]\s*[-−]\s*V_?[A-Za-z0-9]\s*(?:\\right)?\)|p\s*(?:\\,)?\s*\\Delta\s*V", re.I)),
     ("F6C3", re.compile(r"n\s*R\s*T(?:_?[A-Za-z0-9])?\s*\\ln\s*(?:\\left)?\(", re.I)),
     # Fila 7: Primera ley y C_P = C_V + R
     ("F7C1", re.compile(r"\\Delta\s*U(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*(?:Q(?:_\{?[A-Za-z0-9]+\}?)?|0)\s*[-−]\s*W|Q(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*\\Delta\s*U(?:_\{?[A-Za-z0-9]+\}?)?\s*\+\s*W|W(?:_\{?[A-Za-z0-9]+\}?)?\s*=\s*Q(?:_\{?[A-Za-z0-9]+\}?)?\s*[-−]\s*\\Delta\s*U|primera\s+ley", re.I)),
@@ -319,7 +319,7 @@ _REGLAS_CELDAS: Tuple[Tuple[str, re.Pattern[str]], ...] = (
     ("F8C3", re.compile(r"\\gamma\s*=\s*\\frac\{C_[pP]\}\{C_V\}|\\gamma\s*=\s*(?:\\frac\{5\}\{3\}|\\frac\{7\}\{5\}|5/3|7/5|1\{?,\}?4|1\{?,\}?67)", re.I)),
     # Fila 9: Procesos adiabáticos
     ("F9C1", re.compile(r"\\frac\{1\}\{\\gamma\s*[-−]\s*1\}\s*\(\s*p_?1\s*V_?1|p_1\s*V_1\s*[-−]\s*p_2\s*V_2", re.I)),
-    ("F9C2", re.compile(r"p\s*V\^\\gamma|p_[A-Za-z0-9]\s*V_[A-Za-z0-9]\^\{?(?:\\gamma(?!\s*[-−]\s*1)|1\{?,\}?4)|\\left\(\\frac\{V_[A-Za-z0-9]\}\{V_[A-Za-z0-9]\}\\right\)\^\{?(?:\\gamma(?!\s*[-−]\s*1)|1\{?,\}?4)|\\left\(\\frac\{p_[A-Za-z0-9]\}\{p_[A-Za-z0-9]\}\\right\)\^\{?1/\\gamma", re.I)),
+    ("F9C2", re.compile(r"p\s*V\^\{?\\gamma\}?|p_[A-Za-z0-9]\s*V_[A-Za-z0-9]\^\{?(?:\\gamma(?!\s*[-−]\s*1)|1\{?,\}?4)|\\left\(\\frac\{V_[A-Za-z0-9]\}\{V_[A-Za-z0-9]\}\\right\)\^\{?(?:\\gamma(?!\s*[-−]\s*1)|1\{?,\}?4)|\\left\(\\frac\{p_[A-Za-z0-9]\}\{p_[A-Za-z0-9]\}\\right\)\^\{?1/\\gamma", re.I)),
     ("F9C3", re.compile(r"T\s*V\^\{\\gamma\s*[-−]\s*1\}|T_[A-Za-z0-9]\s*V_[A-Za-z0-9]\^\{\\gamma|\\left\(\\frac\{T_[A-Za-z0-9]\}\{T_[A-Za-z0-9]\}\\right\)\^\{?(?:1/\(\\gamma|2\{?,\}?5|1\{?,\}?5)", re.I)),
     # Fila 10: Máquinas, refrigeradores, Kelvin
     ("F10C1", re.compile(r"e\s*=\s*\\frac\{W|e\s*=\s*1\s*[-−]\s*(?:\\left)?\||e\s*=\s*1\s*[-−]\s*\\frac\{\|Q_[cC]\||e\s*=\s*W/Q_H|e\s*=\s*\\frac\{[\d{,}]+", re.I)),

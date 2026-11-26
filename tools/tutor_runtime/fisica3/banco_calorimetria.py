@@ -306,15 +306,15 @@ def _mezcla_aguas(q: str, m1: float, T1: float, m2: float, T2: float, ops: dict,
         .di(f"Hay más agua {mas}, así que la mezcla se inclina hacia ese lado, pero poquito.", T(f"Más masa de agua **{mas}** → la temperatura queda un poco hacia ese lado de {prom:g} °C."))\
         .por_que("La que tiene más masa cambia menos su temperatura: jala la mezcla hacia ella.")
     L.paso("Comprobarlo con la ecuación")\
-        .di("Lo que cede una lo gana la otra. El específico es el mismo y se cancela.", F(r"\sum Q=0"), M(r"m_1\cancel{c}(T-T_1)+m_2\cancel{c}(T-T_2)=0"))\
-        .di("Abrimos los paréntesis.", M(r"m_1T-m_1T_1+m_2T-m_2T_2=0"))\
+        .di("Partimos de la casilla de calor sensible de la hoja. En un calorímetro ideal la suma de calores es cero y el calor específico se cancela.", F(r"Q=mc\Delta T"), M(r"\sum Q=0\;\Rightarrow\;m_1\cancel{c}(T-T_1)+m_2\cancel{c}(T-T_2)=0"))\
+        .di("Abrimos los paréntesis multiplicando cada masa por la diferencia de temperaturas.", M(r"m_1T-m_1T_1+m_2T-m_2T_2=0"))\
         .di("Dejamos a la izquierda lo que tiene te, y la sacamos de factor común.".replace("tiene te", "tiene " + dice("T", "te")),
             M(r"m_1T+m_2T=m_1T_1+m_2T_2"), M(r"T(m_1+m_2)=m_1T_1+m_2T_2"))\
         .di("La suma de las masas pasa a dividir.", M(r"T=\frac{m_1T_1+m_2T_2}{m_1+m_2}", "f", "azul"))
     L.paso("Comprobarlo con números")\
-        .di("Sustituimos.", M(rf"T=\frac{{({m1:g})({T1:g})+({m2:g})({T2:g})}}{{{m1:g}+{m2:g}}}"))\
-        .di("Multiplicamos arriba y sumamos abajo.", M(rf"T=\frac{{{m1 * T1:g}+{m2 * T2:g}}}{{{m1 + m2:g}}}=\frac{{{tex(m1 * T1 + m2 * T2, 5, sci='no', recorta=True)}}}{{{m1 + m2:g}}}"))\
-        .di("Dividimos.", R(rf"T={tex(Tf, 3)}\ {C}"))
+        .di("Sustituimos cada masa y su temperatura inicial en el promedio ponderado que acabamos de despejar.", M(rf"T=\frac{{({m1:g})({T1:g})+({m2:g})({T2:g})}}{{{m1:g}+{m2:g}}}"))\
+        .di("Multiplicamos cada pareja en el numerador y sumamos las dos masas en el denominador.", M(rf"T=\frac{{{m1 * T1:g}+{m2 * T2:g}}}{{{m1 + m2:g}}}=\frac{{{tex(m1 * T1 + m2 * T2, 5, sci='no', recorta=True)}}}{{{m1 + m2:g}}}"))\
+        .di("Dividimos ambos resultados para confirmar el valor exacto de la temperatura de equilibrio.", R(rf"T={tex(Tf, 3)}\ {C}"))
     revisar_opciones(L, motivos)
     return L.oficial(of, corr).usa(r"\sum Q=0", r"Q=mc\Delta T")
 

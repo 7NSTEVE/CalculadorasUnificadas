@@ -12,6 +12,7 @@ import { Lateral } from './ui/lateral.js';
 import { Inicio } from './ui/inicio.js';
 import { Biblioteca } from './ui/biblioteca.js';
 import { EstudioFormulario } from './ui/formulario_estudio.js';
+import { PreparacionExamenes } from './ui/preparacion.js';
 import { armarAjustes } from './ui/ajustes.js';
 import { banco, cargarBanco, idDeTexto, textoFuente } from './ui/banco.js';
 import { ponerCierre, ponerPregunta } from './ui/cierre.js';
@@ -38,6 +39,7 @@ function verVista(v) {
   $('vista-inicio').hidden = v !== 'inicio';
   $('vista-biblioteca').hidden = v !== 'biblioteca';
   $('vista-formulario').hidden = v !== 'formulario';
+  $('vista-preparacion').hidden = v !== 'preparacion';
   $('vista-pizarra').hidden = v !== 'pizarra';
   $('transporte').hidden = v !== 'pizarra' || !rep.lec;
   $('progreso').hidden = v !== 'pizarra' || !rep.lec || rep.total < 2;
@@ -48,7 +50,9 @@ function verVista(v) {
       ? 'Banco de ejercicios'
       : v === 'formulario'
         ? 'Estudio del formulario oficial'
-        : 'Pizarra del profesor';
+        : v === 'preparacion'
+          ? 'Preparación Extraordinario y Reposición'
+          : 'Pizarra del profesor';
     $('subtitulo-barra').textContent = '';
     $('subtitulo').hidden = true;
   }
@@ -73,14 +77,105 @@ function aPizarra() {
   verVista('pizarra');
 }
 
-async function abrirLeccion(id, { desde = 0 } = {}) {
+let contextoAtencion = { meta: '', corte: '', volverA: '' };
+
+function actualizarResumenAtencion() {
+  const caja = $('resumen-atencion');
+  if (!caja || !rep.lec) return;
+  const lec = rep.lec;
+  const paso = (lec.pasos && lec.pasos[rep.i]) || null;
+  const mapa = lec.formulario_mapa || null;
+  const pasoCids = (mapa && mapa.por_paso && mapa.por_paso[rep.i]) || [];
+  const celdasPorId = new Map(((mapa && mapa.celdas) || []).map((c) => [c.id, c]));
+  const cidsMostrar = pasoCids.length ? pasoCids : ((mapa && mapa.celdas && mapa.celdas[0]) ? [mapa.celdas[0].id] : []);
+  const celdas = cidsMostrar.map((id) => celdasPorId.get(id)).filter(Boolean).slice(0, 2);
+
+  caja.replaceChildren();
+  const cab = document.createElement('div');
+  cab.className = 'atencion-res-cab';
+  const h = document.createElement('strong');
+  h.textContent = 'Retoma el hilo en 3 segundos';
+  const num = document.createElement('span');
+  num.textContent = rep.total ? `Paso ${rep.i + 1} de ${rep.total}` : '';
+  cab.append(h, num);
+  caja.appendChild(cab);
+
+  const dl = document.createElement('dl');
+  dl.className = 'atencion-res-lista';
+
+  const fila = (et, val) => {
+    const dt = document.createElement('dt');
+    dt.textContent = et;
+    const dd = document.createElement('dd');
+    dd.textContent = val;
+    dl.append(dt, dd);
+  };
+
+  fila('1. Meta del ejercicio', contextoAtencion.meta || lec.titulo.replace(/\$([^$]*)\$/g, '$1').replace(/[\\{}]/g, ''));
+  fila('2. Dónde vas ahora', paso ? `Paso ${rep.i + 1} de ${rep.total}: ${paso.titulo}` : 'Inicio del problema');
+
+  const dt3 = document.createElement('dt');
+  dt3.textContent = '3. Fórmula base activa';
+  const dd3 = document.createElement('dd');
+  if (celdas.length) {
+    for (const c of celdas) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `atencion-res-celda form-c-${c.color}`;
+      b.textContent = `${c.id} · ${c.nombre}`;
+      b.addEventListener('click', () => {
+        caja.hidePopover?.();
+        lateral.enfocarFormulario(c.id);
+      });
+      dd3.appendChild(b);
+    }
+  } else {
+    dd3.textContent = 'Razonamiento paso a paso en la pizarra';
+  }
+  dl.append(dt3, dd3);
+  caja.appendChild(dl);
+
+  if (lec.inciso_omitido) {
+    const nota = document.createElement('p');
+    nota.className = 'atencion-res-corte';
+    nota.textContent = `Corte ≤ 20.5: ${lec.inciso_omitido}`;
+    caja.appendChild(nota);
+  }
+
+  const pie = document.createElement('div');
+  pie.className = 'atencion-res-pie';
+  const bSeg = document.createElement('button');
+  bSeg.type = 'button';
+  bSeg.className = 'btn btn-principal';
+  bSeg.textContent = 'Seguir desde aquí';
+  bSeg.addEventListener('click', () => caja.hidePopover?.());
+  pie.appendChild(bSeg);
+
+  if (contextoAtencion.volverA === 'preparacion') {
+    const bVol = document.createElement('button');
+    bVol.type = 'button';
+    bVol.className = 'btn btn-suave';
+    bVol.textContent = 'Volver a preparación';
+    bVol.addEventListener('click', () => {
+      caja.hidePopover?.();
+      acciones.preparacion();
+    });
+    pie.appendChild(bVol);
+  }
+  caja.appendChild(pie);
+}
+
+async function abrirLeccion(id, { desde = 0, corte = '', meta = '', volverA = '' } = {}) {
   asistente.callar();
+  contextoAtencion = { meta, corte, volverA };
   try {
-    const lec = await pedir(`/api/banco/${encodeURIComponent(id)}`, { tiempo: 20000 });
+    const qs = corte ? `?corte=${encodeURIComponent(corte)}` : '';
+    const lec = await pedir(`/api/banco/${encodeURIComponent(id)}${qs}`, { tiempo: 20000 });
     aPizarra();
     await rep.cargar(lec, { desde });
     $('transporte').hidden = false;
     $('progreso').hidden = rep.total < 2;
+    actualizarResumenAtencion();
   } catch (err) {
     aviso(err.estado === 404 ? `${id} todavía no está en el banco.` : 'No pude abrir la lección. Revisa que el motor siga abierto.', { mal: true });
   }
@@ -128,14 +223,28 @@ const acciones = {
     verVista('formulario');
     return estudioFormulario.abrir({ celda: celdaId, modo });
   },
+  preparacion: (tab = null) => {
+    if (rep.estado === 'hablando') rep.pausar();
+    asistente.callar();
+    verVista('preparacion');
+    return preparacion.abrir({ tab });
+  },
   preguntar: () => { aPizarra(); $('pregunta').focus(); },
   cambioVoz: () => { rep.motorLec = null; if (rep.lec && ['hablando', 'pausado'].includes(rep.estado)) rep.irA(rep.i, { reproducir: rep.estado === 'hablando' }); },
   cambioModelo: (m) => enviar({ type: 'UPDATE_SETTINGS', visual_model: m }),
   modelos: () => [
-    ['gemini-2.5-flash', 'Rápida (Gemini 2.5 Flash)'],
-    ['gemini-3.5-flash-lite', 'Ligera (Gemini 3.5 Flash Lite)'],
-    ['gemini-3.5-flash', 'Equilibrada (Gemini 3.5 Flash)'],
-    ['gemini-3.1-pro-preview', 'Profunda (Gemini 3.1 Pro)'],
+    ['gemini-4-hydrogen', 'Gemini 4 Hydrogen · Nuevo', 'Gratis con API key de Google'],
+    ['gemini-3.8-flash', 'Gemini 3.8 Flash · Avanzado', 'Gratis con API key de Google'],
+    ['gemini-3.7-flash', 'Gemini 3.7 Flash', 'Gratis con API key de Google'],
+    ['gemini-3.6-flash', 'Gemini 3.6 Flash · Equilibrado', 'Gratis con API key de Google'],
+    ['gemini-3.5-flash', 'Gemini 3.5 Flash', 'Gratis con API key de Google'],
+    ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite · Rápido', 'Gratis con API key de Google'],
+    ['gemini-3.1-flash-lite', 'Gemini 3.1 Flash-Lite · Ligero', 'Gratis con API key de Google'],
+    ['gemma-4-31b-it', 'Gemma 4 31B · Abierto', 'Gratis con API key de Google'],
+    ['gemma-4-26b-a4b-it', 'Gemma 4 26B MoE · Abierto', 'Gratis con API key de Google'],
+    ['gemini-4-argon', 'Gemini 4 Argon · Pago', 'Solo plan de pago (Paid Tier)'],
+    ['gemini-4-neon', 'Gemini 4 Neon · Pago', 'Solo plan de pago (Paid Tier)'],
+    ['gemini-4-carbon', 'Gemini 4 Carbon · Pago', 'Solo plan de pago (Paid Tier)'],
   ],
   reportar: () => asistente.reportar('Marcado por la persona'),
   guardarCuaderno: () => guardarEnCuaderno(rep, asistente.viva),
@@ -150,6 +259,7 @@ const simulacro = new Simulacro({ el: $('vista-inicio'), acciones });
 const inicio = new Inicio($('vista-inicio'), acciones);
 const biblioteca = new Biblioteca($('vista-biblioteca'), acciones);
 const estudioFormulario = new EstudioFormulario({ el: $('vista-formulario'), acciones });
+const preparacion = new PreparacionExamenes({ el: $('vista-preparacion'), acciones });
 armarAjustes($('ajustes'), acciones);
 bus.on('formulario:estudiar', ({ celdaId = null, modo = null } = {}) => acciones.estudiarFormulario(celdaId, modo));
 
@@ -180,13 +290,15 @@ function pintarProgreso() {
 
 bus.on('leccion:abierta', (lec) => {
   $('titulo').textContent = lec.titulo.replace(/\$([^$]*)\$/g, '$1').replace(/[\\{}]/g, '');
-  $('subtitulo-barra').textContent = [/^([EQ]\d|PR\d|P26-)/.test(lec.id) ? lec.id : '', textoFuente(lec.fuente)].filter(Boolean).join(' · ');
+  $('subtitulo-barra').textContent = [/^([EQ]\d|PR\d|P26-|RP-)/.test(lec.id) ? lec.id : '', textoFuente(lec.fuente)].filter(Boolean).join(' · ');
   $('transporte').hidden = false;
   $('btn-enfoque').hidden = false;
+  actualizarResumenAtencion();
 });
 
 bus.on('leccion:paso', ({ i, total, paso }) => {
   pintarProgreso();
+  actualizarResumenAtencion();
   anunciar(`Paso ${i + 1} de ${total}: ${paso.titulo}`);
   $('btn-despacio').disabled = false;
   $('btn-origen').hidden = !(paso.origen && paso.origen.length) && !(rep.lec.formulas && rep.lec.formulas.length);
@@ -336,6 +448,7 @@ bus.on('conexion', ({ estado }) => {
   $('punto').className = `punto ${c}`;
   $('estado-txt').textContent = t;
   if (estado === 'conectado') {
+    if (ajustes.modelo) enviar({ type: 'UPDATE_SETTINGS', visual_model: ajustes.modelo });
     if (conectadoAntes && !banco.listo) cargarBanco();
     conectadoAntes = true;
   }
@@ -379,4 +492,4 @@ const pedida = new URLSearchParams(window.location.search).get('leccion');
 })();
 
 /* Gancho de pruebas: no se usa en la aplicación */
-window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario };
+window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario, preparacion };

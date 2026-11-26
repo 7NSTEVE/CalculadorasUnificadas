@@ -63,13 +63,19 @@ class TestBanco158YTeoria(unittest.TestCase):
                        | {f"PR2-D{i}" for i in range(1, 13)})
         # Blindaje II-2026 para las casillas nuevas del formulario (F1C3, F12C2, F5C3, F14C2)
         esperados_b = {"P26-1", "P26-2", "P26-3", "P26-4", "P26-5"}
+        # Reposición Parcial 1 y Parcial 2 (7 ondas + 7 fluidos)
+        esperados_rp = {
+            "RP-23II-1", "RP-24I-1", "RP-24II-1", "RP-25II-1", "RP-26I-1", "RP-26I-2", "RP-26I-7",
+            "RP-23II-2", "RP-24I-2", "RP-24II-2", "RP-25II-2", "RP-26I-3", "RP-26I-4", "RP-26I-8",
+        }
 
         self.assertTrue(esperados_e.issubset(ids), f"Faltan E: {sorted(esperados_e - ids)}")
         self.assertTrue(esperados_q.issubset(ids), f"Faltan Q: {sorted(esperados_q - ids)}")
         self.assertTrue(esperados_t.issubset(ids), f"Faltan T: {sorted(esperados_t - ids)}")
         self.assertTrue(esperados_p.issubset(ids), f"Faltan prácticas: {sorted(esperados_p - ids)}")
         self.assertTrue(esperados_b.issubset(ids), f"Faltan blindaje II-2026: {sorted(esperados_b - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 5 + 4)  # + T-MAT1..3, T-CONO; blindaje P26-1..5
+        self.assertTrue(esperados_rp.issubset(ids), f"Faltan reposición P1/P2: {sorted(esperados_rp - ids)}")
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14)  # + T-MAT1..3, T-CONO; blindaje P26-1..5; reposición 14 RP-*
 
         faltas = {}
         for lid in sorted(ids):
@@ -690,6 +696,10 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             mapear_formulario_leccion,
             verificar_origen_formulario,
         )
+        from tools.tutor_runtime.fisica3.formularios_p1_p2 import (
+            catalogo_formulario_parcial,
+            mapear_formulario_por_parcial,
+        )
         from tools.tutor_runtime.verificador_fisico import auditar_leccion
 
         # 1. Catálogo oficial exacto de 42 celdas (14×3) con geometría normalizada
@@ -700,15 +710,32 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             x0, y0, x1, y1 = c["caja"]
             self.assertTrue(0.0 <= x0 < x1 <= 1.0 and 0.0 <= y0 < y1 <= 1.0, c)
 
-        # 2. Auditoría estricta de las 204 lecciones del banco (0 violaciones, 0 alertas físicas, 42/42 casillas)
+        cajas_por_parcial = {
+            1: {c["id"] for c in catalogo_formulario_parcial(1)["celdas"]},
+            2: {c["id"] for c in catalogo_formulario_parcial(2)["celdas"]},
+            3: set(CAJAS_CELDAS.keys()),
+        }
+
+        # 2. Auditoría estricta de todas las lecciones del banco (0 violaciones, 0 alertas físicas, 42/42 casillas P3)
         desarrollos = 0
         cobertura: dict[str, list[str]] = {c["id"]: [] for c in cat["celdas"]}
         cobertura_des: dict[str, list[str]] = {c["id"]: [] for c in cat["celdas"]}
         for lid in registro.ids():
             j = registro.obtener(lid).a_json()
-            self.assertEqual(verificar_origen_formulario(j), [], f"{lid} usa atajo sin derivar")
+            parcial = int(j.get("parcial") or 3)
             aud = auditar_leccion(j)
             self.assertEqual(aud["alertas"], [], f"{lid} tiene alertas físicas: {aud['alertas']}")
+            if parcial in (1, 2):
+                mapa = mapear_formulario_por_parcial(j)
+                self.assertEqual(len(mapa["por_paso"]), len(j.get("pasos") or []), lid)
+                self.assertGreaterEqual(len(mapa["celdas"]), 1, f"{lid} (P{parcial}) sin celdas")
+                for c in mapa["celdas"]:
+                    self.assertIn(c["id"], cajas_por_parcial[parcial])
+                    self.assertIn(c["color"], COLORES_FORMULARIO)
+                if j.get("tipo") not in ("seleccion", "teoria"):
+                    desarrollos += 1
+                continue
+            self.assertEqual(verificar_origen_formulario(j), [], f"{lid} usa atajo sin derivar")
             mapa = mapear_formulario_leccion(j)
             self.assertEqual(len(mapa["por_paso"]), len(j.get("pasos") or []), lid)
             cids_lec = {c["id"] for c in mapa["celdas"]}
@@ -905,6 +932,185 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             headers={"Origin": "https://evil.example"},
         )
         self.assertEqual(r_bad_ori.status_code, 403)
+
+    def test_catalogo_modelos_gemini_4_y_failover_sin_legado_2_5(self) -> None:
+        from tools.tutor_runtime.gemini_engines import (
+            LIVE_AUDIO_MODEL_PRIMARY,
+            TTS_MODEL_CHAIN,
+            VISUAL_MODEL_CHAIN,
+            VISUAL_MODEL_DEFAULT,
+            normalizar_modelo_visual,
+        )
+
+        self.assertEqual(VISUAL_MODEL_DEFAULT, "gemini-4-hydrogen")
+        self.assertEqual(VISUAL_MODEL_CHAIN[0], "gemini-4-hydrogen")
+        for esperado in ("gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemma-4-31b-it"):
+            self.assertIn(esperado, VISUAL_MODEL_CHAIN)
+        for m in VISUAL_MODEL_CHAIN + TTS_MODEL_CHAIN:
+            self.assertFalse(m.startswith("gemini-2.5"), f"Modelo legado 2.5 en cadena: {m}")
+        self.assertEqual(LIVE_AUDIO_MODEL_PRIMARY, "gemini-3.8-live")
+
+        # Migración automática de modelos obsoletos y rechazo de entradas inválidas
+        self.assertEqual(normalizar_modelo_visual("gemini-2.5-flash"), "gemini-4-hydrogen")
+        self.assertEqual(normalizar_modelo_visual("models/gemini-3.8-flash"), "gemini-3.8-flash")
+        self.assertEqual(normalizar_modelo_visual("  "), "gemini-4-hydrogen")
+        self.assertEqual(normalizar_modelo_visual("../../evil"), "gemini-4-hydrogen")
+
+        app_js = (REPO_ROOT / "assets" / "cuadernu" / "tutor_web" / "js" / "app.js").read_text(encoding="utf-8")
+        api_js = (REPO_ROOT / "assets" / "cuadernu" / "tutor_web" / "js" / "nucleo" / "api.js").read_text(encoding="utf-8")
+        for esperado in ("gemini-4-hydrogen", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemma-4-31b-it", "gemini-4-carbon"):
+            self.assertIn(esperado, app_js)
+        self.assertIn("modelo: 'gemini-4-hydrogen'", api_js)
+        self.assertNotIn("gemini-2.5-flash", app_js)
+
+    def test_preparacion_extraordinario_42_reposicion_22_y_corte_20_5(self) -> None:
+        from tools.tutor_runtime.fisica3.formularios_p1_p2 import (
+            catalogo_formulario_parcial,
+            mapear_formulario_por_parcial,
+        )
+        from tools.tutor_runtime.fisica3.preparacion_examenes import preparacion_completa
+        from tools.tutor_runtime.verificador_fisico import auditar_leccion
+
+        # 1. Catálogos de formularios P1 y P2 con cajas normalizadas válidas
+        cat1 = catalogo_formulario_parcial(1)
+        cat2 = catalogo_formulario_parcial(2)
+        self.assertEqual(cat1["total"], 38)
+        self.assertEqual(cat2["total"], 27)
+        for cat in (cat1, cat2):
+            for c in cat["celdas"]:
+                x0, y0, x1, y1 = c["caja"]
+                self.assertTrue(0.0 <= x0 < x1 <= 1.0 and 0.0 <= y0 < y1 <= 1.0, c)
+
+        # 2. Estructura exacta Extraordinario (42 activos + 4 excluidos) y Reposición (22 = 7 P1 + 7 P2 + 8 P3)
+        prep = preparacion_completa()
+        extra = prep["extraordinario"]
+        repos = prep["reposicion"]
+        self.assertEqual(extra["total_activos"], 42)
+        self.assertEqual(extra["total_excluidos"], 4)
+        self.assertEqual(extra["total_historico"], 46)
+
+        ids_extra = [it["id"] for b in extra["bloques"] for it in b["items"]]
+        self.assertEqual(len(ids_extra), 42)
+        self.assertEqual(len(set(ids_extra)), 42)
+        excl_ids = {e["id"] for e in extra["excluidos_corte"]}
+        self.assertEqual(excl_ids, {"Q132", "Q023", "Q130", "Q125"})
+        self.assertTrue(excl_ids.isdisjoint(ids_extra))
+
+        for b in extra["bloques"]:
+            self.assertTrue(3 <= len(b["items"]) <= 5, f"Bloque {b['id']} fuera de tamaño pasos cortos: {len(b['items'])}")
+            for it in b["items"]:
+                self.assertTrue(it["meta_1_linea"])
+                cal = it["calentamiento"]
+                self.assertEqual(len(cal["opciones"]), 3)
+                self.assertIn(cal["correcta"], (0, 1, 2))
+                self.assertTrue(cal["explica"])
+
+        ids_repos = [it["id"] for b in repos["bloques"] for it in b["items"]]
+        self.assertEqual(repos["total"], 22)
+        self.assertEqual(len(ids_repos), 22)
+        self.assertEqual(len(set(ids_repos)), 22)
+        por_parcial = {1: [], 2: [], 3: []}
+        for b in repos["bloques"]:
+            for it in b["items"]:
+                por_parcial[it["parcial"]].append(it["id"])
+        self.assertEqual(len(por_parcial[1]), 7)
+        self.assertEqual(len(por_parcial[2]), 7)
+        self.assertEqual(len(por_parcial[3]), 8)
+
+        # 3. Las 14 lecciones nuevas RP-* pasan DSL, auditoría física, cotejo oficial, mapeo P1/P2 y TeX en Node.js
+        rp_ids = por_parcial[1] + por_parcial[2]
+        self.assertEqual(len(rp_ids), 14)
+        exprs: list[tuple[str, str]] = []
+        for lid in rp_ids:
+            lec = registro.obtener(lid)
+            self.assertEqual(revisar(lec), [], f"Faltas DSL en {lid}")
+            j = lec.a_json()
+            aud = auditar_leccion(j)
+            self.assertEqual(aud["alertas"], [], f"Alertas físicas en {lid}: {aud['alertas']}")
+            self.assertIsNotNone(j["cotejo"], f"{lid} sin cotejo oficial")
+            self.assertEqual(j["cotejo"]["estado"], "coincide", f"{lid} difiere de la oficial: {j['cotejo']}")
+            mapa = mapear_formulario_por_parcial(j)
+            self.assertEqual(mapa["parcial"], j["parcial"])
+            self.assertGreaterEqual(len([c for c in mapa["celdas"] if not c["es_constante"]]), 1, lid)
+            for p in j["pasos"]:
+                for tr in p["tramos"]:
+                    for acc in tr["acc"]:
+                        if acc.get("a") == "mate" and acc.get("tex"):
+                            exprs.append((f"{lid}:p{p['n']}", acc["tex"]))
+            for r_item in j["respuestas"]:
+                if r_item.get("tex"):
+                    exprs.append((f"{lid}:resp", r_item["tex"]))
+
+        tex_js_uri = (REPO_ROOT / "assets" / "cuadernu" / "tutor_web" / "js" / "mate" / "tex.js").as_uri()
+        js_code = (
+            f"import {{ analizarTex }} from {json.dumps(tex_js_uri)};\n"
+            "import fs from 'node:fs';\n"
+            "const items = JSON.parse(fs.readFileSync(0, 'utf8'));\n"
+            "const bad = items.map(([id, t]) => [id, t, analizarTex(t).desconocidos || []]).filter(([, , d]) => d.length > 0);\n"
+            "console.log(JSON.stringify({ total: items.length, bad }));\n"
+        )
+        proc = subprocess.run(
+            [_node_cmd(), "--input-type=module", "-e", js_code],
+            input=json.dumps(exprs, ensure_ascii=False),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=20,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        res_tex = json.loads(proc.stdout)
+        self.assertEqual(res_tex["bad"], [], f"TeX desconocido en RP-*: {res_tex['bad']}")
+
+        # 4. Endpoints HTTP: /api/preparacion, /api/banco/{id}?corte=20.5, /api/formulario/p1|p2/hoja.png + seguridad
+        app = create_app({"session_token": "tok-prep-test"})
+        client = TestClient(app)
+        hdrs = {"Origin": "http://127.0.0.1:8765"}
+
+        self.assertEqual(client.get("/api/preparacion").status_code, 401)
+        self.assertEqual(client.get("/api/preparacion?token=tok-prep-test", headers={"Origin": "https://evil.example"}).status_code, 403)
+        r_prep = client.get("/api/preparacion?token=tok-prep-test", headers=hdrs)
+        self.assertEqual(r_prep.status_code, 200)
+        self.assertEqual(r_prep.json()["extraordinario"]["total_activos"], 42)
+        self.assertEqual(r_prep.json()["reposicion"]["total"], 22)
+
+        # Corte quirúrgico ?corte=20.5 en los 5 problemas mixtos (Q092, Q097, Q128, Q108, Q127)
+        for q_mix in ("Q092", "Q097", "Q128", "Q108"):
+            r_cut = client.get(f"/api/banco/{q_mix}?corte=20.5&token=tok-prep-test", headers=hdrs)
+            self.assertEqual(r_cut.status_code, 200)
+            body = r_cut.json()
+            self.assertEqual(body.get("corte_aplicado"), "20.5")
+            self.assertTrue(body.get("inciso_omitido"))
+            self.assertEqual((body.get("formulario_mapa") or {}).get("fuera_de_hoja"), [], f"{q_mix} aún tiene fuera_de_hoja")
+            pasos_txt = " ".join((p.get("titulo") or "") + " " + (p.get("habla") or "") for p in body["pasos"])
+            self.assertNotRegex(pasos_txt, r"Carnot|entrop[íi]a|\\Delta\s*S", f"{q_mix} filtró incompleto")
+            resp_txt = " ".join(str(x.get("tex") or "") for x in body["respuestas"])
+            self.assertNotRegex(resp_txt, r"Carnot|\\Delta\s*S", f"{q_mix} mantuvo respuesta > 20.5")
+            self.assertGreaterEqual(len(body["pasos"]), 8, f"{q_mix} perdió pasos <= 20.5")
+
+        r_127 = client.get("/api/banco/Q127?corte=20.5&token=tok-prep-test", headers=hdrs)
+        self.assertEqual(r_127.status_code, 200)
+        b127 = r_127.json()
+        self.assertEqual(len(b127["pasos"]), 2)
+        self.assertNotRegex(b127["pasos"][0]["titulo"] + " " + b127["pasos"][1]["titulo"], r"entrop[íi]a")
+
+        # Hojas PNG oficiales de Parcial 1 y Parcial 2 + seguridad + 404 en parcial inválido
+        for pnum in (1, 2):
+            self.assertEqual(client.get(f"/api/formulario/p{pnum}/hoja.png").status_code, 401)
+            r_png = client.get(f"/api/formulario/p{pnum}/hoja.png?token=tok-prep-test", headers=hdrs)
+            self.assertEqual(r_png.status_code, 200)
+            self.assertEqual(r_png.headers.get("content-type"), "image/png")
+            self.assertTrue(r_png.content.startswith(b"\x89PNG\r\n\x1a\n"))
+            self.assertGreater(len(r_png.content), 10000)
+        self.assertEqual(client.get("/api/formulario/p9/hoja.png?token=tok-prep-test", headers=hdrs).status_code, 404)
+
+        # Recorte real y hoja P1/P2 al abrir RP-23II-1 y RP-24I-2 vía HTTP
+        for rid, p_exp in (("RP-23II-1", 1), ("RP-24I-2", 2)):
+            r_rp = client.get(f"/api/banco/{rid}?token=tok-prep-test", headers=hdrs)
+            self.assertEqual(r_rp.status_code, 200)
+            jb = r_rp.json()
+            self.assertEqual(jb["formulario_mapa"]["parcial"], p_exp)
+            self.assertEqual(jb["formulario_mapa"]["hoja_url"], f"/api/formulario/p{p_exp}/hoja.png")
+            self.assertTrue(jb.get("recorte") and jb["recorte"].get("url"), f"{rid} sin recorte PDF")
 
 
 if __name__ == "__main__":

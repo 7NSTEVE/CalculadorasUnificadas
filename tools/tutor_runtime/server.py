@@ -42,7 +42,9 @@ from tools.tutor_runtime.gemini_engines import (
     AlignedSpanishTts,
     GeminiLiveVoiceBridge,
     GeminiVisualDirector,
+    VISUAL_MODEL_DEFAULT,
     estimate_cues_fallback,
+    normalizar_modelo_visual,
     parse_cue_markup,
 )
 from tools.tutor_runtime.pdf_rag import (
@@ -179,7 +181,7 @@ class TutorRuntimeContext:
 
         self.visual_director = GeminiVisualDirector(
             api_key=visual_key,
-            primary_model=str(bootstrap.get("visual_model") or "gemini-2.5-flash"),
+            primary_model=normalizar_modelo_visual(str(bootstrap.get("visual_model") or VISUAL_MODEL_DEFAULT)),
         )
         self.audio_api_key = audio_key
         self.live_audio_model = str(bootstrap.get("live_audio_model") or "gemini-3.8-live")
@@ -1556,7 +1558,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
                     if "tts_voice" in evt and isinstance(evt["tts_voice"], str):
                         tts_voice = evt["tts_voice"]
                     if "visual_model" in evt and isinstance(evt["visual_model"], str):
-                        ctx.visual_director.primary_model = evt["visual_model"]
+                        ctx.visual_director.primary_model = normalizar_modelo_visual(evt["visual_model"])
                     await send_json_safe({"type": "SETTINGS_UPDATED", "speech_enabled": speech_enabled, "speech_rate": speech_rate, "visual_model": ctx.visual_director.primary_model})
 
                 elif etype == "CLIENT_INTERRUPT":

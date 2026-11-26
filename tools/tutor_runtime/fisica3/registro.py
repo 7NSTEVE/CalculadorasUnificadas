@@ -28,6 +28,8 @@ MODULOS = [
     "banco_entropia",
     "banco_practica",
     "banco_blindaje_ii_2026",
+    "banco_reposicion_p1",
+    "banco_reposicion_p2",
     "teoria",
 ]
 
@@ -121,6 +123,7 @@ _GRUPO_POR_CODIGO = {
     "6.7": "primera_ley", "6.8": "primera_ley", "6.9": "primera_ley", "6.10": "primera_ley",
     "6.11": "ciclos", "6.12": "entropia", "6.13": "entropia", "6.14": "maquinas", "6.15": "maquinas",
     "6.16": "entropia", "6.17": "entropia",
+    "ondas": "ondas", "fluidos": "fluidos",
 }
 
 
@@ -135,7 +138,7 @@ def resumen(id: str) -> Optional[Dict[str, Any]]:
         return None
     return {
         "id": lec.id, "titulo": lec.titulo, "tema": grupo(lec.tema), "codigo": lec.tema, "tipo": lec.tipo, "nivel": lec.nivel,
-        "fuente": lec.fuente, "pasos": len(lec.pasos), "claves": lec.claves, "aviso": bool(lec.aviso),
+        "parcial": lec.parcial, "fuente": lec.fuente, "pasos": len(lec.pasos), "claves": lec.claves, "aviso": bool(lec.aviso),
         "min": minutos(lec),
     }
 
