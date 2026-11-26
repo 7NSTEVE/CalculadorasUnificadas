@@ -255,6 +255,8 @@ def p26_3() -> Leccion:
     n_molec = n_mol * NA
     v_rms_M = math.sqrt(3.0 * R_GAS * tk / M_mol)
     v_rms_m = math.sqrt(3.0 * KB * tk / m_molec)
+    # La comprobación con Boltzmann se hace con lo que se ve escrito: k_B = 1,38e-23 y m con cuatro cifras
+    v_rms_kb_vis = math.sqrt(3.0 * 1.38e-23 * tk / float(f"{m_molec:.3e}"))
     k_med = 1.5 * KB * tk
     k_tot = 1.5 * n_mol * R_GAS * tk
 
@@ -299,15 +301,17 @@ def p26_3() -> Leccion:
             F(r"M=N_A m\;\Rightarrow\;m=\frac{M}{N_A}"),
             M(rf"m=\frac{{0{{,}}0280}}{{6{{,}}022\times 10^{{23}}}}={tex(m_molec, 4, u='kg')}"))\
         .di("Y el total de moléculas es moles por número de Avogadro.",
-            M(rf"N=nN_A=({tex(n_mol, 4)})(6{{,}}022\times 10^{{23}})={tex(n_molec, 3)}"),
+            M(rf"N=nN_A=({tex(n_mol, 5)})(6{{,}}022\times 10^{{23}})={tex(n_molec, 3)}"),
             R(rf"m={tex(m_molec, 3, u='kg')}\qquad N={tex(n_molec, 3)}\ \text{{moléculas}}", "rb"))
 
     L.paso("c) Rapidez cuadrática media por ambas formas")\
         .di("La hoja trae dos expresiones equivalentes para la rapidez cuadrática media: con erre y masa molar, o con Boltzmann y masa molecular.",
             F(r"v_{\text{rms}}=\sqrt{\frac{3k_B T}{m}}=\sqrt{\frac{3RT}{M}}"),
             M(rf"v_{{\text{{rms}}}}=\sqrt{{\frac{{3(8{{,}}314)({tex(tk, 5)})}}{{0{{,}}0280}}}}=\sqrt{{{tex(3 * R_GAS * tk / M_mol, 5, sci='no')}}}={tex(v_rms_M, 4)}\ \text{{m/s}}"))\
-        .di("Comprobamos con la constante de Boltzmann de la hoja: da el mismo resultado.",
-            M(rf"v_{{\text{{rms}}}}=\sqrt{{\frac{{3(1{{,}}38\times 10^{{-23}})({tex(tk, 5)})}}{{{tex(m_molec, 4)}}}}}={tex(v_rms_m, 4)}\ \text{{m/s}}"),
+        .di("Comprobamos con la constante de Boltzmann de la hoja.",
+            M(rf"v_{{\text{{rms}}}}=\sqrt{{\frac{{3(1{{,}}38\times 10^{{-23}})({tex(tk, 5)})}}{{{tex(m_molec, 4)}}}}}"),
+            M(rf"v_{{\text{{rms}}}}={tex(v_rms_kb_vis, 4)}\ \text{{m/s}}"))\
+        .di("Sale casi lo mismo. La décima de diferencia viene de que la hoja redondea la constante de Boltzmann a tres cifras. Con tres cifras, las dos formas dan lo mismo.",
             R(rf"v_{{\text{{rms}}}}={tex(v_rms_M, 3)}\ \text{{m/s}}", "rc"))
 
     L.paso("d) Energía cinética molecular y total")\

@@ -51,7 +51,7 @@
 
 - **Coincidencias exactas verificadas:** `117` ejercicios coinciden dentro de tolerancia con las respuestas publicadas en los exámenes 2023–2026 y el folleto oficial.
 - **Discrepancias reales documentadas (errores detectados en los solucionarios publicados — nunca ocultados):**
-  1. **`Q045` (`25-II-E` p. 6):** El solucionario oficial usó el volumen del cilindro ($\pi r^2 L$) en lugar del área lateral ($2\pi r L$). Resultado físico verificado: `223,7 kW/m`, `671,1 MJ`, `88,6 °C` (frente a `6202`, `18,61 MJ`, `80,0 °C` publicados).
+  1. **`Q045` (`25-II-E` p. 6):** El solucionario oficial usó el volumen del cilindro ($\pi r^2 L$) en lugar del área lateral ($2\pi r L$). Resultado físico verificado: `223,7 kW/m`, `671,0 MJ`, `88,6 °C` (frente a `6202`, `18,61 MJ`, `80,0 °C` publicados).
   2. **`Q050` (`25-II-R` p. 3):** El solucionario omitió el factor $1/1000$ de $du = 1000\,dy$, desplazando $H$ y $Q$ por un factor de $1000$ (`8,394 MW` y `2,518 GJ` frente a `8,394 kW` y `2,518 MJ`; $T(d/2) = 197,6\,^\circ\text{C}$ coincide).
   3. **`Q060` (`26-F` 3.4-7):** El folleto imprimió `36,2 W` al omitir el factor `2` de $\int r^{-3}\,dr = -1/(2r^2)$ (el mismo problema resuelto en `3.3-6` / `Q057` da `72,4 W`; `84 °C` coincide).
   4. **`Q061` (`26-F` 3.3-9):** El folleto sustituyó $A = 3{,}25\text{ m}^2$ en lugar de $3{,}25\text{ cm}^2 = 3{,}25\times 10^{-4}\text{ m}^2$ (`7,80 W` frente a `78 220 W`).

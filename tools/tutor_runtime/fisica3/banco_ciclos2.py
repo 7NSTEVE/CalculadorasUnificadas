@@ -143,8 +143,9 @@ def q109() -> Leccion:
     L.paso("B) Estado B con la adiabática")\
         .di("B tiene el volumen de A y está en la misma adiabática que C. La hoja da la relación de presión y volumen.", V(foco="BC"), F(r"pV^\gamma=\text{cte}"))\
         .di("La igualamos entre B y C y despejamos pe be.".replace("pe be", dice("p_B", "pe be")), M(r"p_BV_B^{\gamma}=p_CV_C^{\gamma}\;\Rightarrow\;p_B=p_C\left(\frac{V_C}{V_B}\right)^{\gamma}"))\
-        .di("Sustituimos en atmósferas: la razón de volúmenes es un tercio.", M(rf"p_B=4{{,}}30\left(\frac{{3{{,}}00}}{{9{{,}}00}}\right)^{{1{{,}}40}}=4{{,}}30\,({tex((1.0 / 3.0) ** 1.4, 4)})={tex(pb / ATM, 4, u='atm')}"))\
-        .di("En pascales.", M(rf"p_B=({tex(pb / ATM, 4)})(101\,325)={tex(pb, 4, u='Pa')}"))
+        .di("Sustituimos en atmósferas: la razón de volúmenes es un tercio. Guardamos seis cifras, porque luego se multiplica por un número grande.",
+            M(rf"p_B=4{{,}}30\left(\frac{{3{{,}}00}}{{9{{,}}00}}\right)^{{1{{,}}40}}=4{{,}}30\,({tex((1.0 / 3.0) ** 1.4, 6)})={tex(pb / ATM, 6, u='atm')}"))\
+        .di("En pascales.", M(rf"p_B=({tex(pb / ATM, 6)})(101\,325)={tex(pb, 4, u='Pa')}"))
     estado_T(L.paso("B) Temperatura de B"), g, "B", voz="Y la temperatura de B con el gas ideal.", dec=0)
     explica_proceso(L.paso("C1) Enfriamiento isocórico A→B"), g, "A", "B", "isocorico", foco="AB", dec_T=0)
     explica_proceso(L.paso("C2) Compresión adiabática B→C"), g, "B", "C", "adiabatico", foco="BC", dec_T=0)
@@ -372,7 +373,7 @@ def q114() -> Leccion:
     L.paso("(a) Estado 3: expansión adiabática")\
         .di("De 2 a 3 no hay calor. La hoja da la relación de presión y volumen en la adiabática.", V(foco="23"), F(r"pV^\gamma=\text{cte}"))\
         .di("La igualamos entre 2 y 3 y despejamos pe tres.".replace("pe tres", dice("p_3", "pe tres")), M(r"p_3V_3^{\gamma}=p_2V_2^{\gamma}\;\Rightarrow\;p_3=p_2\left(\frac{V_2}{V_3}\right)^{\gamma}"))\
-        .di("Como ve tres es ve uno, la razón de volúmenes es un medio.".replace("ve tres es ve uno", dice("V₃ = V₁", "ve tres es ve uno")), M(rf"p_3=(2{{,}}00\times10^5)\left(\frac{{1}}{{2}}\right)^{{1{{,}}40}}=(2{{,}}00\times10^5)({tex(0.5 ** g.g, 4)})"))\
+        .di("Como ve tres es ve uno, la razón de volúmenes es un medio.".replace("ve tres es ve uno", dice("V₃ = V₁", "ve tres es ve uno")), M(rf"p_3=(2{{,}}00\times10^5)\left(\frac{{1}}{{2}}\right)^{{1{{,}}40}}=(2{{,}}00\times10^5)({tex(0.5 ** g.g, 5)})"))\
         .di(f"La presión de 3 es {nu(p3, 'Pa', 3)}.", M(rf"p_3={tex(p3, 3, u='Pa')}", "p3", "verde"))
     estado_T(L.paso("(a) Temperatura de 3"), g, "3", voz="Y con el gas ideal, la temperatura de 3.")
     explica_proceso(L.paso("(b) Proceso 1→2 (isobárico)"), g, "1", "2", "isobarico", foco="12", dec_T=1)
@@ -421,7 +422,7 @@ def q115() -> Leccion:
         .di("De ce a de no hay calor. La hoja da la relación de temperatura y volumen.".replace("ce a de", dice("c a d", "ce a de")), V(foco="cd"), F(r"TV^{\gamma-1}=\text{cte}"))\
         .di("Y de vuelve a la isoterma de doscientos noventa y tres kelvin.".replace("Y de vuelve", dice("Y d vuelve", "Y de vuelve")), M(r"T_d=T_a=293\ \text{K}"))\
         .di("Igualamos entre c y d y despejamos el volumen de d.", M(r"T_dV_d^{\gamma-1}=T_cV_c^{\gamma-1}\;\Rightarrow\;V_d=V_c\left(\frac{T_c}{T_d}\right)^{\frac{1}{\gamma-1}}"))\
-        .di("El exponente es uno entre dos tercios: uno coma cinco.", M(r"\frac{1}{\gamma-1}=\frac{1}{5/3-1}=\frac{3}{2}=1{,}5"))\
+        .di("El exponente es uno entre dos tercios: uno coma cinco.", M(r"\frac{1}{\gamma-1}=\frac{1}{5/3-1}=\frac{1}{2/3}=\frac{3}{2}=1{,}5"))\
         .di("Sustituimos.", M(rf"V_d=(3)\left(\frac{{700}}{{293}}\right)^{{1{{,}}5}}=(3)({tex((700.0 / 293.0) ** 1.5, 4)})"), M(rf"V_d={tex(vd, 4, u='m^3')}", "vd", "verde"))
     estado_p(L.paso("(a) Presión de d"), g, "d", voz="Y la presión de d con el gas ideal.", dec_T=0)
     explica_proceso(L.paso("(a) Proceso a→b (isobárico)"), g, "a", "b", "isobarico", foco="ab", dec_T=0)
@@ -451,8 +452,10 @@ def q115() -> Leccion:
 @leccion("Q116")
 def q116() -> Leccion:
     g = Gas(3.00, "dia")
-    # a->b isobárico: Va=1.0, Vb=1.5, Tb=700 => Ta = 700/1.5
-    ta = 700.0 * (1.0 / 1.5)
+    # a->b isobárico: Va=1.0, Vb=1.5, Tb=700 => Ta = 700/1.5 = 466,666...
+    # Se usa 466,67 K, como se escribe: n·C_V·ΔT con el valor exacto cae justo en ...,5 J y la última cifra
+    # escrita no saldría con calculadora
+    ta = round(700.0 * (1.0 / 1.5), 2)
     g.pone("a", v=1.0, t=ta)
     g.pone("b", v=1.5, t=700.0)
     vc = 1.5 * (700.0 / ta) ** (1.0 / (g.g - 1.0))

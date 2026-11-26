@@ -482,7 +482,7 @@ def pr1_6() -> Leccion:
         .di("La temperatura no cambia, así que ene erre te sale de la integral. Regla dos: uno entre ve da logaritmo.".replace("ene erre te", dice("nRT", "ene erre te")).replace("entre ve", "entre " + dice("V", "ve")),
             M(r"W_{AB}=nRT\Big[\ln V\Big]_{V_A}^{V_B}=nRT\left(\ln V_B-\ln V_A\right)=nRT\ln\left(\frac{V_B}{V_A}\right)"),
             NOTA("Regla 2 de **T-MAT2** y la resta de logaritmos de **T-MAT3**. Es la casilla isotérmica de la hoja."))\
-        .di("Sustituimos.", M(rf"W_{{AB}}=(2{{,}}00)(8{{,}}314)(400)\ln 3=({tex(2.0 * 8.314 * 400.0, 4)})({tex(math.log(3.0), 4)})"),
+        .di("Sustituimos. Con cinco cifras en cada factor, para que el producto salga justo.", M(rf"W_{{AB}}=(2{{,}}00)(8{{,}}314)(400)\ln 3=({tex(2.0 * 8.314 * 400.0, 5)})({tex(math.log(3.0), 5)})"),
             M(rf"W_{{AB}}={tex(rab['W'], 4)}\ \text{{J}}", "wab", "verde"))
     L.paso("2) Trabajo de B a C integrando")\
         .di("En la adiabática la presión es una constante dividida entre el volumen elevado a gama.", V(foco="BC"),

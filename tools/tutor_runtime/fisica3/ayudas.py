@@ -231,7 +231,21 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
     return r
 
 
-def tabla_quw(res: Sequence[Tuple[str, Dict[str, float]]], *, cifras: int = 4, u: str = "J", f: float = 1.0) -> Dict[str, Any]:
+def tabla_quw(res: Sequence[Tuple[str, Dict[str, float]]], *, cifras: int = 4, u: str = "J", f: float = 1.0,
+              d: Optional[int] = None) -> Dict[str, Any]:
+    """Tabla Q, W, ΔU de cada proceso y del ciclo.
+
+    Con d (decimales fijos) cada casilla se escribe ya redondeada y la fila del ciclo es la suma exacta de lo
+    escrito: así coincide con las sumas que se hacen debajo."""
+    if d is not None:
+        def cas(v: float) -> str:
+            r = _rd(v * f, d)
+            return "$0$" if r == 0 else f"${tex(r, dec=d)}$"
+        filas = [[k, cas(r["Q"]), cas(r["W"]), cas(r["U"])] for k, r in res]
+        tq = sum(_rd(r["Q"] * f, d) for _, r in res)
+        tw = sum(_rd(r["W"] * f, d) for _, r in res)
+        filas.append(["**Ciclo**", f"${tex(tq, dec=d)}$", f"${tex(tw, dec=d)}$", "$0$"])
+        return TABLA(["Proceso", f"$Q$ ({u})", f"$W$ ({u})", rf"$\Delta U$ ({u})"], filas, resaltar=[[len(filas) - 1, None]])
     filas = [[k, f"${tex(r['Q'] * f, cifras)}$", f"${tex(r['W'] * f, cifras)}$", f"${tex(r['U'] * f, cifras)}$"] for k, r in res]
     tq = sum(r["Q"] for _, r in res)
     tw = sum(r["W"] for _, r in res)
@@ -341,7 +355,7 @@ def _suma_tex(vals: Sequence[float], cifras: int, u: str = "J", d: Optional[int]
         d = _dec_suma(vals, sum(vals), cifras)
     redondeados = [_rd(v, d) for v in vals]
     total = sum(redondeados)
-    return "+".join(f"({tex(v, dec=d)})" for v in redondeados) + f"={tex(total, dec=d, u=u)}"
+    return "+".join("(0)" if v == 0 else f"({tex(v, dec=d)})" for v in redondeados) + f"={tex(total, dec=d, u=u)}"
 
 
 def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, refri: bool = False, cifras: int = 4,
@@ -358,19 +372,35 @@ def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, ref
     qh = sum(q for _, q in qin)
     qc = sum(q for _, q in qout)
     vw, vin, vout = [w for _, w in ws], [q for _, q in qin], [q for _, q in qout]
-    d = _dec_suma(vw + vin + vout, wnet, cifras)
-    while True:
+    d0 = d = _dec_suma(vw + vin + vout, wnet, cifras)
+
+    def _cuadra(d: int) -> bool:
+        """Con d decimales, ¿las sumas escritas cuadran entre sí y dan lo mismo que la respuesta (y la e)?"""
         wr = sum(_rd(w, d) for w in vw)
         qhr = sum(_rd(q, d) for q in vin)
         qcr = sum(_rd(q, d) for q in vout)
-        if abs(wr - (qhr + qcr)) < 0.5 * 10 ** (-d) or d >= 3:
-            break
+        if abs(wr - (qhr + qcr)) >= 0.5 * 10 ** (-d):
+            return False
+        if tex(wr, cifras) != tex(wnet, cifras) or (vin and tex(qhr, cifras) != tex(qh, cifras)) or (vout and tex(qcr, cifras) != tex(qc, cifras)):
+            return False
+        if abs(wr) < 1e-12 or abs(qhr) < 1e-12:
+            return True
+        if refri:
+            return tex(abs(qhr) / abs(wr), 3) == tex(abs(qh) / abs(wnet), 3)
+        return tex(wr / qhr, 3) == tex(wnet / qh, 3) and tex(1 - abs(qcr) / qhr, 3) == tex(1 - abs(qc) / qh, 3)
+
+    while not _cuadra(d) and d < 4:
         d += 1
+    wr = sum(_rd(w, d) for w in vw)
+    qhr = sum(_rd(q, d) for q in vin)
+    qcr = sum(_rd(q, d) for q in vout)
     p = L.paso(titulo or ("Coeficiente de rendimiento" if refri else "Trabajo neto, calores y eficiencia"))
-    p.di("Primero la tabla de los procesos, para ver los signos.", tabla_quw(res, cifras=cifras), V(foco="ciclo"))
+    p.di("Primero la tabla de los procesos, para ver los signos.", tabla_quw(res, cifras=cifras, d=d), V(foco="ciclo"))
+    extra = [NOTA("Aquí sumamos con " + ("un decimal más" if d - d0 == 1 else f"{d - d0} decimales más") +
+                  " que en los pasos de arriba: con los números redondeados la suma se correría una unidad en la última cifra.")] if d > d0 else []
     p.di("El trabajo neto es la suma de los trabajos de cada proceso.",
          M(r"W_{\text{neto}}=" + "+".join(f"W_{{{k}}}" for k, _ in ws)),
-         M("=" + _suma_tex(vw, cifras, d=d)))
+         M("=" + _suma_tex(vw, cifras, d=d)), *extra)
     ent, sal = ("Q_C", "Q_H") if refri else ("Q_H", "Q_C")
     p.di("Los calores positivos son los que entran al gas; los negativos, los que salen." + (" En el refrigerador, el que entra viene del foco frío." if refri else ""),
          M(ent + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qin) + "=" + _suma_tex(vin, cifras, d=d)),

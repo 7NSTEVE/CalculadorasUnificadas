@@ -45,6 +45,9 @@ def _area_lineal(q: str, titulo: str, enunciado: str, incisos, *, k: float, h: f
     Q = H * dt_s
     sg = "-" if neg else "+"
     A_tex = rf"{_nm(a0)}{sg}{'' if abs(ab - 1.0) < 1e-12 else _nm(ab)}y"
+    # La integral se escribe con las cifras justas para que k(T1-T2) entre ella dé el H que se muestra
+    from .ayudas import _datos_justos
+    (sI,) = _datos_justos([(I, "c")], lambda i: k * (t1 - t2) / i, lambda x: tex(x, 5, sci="no"))
 
     def cociente(a_fin: float) -> str:
         return rf"\frac{{{_nm(a0)}}}{{{tex(a_fin, 5)}}}" if neg else rf"\frac{{{tex(a_fin, 5)}}}{{{_nm(a0)}}}"
@@ -89,10 +92,10 @@ def _area_lineal(q: str, titulo: str, enunciado: str, incisos, *, k: float, h: f
             L.paso(f"{lt}) La integral del área: arriba menos abajo")\
                 .di("Evaluamos el logaritmo arriba menos abajo.", M(rf"I={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\Big[\ln u\Big]_{{{_nm(a0)}}}^{{{tex(ah, 5)}}}={'-' if neg else ''}\frac{{1}}{{{_nm(ab)}}}\left(\ln {tex(ah, 5)}-\ln {_nm(a0)}\right)"))\
                 .di(("El signo menos da vuelta a la resta, y una resta de logaritmos es el logaritmo de la división." if neg else "Una resta de logaritmos es el logaritmo de la división."),
-                    M(rf"I=\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)={tex(I, 4)}\ \text{{m}}^{{-1}}", "ii", "verde"))
+                    M(rf"I=\frac{{1}}{{{_nm(ab)}}}\ln\left({cociente(ah)}\right)={sI}\ \text{{m}}^{{-1}}", "ii", "verde"))
             L.paso(f"{lt}) Despejar el flujo")\
-                .di("Juntamos las dos integrales.", M(rf"H\,({tex(I, 4)})={tex(k * (t1 - t2), 5, sci='no')}"))\
-                .di("Despejamos.", M(rf"H=\frac{{{tex(k * (t1 - t2), 5, sci='no')}}}{{{tex(I, 4)}}}"))\
+                .di("Juntamos las dos integrales.", M(rf"H\,({sI})={tex(k * (t1 - t2), 5, sci='no')}"))\
+                .di("Despejamos.", M(rf"H=\frac{{{tex(k * (t1 - t2), 5, sci='no')}}}{{{sI}}}"))\
                 .di(f"Son {nu(H / 1e3, 'kW', 4)}.", R(rf"H={tex(H, 5, u='W', sci='no')}={tex(H / 1e3, 4, u='kW')}", "rh"))
             resp.append((lt, rf"H={tex(H / 1e3, 4)}\ \text{{kW}}", H, "W"))
         elif inc == "Q":
@@ -111,7 +114,7 @@ def _area_lineal(q: str, titulo: str, enunciado: str, incisos, *, k: float, h: f
             resp.append((lt, rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C"))
         elif inc == "inter":
             L.paso(f"{lt}) ¿Cambia el flujo si se intercambian los focos?")\
-                .di("La integral del área depende solo de la forma del bloque, no de las temperaturas.", M(rf"I={tex(I, 4)}\ \text{{m}}^{{-1}}\ \text{{igual}}"))\
+                .di("La integral del área depende solo de la forma del bloque, no de las temperaturas.", M(rf"I={sI}\ \text{{m}}^{{-1}}\ \text{{igual}}"))\
                 .di("Y la diferencia de temperatura tiene el mismo tamaño.", M(r"|T_1-T_2|=\text{igual}\;\Rightarrow\;|H|=\frac{k\,|T_1-T_2|}{I}"))\
                 .di("El flujo tiene el mismo tamaño; solo cambia de sentido.", R(r"|H|\ \text{se mantiene igual}", "ri"))
     for r in resp:
@@ -150,18 +153,18 @@ def _tubo(q: str, titulo: str, enunciado: str, *, k: float, lc: float, r1: float
         .di("Derecha: sumar los pedacitos de temperatura da el cambio total.", M(rf"-2\pi kL\int_{{{_nm(t1)}}}^{{{_nm(t2)}}}dT=-2\pi kL\,(T_2-T_1)=2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})"))
     L.paso("A) Despejar el flujo")\
         .di("Despejamos hache.".replace("hache", s("H", "hache")), M(rf"H=\frac{{2\pi kL\,(T_1-T_2)}}{{\ln(r_2/r_1)}}=\frac{{2\pi({_nm(k)})({_nm(lc)})({_nm(t1 - t2)})}}{{{tex(lnr, 4)}}}"))\
-        .di(f"En todo el tubo: {nu(H / 1e3, 'kW', 4)}.", M(rf"H={tex(H, 4, u='W')}"))
+        .di(f"En todo el tubo: {nu(H / 1e3, 'kW', 4)}. Lo guardamos con cinco cifras, porque se sigue usando.", M(rf"H={tex(H, 5, u='W')}"))
     if por_longitud:
         L.paso("A) Por cada metro de tubo")\
-            .di("Dividimos entre el largo.", M(rf"\frac{{H}}{{L}}=\frac{{{tex(H, 4)}}}{{{_nm(lc)}}}"), R(rf"\frac{{H}}{{L}}={tex(HL, 4, u='W/m')}={tex(HL / 1e3, 4, u='kW/m')}", "ra"))
+            .di("Dividimos entre el largo.", M(rf"\frac{{H}}{{L}}=\frac{{{tex(H, 5)}}}{{{_nm(lc)}}}"), R(rf"\frac{{H}}{{L}}={tex(HL, 4, u='W/m')}={tex(HL / 1e3, 4, u='kW/m')}", "ra"))
     L.paso(f"B) Energía en {dt_txt}")\
-        .di("Flujo por tiempo, en segundos.", F(r"Q=H\,\Delta t"), M(rf"Q=({tex(H, 4)})({_nm(dt_s)})"))\
+        .di("Flujo por tiempo, en segundos.", F(r"Q=H\,\Delta t"), M(rf"Q=({tex(H, 5)})({_nm(dt_s)})"))\
         .di("Queda.", R(rf"Q={tex(Q, 4, u='J')}", "rb"))
     L.paso(f"C) Temperatura en r = {_nm(rm * 100, 3)} cm")\
         .di("Repetimos la integral, pero solo hasta ese radio.", V(foco="punto"), M(rf"H\int_{{{_nm(r1)}}}^{{{_nm(rm)}}}\frac{{dr}}{{r}}=-2\pi kL\int_{{{_nm(t1)}}}^{{T}}dT"))\
         .di("Las dos integrales salen igual que antes: un logaritmo y una resta.", M(rf"H\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}=-2\pi kL\,(T-{_nm(t1)})"))\
         .di("Despejamos la temperatura: dividimos entre menos dos pi ka ele y pasamos sumando.", M(rf"T={_nm(t1)}-\frac{{H}}{{2\pi kL}}\ln\frac{{{_nm(rm)}}}{{{_nm(r1)}}}"))\
-        .di("Sustituimos.", M(rf"T={_nm(t1)}-\frac{{{tex(H, 4)}}}{{2\pi({_nm(k)})({_nm(lc)})}}\ln({tex(rm / r1, 3)})"))\
+        .di("Sustituimos.", M(rf"T={_nm(t1)}-\frac{{{tex(H, 5)}}}{{2\pi({_nm(k)})({_nm(lc)})}}\ln({tex(rm / r1, 3)})"))\
         .di(f"Da {nu(tm, '°C', dec=1)}.", R(rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", "rc"))
     L.responde("A", rf"H/L={tex(HL / 1e3, 4)}\ \text{{kW/m}}", HL, "W/m").responde("B", rf"Q={tex(Q, 4)}\ \text{{J}}", Q, "J").responde("C", rf"T={tex(tm, dec=1)}\ ^\circ\text{{C}}", tm, "°C")
     if oficial:
@@ -236,7 +239,7 @@ def q037() -> Leccion:
         .di("Sustituimos en la expresión de la parte A.", V(foco="flujo"),
             M(r"H = \frac{2\pi(50{,}2)(1{,}5)(80-20)}{\ln(4{,}2/3{,}3)}"))\
         .di("Arriba multiplicamos todo.", M(rf"2\pi(50{{,}}2)(1{{,}}5)(60)={tex(num, 5)}"))\
-        .di("Abajo, el logaritmo de la razón de radios.", M(rf"\ln\left(\frac{{4{{,}}2}}{{3{{,}}3}}\right)=\ln({tex(r2 / r1, 4)})={tex(lnr, 4)}"))\
+        .di("Abajo, el logaritmo de la razón de radios. Guardamos seis cifras del cociente: el logaritmo es muy sensible.", M(rf"\ln\left(\frac{{4{{,}}2}}{{3{{,}}3}}\right)=\ln({tex(r2 / r1, 6)})={tex(lnr, 4)}"))\
         .di(f"Dividimos: el flujo sale {nu(h_ac / 1e3, 'kW', 4)}.", M(rf"H=\frac{{{tex(num, 5)}}}{{{tex(lnr, 4)}}}"),
             R(rf"H = {tex(h_ac, 4, u='W', sci='si')} = {tex(h_ac / 1e3, 4, u='kW')}", "rb"))
     L.paso("C) Comparación con el cobre")\
@@ -430,25 +433,27 @@ def q042() -> Leccion:
                      "capas": [{"n": "Al", "e": L1, "k": k1}, {"n": "Acero", "e": L2, "k": k2}, {"n": "Ag", "e": L3, "k": k3}]})
     L.paso("Flujo de calor desde la varilla de plata")\
         .di("De la plata conocemos todo: conductividad, largo y sus dos temperaturas.", DATO("22,2 °C"),
-            M(rf"A = \frac{{\pi d^2}}{{4}} = \frac{{\pi(0{{,}}15)^2}}{{4}} = {tex(A, 3, u='m^2', sci='si')}"))\
+            M(rf"A = \frac{{\pi d^2}}{{4}} = \frac{{\pi(0{{,}}15)^2}}{{4}} = {tex(A, 5, u='m^2', sci='si')}"),
+            NOTA("El área se guarda con cinco cifras: se usa en las tres cuentas que siguen."))\
         .di("Usamos la ley de Fourier de la hoja en la plata.", F(r"H = kA\,\frac{T_H-T_C}{L}"), M(r"H = \frac{k_3 A\,(T_{23}-T_C)}{L_3}"))\
-        .di(f"Sustituimos; arriba multiplicamos y luego dividimos. Da {nu(H, 'W', 3)}.",
-            M(rf"H = \frac{{(406{{,}}0)({tex(A, 3, sci='si')})(22{{,}}2-0)}}{{0{{,}}20}} = \frac{{{tex(k3 * A * (t23 - tc), 4)}}}{{0{{,}}20}} = {tex(H, 3, u='W')}"))\
+        .di("Sustituimos; arriba multiplicamos y luego dividimos.",
+            M(rf"H = \frac{{(406{{,}}0)({tex(A, 5, sci='si')})(22{{,}}2-0)}}{{0{{,}}20}}"))\
+        .di(f"Da {nu(H, 'W', 4)}.", M(rf"H = {tex(H, 4, u='W')}", "h", "verde"))\
         .por_que("Están en serie y aisladas lateralmente, así que ese mismo flujo cruza las tres varillas.")
     L.paso("A) Temperatura en la unión aluminio-acero")\
         .di("Usamos el mismo flujo en el tramo de aluminio.", V(foco="perfil"), M(r"H = \frac{k_1 A\,(T_H - T_{12})}{L_1}"))\
         .di("Despejamos: multiplicamos por ele uno, dividimos entre ka uno por A, y pasamos te doce.".replace("ele uno", dice("L₁", "ele uno")).replace("ka uno por A", dice("k₁A", "ka uno por A")).replace("te doce", dice("T₁₂", "te doce")),
             M(r"\frac{H L_1}{k_1 A}=T_H - T_{12}\;\Rightarrow\; T_{12} = T_H - \frac{H L_1}{k_1 A}"))\
-        .di(f"Sustituimos; primero la fracción y luego la resta. Resulta {nu(t12, '°C', dec=1)}.",
-            M(rf"T_{{12}} = 100{{,}}0 - \frac{{({tex(H, 3)})(0{{,}}15)}}{{(205{{,}}0)({tex(A, 3, sci='si')})}} = 100{{,}}0-\frac{{{tex(H * L1, 4)}}}{{{tex(k1 * A, 4)}}} = 100{{,}}0-{tex(H * L1 / (k1 * A), 4)}"),
-            R(rf"T_{{12}} = {tex(t12, dec=1, u='°C')}", "ra"))
+        .di("Sustituimos; primero la fracción y luego la resta.",
+            M(rf"T_{{12}} = 100{{,}}0 - \frac{{({tex(H, 4)})(0{{,}}15)}}{{(205{{,}}0)({tex(A, 5, sci='si')})}}"))\
+        .di(f"Resulta {nu(t12, '°C', dec=1)}.", R(rf"T_{{12}} = {tex(t12, dec=1, u='°C')}", "ra"))
     L.paso("B) Largo de la varilla de acero")\
         .di("El mismo flujo cruza el acero; ahí la incógnita es el largo.", M(r"H = \frac{k_2 A\,(T_{12}-T_{23})}{L_2}"))\
         .di("Despejamos: multiplicamos por ele dos y dividimos entre hache.".replace("ele dos", dice("L₂", "ele dos")).replace("hache", dice("H", "hache")),
             M(r"L_2 = \frac{k_2 A\,(T_{12}-T_{23})}{H}"))\
-        .di(f"Con el salto entre las dos uniones obtenemos {nu(L2, 'm', 3)}.",
-            M(rf"L_2 = \frac{{(50{{,}}2)({tex(A, 3, sci='si')})({tex(t12, dec=1)}-22{{,}}2)}}{{{tex(H, 3)}}}=\frac{{{tex(k2 * A * (t12 - t23), 4)}}}{{{tex(H, 3)}}}"),
-            R(rf"L_2 = {tex(L2, 3, u='m')}\ \ (\approx 5{{,}}0\ \text{{cm}})", "rb"))
+        .di("Sustituimos con el salto entre las dos uniones.",
+            M(rf"L_2 = \frac{{(50{{,}}2)({tex(A, 5, sci='si')})({tex(t12, dec=1)}-22{{,}}2)}}{{{tex(H, 4)}}}"))\
+        .di(f"Obtenemos {nu(L2, 'm', 3)}.", R(rf"L_2 = {tex(L2, 3, u='m')}\ \ (\approx 5{{,}}0\ \text{{cm}})", "rb"))
     L.responde("A", rf"T_{{12}}={tex(t12, dec=1)}\ ^\circ\text{{C}}", t12, "°C").responde("B", rf"L_2={tex(L2, 3)}\ \text{{m}}", L2, "m")
     return L.oficial("III Parcial ordinario II-2024", 67.0, 0.050).usa(r"H=kA\frac{\Delta T}{L}")
 
@@ -565,7 +570,7 @@ def q045() -> Leccion:
                  "Tubería cilíndrica de aluminio ($k=235$ W/m·K) de $5{,}00$ m de largo, radio interno $4{,}00$ cm y externo $8{,}00$ cm. Adentro hay un fluido a $150\\ ^\\circ\\text{C}$ y afuera la tubería está a $45\\ ^\\circ\\text{C}$, en estado estacionario. A) Flujo de calor por unidad de longitud. B) Calor transferido en $10{,}0$ min. C) Temperatura a $6{,}00$ cm del eje.",
                  k=235.0, lc=5.00, r1=0.0400, r2=0.0800, t1=150.0, t2=45.0, rm=0.0600, dt_s=600.0, dt_txt="10,0 min",
                  aviso="El solucionario oficial de 25-II-E usó por error πr²L (un volumen) en vez del área lateral 2πrL. Aquí se resuelve con el área correcta.",
-                 oficial=("III Parcial extraordinario II-2025", (6202.0, 18.61e6, 80.0), "El solucionario oficial usó A = πr²L (volumen) en vez del área lateral 2πrL; con 2πrL da 223,7 kW/m, 671,1 MJ y 88,6 °C."))
+                 oficial=("III Parcial extraordinario II-2025", (6202.0, 18.61e6, 80.0), "El solucionario oficial usó A = πr²L (volumen) en vez del área lateral 2πrL; con 2πrL da 223,7 kW/m, 671,0 MJ y 88,6 °C."))
 
 # ============================================================================ Q046
 @leccion("Q046")
@@ -849,8 +854,8 @@ def q055() -> Leccion:
         .di("Despejamos hache.".replace("hache", dice("H", "hache")), M(r"H = \frac{\pi k L\,(T_a-T_b)}{\ln(b/a)}"))
     L.paso("Sustituir los datos")\
         .di("Sustituimos.", V(foco="flujo"), M(r"H = \frac{\pi(238{,}0)(0{,}1)(80-20)}{\ln(1{,}0/0{,}2)}"))\
-        .di("Arriba multiplicamos; abajo, el logaritmo de cinco.", M(rf"\pi(238{{,}}0)(0{{,}}1)(60)={tex(num, 5)}"), M(rf"\ln\left(\frac{{1{{,}}0}}{{0{{,}}2}}\right)=\ln 5={tex(lnr, 4)}"))\
-        .di(f"Dividimos: {nu(H, 'W', 4)}.", M(rf"H=\frac{{{tex(num, 5)}}}{{{tex(lnr, 4)}}}"), R(rf"H = {tex(H, 4, u='W')}", "ra"))
+        .di("Arriba multiplicamos; abajo, el logaritmo de cinco.", M(rf"\pi(238{{,}}0)(0{{,}}1)(60)={tex(num, 5)}"), M(rf"\ln\left(\frac{{1{{,}}0}}{{0{{,}}2}}\right)=\ln 5={tex(lnr, 6)}"))\
+        .di(f"Dividimos: {nu(H, 'W', 4)}.", M(rf"H=\frac{{{tex(num, 5)}}}{{{tex(lnr, 6)}}}"), R(rf"H = {tex(H, 4, u='W')}", "ra"))
     L.responde("", rf"H={tex(H, 4)}\ \text{{W}}", H, "W")
     return L.oficial("Folleto resuelto 3.3-4", 2787.0).usa(r"H=-kA\frac{dT}{dx}")
 

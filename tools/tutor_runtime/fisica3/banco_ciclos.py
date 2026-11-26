@@ -61,10 +61,10 @@ def q092() -> Leccion:
     cierre_ciclo(L, res, titulo="C) Resumen de los dos procesos", solo_totales=True)
     deriva_entropia(L.paso("D) Entropía: de dónde salen las fórmulas (no entra en el parcial)"), "cv", "cp")
     L.paso("D) Cambio de entropía en cada etapa")\
-        .di("A volumen constante.", V(foco="12"), M(rf"\Delta S_{{12}} = nC_V\ln\left(\frac{{T_2}}{{T_1}}\right)=(2{{,}}50)({tex(g.cv, 5)})\ln\left(\frac{{{tex(t2, 4)}}}{{293{{,}}15}}\right)"))\
-        .di("Calculamos.", M(rf"\Delta S_{{12}}=({tex(g.n * g.cv, 4)})({tex(math.log(t2 / g.t('1')), 4)})={tex(ds12, 4, u='J/K')}"))\
+        .di("A volumen constante.", V(foco="12"), M(rf"\Delta S_{{12}} = nC_V\ln\left(\frac{{T_2}}{{T_1}}\right)=(2{{,}}50)({tex(g.cv, 5)})\ln\left(\frac{{{tex(t2, 5)}}}{{293{{,}}15}}\right)"))\
+        .di("Calculamos.", M(rf"\Delta S_{{12}}=({tex(g.n * g.cv, 5)})({tex(math.log(t2 / g.t('1')), 5)})={tex(ds12, 4, u='J/K')}"))\
         .di("A presión constante, con la temperatura que se triplica.", V(foco="23"), M(rf"\Delta S_{{23}} = nC_p\ln\left(\frac{{T_3}}{{T_2}}\right)=(2{{,}}50)({tex(g.cp, 5)})\ln 3"))\
-        .di("Calculamos.", M(rf"\Delta S_{{23}}=({tex(g.n * g.cp, 4)})({tex(math.log(3.0), 4)})={tex(ds23, 4, u='J/K')}"),
+        .di("Calculamos.", M(rf"\Delta S_{{23}}=({tex(g.n * g.cp, 5)})({tex(math.log(3.0), 5)})={tex(ds23, 4, u='J/K')}"),
             R(rf"\Delta S_{{12}}={tex(ds12, 4, u='J/K')}\qquad \Delta S_{{23}}={tex(ds23, 4, u='J/K')}", "rd"))
     L.responde("T2", rf"T_2={tex(t2, dec=1)}\ \text{{K}}", t2, "K")\
      .responde("Q23", rf"Q_{{23}}={tex(r23['Q'] / 1e3, 4)}\ \text{{kJ}}", r23["Q"], "J")\
@@ -273,7 +273,7 @@ def q097() -> Leccion:
         .di("A presión constante, volumen y temperatura van juntos: si el volumen se duplica, la temperatura también.", F(r"pV=nRT"), M(r"\frac{V_C}{T_C}=\frac{V_B}{T_B}\;\Rightarrow\;T_C=T_B\,\frac{V_C}{V_B}=2T_B"), M(rf"T_C=2({tex(tb, 4)})={tex(tc, 4, u='K')}", "tc"))
     L.paso("B) Estado D: expansión adiabática")\
         .di("De C a D otra vez adiabático, hasta el volumen de A.", V(foco="CD"), M(r"p_D=p_C\left(\frac{V_C}{V_D}\right)^\gamma=(25{,}1)\left(\frac{0{,}380}{1{,}90}\right)^{1{,}40}"), M(rf"p_D={tex(pd_atm, 3, u='atm')}", "pd"))\
-        .di("Y su temperatura.", M(rf"T_D=T_C\left(\frac{{V_C}}{{V_D}}\right)^{{\gamma-1}}=({tex(tc, 4)})(0{{,}}200)^{{0{{,}}40}}={tex(td, 3, u='K')}", "td"))
+        .di("Y su temperatura.", M(rf"T_D=T_C\left(\frac{{V_C}}{{V_D}}\right)^{{\gamma-1}}=({tex(tc, 4)})(0{{,}}200)^{{0{{,}}40}}={tex(td, 4, u='K')}", "td"))
     L.paso("B) Los cuatro estados")\
         .di("Resumen en una tabla.", tabla_estados(g, ["A", "B", "C", "D"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0), V(foco="ciclo"))
     L.paso("C) Calor suministrado (B→C)")\
@@ -281,7 +281,7 @@ def q097() -> Leccion:
         .di("Sustituimos.", M(rf"Q_H=({tex(nm, 3)})\left(\frac{{7}}{{2}}\right)(8{{,}}314)({tex(tc, 4)}-{tex(tb, 4)})"))\
         .di(f"Entran {nu(qh, 'J', 4)}.", R(rf"Q_H={tex(qh, 4, u='J')}", "rch"))
     L.paso("C) Calor expulsado (D→A)")\
-        .di("El calor sale solo de D a A, a volumen constante, donde no hay trabajo.", V(foco="DA"), F(r"Q=nC_V\,\Delta T"), M(rf"Q_C=({tex(nm, 3)})\left(\frac{{5}}{{2}}\right)(8{{,}}314)(298-{tex(td, 3)})"))\
+        .di("El calor sale solo de D a A, a volumen constante, donde no hay trabajo.", V(foco="DA"), F(r"Q=nC_V\,\Delta T"), M(rf"Q_C=({tex(nm, 3)})\left(\frac{{5}}{{2}}\right)(8{{,}}314)(298-{tex(td, 4)})"))\
         .di(f"Salen {nu(abs(qc), 'J', 3)}: por eso el signo menos.", R(rf"Q_C={tex(qc, 3, u='J')}", "rcc"))\
         .di("En las dos adiabáticas no hay calor.", M(r"Q_{AB}=Q_{CD}=0"))
     L.paso("D) Eficiencia")\
@@ -294,7 +294,7 @@ def q097() -> Leccion:
         .por_que("La fórmula de entropía no está en el formulario: se arma con $dS=dQ/T$ y el $dQ$ que sí está impreso.")
     L.paso("E) Sumar las entropías del ciclo")\
         .di("De B a C, a presión constante.", M(rf"\Delta S_{{BC}}=nC_p\ln\frac{{T_C}}{{T_B}}=({tex(nm, 3)})(29{{,}}10)\ln 2={tex(ds_bc, 3, signo=True, u='J/K')}"))\
-        .di("De D a A, a volumen constante: igual pero con ce ve.".replace("ce ve", s("C_V")), M(rf"\Delta S_{{DA}}=nC_V\ln\frac{{T_A}}{{T_D}}=({tex(nm, 3)})(20{{,}}79)\ln\frac{{298}}{{{tex(td, 3)}}}={tex(ds_da, 3, u='J/K')}"))\
+        .di("De D a A, a volumen constante: igual pero con ce ve.".replace("ce ve", s("C_V")), M(rf"\Delta S_{{DA}}=nC_V\ln\frac{{T_A}}{{T_D}}=({tex(nm, 3)})(20{{,}}79)\ln\frac{{298}}{{{tex(td, 4)}}}={tex(ds_da, 3, u='J/K')}"))\
         .di("La suma da cero, como debe ser en un ciclo.", R(rf"\Delta S_{{\text{{ciclo}}}}=0+({tex(ds_bc, 3)})+0+({tex(ds_da, 3)})=0", "re"))
     L.responde("A", rf"n={tex(nm, 3)}\ \text{{mol}}", nm, "mol").responde("C", rf"Q_H={tex(qh, 4)}\ \text{{J}}", qh, "J").responde("C", rf"Q_C={tex(qc, 3)}\ \text{{J}}", qc, "J").responde("D", rf"e={tex(ef, 3)}", ef, "")
     return L.oficial("III Parcial extraordinario II-2024", 7.77e-2, 1692.0, -789.0, 0.53, tol=0.02).usa(r"pV=nRT", r"pV^\gamma=\text{cte}", r"TV^{\gamma-1}=\text{cte}", r"e=1-\left|\frac{Q_c}{Q_H}\right|")
@@ -331,19 +331,19 @@ def q098() -> Leccion:
         .di("En una isoterma la temperatura no cambia: B está a seiscientos y D a cuatrocientos.", M(r"T_B=T_A=600\ \text{K}\qquad T_D=T_C=400\ \text{K}", "tt", "azul"))\
         .sale_de(("$T_B=600$ K", "A→B es isotérmico"), ("$T_D=400$ K", "C→D es isotérmico"))
     L.paso("A) Volúmenes en A y en C")\
-        .di("Gas ideal. Con erre en litros atmósfera, el volumen sale en litros.".replace("erre", s("R")), F(r"pV=nRT"), M(r"V_A=\frac{nRT_A}{p_A}=\frac{(1{,}00)(0{,}08206)(600)}{25{,}0}"), M(rf"V_A={tex(VA, 3, u='L')}", "va"))\
-        .di("Igual para C.", M(r"V_C=\frac{(1{,}00)(0{,}08206)(400)}{1{,}00}"), M(rf"V_C={tex(VC, 3, u='L')}", "vc"))
+        .di("Gas ideal. Con erre en litros atmósfera, el volumen sale en litros.".replace("erre", s("R")), F(r"pV=nRT"), M(r"V_A=\frac{nRT_A}{p_A}=\frac{(1{,}00)(0{,}08206)(600)}{25{,}0}"), M(rf"V_A={tex(VA, 4, u='L')}", "va"))\
+        .di("Igual para C.", M(r"V_C=\frac{(1{,}00)(0{,}08206)(400)}{1{,}00}"), M(rf"V_C={tex(VC, 4, u='L')}", "vc"))
     L.paso("A) Volumen en B: B y C están en la misma adiabática")\
         .di("En una adiabática, te por ve a la gama menos uno se mantiene.".replace("te por ve a la gama menos uno", dice("TVᵞ⁻¹", "te ve a la gama menos uno")), V(foco="BC"), F(r"TV^{\gamma-1}=\text{cte}"), M(r"T_BV_B^{\gamma-1}=T_CV_C^{\gamma-1}"))\
         .di("Despejamos ve be: sacamos la raíz con exponente uno entre gama menos uno.".replace("ve be", s("V_B")), M(r"V_B=V_C\left(\frac{T_C}{T_B}\right)^{\frac{1}{\gamma-1}}"), M(r"\frac{1}{\gamma-1}=\frac{1}{0{,}40}=2{,}5"))\
-        .di("Sustituimos.", M(rf"V_B=({tex(VC, 3)})\left(\frac{{400}}{{600}}\right)^{{2{{,}}5}}=({tex(VC, 3)})({tex((TC / TH) ** k, 4)})"), M(rf"V_B={tex(VB, 4, u='L')}", "vb"))\
+        .di("Sustituimos.", M(rf"V_B=({tex(VC, 4)})\left(\frac{{400}}{{600}}\right)^{{2{{,}}5}}=({tex(VC, 4)})({tex((TC / TH) ** k, 4)})"), M(rf"V_B={tex(VB, 4, u='L')}", "vb"))\
         .despacio((r"T_BV_B^{0{,}4}=T_CV_C^{0{,}4}", "con $\\gamma-1=0{,}4$"), (r"V_B^{0{,}4}=V_C^{0{,}4}\,\frac{T_C}{T_B}", "se divide entre $T_B$"), (r"V_B=\left(V_C^{0{,}4}\,\frac{T_C}{T_B}\right)^{1/0{,}4}=V_C\left(\frac{T_C}{T_B}\right)^{2{,}5}", "se eleva todo a $1/0{,}4=2{,}5$"))
     L.paso("A) Presión en B")\
         .di("Gas ideal en B.", M(rf"p_B=\frac{{nRT_B}}{{V_B}}=\frac{{(1{{,}}00)(0{{,}}08206)(600)}}{{{tex(VB, 4)}}}"), R(rf"p_B={tex(pB, 3, u='atm')}", "pb"))
     L.paso("A) Volumen y presión en D: D y A están en la otra adiabática")\
         .di("Ahora entre D y A.", V(foco="DA"), M(r"T_DV_D^{\gamma-1}=T_AV_A^{\gamma-1}\;\Rightarrow\;V_D=V_A\left(\frac{T_A}{T_D}\right)^{2{,}5}"))\
-        .di("Sustituimos.", M(rf"V_D=({tex(VA, 3)})\left(\frac{{600}}{{400}}\right)^{{2{{,}}5}}=({tex(VA, 3)})({tex((TH / TC) ** k, 4)})={tex(VD, 3, u='L')}", "vd"))\
-        .di("Y su presión.", M(rf"p_D=\frac{{(1{{,}}00)(0{{,}}08206)(400)}}{{{tex(VD, 3)}}}"), R(rf"p_D={tex(pD, 3, u='atm')}", "pd"))
+        .di("Sustituimos.", M(rf"V_D=({tex(VA, 4)})\left(\frac{{600}}{{400}}\right)^{{2{{,}}5}}=({tex(VA, 4)})({tex((TH / TC) ** k, 4)})={tex(VD, 4, u='L')}", "vd"))\
+        .di("Y su presión.", M(rf"p_D=\frac{{(1{{,}}00)(0{{,}}08206)(400)}}{{{tex(VD, 4)}}}"), R(rf"p_D={tex(pD, 3, u='atm')}", "pd"))
     L.paso("A) Los cuatro estados")\
         .di("Juntamos todo.", tabla_estados(g, ["A", "B", "C", "D"], up="atm", uv="L", fp=1.0 / ATM, fv=1e3, cp=3, cv=3, dt=0), V(foco="ciclo"))\
         .di("La solución oficial redondea un poquito distinto: cuatro coma quince y seis coma cero uno atmósferas.", NOTA("La oficial usa $R=0{,}082$; por eso da $4{,}15$ atm y $6{,}01$ atm."))
@@ -443,9 +443,11 @@ def q100() -> Leccion:
     p = L.paso("A) Estados A y B")
     estado_p(p, g, "A", primero=True, voz="Despejamos la presión del gas ideal y la calculamos en A.")
     p.di("De A a B la temperatura no cambia: pe por ve se conserva.".replace("pe por ve", dice("pV", "pe por ve")), V(foco="AB"),
-         M(r"p_AV_A=p_BV_B\;\Rightarrow\;p_B=p_A\,\frac{V_A}{V_B}=\frac{p_A}{3}"), M(rf"p_B=\frac{{{tex(g.p('A'), 4)}}}{{3}}={tex(g.p('B'), 4, u='Pa')}"))
+         M(r"p_AV_A=p_BV_B\;\Rightarrow\;p_B=p_A\,\frac{V_A}{V_B}=\frac{p_A}{3}"))
+    p.di(f"Usamos la presión de A completa, {nu(g.p('A'), 'Pa', 6, sci='no')}: redondeada se correrían las cifras de C.",
+         M(rf"p_A={tex(g.p('A'), 6, sci='no', u='Pa')}"), M(rf"p_B=\frac{{{tex(g.p('A'), 6, sci='no')}}}{{3}}={tex(g.p('B'), 4, u='Pa')}"))
     p = L.paso("A) Estados C y D")
-    p.di("La presión de C es la quinta parte de la de A.", V(foco="BC"), M(rf"p_C=\frac{{p_A}}{{5}}=\frac{{{tex(g.p('A'), 4)}}}{{5}}={tex(g.p('C'), 4, u='Pa')}"))
+    p.di("La presión de C es la quinta parte de la de A.", V(foco="BC"), M(rf"p_C=\frac{{p_A}}{{5}}=\frac{{{tex(g.p('A'), 6, sci='no')}}}{{5}}={tex(g.p('C'), 5, u='Pa')}"))
     estado_T(p, g, "C", primero=True, voz="Despejamos la temperatura del gas ideal y la calculamos en C.")
     p.di("D está en la misma isoterma que C, con el volumen de A.", V(foco="CD"), M(rf"T_D=T_C={tex(g.t('D'), 4, u='K')}\qquad V_D=V_A=0{{,}}0100\ \text{{m}}^3"))
     estado_p(p, g, "D")

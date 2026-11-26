@@ -83,8 +83,10 @@ def q131() -> Leccion:
             NOTA("El folleto imprimió $T_h=268{,}15$ K en vez de $258{,}15$ K (obteniendo $87{,}24$ J/K); la diferencia es menor al $1\\,\\%$."))
     L.paso("(b) Masa equivalente de hierro")\
         .di("Para el hierro con capacidad molar tres erre, despejamos los moles y multiplicamos por su masa molar.",
-            F(r"\Delta S_{\text{Fe}} = n(3R)\ln\left(\frac{T_f}{T_h}\right) \;\Rightarrow\; n = \frac{\Delta S}{3R\ln(393{,}15/258{,}15)}"),
-            M(rf"n = {tex(n_fe, 3, u='mol')}\qquad m = n M = ({tex(n_fe, 3)})(55{{,}}847)"),
+            F(r"\Delta S_{\text{Fe}} = n(3R)\ln\left(\frac{T_f}{T_h}\right) \;\Rightarrow\; n = \frac{\Delta S}{3R\ln(393{,}15/258{,}15)}"))\
+        .di("Sustituimos el cambio de entropía del inciso a.", M(rf"n = \frac{{{tex(ds_tot, 4)}}}{{3(8{{,}}314)\ln(393{{,}}15/258{{,}}15)}}"),
+            M(rf"n = {tex(n_fe, 4, u='mol')}"))\
+        .di("La masa es los moles por la masa molar del hierro.", M(rf"m = n M = ({tex(n_fe, 4)})(55{{,}}847)"),
             R(rf"m = {tex(m_fe_g, 4, u='g')}", "rb"))
     L.responde("a", rf"\Delta S={tex(ds_tot, 4)}\ \text{{J/K}}", ds_tot, "J/K")\
      .responde("b", rf"m={tex(m_fe_g, 4)}\ \text{{g}}", m_fe_g, "g")

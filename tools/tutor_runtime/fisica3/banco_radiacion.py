@@ -169,10 +169,10 @@ def q068() -> Leccion:
         .di("Partimos de la radiación neta de la hoja.",
             F(r"H_{\text{neto}} = A e \sigma\,(T^4 - T_s^4)"),
             M(r"H_{\text{neto}} = (0{,}200)(0{,}850)(5{,}67\times 10^{-8})(370{,}15^4 - 300{,}15^4)"))\
-        .di("Elevamos cada temperatura a la cuarta y restamos.", M(rf"370{{,}}15^4={tex(T ** 4, 4)}"), M(rf"300{{,}}15^4={tex(Ts ** 4, 4)}"),
-            M(rf"370{{,}}15^4-300{{,}}15^4={tex(d4, 4)}"))\
+        .di("Elevamos cada temperatura a la cuarta, con cinco cifras: al restar números parecidos se pierden cifras.", M(rf"370{{,}}15^4={tex(T ** 4, 5)}"), M(rf"300{{,}}15^4={tex(Ts ** 4, 5)}"))\
+        .di("Y restamos.", M(rf"370{{,}}15^4-300{{,}}15^4={tex(T ** 4, 5)}-{tex(Ts ** 4, 5)}={tex(d4, 5)}"))\
         .di("Multiplicamos los tres factores de adelante.", M(rf"(0{{,}}200)(0{{,}}850)(5{{,}}67\times 10^{{-8}})={tex(pre, 4)}"))\
-        .di(f"Y el producto final: {nu(H, 'W', 4)}.", M(rf"H_{{\text{{neto}}}}=({tex(pre, 4)})({tex(d4, 4)})"),
+        .di(f"Y el producto final: {nu(H, 'W', 4)}.", M(rf"H_{{\text{{neto}}}}=({tex(pre, 4)})({tex(d4, 5)})"),
             R(rf"H_{{\text{{neto}}}} = {tex(H, 4, u='W')}"),
             NOTA(f"Con $T_0=273$ K sale ${tex(H_273, 4, u='W')}$, exacto con la opción C."))
     revisar_opciones(L, {

@@ -365,7 +365,9 @@ def q029() -> Leccion:
     qa1, qa2 = ma * ca * dT, mv * Lv
     qa = qa1 + qa2
     qt = mt * cc * dT
-    dTc = (qa + qt) / (mc * cc)
+    # Lo que se suma es lo escrito (84 418 + 4498): de ahí sale la cuenta del cilindro
+    qc_vis = round(qa) + round(qt)
+    dTc = qc_vis / (mc * cc)
     Tc = 100 + dTc
     L = _des("Q029", "Cilindro de cobre al rojo en agua",
              "Un tazón de cobre de 146,0 g contiene 223,0 g de agua, a 21,0 °C. Se deja caer un cilindro de cobre muy caliente de 314,0 g; el agua hierve y 4,7 g se convierten en vapor. a) Temperatura de equilibrio. b) Calor transferido al agua. c) Al tazón. d) Temperatura original del cilindro.",
@@ -390,13 +392,13 @@ def q029() -> Leccion:
         .di("Es poquito comparado con el agua, pero se cuenta.", NOTA("Olvidar el recipiente es el error más común."))
     L.paso("d) Conservación de la energía")\
         .di("Lo que ganaron el agua y el tazón lo perdió el cilindro.", F(r"\sum Q=0"), M(r"Q_A+Q_T+Q_C=0"), V(foco="comparar"))\
-        .di("Despejamos el calor del cilindro: es negativo, porque lo entrega.", M(rf"Q_C=-({tex(qa, 5, sci='no')}+{tex(qt, 4, sci='no')})=-{_j(qa + qt)}", "qc", "rojo"))
+        .di("Despejamos el calor del cilindro: es negativo, porque lo entrega.", M(rf"Q_C=-({tex(qa, 5, sci='no')}+{tex(qt, 4, sci='no')})=-{tex(qc_vis, 5, sci='no')}\ \text{{J}}", "qc", "rojo"))
     L.paso("d) Temperatura original")\
         .di("El cilindro baja de su temperatura original a cien grados.", M(r"Q_C=m_Cc_C\,(100-T_0)"))\
-        .di("Despejamos la diferencia de temperatura.", M(rf"T_0-100=\frac{{{tex(qa + qt, 5, sci='no')}}}{{(0{{,}}3140)(390)}}={tex(dTc, 4)}\ {C}"))\
-        .di("Sumamos cien.", R(rf"T_0=100+{tex(dTc, 4)}={tex(Tc, 3)}\ {C}", "rd"))\
+        .di("Despejamos la diferencia de temperatura.", M(rf"T_0-100=\frac{{{tex(qc_vis, 5, sci='no')}}}{{(0{{,}}3140)(390)}}={tex(dTc, 4)}\ {C}"))\
+        .di("Sumamos cien.", R(rf"T_0=100+{tex(dTc, 4)}={tex(Tc, dec=1)}\ {C}", "rd"))\
         .di("Más de ochocientos grados: por eso hace hervir el agua.", NOTA("El folleto escribe $-88{,}9$ J; es una errata, son $-88{,}9$ **kJ**."))
-    L.responde("a", r"T_{eq}=100\ ^\circ\text{C}", 100.0, "°C").responde("b", rf"Q_A={tex(qa, 3)}\ \text{{J}}", qa, "J").responde("c", rf"Q_T={tex(qt, 3, sci='no')}\ \text{{J}}", qt, "J").responde("d", rf"T_0={tex(Tc, 3)}\ {C}", Tc, "°C")
+    L.responde("a", r"T_{eq}=100\ ^\circ\text{C}", 100.0, "°C").responde("b", rf"Q_A={tex(qa, 3)}\ \text{{J}}", qa, "J").responde("c", rf"Q_T={tex(qt, 3, sci='no')}\ \text{{J}}", qt, "J").responde("d", rf"T_0={tex(Tc, dec=1)}\ {C}", Tc, "°C")
     return L.oficial("folleto, sección 3.2", 100.0, 84.4e3, 4.50e3, 826.1).usa(r"Q=mc\Delta T", r"Q=\pm mL")
 
 

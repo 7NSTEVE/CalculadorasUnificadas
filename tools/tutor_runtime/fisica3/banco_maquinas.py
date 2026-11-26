@@ -222,19 +222,20 @@ def q122() -> Leccion:
     L.paso("A) γ con la adiabática B→C")\
         .di("La hoja da la relación de temperatura y volumen en la adiabática.", V(foco="BC"), F(r"TV^{\gamma-1}=\text{cte}"))\
         .di("La igualamos entre B y C, y juntamos las razones.", M(r"T_BV_B^{\gamma-1}=T_CV_C^{\gamma-1}\;\Rightarrow\;\left(\frac{V_B}{V_C}\right)^{\gamma-1}=\frac{T_C}{T_B}"))\
-        .di("Como ve ce es ve a, la razón de volúmenes es cero coma setenta y cinco.".replace("ve ce es ve a", dice("V_C = V_A", "ve ce es ve a")), M(rf"(0{{,}}75)^{{\gamma-1}}=\frac{{267{{,}}2}}{{300}}={tex(rt, 4)}"))\
-        .di("Sacamos logaritmo a los dos lados para bajar el exponente.", M(rf"(\gamma-1)\ln(0{{,}}75)=\ln({tex(rt, 4)})\;\Rightarrow\;\gamma-1=\frac{{{tex(math.log(rt), 4)}}}{{{tex(math.log(0.75), 4)}}}={tex(gm1, 4)}"))\
-        .di(f"Gama vale {n(gamma, 3)}: es un gas diatómico.".replace("Gama", dice("γ", "Gama")), R(rf"\gamma={tex(gamma, 4)}", "ra"))
+        .di("Como ve ce es ve a, la razón de volúmenes es cero coma setenta y cinco.".replace("ve ce es ve a", dice("V_C = V_A", "ve ce es ve a")), M(rf"(0{{,}}75)^{{\gamma-1}}=\frac{{267{{,}}2}}{{300}}={tex(rt, 6)}"))\
+        .di("Sacamos logaritmo a los dos lados para bajar el exponente. Con seis cifras: gama queda justo entre dos redondeos.".replace("gama", dice("γ", "gama")),
+            M(rf"(\gamma-1)\ln(0{{,}}75)=\ln({tex(rt, 6)})\;\Rightarrow\;\gamma-1=\frac{{{tex(math.log(rt), 6)}}}{{{tex(math.log(0.75), 6)}}}={tex(gm1, 5)}"))\
+        .di(f"Gama vale {n(gamma, 3)}: es un gas diatómico.".replace("Gama", dice("γ", "Gama")), R(rf"\gamma=1+{tex(gm1, 5)}={tex(gamma, 4)}", "ra"))
     L.paso("A) Otra forma: con las presiones (como el solucionario)")\
         .di("De C a A el volumen no cambia: del gas ideal, la presión va en proporción a la temperatura.", V(foco="CA"), F(r"pV=nRT"),
             M(r"\frac{p_C}{T_C}=\frac{p_A}{T_A}\;\Rightarrow\;p_C=p_A\,\frac{T_C}{T_A}=p_A\,\frac{267{,}2}{400}=0{,}668\,p_A"))\
         .di("En la adiabática de B a C usamos la relación de presión y volumen; pe be es pe a.".replace("pe be es pe a", dice("p_B = p_A", "pe be es pe a")), F(r"pV^\gamma=\text{cte}"),
             M(r"p_BV_B^{\gamma}=p_CV_C^{\gamma}\;\Rightarrow\;\left(\frac{V_B}{V_C}\right)^{\gamma}=\frac{p_C}{p_B}\;\Rightarrow\;(0{,}75)^{\gamma}=0{,}668"))\
-        .di("Con logaritmos sale la misma gama.".replace("gama", dice("γ", "gama")), M(rf"\gamma=\frac{{\ln(0{{,}}668)}}{{\ln(0{{,}}75)}}=\frac{{{tex(math.log(tc / ta), 4)}}}{{{tex(math.log(0.75), 4)}}}={tex(math.log(tc / ta) / math.log(0.75), 4)}"))
+        .di("Con logaritmos sale la misma gama.".replace("gama", dice("γ", "gama")), M(rf"\gamma=\frac{{\ln(0{{,}}668)}}{{\ln(0{{,}}75)}}=\frac{{{tex(math.log(tc / ta), 6)}}}{{{tex(math.log(0.75), 6)}}}={tex(math.log(tc / ta) / math.log(0.75), 4)}"))
     L.paso("B) C_p desde las dos casillas de la hoja")\
         .di("La hoja trae dos relaciones entre las capacidades.", F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"))\
         .di("Ponemos ce pe igual a gama ce ve en la primera.".replace("ce pe", dice("C_P", "ce pe")).replace("gama ce ve", dice("γC_V", "gama ce ve")), M(r"\gamma C_V=C_V+R\;\Rightarrow\;C_V(\gamma-1)=R\;\Rightarrow\;C_V=\frac{R}{\gamma-1}"))\
-        .di("Sustituimos.", M(rf"C_V=\frac{{8{{,}}314}}{{{tex(gm1, 4)}}}={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
+        .di("Sustituimos.", M(rf"C_V=\frac{{8{{,}}314}}{{{tex(gm1, 5)}}}={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
         .di("Y ce pe es ce ve más erre.".replace("ce pe es ce ve más erre", dice("C_P = C_V + R", "ce pe es ce ve más erre")), M(rf"C_P={tex(cv, 4)}+8{{,}}314"),
             R(rf"C_p={tex(cp, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}", "rb"))
     explica_proceso(L.paso("C1) Compresión isobárica A→B"), g, "A", "B", "isobarico", foco="AB")
