@@ -10,6 +10,7 @@ import { TintaMate, TintaTexto, tintaLista, tintaTabla } from '../mate/tinta.js'
 import { ajustes, bus, menosMovimiento, pedir } from '../nucleo/api.js';
 import { Enunciado } from './enunciado.js';
 import { Citas } from '../pizarra/citas.js';
+import { Leyenda } from '../pizarra/simbolos.js';
 import { callarTodo, crearVoz, prepararVoz } from './voz_leccion.js';
 
 const ACELERA = 2.6; // la mano puede ir hasta 2,6 veces su ritmo natural
@@ -82,6 +83,10 @@ class Obra {
     t.progreso(0);
     rep.tablero.agregar(t, { paso: this.vista, id: acc.id });
     if (acc.a === 'mate' && rep.citas) rep.citas.aplicar(acc, t);
+    if (acc.a === 'mate' && !rep._pintando) {
+      rep.mostrarSimbolos(acc.id);
+      if (/\\int/.test(acc.tex || '')) rep.integralEnVisual();
+    }
     this.cosa = t;
     this.dur = t.duracionNatural;
     rep.tablero.seguir(t.el);
@@ -122,6 +127,9 @@ class Obra {
 export class Reproductor {
   constructor({ tablero, lateral }) {
     this.citas = new Citas(tablero);
+    this.leyenda = new Leyenda({ lateral: lateral && lateral.el, escena: document.getElementById('escena') });
+    this.mapaSimbolos = {};
+    this._pintando = false;
     this.tablero = tablero;
     this.lateral = lateral;
     this.lec = null;
@@ -142,6 +150,24 @@ export class Reproductor {
     bus.on('ajuste:vel', (v) => { if (this.voz && this.voz.velocidad) this.voz.velocidad(v); });
   }
 
+  /** Muestra unos segundos qué es cada letra nueva del renglón que se está escribiendo. */
+  mostrarSimbolos(id) {
+    const items = id && this.mapaSimbolos[id];
+    if (items && items.length) this.leyenda.mostrar(items);
+  }
+
+  /**
+   * Cuando se escribe una integral de conducción y la lección no pidió nada al visual, el visual barre
+   * las capas y va sumando los escalones de temperatura: así se ve que la integral es esa suma.
+   */
+  integralEnVisual() {
+    const v = this.lateral && this.lateral.visual;
+    if (!v || typeof v._armar !== 'function' || v.armado) return;
+    const f = String(v.foco ?? '');
+    if (['barrido', 'dr', 'dx', 'perfil', 'listo'].includes(f) || f.startsWith('armar')) return;
+    this.lateral.cambiarVisual({ foco: 'barrido' }, false);
+  }
+
   get total() { return this.lec ? this.lec.pasos.length : 0; }
   get paso() { return this.lec && this.lec.pasos[this.i] ? this.lec.pasos[this.i] : null; }
 
@@ -159,6 +185,8 @@ export class Reproductor {
     this.i = -1;
     this.motorLec = null;
     this.vistas = [];
+    this.mapaSimbolos = (lec.simbolos && lec.simbolos.por_accion) || {};
+    this.leyenda.ocultar();
     this.tablero.limpiar();
     this.lateral.abrirLeccion(lec);
     this.citas.usar(lec);
@@ -183,6 +211,7 @@ export class Reproductor {
 
   cerrar() {
     this.soltar();
+    this.leyenda.ocultar();
     this.lec = null;
     this.i = -1;
     this.enun = null;
@@ -243,7 +272,9 @@ export class Reproductor {
     this.i = i;
     this.vista = this._vistaDe(i);
     const obras = this._armarObras(this.lec.pasos[i]);
-    for (const o of obras) o.completar();
+    // Al pintar de golpe no salen las tarjetas de símbolos (serían una ráfaga)
+    this._pintando = true;
+    try { for (const o of obras) o.completar(); } finally { this._pintando = false; }
   }
 
   async irA(i, { reproducir = true } = {}) {

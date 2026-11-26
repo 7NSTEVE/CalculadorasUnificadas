@@ -49,7 +49,200 @@ export class VisualConduccion extends Visual {
       alMover: (v) => { this.x = v; },
     });
     this.x0 = ini;
+    // Armar la integral paso a paso: capas, una capa, Fourier, separar y sumar (botones o foco "armar1".."armar5")
+    this.armado = 0;
+    this._capa = null;
+    if (this.radial || geo === 'pared') {
+      this.bArmar = this.boton('Cómo se arma la integral', () => this._armar(this.armado ? 0 : 1));
+      this.bAnt = this.boton('◀ Paso anterior', () => this._armar(Math.max(1, this.armado - 1)));
+      this.bSig = this.boton('Paso siguiente ▶', () => this._armar(Math.min(5, this.armado + 1)));
+      this.bArmar.setAttribute('aria-pressed', 'false');
+      this.bAnt.hidden = true;
+      this.bSig.hidden = true;
+    }
     this.describe(`Conducción de calor, geometría ${geo}. De ${num(this.T1)} a ${num(this.Tn)} ${this.uT}`);
+  }
+
+  /* ---------------------------------------------------------------- armar la integral */
+
+  _armar(n) {
+    this.armado = n;
+    this.tFoco = 0;
+    if (this.bArmar) {
+      this.bArmar.textContent = n ? 'Salir de la integral' : 'Cómo se arma la integral';
+      this.bArmar.setAttribute('aria-pressed', n ? 'true' : 'false');
+      this.bAnt.hidden = !n || n <= 1;
+      this.bSig.hidden = !n || n >= 5;
+    }
+    this.sucio = true;
+    this._pedir();
+  }
+
+  _etapa() {
+    if (this.armado) return this.armado;
+    const m = /^armar([1-5])$/.exec(String(this.foco ?? ''));
+    return m ? Number(m[1]) : 0;
+  }
+
+  _nCapas(etapa) {
+    if (etapa === 1) {
+      const serie = [3, 5, 8, 12, 18, 26];
+      return this.animado() ? serie[Math.floor(this.tFoco / 1.1) % serie.length] : serie[serie.length - 1];
+    }
+    return etapa === 5 || this.foco === 'barrido' ? 16 : 10;
+  }
+
+  _capaResaltada(N) {
+    const u = ((this.x ?? this.x0) - this.a) / (this.b - this.a);
+    return Math.min(N - 1, Math.max(0, Math.floor(limitar(u) * N)));
+  }
+
+  _textos() {
+    const g = this.s.geo;
+    const esf = g.startsWith('esfera');
+    const cil = g.startsWith('cilindro');
+    const forma = Boolean(this.s.forma);
+    const dos = this.s.r3 !== undefined;
+    const v = this.radial ? 'r' : (this.s.eje || 'x');
+    let res;
+    if (cil) res = dos ? 'T₁ − T₃ = (H/2πL)·[ln(r₂/r₁)/k₁ + ln(r₃/r₂)/k₂]' : 'T₁ − T₂ = (H/2πkL)·ln(r₂/r₁)';
+    else if (esf) res = dos ? 'T₁ − T₃ = (H/4π)·[(1/r₁ − 1/r₂)/k₁ + (1/r₂ − 1/r₃)/k₂]' : 'T₁ − T₂ = (H/4πk)·(1/r₁ − 1/r₂)';
+    else res = forma ? `T₁ − T₂ = (H/k)·∫ d${v}/A(${v})` : 'T₁ − T₂ = H·L/(k·A)';
+    return {
+      v,
+      dos,
+      capa: this.radial ? (esf ? 'cáscara' : 'tubo') : 'rebanada',
+      A: cil ? 'A = 2πrL' : esf ? 'A = 4πr²' : forma ? `A(${v}) cambia con ${v}` : 'A es la misma en todas',
+      sep: cil ? 'dT = −(H/k)·dr/(2πrL)' : esf ? 'dT = −(H/k)·dr/(4πr²)' : forma ? `dT = −(H/k)·d${v}/A(${v})` : `dT = −(H/k)·d${v}/A`,
+      res,
+    };
+  }
+
+  _rotulos(etapa) {
+    const t = this._textos();
+    const d = `d${t.v}`;
+    const lista = [
+      null,
+      ['1 · Cortamos en capas delgaditas', [`Cada ${t.capa} es tan fina que adentro la temperatura casi no cambia.`, 'Así se puede usar la fórmula de la hoja en cada una.']],
+      [this.radial ? `2 · Una capa: radio r, grosor ${d}` : `2 · Una rebanada en ${t.v}, grosor ${d}`,
+        [this.radial ? (t.capa === 'cáscara' ? 'Es la cáscara de una pelota; su área es:' : 'Desenrollada es un rectángulo de 2πr por L; su área es:') : 'Su área es la cara que cruza el calor:', t.A]],
+      ['3 · Fourier de la hoja en esa capa', [`H = −k·A·dT/${d}`, 'El mismo H cruza todas las capas, una tras otra.']],
+      ['4 · Separamos las letras', [t.sep, `Lo que tiene T, a la izquierda; lo que tiene ${t.v}, a la derecha.`]],
+      ['5 · Sumamos todas las capas: la integral', ['Cada capa baja un poquito la temperatura: son los escalones de abajo.', `Sumando de ${t.v}₁ a ${t.v}${t.dos ? '₃' : '₂'} sale la bajada total:`, t.res]],
+    ];
+    return lista[etapa];
+  }
+
+  /** Escribe renglones con corte de línea; los que llevan "=" van como fórmula. Devuelve la y final. */
+  _parrafo(lineas, x, y, ancho, { tam = 15, color: col = 'tinta2', negrita = false } = {}) {
+    const c = this.ctx;
+    let yy = y;
+    for (const l of lineas) {
+      const esF = !negrita && /=/.test(l);
+      const t = esF ? tam + 2 : tam;
+      c.font = this.fuente(t, { negrita: negrita || esF, mate: esF });
+      const salida = [];
+      let linea = '';
+      for (const p of l.split(' ')) {
+        const prueba = linea ? `${linea} ${p}` : p;
+        if (linea && c.measureText(prueba.replace(/[_^]/g, '')).width > ancho) { salida.push(linea); linea = p; } else linea = prueba;
+      }
+      if (linea) salida.push(linea);
+      for (const s of salida) {
+        this.texto(s, x, yy, { tam: t, color: esF ? 'azul' : col, mate: esF, negrita: negrita || esF, halo: true });
+        yy += t * 1.38;
+      }
+      yy += 3;
+    }
+    return yy;
+  }
+
+  _capasRadiales(cx, cy, etapa) {
+    const N = this._nCapas(etapa);
+    const rs = Array.from({ length: N + 1 }, (_, i) => this.a + ((this.b - this.a) * i) / N);
+    for (let i = 1; i < N; i += 1) this.circulo(cx, cy, this.R(rs[i]), { borde: 'tinta', grosor: 1, a: 0.55 });
+    if (etapa >= 2 && etapa <= 4) {
+      const i = this._capaResaltada(N);
+      const c = this.ctx;
+      c.save();
+      c.beginPath();
+      c.arc(cx, cy, this.R(rs[i + 1]), 0, Math.PI * 2);
+      c.arc(cx, cy, this.R(rs[i]), 0, Math.PI * 2, true);
+      c.fillStyle = alfa('amarillo', 0.72);
+      c.fill('evenodd');
+      c.restore();
+      this.circulo(cx, cy, this.R(rs[i]), { borde: 'naranja', grosor: 2 });
+      this.circulo(cx, cy, this.R(rs[i + 1]), { borde: 'naranja', grosor: 2 });
+      const rm = this.R((rs[i] + rs[i + 1]) / 2);
+      this.linea(cx, cy, cx + rm * Math.cos(-0.6), cy + rm * Math.sin(-0.6), { color: 'tinta', grosor: 1.6, guion: [5, 4] });
+      this.texto('r', cx + rm * 0.5 * Math.cos(-0.6) - 2, cy + rm * 0.5 * Math.sin(-0.6) - 8, { tam: 18, mate: true, halo: true });
+      this.texto('dr', cx + (rm + 14) * Math.cos(0.5), cy + (rm + 14) * Math.sin(0.5) + 6, { tam: 18, mate: true, color: 'naranja', negrita: true, halo: true });
+      this.rMarcado = (rs[i] + rs[i + 1]) / 2;
+      this._capa = [rs[i], rs[i + 1]];
+    }
+  }
+
+  _capasPlanas(x0, w, yc, alto, forma, etapa) {
+    const N = this._nCapas(etapa);
+    const h2 = (u) => (alto / 2) * Math.max(0.05, forma(limitar(u)));
+    for (let i = 1; i < N; i += 1) {
+      const u = i / N;
+      const X = x0 + w * u;
+      this.linea(X, yc - h2(u), X, yc + h2(u), { color: 'tinta', grosor: 1, a: 0.55 });
+    }
+    if (etapa >= 2 && etapa <= 4) {
+      const i = this._capaResaltada(N);
+      const u0 = i / N;
+      const u1 = (i + 1) / N;
+      const um = (u0 + u1) / 2;
+      this.poligono([[x0 + w * u0, yc - h2(u0)], [x0 + w * u1, yc - h2(u1)], [x0 + w * u1, yc + h2(u1)], [x0 + w * u0, yc + h2(u0)]],
+        { relleno: alfa('amarillo', 0.72), borde: 'naranja', grosor: 2 });
+      this.texto(`d${this.s.eje || 'x'}`, x0 + w * um, yc + h2(um) + 20, { tam: 18, mate: true, alin: 'center', color: 'naranja', negrita: true, halo: true });
+      this.texto('A', x0 + w * um, yc - h2(um) - 10, { tam: 18, mate: true, alin: 'center', color: 'azul', negrita: true, halo: true });
+      this.rMarcado = this.a + (this.b - this.a) * um;
+      this._capa = [this.a + (this.b - this.a) * u0, this.a + (this.b - this.a) * u1];
+    }
+  }
+
+  /** Abajo: los escalones de temperatura que se van sumando (la integral como suma de bajadas). */
+  _escalera(etapa) {
+    const { e } = this;
+    const N = this._nCapas(5);
+    let avance = 1;
+    if (etapa === 5) avance = this.animado() ? limitar(this.tFoco / 5.5) : 1;
+    else if (this.rMarcado !== null && this.rMarcado !== undefined) avance = (this.rMarcado - this.a) / (this.b - this.a);
+    const k = Math.max(1, Math.min(N, Math.round(avance * N)));
+    const xs = (i) => this.a + ((this.b - this.a) * i) / N;
+    for (let i = 0; i < k; i += 1) {
+      const xa = xs(i);
+      const xb = xs(i + 1);
+      const Ta = interpola(this.perfil, xa);
+      const Tb = interpola(this.perfil, xb);
+      this.linea(e.X(xa), e.Y(Ta), e.X(xb), e.Y(Ta), { color: 'naranja', grosor: 2.6 });
+      this.linea(e.X(xb), e.Y(Ta), e.X(xb), e.Y(Tb), { color: 'naranja', grosor: 2.6 });
+    }
+    const xk = xs(k);
+    const Tk = interpola(this.perfil, xk);
+    const der = k > N * 0.55;
+    // Con el barrido de la lección ya hay una etiqueta arriba del punto: esta va abajo de la curva
+    const dy = etapa === 5 ? -12 : 24;
+    this.texto(`${k} ${k === 1 ? 'capa' : 'capas'}: bajó ${num(this.T1 - Tk, 3)} ${this.uT}`, e.X(xk) + (der ? -10 : 10), e.Y(Tk) + dy,
+      { tam: 14, color: 'naranja', negrita: true, halo: true, alin: der ? 'right' : 'left' });
+    if (etapa === 5 && k >= N) {
+      const fin = this.s.r3 !== undefined ? 'T₁ − T₃' : 'T₁ − T₂';
+      this.texto(`Suma de todas = ${fin} = ${num(this.T1 - this.Tn, 4)} ${this.uT}`, e.x + e.w, e.y - 8, { tam: 15, color: 'azul', negrita: true, alin: 'right', halo: true });
+    }
+  }
+
+  /** Abajo: la bajadita de temperatura dT dentro de una sola capa. */
+  _bajadaCapa() {
+    const { e } = this;
+    const [xa, xb] = this._capa;
+    const Ta = interpola(this.perfil, xa);
+    const Tb = interpola(this.perfil, xb);
+    this.caja(e.X(xa), e.y, Math.max(2, e.X(xb) - e.X(xa)), e.h, { r: 0, relleno: alfa('amarillo', 0.35) });
+    this.linea(e.X(xb) + 7, e.Y(Ta), e.X(xb) + 7, e.Y(Tb), { color: 'naranja', grosor: 3.2 });
+    this.texto('dT', e.X(xb) + 13, (e.Y(Ta) + e.Y(Tb)) / 2 + 5, { tam: 16, mate: true, color: 'naranja', negrita: true, halo: true });
   }
 
   _perfil() {
@@ -129,6 +322,14 @@ export class VisualConduccion extends Visual {
       const d = sale ? 13 : -13;
       const a = 0.35 + 0.65 * Math.sin(u * Math.PI);
       this.flecha(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0, cx + Math.cos(ang) * (r0 + d), cy + Math.sin(ang) * (r0 + d), { color: 'tinta', grosor: 2.6, punta: 8, a });
+    }
+    const etapa = this._etapa();
+    if (etapa) {
+      this._capasRadiales(cx, cy, etapa);
+      const [tit, cuerpo] = this._rotulos(etapa);
+      const y = this._parrafo([tit], 330, 40, 218, { tam: 16, color: 'azul', negrita: true });
+      this._parrafo(cuerpo, 330, y + 6, 218, { tam: 15 });
+      return;
     }
     // Cascarón diferencial
     const barr = this.foco === 'dr' || this.foco === 'barrido';
@@ -262,6 +463,14 @@ export class VisualConduccion extends Visual {
     this.bloque(x0, yc, w, alto, this.a, this.b, (u) => Math.max(0.05, forma(u)));
     this.focos(x0, x1, yc, Math.max(90, alto * 0.8), this.T1, this.Tn);
     this.calor(x0 + 6, x1 - 6, yc, 34, 3, dir);
+    const etapa = this._etapa();
+    if (etapa) {
+      this._capasPlanas(x0, w, yc, alto, forma, etapa);
+      const [tit, cuerpo] = this._rotulos(etapa);
+      this.texto(tit, 280, 24, { tam: 16, color: 'azul', negrita: true, alin: 'center', halo: true });
+      this._parrafo(cuerpo, 66, yc + alto / 2 + 34, 430, { tam: 14 });
+      return;
+    }
     const barr = this.foco === 'dr' || this.foco === 'dx' || this.foco === 'barrido';
     const u = this.foco === 'barrido' ? suave((this.tFoco % 3.4) / 2.6) : this.x !== null ? (this.x - this.a) / (this.b - this.a) : barr ? 0.5 + 0.05 * Math.sin(this.t * 2) : this.foco === 'punto' ? (this.x0 - this.a) / (this.b - this.a) : null;
     if (u !== null) {
@@ -277,11 +486,13 @@ export class VisualConduccion extends Visual {
 
   dibujar() {
     this.rMarcado = null;
+    this._capa = null;
     if (this.radial) this.seccionRadial(); else this.seccionPlana();
     const { e } = this;
     const c = this.ctx;
     e.dibujar({ tam: 15, corteX: this.a > 0 });
-    const enPerfil = ['perfil', 'listo', 'punto', 'barrido', null, undefined].includes(this.foco) || this.x !== null;
+    const etapa = this._etapa();
+    const enPerfil = ['perfil', 'listo', 'punto', 'barrido', null, undefined].includes(this.foco) || this.x !== null || etapa > 0;
     const oculta = this.s.oculta2 && !['perfil', 'listo'].includes(this.foco);
     c.save();
     c.globalAlpha = oculta ? 0.25 : enPerfil ? 1 : 0.5;
@@ -295,6 +506,16 @@ export class VisualConduccion extends Visual {
     c.restore();
     this.texto(num(this.T1, 4), e.x - 6, e.Y(this.T1) + 5, { tam: 14, alin: 'right', color: 'caliente' });
     if (!oculta) this.texto(num(this.Tn, 4), e.x + e.w + 6, e.Y(this.Tn) + 5, { tam: 14, color: 'frio' });
+    // La integral como suma de bajadas (escalones) o la bajadita dT de una sola capa
+    if (!oculta) {
+      if (etapa === 5 || (!etapa && this.foco === 'barrido')) this._escalera(etapa);
+      else if (etapa >= 2 && etapa <= 4 && this._capa) this._bajadaCapa();
+      else if (!etapa && (this.foco === 'dr' || this.foco === 'dx') && this.rMarcado !== null && this.rMarcado !== undefined) {
+        const d = (this.b - this.a) / 24;
+        this._capa = [Math.max(this.a, this.rMarcado - d), Math.min(this.b, this.rMarcado + d)];
+        this._bajadaCapa();
+      }
+    }
     const r = this.rMarcado ?? (this.foco === 'punto' ? this.x0 : null);
     if (r !== null && r !== undefined && !oculta) {
       const T = interpola(this.perfil, r);

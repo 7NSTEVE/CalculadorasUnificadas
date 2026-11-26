@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 
-from .fisica3 import registro, rutas, variantes
+from .fisica3 import registro, rutas, simbolos, variantes
 from .fisica3.dsl import revisar
 from .fisica3.formulario_ii_2026 import catalogo_formulario, mapear_formulario_leccion
 from .documentos import MAX_PDF
@@ -194,6 +194,9 @@ def crear_router(
             j = lec.a_json()
             j["auditoria_fisica"] = auditar_leccion(j)
             j["formulario_mapa"] = mapear_formulario_leccion(j)
+            j["simbolos"] = simbolos.mapa_leccion(j)
+            for c in (j["formulario_mapa"] or {}).get("celdas") or []:
+                c["simbolos"] = simbolos.simbolos_de(c.get("tex", ""), simbolos.grupo_celda(c.get("id", "")))
             j["esVariante"] = True
             j["origenVariante"] = id[:60]
             return j
@@ -210,6 +213,9 @@ def crear_router(
         j = lec.a_json()
         j["auditoria_fisica"] = await asyncio.to_thread(auditar_leccion, j)
         j["formulario_mapa"] = await asyncio.to_thread(mapear_formulario_leccion, j)
+        j["simbolos"] = await asyncio.to_thread(simbolos.mapa_leccion, j)
+        for c in (j["formulario_mapa"] or {}).get("celdas") or []:
+            c["simbolos"] = simbolos.simbolos_de(c.get("tex", ""), simbolos.grupo_celda(c.get("id", "")))
         if documentos is not None:
             rec = await asyncio.to_thread(documentos.recorte_de_leccion, lec)
             if rec:
@@ -219,7 +225,10 @@ def crear_router(
     @r.get("/formulario")
     async def api_formulario(request: Request) -> Dict[str, Any]:
         revisa_token(request)
-        return catalogo_formulario()
+        cat = catalogo_formulario()
+        for c in cat.get("celdas") or []:
+            c["simbolos"] = simbolos.simbolos_de(c.get("tex", ""), simbolos.grupo_celda(c.get("id", "")))
+        return cat
 
     @r.get("/formulario/hoja.png")
     async def api_formulario_hoja(request: Request) -> Response:

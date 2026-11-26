@@ -140,7 +140,7 @@ const POR_DEFECTO = {
   tema: 'light', letra: 'manuscrita', vel: 1, voz: 'es-MX-DaliaNeural', motorVoz: 'auto', vozLocal: '',
   servidorVozLocal: 'http://127.0.0.1:8880/v1/audio/speech', vozLocalHttp: 'es-default', vozKokoro: 'ef_dora',
   narracion: true, foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-2.5-flash',
-  zoom: 1, autoSeguir: false, sinSaltos: true,
+  zoom: 1, autoSeguir: false, sinSaltos: true, simbolos: true,
 };
 // Los despejes intermedios se muestran siempre por defecto. Antes venían apagados y se guardaban
 // apagados junto con cualquier otro ajuste; esta marca los enciende una sola vez (luego se respeta lo que elija).

@@ -191,7 +191,24 @@ body.sin-lateral .vista-pizarra { grid-template-columns: auto minmax(0, 1fr); }
 body:not(.sin-lateral) .volver { left: 32%; }
 
 /* ------------------------------------------------------------------ lateral */
-.lateral { grid-column: 3; grid-row: 1; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--tarjeta); border-left: 1px solid var(--borde); min-width: 0; }
+.lateral { grid-column: 3; grid-row: 1; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--tarjeta); border-left: 1px solid var(--borde); min-width: 0; }
+/* Qué es cada letra: aparece unos segundos con cada fórmula, al pie del panel de apoyo */
+.leyenda { margin: 0.5em 0.7em 0.7em; padding: 0.55em 0.8em 0.65em; border: 1px solid var(--borde); border-left: 4px solid var(--azul); border-radius: var(--r); background: var(--elevada); max-height: 42vh; overflow: auto; }
+.leyenda.flotante { position: absolute; top: 0.8em; right: 0.8em; z-index: 6; width: min(26em, 42%); margin: 0; box-shadow: 0 6px 22px rgb(15 23 42 / 0.16); }
+.leyenda.entra { animation: leyenda-entra 240ms ease-out both; }
+.leyenda.sale { animation: leyenda-sale 260ms ease-in both; }
+@keyframes leyenda-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes leyenda-sale { from { opacity: 1; } to { opacity: 0; transform: translateY(4px); } }
+.leyenda-cab { display: flex; align-items: center; justify-content: space-between; gap: 0.6em; font-size: 0.82em; font-weight: 600; color: var(--azul); margin-bottom: 0.25em; }
+.leyenda-x { border: 0; background: transparent; color: var(--tinta3); font-size: 1.3em; line-height: 1; min-width: 1.8em; min-height: 1.8em; border-radius: 6px; cursor: pointer; }
+.leyenda-lista { margin: 0; display: grid; gap: 0.3em; }
+.leyenda-fila { display: grid; grid-template-columns: minmax(2.6em, auto) 1fr; gap: 0.7em; align-items: baseline; }
+.leyenda-fila dt { font-family: "Cambria Math", "STIX Two Math", Cambria, "Times New Roman", serif; font-style: italic; font-size: 1.22em; color: var(--tinta); white-space: nowrap; }
+.leyenda-fila dt sub { font-size: 0.68em; font-style: normal; }
+.leyenda-fila dd { margin: 0; color: var(--tinta2); line-height: 1.35; }
+.leyenda-u { display: inline-block; padding: 0 0.45em; border-radius: 6px; background: color-mix(in srgb, var(--azul) 10%, transparent); color: var(--azul); font-size: 0.86em; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .leyenda.entra, .leyenda.sale { animation: none; } }
+@media (hover: hover) { .leyenda-x:hover { background: color-mix(in srgb, var(--tinta) 8%, transparent); color: var(--tinta); } }
 .lateral-tabs { display: flex; gap: 0.2em; padding: 0.4em 0.6em 0; border-bottom: 1px solid var(--borde); }
 .lateral-tabs button { border: 0; background: transparent; padding: 0.5em 0.9em; min-height: 2.5em; color: var(--tinta2); border-bottom: 3px solid transparent; }
 .lateral-tabs button[aria-selected="true"] { color: var(--azul); border-bottom-color: var(--azul); font-weight: 600; }
@@ -425,6 +442,10 @@ body.enfoque .estado { display: none; }
 .form-item-ubic { font-size: 0.76em; color: var(--tinta2); font-variant-numeric: tabular-nums; }
 .form-item-eq { margin: 0.05em 0 0; }
 .form-item-deriv { font-size: 0.78em; color: var(--tinta2); line-height: 1.3; }
+.form-item-sim { display: grid; gap: 0.15em; margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dashed var(--borde); font-size: 0.8em; color: var(--tinta2); text-align: left; }
+.form-sim-fila { display: grid; grid-template-columns: minmax(2.2em, auto) 1fr; gap: 0.5em; align-items: baseline; line-height: 1.3; }
+.form-sim-s { font-family: "Cambria Math", "STIX Two Math", Cambria, "Times New Roman", serif; font-size: 1.15em; color: var(--tinta); white-space: nowrap; }
+.form-sim-s sub { font-size: 0.7em; }
 
 .form-fuera { margin-top: 0.65em; padding: 0.5em 0.75em; border-left: 3px solid var(--naranja); background: color-mix(in srgb, var(--naranja) 8%, transparent); border-radius: 0 7px 7px 0; display: flex; flex-direction: column; gap: 0.15em; font-size: 0.82em; line-height: 1.35; }
 .form-fuera strong { color: var(--naranja); font-weight: 600; }

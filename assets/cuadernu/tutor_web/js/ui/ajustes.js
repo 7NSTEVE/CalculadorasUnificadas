@@ -188,6 +188,7 @@ export function armarAjustes(el, acciones) {
       titulo('Ritmo'),
       fila('Plegar los pasos anteriores', casilla('foco')),
       fila('Modo sin saltos (mostrar despejes)', casilla('sinSaltos')),
+      fila('Mostrar qué es cada letra al escribir', casilla('simbolos')),
       fila('Pasar solo al siguiente paso', casilla('autoSeguir')),
       fila('Menos movimiento', casilla('menosMovimiento')),
       titulo('Preguntas libres e imágenes'),

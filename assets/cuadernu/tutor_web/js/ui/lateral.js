@@ -352,6 +352,28 @@ export class Lateral {
             cuerpo.appendChild(der);
           }
 
+          // Qué es cada letra de esta fórmula, con sus unidades
+          if (Array.isArray(c.simbolos) && c.simbolos.length) {
+            const dl = document.createElement('span');
+            dl.className = 'form-item-sim';
+            for (const [s, que, u] of c.simbolos) {
+              const fila = document.createElement('span');
+              fila.className = 'form-sim-fila';
+              const k = s.indexOf('_');
+              const b = document.createElement('i');
+              b.textContent = k < 0 ? s : s.slice(0, k);
+              const simb = document.createElement('span');
+              simb.className = 'form-sim-s';
+              simb.append(b);
+              if (k >= 0) { const sub = document.createElement('sub'); sub.textContent = s.slice(k + 1); simb.append(sub); }
+              const txt = document.createElement('span');
+              txt.textContent = u ? `${que} · ${u}` : que;
+              fila.append(simb, txt);
+              dl.appendChild(fila);
+            }
+            cuerpo.appendChild(dl);
+          }
+
           item.append(num, cuerpo);
           item.addEventListener('click', () => this.enfocarFormulario(c.id));
           lista.appendChild(item);

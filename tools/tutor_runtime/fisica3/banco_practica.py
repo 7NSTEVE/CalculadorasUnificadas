@@ -327,9 +327,18 @@ def pr1_4() -> Leccion:
         .di("A la mitad de la barra el radio vale dos centímetros; sustituimos en la expresión de temperatura y restamos los inversos.", V(foco="punto"), M(rf"r(L/2)={tex(rmid, 3)}\ \text{{m}}"),
             M(rf"T=100-{tex(fac, 4)}\left(\frac{{1}}{{0{{,}}0100}}-\frac{{1}}{{{tex(rmid, 3)}}}\right)=100-{tex(fac, 4)}(100-50{{,}}0)"),
             R(rf"T(L/2)={tex(tmid, 3)}\ {C}", "r4a"))\
-        .di("Para hallar dónde la temperatura cae a cincuenta grados despejamos primero el radio y luego la posición equis.".replace("equis", dice("x", "equis")),
-            M(rf"100-\frac{{1}}{{r}}=\frac{{100-50}}{{{tex(fac, 4)}}}={tex((t1 - 50.0) / fac, 4)}\;\Rightarrow\;r={tex(r50, 3)}\ \text{{m}}"),
-            M(rf"x=\frac{{r-r_1}}{{b}}=\frac{{{tex(r50, 3)}-0{{,}}0100}}{{{tex(b, 3)}}}={tex(x50, 3)}\ \text{{m}}"),
+        .di("Ahora, dónde vale cincuenta grados. Igualamos la expresión a cincuenta. El cien de adentro es uno entre erre uno.".replace("erre uno", dice("r₁", "erre uno")),
+            M(rf"50=100-{tex(fac, 4)}\left(100-\frac{{1}}{{r}}\right)"))\
+        .di("Pasamos el paréntesis a la izquierda y el cincuenta a la derecha: cada uno cambia de signo.",
+            M(rf"{tex(fac, 4)}\left(100-\frac{{1}}{{r}}\right)=100-50=50"))
+    L.paso("4) Dónde vale 50 °C: despejar el radio y la posición")\
+        .di(f"Dividimos los dos lados entre {n(fac, 4)}.", M(rf"100-\frac{{1}}{{r}}=\frac{{50}}{{{tex(fac, 4)}}}={tex((t1 - 50.0) / fac, 4)}"))\
+        .di("Uno entre erre está restando: lo pasamos sumando, y el número pasa restando.".replace("erre", dice("r", "erre")),
+            M(rf"\frac{{1}}{{r}}=100-{tex((t1 - 50.0) / fac, 4)}={tex(100.0 - (t1 - 50.0) / fac, 4)}"))\
+        .di("El radio es uno entre ese número.", M(rf"r=\frac{{1}}{{{tex(100.0 - (t1 - 50.0) / fac, 4)}}}={tex(r50, 3)}\ \text{{m}}"))\
+        .di("Por último la posición: del radio en línea recta despejamos equis.".replace("equis", dice("x", "equis")),
+            M(r"r=r_1+b\,x\;\Rightarrow\;x=\frac{r-r_1}{b}"),
+            M(rf"x=\frac{{{tex(r50, 3)}-0{{,}}0100}}{{{tex(b, 3)}}}={tex(x50, 3)}\ \text{{m}}"),
             R(rf"x={tex(x50 * 100, 3)}\ \text{{cm}}", "r4b"))
     L.paso("4) ¿Por qué no es en la mitad?")\
         .di("El gradiente es hache entre ka por el área: donde el área es chica, la temperatura cae rápido.".replace("hache entre ka", dice("H/(kA)", "hache entre ka")),
@@ -396,9 +405,17 @@ def pr1_5() -> Leccion:
         .di("Del gas ideal, ene erre te es pe ve; y en esta recta pe ve es alfa ve al cuadrado.".replace("ene erre te es pe ve", dice("nRT = PV", "ene erre te es pe ve")).replace("pe ve es alfa ve al cuadrado", dice("PV = αV²", "pe ve es alfa ve al cuadrado")),
             M(r"PV=(\alpha V)\,V=\alpha V^2\;\Rightarrow\;dU=\frac{3}{2}\,d\left(\alpha V^2\right)"))
     L.paso("4) Derivar y sumar")\
-        .di("Derivada de una potencia: el dos baja a multiplicar y el exponente queda en uno.", M(r"d\left(V^2\right)=2V\,dV\;\Rightarrow\;dU=\frac{3}{2}\,\alpha\,(2V\,dV)=3\alpha V\,dV"),
+        .di("Derivada de una potencia: el dos baja a multiplicar y el exponente queda en uno.", M(r"d\left(V^2\right)=2V^{2-1}\,dV=2V\,dV"),
             NOTA("Derivada de una potencia: lección **T-MAT1**, último paso."))\
-        .di("Sumamos con la primera ley: el calor del pedacito es positivo mientras el volumen crece.", F(r"\Delta U=Q-W\;\Rightarrow\;dQ=dU+dW"), M(r"dQ=3\alpha V\,dV+\alpha V\,dV=4\alpha V\,dV>0"),
+        .di("Alfa es un número fijo: sale afuera. Ponemos lo que acabamos de derivar.",
+            M(r"dU=\frac{3}{2}\,d\left(\alpha V^2\right)=\frac{3}{2}\,\alpha\,d\left(V^2\right)=\frac{3}{2}\,\alpha\,(2V\,dV)"))\
+        .di("Tres medios por dos da tres.", M(r"dU=\frac{3\cdot 2}{2}\,\alpha V\,dV=3\alpha V\,dV"))
+    L.paso("4) Sumar con la primera ley")\
+        .di("Despejamos el calor de la primera ley de la hoja, para un pedacito del proceso.", F(r"\Delta U=Q-W\;\Rightarrow\;dQ=dU+dW"))\
+        .di("El trabajo de un pedacito es presión por el pedacito de volumen; aquí la presión es alfa por ve.".replace("alfa por ve", dice("αV", "alfa por ve")),
+            M(r"dW=p\,dV=\alpha V\,dV"))\
+        .di("Sumamos: tres alfa ve de ve más un alfa ve de ve dan cuatro. Es positivo mientras el volumen crece.".replace("tres alfa ve de ve más un alfa ve de ve", dice("3αV dV + αV dV", "tres alfa ve de ve más un alfa ve de ve")),
+            M(r"dQ=3\alpha V\,dV+\alpha V\,dV=4\alpha V\,dV>0"),
             R(r"dQ=4\alpha V\,dV>0\ \text{en todo }A\to B", "r4"))
     c = cierre_ciclo(L, res, titulo="3) Tabla del ciclo y 5) eficiencia", id_e="r5")
     L.responde("1", rf"\alpha={tex(alfa, 3)}\ \text{{Pa/m}}^3", alfa, "Pa/m³").responde("1", rf"T_B={tex(g.t('B'), 4)}\ \text{{K}}", g.t("B"), "K")\
