@@ -221,11 +221,11 @@ body:not(.sin-lateral) .volver { left: 32%; }
 .visual { display: flex; flex-direction: column; gap: 0.6em; height: 100%; min-height: 0; }
 .visual-marco { width: 100%; flex: 1 1 auto; min-height: 220px; display: grid; place-items: start center; }
 .visual canvas { display: block; }
-.visual-mandos { display: grid; gap: 0.5em; padding-top: 0.5em; border-top: 1px solid var(--borde); flex: 0 0 auto; }
-.mando { display: grid; grid-template-columns: auto minmax(60px, 1fr) minmax(6em, auto); gap: 0.7em; align-items: center; font-size: 0.94em; }
+.visual-mandos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45em; padding-top: 0.5em; border-top: 1px solid var(--borde); flex: 0 0 auto; }
+.mando { flex: 1 1 100%; display: grid; grid-template-columns: auto minmax(60px, 1fr) minmax(6em, auto); gap: 0.7em; align-items: center; font-size: 0.94em; }
 .mando-val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--azul); }
 .mando input { accent-color: var(--azul); min-height: 2em; }
-.mando-btn { min-height: 2.5em; border: 1px solid var(--borde); border-radius: 8px; background: var(--elevada); padding: 0 1em; justify-self: start; }
+.mando-btn { min-height: 2.35em; border: 1px solid var(--borde); border-radius: 8px; background: var(--elevada); padding: 0 0.85em; font-size: 0.9em; }
 
 /* ------------------------------------------------------------------ consola */
 .consola { display: grid; gap: 0.45em; padding: 0.5em 0.9em 0.6em; background: var(--tarjeta); border-top: 1px solid var(--borde); z-index: 20; }
@@ -306,6 +306,27 @@ body[data-vista="inicio"] .transporte, body[data-vista="inicio"] .subtitulo { di
 .ruta-item small { color: var(--tinta2); }
 .ruta-item .min { color: var(--tinta3); font-size: 0.9em; white-space: nowrap; }
 .ruta-item.sigue { border-color: var(--azul); box-shadow: 0 0 0 2px color-mix(in srgb, var(--azul) 22%, transparent); }
+
+/* Inicio «Hoy»: un plan activo, una sola acción grande y lo demás plegado */
+.hoy { gap: 1.2em; }
+.hoy-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em 0.9em; }
+.hoy-plan-lbl { color: var(--tinta2); }
+.hoy-hero { display: grid; gap: 0.8em; }
+.hoy-hero .accion-grande:disabled { opacity: 0.55; cursor: progress; }
+.hoy-avance .prep-progreso-top { align-items: center; font-size: 0.95em; }
+.hoy-enlace { border: 0; background: none; padding: 0.3em 0; color: var(--azul); font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; }
+.hoy-aviso { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8em; padding: 1em 1.2em; border: 1px solid var(--borde); border-radius: var(--r); background: var(--tarjeta); }
+.hoy-aviso p { margin: 0; }
+.hoy-accesos { display: flex; flex-wrap: wrap; gap: 0.3em 1.6em; }
+.hoy-acceso { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75em; padding: 0; border: 0; background: none; color: var(--tinta); font-weight: 600; }
+.hoy-acceso svg { width: 1.3em; height: 1.3em; fill: var(--azul); flex: 0 0 auto; }
+@media (hover: hover) { .hoy-acceso:hover span { color: var(--azul); text-decoration: underline; text-underline-offset: 0.2em; } }
+.hoy .mas-rutas { border-top: 1px solid var(--borde); border-bottom: 0; }
+.hoy .mas-rutas > summary { font-size: 1.02em; color: var(--tinta2); }
+.hoy .mas-rutas-cuerpo { padding-left: 0; gap: 0; }
+.hoy .ruta > summary { font-size: 1em; }
+.hoy .ruta-meta { margin-left: auto; color: var(--tinta2); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hoy .ruta-desc { margin: 0 0 0.3em; color: var(--tinta2); line-height: 1.45; }
 
 /* ------------------------------------------------------------------ biblioteca */
 .biblio { max-width: 74em; margin: 0 auto; padding: 1.2em 1.3em 3em; display: grid; gap: 0.9em; }
@@ -689,7 +710,7 @@ body.enfoque .estado { display: none; }
 /* ------------------------------------------------------------------ preparación en pasos cortos: Extraordinario y Reposición */
 body[data-vista="preparacion"] .consola { display: none; }
 
-.prep-wrap { max-width: 64em; margin: 0 auto; padding: 1em 1.25em 3.2em; display: grid; gap: 1.05em; }
+.prep-wrap { max-width: 69em; margin: 0 auto; padding: 1em 1.25em 3.2em; display: grid; gap: 1.05em; }
 .prep-barra { align-items: center; }
 
 .prep-sprint { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.45em; }
@@ -716,6 +737,28 @@ body[data-vista="preparacion"] .consola { display: none; }
 .prep-p2 { background: color-mix(in srgb, var(--morado) 13%, transparent); color: var(--morado); }
 .prep-p3 { background: color-mix(in srgb, var(--verde) 13%, transparent); color: var(--verde); }
 .prep-corte { background: color-mix(in srgb, var(--naranja) 14%, transparent); color: var(--naranja); }
+.prep-hoy { background: color-mix(in srgb, var(--azul) 14%, transparent); color: var(--azul); }
+.prep-ext { background: color-mix(in srgb, var(--rojo) 14%, transparent); color: var(--rojo); }
+
+/* Pestañas en una sola fila sin envolver (modern-web-guidance: tabs) */
+.est-modos[role="tablist"] { display: flex; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+.est-modos[role="tablist"]::-webkit-scrollbar { display: none; }
+.est-modos[role="tablist"] > button { flex: none; white-space: nowrap; position: relative; min-height: 2.55em; padding: 0.15em 0.85em 0.25em; }
+.est-modos[role="tablist"] > button[aria-selected="true"]::after { content: ""; position: absolute; inset: auto 0.65em 0.14em; border-block-end: 2px solid currentColor; border-radius: 2px; }
+
+/* Etiquetas de estado en Ordinario II-2026 dentro de Estudiar formulario */
+.est-tag-virgen { background: color-mix(in srgb, var(--rojo) 14%, transparent); color: var(--rojo); }
+.est-tag-evaluada { background: color-mix(in srgb, var(--verde) 14%, transparent); color: var(--verde); }
+
+/* Protocolo anti-bloqueo de 30 s (Cartago Extremo) y casillas vírgenes */
+.prep-proto-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65em; padding-left: 0.2em; }
+.prep-proto-card { padding: 0.72em 0.9em; border: 1px solid var(--borde); border-radius: 10px; background: var(--papel); display: grid; gap: 0.4em; align-content: start; }
+.prep-proto-cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.35em; }
+.prep-proto-cab strong { font-size: 0.92em; color: var(--tinta); }
+.prep-proto-cels { font-size: 0.78em; font-weight: 600; color: var(--azul); font-variant-numeric: tabular-nums; }
+.prep-proto-pasos { margin: 0; padding-left: 1.05em; display: grid; gap: 0.28em; font-size: 0.86em; line-height: 1.4; color: var(--tinta2); }
+.prep-virgenes-grid { display: flex; flex-wrap: wrap; gap: 0.38em; margin-bottom: 0.55em; }
+.prep-virgen-pill { font-size: 0.81em; font-weight: 600; padding: 0.2em 0.58em; border-radius: 7px; border: 1px solid color-mix(in srgb, var(--rojo) 38%, transparent); background: color-mix(in srgb, var(--rojo) 9%, transparent); color: var(--rojo); }
 
 .prep-celdas { display: flex; flex-wrap: wrap; gap: 0.4em; }
 .prep-celda { font-size: 0.84em; font-weight: 600; padding: 0.22em 0.62em; border-radius: 7px; border: 1px solid color-mix(in srgb, var(--fc, var(--azul)) 42%, transparent); background: color-mix(in srgb, var(--fc, var(--azul)) 9%, transparent); color: var(--fc, var(--azul)); }
@@ -798,7 +841,8 @@ body[data-vista="preparacion"] .consola { display: none; }
 .atencion-res-cab span { font-size: 0.82em; font-weight: 600; color: var(--azul); font-variant-numeric: tabular-nums; }
 .atencion-res-lista { margin: 0; display: grid; gap: 0.48em; }
 .atencion-res-lista dt { font-size: 0.76em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: var(--tinta2); }
-.atencion-res-lista dd { margin: 0.1em 0 0; font-size: 0.92em; line-height: 1.38; color: var(--tinta); display: flex; flex-wrap: wrap; gap: 0.35em; }
+.atencion-res-lista dd { margin: 0.1em 0 0; font-size: 0.92em; line-height: 1.38; color: var(--tinta); }
+.atencion-res-lista dd.atencion-res-celdas { display: flex; flex-wrap: wrap; gap: 0.35em; }
 .atencion-res-celda { padding: 0.22em 0.58em; border-radius: 7px; border: 1px solid color-mix(in srgb, var(--fc, var(--azul)) 45%, transparent); background: color-mix(in srgb, var(--fc, var(--azul)) 10%, transparent); color: var(--fc, var(--azul)); font-size: 0.88em; font-weight: 600; }
 .atencion-res-corte { margin: 0; font-size: 0.82em; padding: 0.42em 0.65em; border-radius: 7px; border-left: 3px solid var(--naranja); background: color-mix(in srgb, var(--naranja) 9%, transparent); color: var(--tinta); }
 .atencion-res-pie { display: flex; flex-wrap: wrap; gap: 0.45em; padding-top: 0.25em; }
@@ -806,7 +850,7 @@ body[data-vista="preparacion"] .consola { display: none; }
 @media (max-width: 760px) {
   .prep-wrap { padding: 0.75em 0.75em 2.6em; }
   .prep-hero { padding: 1em 1em; }
-  .prep-cal-ops { grid-template-columns: minmax(0, 1fr); }
+  .prep-cal-ops, .prep-proto-grid { grid-template-columns: minmax(0, 1fr); }
   .prep-item { grid-template-columns: 2.1em minmax(0, 1fr); }
   .prep-item-min { grid-column: 2; }
   .hoja-resumen-atencion { margin: auto auto 9.2em auto; }

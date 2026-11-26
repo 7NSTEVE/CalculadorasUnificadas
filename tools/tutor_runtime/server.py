@@ -248,7 +248,13 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
         origin = request.headers.get("origin", "")
         if not _is_allowed_host(host) or not _is_allowed_origin(origin):
             return JSONResponse(status_code=403, content={"detail": "Origen o host no permitido"})
-        return await call_next(request)
+        response = await call_next(request)
+        # Archivos de la página (HTML, JS, CSS): que el navegador pregunte siempre si cambiaron
+        # (con ETag es barato). Sin esto mezcla módulos JS nuevos con copias viejas en caché
+        # durante horas después de una actualización.
+        if not request.url.path.startswith(("/api/", "/ws/")):
+            response.headers.setdefault("Cache-Control", "no-cache")
+        return response
 
     def _check_token(token_q: Optional[str], req: Optional[Request] = None) -> None:
         if not ctx.session_token:

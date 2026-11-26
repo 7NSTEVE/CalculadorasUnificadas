@@ -28,6 +28,7 @@ MODULOS = [
     "banco_entropia",
     "banco_practica",
     "banco_blindaje_ii_2026",
+    "banco_ordinario_ii_2026",
     "banco_reposicion_p1",
     "banco_reposicion_p2",
     "teoria",

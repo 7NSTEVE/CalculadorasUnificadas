@@ -68,6 +68,10 @@ class TestBanco158YTeoria(unittest.TestCase):
             "RP-23II-1", "RP-24I-1", "RP-24II-1", "RP-25II-1", "RP-26I-1", "RP-26I-2", "RP-26I-7",
             "RP-23II-2", "RP-24I-2", "RP-24II-2", "RP-25II-2", "RP-26I-3", "RP-26I-4", "RP-26I-8",
         }
+        # III Parcial Ordinario real II-2026 (9 confirmados) + Cartago Extremo C26-1
+        esperados_o26 = {
+            "O26-1", "O26-2", "O26-3", "O26-4", "O26-5", "O26-6", "O26-8", "O26-9", "O26-10", "C26-1",
+        }
 
         self.assertTrue(esperados_e.issubset(ids), f"Faltan E: {sorted(esperados_e - ids)}")
         self.assertTrue(esperados_q.issubset(ids), f"Faltan Q: {sorted(esperados_q - ids)}")
@@ -75,7 +79,8 @@ class TestBanco158YTeoria(unittest.TestCase):
         self.assertTrue(esperados_p.issubset(ids), f"Faltan prácticas: {sorted(esperados_p - ids)}")
         self.assertTrue(esperados_b.issubset(ids), f"Faltan blindaje II-2026: {sorted(esperados_b - ids)}")
         self.assertTrue(esperados_rp.issubset(ids), f"Faltan reposición P1/P2: {sorted(esperados_rp - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14)  # + T-MAT1..3, T-CONO; blindaje P26-1..5; reposición 14 RP-*
+        self.assertTrue(esperados_o26.issubset(ids), f"Faltan Ordinario II-2026 / C26-1: {sorted(esperados_o26 - ids)}")
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10)  # 231 lecciones totales
 
         faltas = {}
         for lid in sorted(ids):
@@ -1111,6 +1116,70 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
             self.assertEqual(jb["formulario_mapa"]["parcial"], p_exp)
             self.assertEqual(jb["formulario_mapa"]["hoja_url"], f"/api/formulario/p{p_exp}/hoja.png")
             self.assertTrue(jb.get("recorte") and jb["recorte"].get("url"), f"{rid} sin recorte PDF")
+
+    def test_ordinario_ii_2026_y_escudo_cartago_extremo(self) -> None:
+        from tools.tutor_runtime.auditoria_pasos import auditar as auditar_pasos
+        from tools.tutor_runtime.fisica3.guia_formulario_ii_2026 import guia_completa
+        from tools.tutor_runtime.fisica3.preparacion_examenes import preparacion_completa
+        from tools.tutor_runtime.verificador_fisico import auditar_leccion
+
+        nuevos = ("O26-1", "O26-2", "O26-3", "O26-4", "O26-5", "O26-6", "O26-8", "O26-9", "O26-10", "C26-1")
+        for lid in nuevos:
+            lec = registro.obtener(lid)
+            self.assertEqual(revisar(lec), [], f"Faltas DSL en {lid}")
+            j = lec.a_json()
+            aud = auditar_leccion(j)
+            self.assertEqual(aud["alertas"], [], f"Alertas físicas en {lid}: {aud['alertas']}")
+            ap = auditar_pasos(lid)
+            self.assertEqual(ap["faltas"], [], f"Faltas en auditoria_pasos para {lid}: {ap['faltas']}")
+            if j.get("cotejo"):
+                self.assertEqual(j["cotejo"]["estado"], "coincide", f"{lid} difiere de clave oficial")
+
+        # O26-8 debe usar la nueva geometría interactiva esfera_seccionada
+        o8 = registro.obtener("O26-8").a_json()
+        self.assertEqual((o8.get("visual") or {}).get("geo"), "esfera_seccionada")
+
+        # Radar Post-Ordinario II-2026 en preparacion_completa()
+        prep = preparacion_completa()
+        radar = prep.get("radar_ii_2026")
+        self.assertIsNotNone(radar)
+        self.assertEqual(len(radar["bloques"]), 7)
+        self.assertEqual(radar["total_hoy"], 9)
+        self.assertEqual(radar["total_extremo"], 23)
+        self.assertEqual(radar["total"], 32)
+        self.assertEqual(len(radar["casillas_virgenes"]), 19)
+        self.assertEqual(len(radar["protocolo_30s"]), 4)
+        ids_radar = [it["id"] for b in radar["bloques"] for it in b["items"]]
+        self.assertEqual(len(set(ids_radar)), 32)
+        self.assertTrue(set(nuevos).issubset(set(ids_radar)))
+
+        # Guía del formulario II-2026: 16 evaluadas + 19 vírgenes + 7 constantes = 42
+        g = guia_completa()
+        res_ord = g.get("resumen_ordinario_ii_2026") or {}
+        self.assertEqual(res_ord.get("evaluadas"), 16)
+        self.assertEqual(res_ord.get("virgenes"), 19)
+        self.assertEqual(res_ord.get("constantes"), 7)
+        self.assertEqual(sum(res_ord.values()), 42)
+        por_id = {c["id"]: c for c in g["celdas"]}
+        self.assertEqual(por_id["F1C3"]["estado_ordinario_ii_2026"], "virgen")
+        self.assertEqual(por_id["F11C3"]["estado_ordinario_ii_2026"], "virgen")
+        self.assertEqual(por_id["F2C2"]["estado_ordinario_ii_2026"], "evaluada")
+        self.assertIn("O26-8", por_id["F2C2"]["en_ordinario_ii_2026"])
+
+        # Endpoint HTTP devuelve radar_ii_2026 y O26-8/C26-1 limpios
+        app = create_app({"session_token": "tok-radar-test"})
+        client = TestClient(app)
+        hdrs = {"Origin": "http://127.0.0.1:8765"}
+        r_prep = client.get("/api/preparacion?token=tok-radar-test", headers=hdrs)
+        self.assertEqual(r_prep.status_code, 200)
+        self.assertEqual(r_prep.json()["radar_ii_2026"]["total"], 32)
+        r_guia = client.get("/api/formulario/guia?token=tok-radar-test", headers=hdrs)
+        self.assertEqual(r_guia.status_code, 200)
+        self.assertEqual(r_guia.json()["resumen_ordinario_ii_2026"]["virgenes"], 19)
+        for lid in ("O26-8", "O26-9", "O26-10", "C26-1"):
+            r_l = client.get(f"/api/banco/{lid}?corte=20.5&token=tok-radar-test", headers=hdrs)
+            self.assertEqual(r_l.status_code, 200)
+            self.assertEqual((r_l.json().get("formulario_mapa") or {}).get("fuera_de_hoja"), [])
 
 
 if __name__ == "__main__":

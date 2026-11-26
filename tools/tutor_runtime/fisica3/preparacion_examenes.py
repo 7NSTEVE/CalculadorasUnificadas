@@ -232,6 +232,78 @@ _CALENTAMIENTO_POR_ID: Dict[str, Dict[str, Any]] = {
         "correcta": 0,
         "explica": "El signo menos en v = −ωA sen(ωt+φ) exige sen(φ) < 0 cuando v(0) > 0.",
     },
+    "O26-8": {
+        "pregunta": "En la esfera seccionada entre y = −L y y = +L, ¿cuál es el área perpendicular al flujo vertical?",
+        "opciones": ["Disco horizontal A(y) = π(R² − y²) por Pitágoras", "Cascarón esférico A = 4πr²", "Área fija πR² en toda la altura"],
+        "correcta": 0,
+        "explica": "El flujo sube por el eje y; cada rebanada es un círculo de radio x = √(R² − y²), no un cascarón radial.",
+    },
+    "O26-9": {
+        "pregunta": "Para hallar ΔU_{AC} sin calcular la curva adiabática A→B, ¿qué atajo exacto funciona?",
+        "opciones": ["ΔU_{AC} = −ΔU_{DA}, porque ΔU_{CD} = 0 (isoterma) y ΔU_{ciclo} = 0", "Aproximar W_{AB} con P_{media}(V_B − V_A)", "Suponer ΔU_{AC} = Q_{BC} directamente"],
+        "correcta": 0,
+        "explica": "La energía interna es función de estado: D→A (isobárico) basta para obtener ΔU_{AC} y γ = Q_{DA}/ΔU_{DA}.",
+    },
+    "O26-10": {
+        "pregunta": "Agua y aluminio a 38,3 °C reciben hielo a −15,0 °C. ¿Cuál es el primer paso obligatorio?",
+        "opciones": ["Comparar Q_{disp} hasta 0 °C contra Q_1 + Q_2 (calentar y fundir todo el hielo)", "Despejar T_f sin incluir mL_f", "Promediar 38,3 °C y −15,0 °C"],
+        "correcta": 0,
+        "explica": "Solo si Q_{disp} > Q_1 + Q_2 sabes con certeza que se funde todo el hielo y T_f > 0 °C.",
+    },
+    "C26-1": {
+        "pregunta": "Si una barra tiene holgura inicial δ entre muros rígidos y se calienta ΔT_{tot}, ¿qué ΔT genera esfuerzo térmico?",
+        "opciones": ["Solo el exceso ΔT_{bloq} = T_f − T_c después de cerrar la holgura δ", "Todo el ΔT_{tot} = T_f − T_0", "La holgura impide cualquier esfuerzo sin importar T_f"],
+        "correcta": 0,
+        "explica": "Primero dilata libre hasta cerrar δ (F/A = 0); solo el calentamiento posterior entra en F/A = −YαΔT.",
+    },
+    "E11": {
+        "pregunta": "En dos capas cilíndricas concéntricas (aire + magnox) en régimen estacionario, ¿qué comparten ambas capas?",
+        "opciones": ["El mismo flujo radial H (se suman resistencias logarítmicas en serie)", "El mismo gradiente dT/dr", "La misma temperatura en todo el espesor"],
+        "correcta": 0,
+        "explica": "Capas concéntricas en serie llevan el mismo H; cada una integra F2C2 con A = 2πrL.",
+    },
+    "E8": {
+        "pregunta": "Si el aislante cilíndrico tiene k(r) = k_0/r y A(r) = 2πrL, ¿qué pasa al sustituir en H = −kA dT/dr?",
+        "opciones": ["El factor r se cancela (kA = 2πk_0 L cte) y la integral queda lineal en r", "Queda ∫ dr/r²", "Se evalúa k en el radio promedio"],
+        "correcta": 0,
+        "explica": "Escribir k(r)·A(r) antes de integrar revela la cancelación exacta de r.",
+    },
+    "Q057": {
+        "pregunta": "En una esfera hueca con k(r) = k_0 r y A(r) = 4πr², ¿qué potencia de r queda en el denominador?",
+        "opciones": ["∫ dr / r³ (porque k·A = 4πk_0 r³)", "∫ dr / r² igual que con k constante", "∫ r dr"],
+        "correcta": 0,
+        "explica": "A(r) = 4πr² multiplicado por k(r) = k_0 r produce r³ en F2C2.",
+    },
+    "Q061": {
+        "pregunta": "Si la conductividad depende de la temperatura k(T) = k_0 + aT, ¿de qué lado de la integral queda k(T)?",
+        "opciones": ["Del lado de dT: H ∫ dx/A = −∫ k(T) dT", "Del lado de dx", "Se saca k(T) fuera de la integral"],
+        "correcta": 0,
+        "explica": "Separar variables obliga a juntar todo lo que depende de T con dT.",
+    },
+    "E18": {
+        "pregunta": "En un refrigerador de 4 etapas (sentido antihorario), ¿qué signo tiene W_{neto} y qué casilla define su desempeño?",
+        "opciones": ["W_{neto} < 0 (consume trabajo) y K = |Q_c|/|W| (F10C2)", "W_{neto} > 0 y e = W/Q_H", "K = 1 − T_c/T_H"],
+        "correcta": 0,
+        "explica": "Todo refrigerador gira antihorario (trabajo neto entra) y hasta 20.5 se evalúa con F10C2.",
+    },
+    "PR2-D9": {
+        "pregunta": "En un ciclo Otto ideal con razón de compresión r = V_{máx}/V_{mín}, ¿qué casillas vírgenes de la hoja lo gobiernan?",
+        "opciones": ["e_{otto} = 1 − 1/r^(γ−1) (F11C3), r (F12C1) y TV^(γ−1) = cte (F9C3)", "e = 1 − T_c/T_H", "W = nRT ln(V_2/V_1)"],
+        "correcta": 0,
+        "explica": "Otto combina 2 adiabáticas (F9C3) con 2 isocóricas (F11C1) y su eficiencia está impresa en F11C3.",
+    },
+    "E6": {
+        "pregunta": "Al mezclar hielo (0 °C), agua (45 °C) y vapor (100 °C) juntos, ¿cómo decides el estado final sin adivinar?",
+        "opciones": ["Comparar el calor máximo de condensar el vapor contra el calor de fundir el hielo y llevar todo a 100 °C", "Suponer siempre T_f = 50 °C", "Ignorar el calor latente del vapor"],
+        "correcta": 0,
+        "explica": "Con 3 fases se prueban los umbrales en 0 °C y 100 °C antes de plantear la ecuación final.",
+    },
+    "E14": {
+        "pregunta": "Dada una distribución por tramos N(v) con parábola y rectas, ¿cómo se halla el número total de moléculas N?",
+        "opciones": ["Integrando el área total bajo la curva N = ∫ N(v) dv", "Evaluando N(v) en el punto medio", "Usando pV = nRT"],
+        "correcta": 0,
+        "explica": "N es el área bajo N(v), v_{mp} es el máximo de N(v) y v_{med} = (1/N) ∫ v·N(v) dv.",
+    },
 }
 
 # ---------------------------------------------------------------------- definición de micro-bloques
@@ -379,6 +451,101 @@ _BLOQUES_REPOS: Tuple[Tuple[str, int, str, str, Tuple[Tuple[str, str, str, str],
     )),
 )
 
+# Radar Post-Ordinario II-2026 + Escudo Cartago Extremo (≤ 20.5): 7 micro-bloques cortos
+# (bloque_id, categoria, titulo, subtitulo, items: [(examen, num, id, meta_1_linea)])
+_BLOQUES_RADAR: Tuple[Tuple[str, str, str, str, Tuple[Tuple[str, str, str, str], ...]], ...] = (
+    ("R-B1", "hoy", "Bloque 1 · Ordinario II-2026 (hoy): selecciones P1–P6", "Calibración rápida sobre las 6 selecciones reales confirmadas de hoy", (
+        ("26-II-O", "1", "O26-1", "Convertir C_p del N₂ de J/(mol·°F) a J/(mol·K) multiplicando por 1,8."),
+        ("26-II-O", "2", "O26-2", "Despejar W = Q_H/5 desde e = 20 % sin invertir la fracción."),
+        ("26-II-O", "3", "O26-3", "Relacionar ΔL₂ = 2ΔL₁ cuando se duplica α con igual L₀ y ΔT."),
+        ("26-II-O", "4", "O26-4", "Duplicar presión a V cte pasando 25 °C a Kelvin → 323 °C."),
+        ("26-II-O", "5", "O26-5", "Pared compuesta estacionaria: igual flujo H, gradientes distintos."),
+        ("26-II-O", "6", "O26-6", "Por qué sube C_V de un gas diatómico al activar rotación y vibración."),
+    )),
+    ("R-B2", "hoy", "Bloque 2 · Ordinario II-2026 (hoy): desarrollos P8–P10", "Los 3 desarrollos reales de hoy (46 pts) derivados desde la hoja oficial", (
+        ("26-II-O", "8", "O26-8", "Esfera seccionada entre y = −L y +L: A(y) = π(R² − y²) e integral."),
+        ("26-II-O", "9", "O26-9", "Ciclo Q096 recalibrado: atajo ΔU_{AC} = −ΔU_{DA} y γ = 1,40."),
+        ("26-II-O", "10", "O26-10", "Agua + aluminio a 38,3 °C con hielo a −15,0 °C → T_f = 11,94 °C."),
+    )),
+    ("R-B3", "extremo", "Bloque 3 · Cartago Extremo I: conducción doble variable / doble capa", "Los 5 monstruos de Fourier diferencial (2 capas, k(r), k(T) y A₀e^(−x/L))", (
+        ("Rec-26", "11", "E11", "Uranio + aire (0,10 mm) + magnox: 2 capas cilíndricas y T_interfaz."),
+        ("Rec-26", "8", "E8", "Tubo cilíndrico con conductividad variable k(r) = k₀/r (doble variable)."),
+        ("Folleto", "3.3-6", "Q057", "Esfera hueca con k(r) = k₀ r: integrar dr/r³ desde F2C2."),
+        ("Folleto", "3.3-9", "Q061", "Conductividad dependiente de temperatura k(T): integrar del lado de dT."),
+        ("Pr-Prof", "D10", "PR2-D10", "Barra exponencial A(x) = A₀ e^(−x/L): R_th, H/H₀, T(x) y |dT/dx|_máx."),
+    )),
+    ("R-B4", "extremo", "Bloque 4 · Cartago Extremo II: ciclos monstruo y refrigeradores", "4 ciclos largos sin atajo (4–5 etapas, refrigerador sin figura y P = αV)", (
+        ("Rec-26", "18", "E18", "Refrigerador de 4 etapas dibujado desde texto: estados, W, Q y K."),
+        ("Rec-26", "19", "E19", "Ciclo abcda monoatómico de 17 pasos (atm, L, F6C3 y F9C2/F9C3)."),
+        ("Folleto", "4.2-3", "Q116", "Ciclo de 5 procesos con 3 mol de O₂ sin atajos cortos."),
+        ("Pr-Marc", "5", "PR1-5", "Ciclo con recta inclinada P = αV: integrar W = ∫p dV y dQ/dV > 0."),
+    )),
+    ("R-B5", "extremo", "Bloque 5 · Cartago Extremo III: Otto, Diésel e info incompleta", "Explotan las casillas vírgenes F11C3, F12C1, F9C2, F9C3 y F10C2 (≤ 20.5)", (
+        ("Pr-Prof", "D9", "PR2-D9", "Ciclo Otto ideal completo (6 incisos usando F11C3 y F12C1 vírgenes)."),
+        ("24-II-E", "7", "Q097", "Ciclo Diésel completo: n, 4 estados, Q_H, Q_C y e (inciso E omitido)."),
+        ("Pr-Prof", "D11", "PR2-D11", "Ciclo con información incompleta: deducir C_P, C_V, γ, gas y e."),
+        ("26-I-E", "10", "Q103", "Refrigerador de 0,300 mol de N₂: péndulo directo de motor → K."),
+    )),
+    ("R-B6", "extremo", "Bloque 6 · Cartago Extremo IV: calorimetría trampa de 3 fases", "Hielo + agua + vapor simultáneos, fusión parcial y calentador por etapas", (
+        ("Rec-26", "6", "E6", "Hielo (0 °C) + agua (45 °C) + vapor (100 °C): probar ambos umbrales."),
+        ("Rec-26", "5", "E5", "Cubo de cobre a −79 °C dentro de aluminio con agua y vapor."),
+        ("23-II-E", "7", "Q022", "Hielo en calorímetro de hierro más vapor (Extraordinario real)."),
+        ("Pr-Prof", "D7", "PR2-D7", "Trampa de fusión parcial: el hierro no logra derretir todo → T_f = 0 °C."),
+        ("Pr-Prof", "D12", "PR2-D12", "Calentador de 250 W durante 3,50 min: comprobar fusión y ebullición."),
+    )),
+    ("R-B7", "extremo", "Bloque 7 · Cartago Extremo V: sorpresa de las 19 fórmulas vírgenes", "Esfuerzo térmico con holgura (F1C3), α(T), N(v) parabólica y radiación", (
+        ("26-II-CE", "1", "C26-1", "Esfuerzo térmico con holgura δ + ΔV libre (F1C1 + F1C2 + F1C3)."),
+        ("Folleto", "3.1-4", "Q012", "Dilatación con α(T) variable: integrar dL/L = α(T) dT."),
+        ("Rec-26", "14", "E14", "Distribución de rapideces N(v) con parábola e integrales por tramos."),
+        ("Folleto", "3.4-8", "Q070", "Tasa inicial de enfriamiento por radiación dT/dt desde F3C1 y F3C2."),
+        ("Pr-Prof", "S13", "PR2-S13", "Barra rígidamente sujeta que se enfría: signo de F/A (tensión)."),
+    )),
+)
+
+_PROTOCOLO_30S: Tuple[Dict[str, Any], ...] = (
+    {
+        "familia": "Conducción (integral o 2 capas)",
+        "casillas": ["F2C2", "F2C1"],
+        "pasos": [
+            "1. Escribe A(coord) (disco πx², cilindro 2πrL, esfera 4πr²) y k(coord o T) antes de tocar la integral.",
+            "2. Parte de H = −kA dT/dx, pon todo lo de T con dT y todo lo de posición con dx/dr/dy.",
+            "3. En 2 capas en serie el flujo H es el mismo: plantea H₁ = H₂ para despejar T_interfaz.",
+        ],
+    },
+    {
+        "familia": "Ciclos y máquinas (≤ 20.5)",
+        "casillas": ["F4C1", "F7C1", "F9C2", "F10C1", "F10C2"],
+        "pasos": [
+            "1. Dibuja o marca flechas: horario ⇒ motor (W_neto > 0, usar F10C1); antihorario ⇒ refrigerador (W_neto < 0, usar F10C2).",
+            "2. Arma tabla de estados (p, V, T) con pV = nRT, pV^γ = cte y TV^(γ−1) = cte; revisa si hay atajo ΔU_ciclo = 0.",
+            "3. Nunca uses P_media·ΔV en una curva (solo vale en rectas); suma solo los Q > 0 para Q_H.",
+        ],
+    },
+    {
+        "familia": "Calorimetría de 2 o 3 fases",
+        "casillas": ["F3C2", "F3C3"],
+        "pasos": [
+            "1. No despejes T_f directo: calcula primero Q_disp hasta 0 °C (o 100 °C) y compáralo con m·L_f (o m·L_v).",
+            "2. Si no alcanza para fundir todo, T_f = 0 °C y despejas la masa fundida m = Q_sobra / L_f.",
+            "3. Si sobra para fundir todo, recuerda sumar la masa derretida como agua líquida a 0 °C en ∑Q = 0.",
+        ],
+    },
+    {
+        "familia": "Esfuerzo térmico, dilatación y radiación",
+        "casillas": ["F1C1", "F1C2", "F1C3", "F3C1"],
+        "pasos": [
+            "1. Si hay holgura δ entre muros, halla primero T_c con δ = αL₀ΔT; solo ΔT_bloq = T_f − T_c entra en F/A = −YαΔT.",
+            "2. Si piden ΔV con α dado, demuestra β = 3α antes de usar ΔV = βV₀ΔT.",
+            "3. En radiación (F2C3/F3C1) y gases (F4C1), pasa TODAS las temperaturas a Kelvin antes de elevar o multiplicar.",
+        ],
+    },
+)
+
+_VIRGENES_ORD_II_2026: Tuple[str, ...] = (
+    "F1C2", "F1C3", "F2C3", "F3C1", "F4C2", "F4C3", "F5C1", "F5C2", "F5C3",
+    "F6C1", "F6C3", "F8C1", "F9C1", "F9C2", "F9C3", "F10C2", "F11C1", "F11C3", "F12C1",
+)
+
 
 def _arma_item(examen: str, num: str, lid: str, meta: str) -> Dict[str, Any]:
     lec = registro.obtener(lid)
@@ -443,11 +610,47 @@ def preparacion_completa() -> Dict[str, Any]:
             "items": lista,
         })
 
+    bloques_radar: List[Dict[str, Any]] = []
+    for bid, cat, tit, sub, items in _BLOQUES_RADAR:
+        lista = [_arma_item(ex, num, lid, meta) for ex, num, lid, meta in items]
+        bloques_radar.append({
+            "id": bid,
+            "categoria": cat,
+            "titulo": tit,
+            "subtitulo": sub,
+            "minutos": sum(x["minutos"] for x in lista),
+            "items": lista,
+        })
+
     total_extra = sum(len(b["items"]) for b in bloques_extra)
     total_repos = sum(len(b["items"]) for b in bloques_repos)
+    total_radar = sum(len(b["items"]) for b in bloques_radar)
+
+    from .formulario_ii_2026 import catalogo_formulario as _cat_f26
+    _cat_por_id = {c["id"]: c for c in _cat_f26()["celdas"]}
+    virgenes_meta = [
+        {"id": cid, "nombre": _cat_por_id[cid]["nombre"], "etiqueta": _cat_por_id[cid]["etiqueta"]}
+        for cid in _VIRGENES_ORD_II_2026
+        if cid in _cat_por_id
+    ]
 
     _CACHE_PREP.update({
         "corte": "20.5",
+        "radar_ii_2026": {
+            "titulo": "Radar Cartago II-2026 · Ordinario de hoy + Escudo Extremo (≤ 20.5)",
+            "descripcion": (
+                "Los 9 ítems confirmados del III Parcial Ordinario II-2026 + los 23 desafíos clave "
+                "de nivel Cartago Extremo calibrados sobre las 19 ecuaciones que quedaron vírgenes hoy."
+            ),
+            "examenes": ["26-II-O", "26-II-CE", "Rec-26", "Pr-Prof", "Pr-Marc", "Folleto", "24-II-E", "26-I-E", "23-II-E"],
+            "total": total_radar,
+            "total_hoy": sum(len(b["items"]) for b in bloques_radar if b["categoria"] == "hoy"),
+            "total_extremo": sum(len(b["items"]) for b in bloques_radar if b["categoria"] == "extremo"),
+            "casillas_virgenes": virgenes_meta,
+            "protocolo_30s": list(_PROTOCOLO_30S),
+            "bloques": bloques_radar,
+            "mixtos_recortados": [{"id": "Q097", "nota": _MIXTOS_20_5["Q097"][0]}],
+        },
         "extraordinario": {
             "titulo": "III Parcial Extraordinario · Corte ≤ 20.5",
             "descripcion": (

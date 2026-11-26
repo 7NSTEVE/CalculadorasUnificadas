@@ -9,7 +9,7 @@
  * - Transparencia total sobre los 4 problemas y 5 incisos omitidos por superar la sección 20.5.
  */
 
-import { bus, pedir } from '../nucleo/api.js';
+import { ajustes, bus, guardarAjuste, pedir } from '../nucleo/api.js';
 import { banco, estaHecha, nombreTema } from './banco.js';
 
 const CLAVE_PREP = 'tutor.preparacion.atencion.v1';
@@ -27,14 +27,15 @@ function svg(d) {
 }
 
 function cargarEstado() {
-  const base = { tab: 'extraordinario', sprintMin: 10, filtroEx: '', filtroPilar: 0, soloPend: false, calOk: {} };
+  const base = { tab: 'extraordinario', sprintMin: 10, filtroEx: '', filtroPilar: 0, filtroRadar: 'todos', soloPend: false, calOk: {} };
   try {
     const raw = JSON.parse(localStorage.getItem(CLAVE_PREP) || '{}');
     if (raw && typeof raw === 'object') {
-      if (raw.tab === 'extraordinario' || raw.tab === 'reposicion') base.tab = raw.tab;
+      if (['extraordinario', 'radar', 'reposicion'].includes(raw.tab)) base.tab = raw.tab;
       if ([0, 10, 15].includes(raw.sprintMin)) base.sprintMin = raw.sprintMin;
       if (typeof raw.filtroEx === 'string') base.filtroEx = raw.filtroEx;
       if ([0, 1, 2, 3].includes(raw.filtroPilar)) base.filtroPilar = raw.filtroPilar;
+      if (['todos', 'hoy', 'extremo'].includes(raw.filtroRadar)) base.filtroRadar = raw.filtroRadar;
       if (typeof raw.soloPend === 'boolean') base.soloPend = raw.soloPend;
       if (raw.calOk && typeof raw.calOk === 'object') base.calOk = raw.calOk;
     }
@@ -46,7 +47,7 @@ function guardarEstado(st) {
   try {
     localStorage.setItem(CLAVE_PREP, JSON.stringify({
       tab: st.tab, sprintMin: st.sprintMin, filtroEx: st.filtroEx,
-      filtroPilar: st.filtroPilar, soloPend: st.soloPend, calOk: st.calOk,
+      filtroPilar: st.filtroPilar, filtroRadar: st.filtroRadar, soloPend: st.soloPend, calOk: st.calOk,
     }));
   } catch { /* modo privado */ }
 }
@@ -72,7 +73,7 @@ function formatoReloj(seg) {
 }
 
 /** Convierte subíndices/superíndices ASCII (Q_H, W_neto, pV^γ, T^(γ−1)) a nodos DOM reales <sub>/<sup>. */
-function ponerTextoMate(el, texto) {
+export function ponerTextoMate(el, texto) {
   el.replaceChildren();
   const s = String(texto || '');
   const re = /_\{([^}]+)\}|_([A-Za-z0-9ÁÉÍÓÚáéíóú]+)|\^\{([^}]+)\}|\^\(([^)]+)\)|\^([A-Za-z0-9γ−\-+]+)/g;
@@ -113,26 +114,107 @@ export class PreparacionExamenes {
   }
 
   async abrir({ tab = null } = {}) {
-    if (tab === 'extraordinario' || tab === 'reposicion') {
+    if (['extraordinario', 'radar', 'reposicion'].includes(tab)) {
+      if (this.st.tab !== tab) {
+        this.st.filtroEx = '';
+        this.st.filtroPilar = 0;
+        this.st.filtroRadar = 'todos';
+      }
       this.st.tab = tab;
-      this.st.filtroEx = '';
-      this.st.filtroPilar = 0;
       guardarEstado(this.st);
     }
-    if (!this.datos && !this.cargando) {
-      this.cargando = true;
+    if (!this.datos) {
       this._pintarCargando();
       try {
-        this.datos = await pedir('/api/preparacion', { tiempo: 20000 });
+        await this._cargar();
       } catch {
-        this.datos = null;
         this._pintarError();
-        this.cargando = false;
         return;
       }
-      this.cargando = false;
     }
     this.pintar();
+  }
+
+  /** Una sola carga de `/api/preparacion`, compartida entre esta vista y el Inicio. */
+  _cargar() {
+    if (this.datos) return Promise.resolve(this.datos);
+    if (!this._promesa) {
+      this.cargando = true;
+      this._promesa = pedir('/api/preparacion', { tiempo: 20000 })
+        .then((d) => { this.datos = d; return d; })
+        .finally(() => { this.cargando = false; this._promesa = null; });
+    }
+    return this._promesa;
+  }
+
+  /* ---------------------------------------------------------------- para el Inicio y el cierre */
+
+  /** Lo que muestra el Inicio «Hoy» para el plan elegido: qué toca, cuánto va hecho y el bloque. */
+  async resumenParaInicio(plan) {
+    try {
+      await this._cargar();
+    } catch {
+      return { error: true };
+    }
+    const mod = plan === 'reposicion'
+      ? this.datos.reposicion
+      : plan === 'radar'
+        ? this.datos.radar_ii_2026
+        : this.datos.extraordinario;
+    if (!mod) return { error: true };
+    const todos = this._todosItems(mod);
+    const it = this._siguientePendiente(mod);
+    return {
+      it,
+      hechos: todos.filter((x) => estaHecha(x.id)).length,
+      total: todos.length,
+      bloque: it ? ((mod.bloques[it._bloqueIdx] || {}).titulo || '') : '',
+    };
+  }
+
+  /**
+   * El siguiente pendiente del plan después de `id`. Primero se termina el bloque actual
+   * (antes el que quedó a medias), luego los bloques siguientes y por último los anteriores.
+   * Devuelve null si `id` no está en ningún plan; `{ it: null }` si ya no quedan pendientes.
+   */
+  siguienteTras(id) {
+    if (!this.datos) return null;
+    const ordenMods = {
+      radar: [this.datos.radar_ii_2026, this.datos.extraordinario, this.datos.reposicion],
+      reposicion: [this.datos.reposicion, this.datos.radar_ii_2026, this.datos.extraordinario],
+      extraordinario: [this.datos.extraordinario, this.datos.radar_ii_2026, this.datos.reposicion],
+    };
+    const mods = ordenMods[this.st.tab] || ordenMods.extraordinario;
+    const pendiente = (x) => x.id !== id && !estaHecha(x.id);
+    const aMedias = (x) => pendiente(x) && ((banco.progreso[x.id] || {}).paso || 0) > 0;
+    for (const mod of mods) {
+      if (!mod) continue;
+      const todos = this._todosItems(mod);
+      const i = todos.findIndex((x) => x.id === id);
+      if (i < 0) continue;
+      const blq = todos[i]._bloqueIdx;
+      const delBloque = todos.filter((x) => x._bloqueIdx === blq);
+      const j = delBloque.findIndex((x) => x.id === id);
+      const ordenBloque = [...delBloque.slice(j + 1), ...delBloque.slice(0, j)];
+      // De los que quedaron a medias, el que se tocó más recientemente
+      const cuando = (x) => (banco.progreso[x.id] || {}).cuando || 0;
+      const enCurso = ordenBloque.filter(aMedias).sort((a, b) => cuando(b) - cuando(a))[0];
+      const enBloque = enCurso || ordenBloque.find(pendiente);
+      if (enBloque) return { it: enBloque };
+      const resto = [...todos.slice(i + 1), ...todos.slice(0, i)].filter((x) => x._bloqueIdx !== blq);
+      return { it: resto.find(pendiente) || null };
+    }
+    return null;
+  }
+
+  /** Abre un ejercicio del plan con su contexto (corte, meta y «volver a la preparación»). */
+  abrirItem(it, desde = null) {
+    let d = desde;
+    if (d === null) {
+      const e = banco.progreso[it.id];
+      d = e && !e.hecha ? Math.min(e.paso || 0, Math.max(0, (e.total || 1) - 1)) : 0;
+    }
+    this._abrirEjercicio(it, d);
   }
 
   _pintarCargando() {
@@ -215,7 +297,9 @@ export class PreparacionExamenes {
   /* ---------------------------------------------------------------- helpers de datos */
 
   _moduloActivo() {
-    return this.st.tab === 'reposicion' ? this.datos.reposicion : this.datos.extraordinario;
+    if (this.st.tab === 'reposicion') return this.datos.reposicion;
+    if (this.st.tab === 'radar' && this.datos.radar_ii_2026) return this.datos.radar_ii_2026;
+    return this.datos.extraordinario;
   }
 
   _todosItems(mod) {
@@ -253,6 +337,7 @@ export class PreparacionExamenes {
     if (!this.datos) return;
     const mod = this._moduloActivo();
     const esRepos = this.st.tab === 'reposicion';
+    const esRadar = this.st.tab === 'radar';
     const todos = this._todosItems(mod);
     const hechos = todos.filter((x) => estaHecha(x.id)).length;
     const total = todos.length;
@@ -262,7 +347,7 @@ export class PreparacionExamenes {
     const wrap = document.createElement('div');
     wrap.className = 'prep-wrap';
 
-    // 1. Barra superior única: selector segmentado + micro-sprint + volver
+    // 1. Barra superior única: selector segmentado (3 pestañas en una sola fila) + micro-sprint + volver
     const barra = document.createElement('div');
     barra.className = 'est-barra prep-barra';
 
@@ -270,10 +355,15 @@ export class PreparacionExamenes {
     seg.className = 'seg est-modos';
     seg.setAttribute('role', 'tablist');
     seg.setAttribute('aria-label', 'Módulo de preparación');
-    for (const [clave, label] of [
-      ['extraordinario', `Extraordinario ≤ 20.5 (${this.datos.extraordinario.total_activos})`],
-      ['reposicion', `Reposición · 3 Parciales (${this.datos.reposicion.total})`],
-    ]) {
+    const pestanas = [
+      ['extraordinario', `Extraordinario (${this.datos.extraordinario.total_activos})`],
+    ];
+    if (this.datos.radar_ii_2026) {
+      pestanas.push(['radar', `Radar Cartago (${this.datos.radar_ii_2026.total})`]);
+    }
+    pestanas.push(['reposicion', `Reposición (${this.datos.reposicion.total})`]);
+
+    for (const [clave, label] of pestanas) {
       const b = document.createElement('button');
       b.type = 'button';
       b.setAttribute('role', 'tab');
@@ -284,8 +374,12 @@ export class PreparacionExamenes {
         this.st.tab = clave;
         this.st.filtroEx = '';
         this.st.filtroPilar = 0;
+        this.st.filtroRadar = 'todos';
         guardarEstado(this.st);
+        if (ajustes.plan !== clave) guardarAjuste('plan', clave);
         this.pintar();
+        const sel = this.el.querySelector('[role="tab"][aria-selected="true"]');
+        if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       });
       seg.appendChild(b);
     }
@@ -359,6 +453,11 @@ export class PreparacionExamenes {
     // 2. Tarjeta única protagonista: "Tu siguiente paso ahora"
     wrap.appendChild(this._construirHero(mod, siguiente, hechos, total));
 
+    // 2b. Protocolo anti-bloqueo de 30 s (solo en Radar Cartago Extremo, colapsado por defecto)
+    if (esRadar && Array.isArray(mod.protocolo_30s) && mod.protocolo_30s.length) {
+      wrap.appendChild(this._construirProtocolo30s(mod));
+    }
+
     // 3. Barra serena de progreso del bloque actual + total
     const blkAct = mod.bloques[bloqueActivoIdx];
     const blkHechos = blkAct ? blkAct.items.filter((x) => estaHecha(x.id)).length : 0;
@@ -408,6 +507,25 @@ export class PreparacionExamenes {
         });
         fil.appendChild(bp);
       }
+    } else if (esRadar) {
+      const cats = [
+        ['todos', `Todo (${mod.total})`],
+        ['hoy', `Ordinario de hoy (${mod.total_hoy || 9})`],
+        ['extremo', `Cartago Extremo (${mod.total_extremo || 23})`],
+      ];
+      for (const [cat, lbl] of cats) {
+        const bc = document.createElement('button');
+        bc.type = 'button';
+        bc.className = 'chip';
+        bc.setAttribute('aria-pressed', String(this.st.filtroRadar === cat));
+        bc.textContent = lbl;
+        bc.addEventListener('click', () => {
+          this.st.filtroRadar = cat;
+          guardarEstado(this.st);
+          this.pintar();
+        });
+        fil.appendChild(bc);
+      }
     }
 
     const selEx = document.createElement('select');
@@ -449,11 +567,12 @@ export class PreparacionExamenes {
     const secBloques = document.createElement('div');
     secBloques.id = 'prep-bloques';
     secBloques.className = 'prep-bloques';
-    const hayFiltro = Boolean(this.st.filtroEx || this.st.filtroPilar || this.st.soloPend);
+    const hayFiltro = Boolean(this.st.filtroEx || this.st.filtroPilar || (esRadar && this.st.filtroRadar !== 'todos') || this.st.soloPend);
 
     let bloquesVisibles = 0;
     mod.bloques.forEach((blk, idx) => {
       if (esRepos && this.st.filtroPilar && blk.parcial !== this.st.filtroPilar) return;
+      if (esRadar && this.st.filtroRadar !== 'todos' && blk.categoria !== this.st.filtroRadar) return;
       const items = blk.items.filter((it) => {
         if (this.st.filtroEx && it.examen !== this.st.filtroEx) return false;
         if (this.st.soloPend && estaHecha(it.id)) return false;
@@ -523,6 +642,11 @@ export class PreparacionExamenes {
           bP.className = `prep-badge prep-p${it.parcial}`;
           bP.textContent = `Parcial ${it.parcial}`;
           tags.appendChild(bP);
+        } else if (esRadar) {
+          const bCat = document.createElement('span');
+          bCat.className = `prep-badge ${blk.categoria === 'hoy' ? 'prep-hoy' : 'prep-ext'}`;
+          bCat.textContent = blk.categoria === 'hoy' ? 'Hoy II-2026' : 'Cartago Extremo';
+          tags.appendChild(bCat);
         }
         const bTipo = document.createElement('span');
         bTipo.className = 'prep-badge';
@@ -562,10 +686,44 @@ export class PreparacionExamenes {
     }
     wrap.appendChild(secBloques);
 
-    // 6. Transparencia de corte ≤ 20.5 (colapsable, sin ruido visual)
-    wrap.appendChild(this._construirTransparencia(mod, esRepos));
+    // 6. Transparencia de corte ≤ 20.5 (y 19 casillas vírgenes en Radar)
+    wrap.appendChild(this._construirTransparencia(mod, esRepos, esRadar));
 
     this.el.replaceChildren(wrap);
+  }
+
+  _construirProtocolo30s(mod) {
+    const det = document.createElement('details');
+    det.className = 'est-det prep-excl prep-proto';
+    const sum = document.createElement('summary');
+    sum.textContent = 'Protocolo anti-bloqueo de 30 s · Qué escribir primero en Cartago Extremo';
+    det.appendChild(sum);
+
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'est-det-cuerpo prep-proto-grid';
+    for (const f of mod.protocolo_30s) {
+      const card = document.createElement('div');
+      card.className = 'prep-proto-card';
+      const cab = document.createElement('div');
+      cab.className = 'prep-proto-cab';
+      const tit = document.createElement('strong');
+      tit.textContent = f.familia;
+      const cels = document.createElement('span');
+      cels.className = 'prep-proto-cels';
+      cels.textContent = (f.casillas || []).join(' · ');
+      cab.append(tit, cels);
+      const ul = document.createElement('ul');
+      ul.className = 'prep-proto-pasos';
+      for (const paso of f.pasos || []) {
+        const li = document.createElement('li');
+        ponerTextoMate(li, paso);
+        ul.appendChild(li);
+      }
+      card.append(cab, ul);
+      cuerpo.appendChild(card);
+    }
+    det.appendChild(cuerpo);
+    return det;
   }
 
   _construirHero(mod, it, hechos, total) {
@@ -711,19 +869,38 @@ export class PreparacionExamenes {
     return hero;
   }
 
-  _construirTransparencia(mod, esRepos) {
+  _construirTransparencia(mod, esRepos, esRadar = false) {
     const det = document.createElement('details');
     det.className = 'est-det prep-excl';
     const sum = document.createElement('summary');
     const nExcl = (mod.excluidos_corte || []).length;
     const nMix = (mod.mixtos_recortados || []).length;
-    sum.textContent = esRepos
-      ? `Corte ≤ 20.5 en Reposición · ${nMix} inciso de entropía omitido automáticamente`
-      : `Qué se ignoró por superar 20.5 (Carnot 20.6 y Entropía 20.7) · ${nExcl} excluidos + ${nMix} incisos omitidos`;
+    const nVirg = (mod.casillas_virgenes || []).length;
+    sum.textContent = esRadar
+      ? `Radar de ${nVirg} ecuaciones vírgenes del Ordinario II-2026 + corte ≤ 20.5`
+      : esRepos
+        ? `Corte ≤ 20.5 en Reposición · ${nMix} inciso de entropía omitido automáticamente`
+        : `Qué se ignoró por superar 20.5 (Carnot 20.6 y Entropía 20.7) · ${nExcl} excluidos + ${nMix} incisos omitidos`;
     det.appendChild(sum);
 
     const cuerpo = document.createElement('div');
     cuerpo.className = 'est-det-cuerpo';
+
+    if (esRadar && nVirg) {
+      const pv = document.createElement('p');
+      pv.className = 'prep-excl-sub';
+      pv.textContent = 'Estas 19 ecuaciones del formulario II-2026 NO se usaron en los 9 ítems confirmados de hoy (prioridad máxima para el Extraordinario):';
+      cuerpo.appendChild(pv);
+      const grid = document.createElement('div');
+      grid.className = 'prep-virgenes-grid';
+      for (const c of mod.casillas_virgenes) {
+        const sp = document.createElement('span');
+        sp.className = 'prep-virgen-pill';
+        sp.textContent = `${c.id} · ${c.nombre}`;
+        grid.appendChild(sp);
+      }
+      cuerpo.appendChild(grid);
+    }
 
     if (nExcl) {
       const p1 = document.createElement('p');

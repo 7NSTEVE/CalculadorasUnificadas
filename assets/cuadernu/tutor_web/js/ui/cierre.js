@@ -98,13 +98,22 @@ export function ponerCierre(rep, lec, acciones) {
   if (lec.practica) ponerPractica(v.cuerpo, lec, tab);
   const fila = document.createElement('div');
   fila.className = 'fila-botones';
-  const sig = siguienteDe(lec.id);
-  if (sig && banco.mapa.has(sig)) {
+  // «Siguiente» respeta el plan de donde se vino (Preparación) y no lleva a temas fuera del corte
+  let sig = null;
+  if (acciones.siguiente) {
+    sig = acciones.siguiente(lec);
+  } else {
+    const id = siguienteDe(lec.id);
+    if (id && banco.mapa.has(id)) {
+      sig = { texto: `Siguiente: ${banco.mapa.get(id).titulo.replace(/\$[^$]*\$/g, '').slice(0, 60)}`, abrir: () => acciones.abrir(id) };
+    }
+  }
+  if (sig) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'btn btn-principal';
-    b.textContent = `Siguiente: ${banco.mapa.get(sig).titulo.replace(/\$[^$]*\$/g, '').slice(0, 60)}`;
-    b.addEventListener('click', () => acciones.abrir(sig));
+    b.textContent = sig.texto;
+    b.addEventListener('click', sig.abrir);
     fila.appendChild(b);
   }
   if (acciones.variante && lec.tipo !== 'teoria') {

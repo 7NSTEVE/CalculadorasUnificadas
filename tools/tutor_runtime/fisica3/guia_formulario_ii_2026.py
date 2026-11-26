@@ -1877,21 +1877,49 @@ _CANDADO = threading.Lock()
 _CACHE_GUIA: Dict[str, Any] | None = None
 
 
+# Cobertura real auditada del III Parcial Ordinario FI2103 II-2026 (págs. 1–2 y 4–5; pág. 3 / P7 no disponible)
+EVALUADAS_ORDINARIO_II_2026: Dict[str, str] = {
+    "F1C1": "Ord. II-2026 P3 (O26-3)",
+    "F2C1": "Ord. II-2026 P5 (O26-5)",
+    "F2C2": "Ord. II-2026 P8 esfera seccionada (O26-8) y P5 (O26-5)",
+    "F3C2": "Ord. II-2026 P10 calorimetría (O26-10)",
+    "F3C3": "Ord. II-2026 P10 fusión del hielo (O26-10)",
+    "F4C1": "Ord. II-2026 P4 gas ideal (O26-4) y P9 (O26-9)",
+    "F6C2": "Ord. II-2026 P9 isobárico D→A (O26-9)",
+    "F7C1": "Ord. II-2026 P9 primera ley (O26-9)",
+    "F7C2": "Ord. II-2026 P9 energía interna (O26-9)",
+    "F7C3": "Ord. II-2026 P9 relación de Mayer (O26-9)",
+    "F8C2": "Ord. II-2026 P6 gas diatómico (O26-6) y P9 (O26-9)",
+    "F8C3": "Ord. II-2026 P9 razón γ (O26-9)",
+    "F10C1": "Ord. II-2026 P2 eficiencia 20 % (O26-2)",
+    "F10C3": "Ord. II-2026 P4 paso a Kelvin (O26-4)",
+    "F11C2": "Ord. II-2026 P9 calor isobárico (O26-9)",
+    "F12C2": "Ord. II-2026 P1 conversión °F → K (O26-1)",
+}
+
+VIRGENES_ORDINARIO_II_2026: Tuple[str, ...] = (
+    "F1C2", "F1C3", "F2C3", "F3C1", "F4C2", "F4C3", "F5C1", "F5C2", "F5C3",
+    "F6C1", "F6C3", "F8C1", "F9C1", "F9C2", "F9C3", "F10C2", "F11C1", "F11C3", "F12C1",
+)
+
+
 def _prioridad_ejemplo(lid: str, tipo: str) -> Tuple[int, str]:
-    """Ordena ejemplos priorizando prácticas II-2026, blindaje P26-* y clásicos de examen."""
-    if lid.startswith("P26-"):
+    """Ordena ejemplos priorizando Ordinario II-2026 (O26-*), Cartago Extremo (C26-*), blindaje y prácticas II-2026."""
+    if lid.startswith("O26-") or lid.startswith("C26-"):
         return (0, lid)
-    if lid.startswith("PR1-") or lid.startswith("PR2-D"):
+    if lid.startswith("P26-"):
         return (1, lid)
-    if lid.startswith("PR2-S"):
+    if lid.startswith("PR1-") or lid.startswith("PR2-D"):
         return (2, lid)
-    if lid in ("Q049", "Q105", "Q103", "Q110", "Q111", "Q122", "Q068", "Q022", "E21", "E16", "E8", "E2"):
+    if lid.startswith("PR2-S"):
         return (3, lid)
-    if tipo == "desarrollo":
+    if lid in ("Q049", "Q105", "Q103", "Q110", "Q111", "Q122", "Q068", "Q022", "E21", "E16", "E8", "E2", "E11", "E18"):
         return (4, lid)
-    if tipo == "seleccion":
+    if tipo == "desarrollo":
         return (5, lid)
-    return (6, lid)
+    if tipo == "seleccion":
+        return (6, lid)
+    return (7, lid)
 
 
 def _recopilar_ejemplos() -> Dict[str, List[Dict[str, str]]]:
@@ -1933,12 +1961,20 @@ def guia_completa() -> Dict[str, Any]:
                 sims = _SIMBOLOS_CONSTANTES[cid]
             else:
                 sims = simbolos.simbolos_de(c["tex"], simbolos.grupo_celda(cid))
+            if c.get("es_constante"):
+                est_ord = "constante"
+            elif cid in EVALUADAS_ORDINARIO_II_2026:
+                est_ord = "evaluada"
+            else:
+                est_ord = "virgen"
             celdas_out.append({
                 **c,
                 "bloque": info["bloque"],
                 "bloque_nombre": blk["nombre"],
                 "color": blk["color"],
                 "estado_ii_2026": info["estado_ii_2026"],
+                "estado_ordinario_ii_2026": est_ord,
+                "en_ordinario_ii_2026": EVALUADAS_ORDINARIO_II_2026.get(cid, ""),
                 "prioridad": info["prioridad"],
                 "que_es": info["que_es"],
                 "cuando_si": list(info["cuando_si"]),
@@ -1958,6 +1994,11 @@ def guia_completa() -> Dict[str, Any]:
             "hoja_url": cat["hoja_url"],
             "aspecto": cat["aspecto"],
             "total": len(celdas_out),
+            "resumen_ordinario_ii_2026": {
+                "evaluadas": sum(1 for x in celdas_out if x["estado_ordinario_ii_2026"] == "evaluada"),
+                "virgenes": sum(1 for x in celdas_out if x["estado_ordinario_ii_2026"] == "virgen"),
+                "constantes": sum(1 for x in celdas_out if x["estado_ordinario_ii_2026"] == "constante"),
+            },
             "bloques": list(BLOQUES_FORMULARIO),
             "celdas": celdas_out,
             "decisiones": list(DECISIONES_RAPIDAS),

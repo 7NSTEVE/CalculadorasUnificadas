@@ -24,10 +24,14 @@ export class VisualConduccion extends Visual {
     this.uT = spec.uT || '°C';
     const geo = spec.geo;
     this.radial = ['cilindro', 'esfera', 'cilindro2', 'esfera2'].includes(geo);
+    this.esferaSec = geo === 'esfera_seccionada';
     if (this.radial) {
       const rs = [spec.r1, spec.r2, spec.r3].filter((x) => x !== undefined);
       this.a = rs[0];
       this.b = rs[rs.length - 1];
+    } else if (this.esferaSec) {
+      this.a = -(spec.L ?? 0.06);
+      this.b = spec.L ?? 0.06;
     } else { this.a = 0; this.b = spec.L ?? spec.h ?? spec.capas?.reduce((q, c) => q + c.e, 0) ?? 1; }
     this.T1 = spec.T1; this.Tn = spec.T3 ?? spec.T2;
     this.perfil = spec.pts || this._perfil();
@@ -52,7 +56,7 @@ export class VisualConduccion extends Visual {
     // Armar la integral paso a paso: capas, una capa, Fourier, separar y sumar (botones o foco "armar1".."armar5")
     this.armado = 0;
     this._capa = null;
-    if (this.radial || geo === 'pared') {
+    if (this.radial || geo === 'pared' || this.esferaSec) {
       this.bArmar = this.boton('Cómo se arma la integral', () => this._armar(this.armado ? 0 : 1));
       this.bAnt = this.boton('◀ Paso anterior', () => this._armar(Math.max(1, this.armado - 1)));
       this.bSig = this.boton('Paso siguiente ▶', () => this._armar(Math.min(5, this.armado + 1)));
@@ -99,6 +103,16 @@ export class VisualConduccion extends Visual {
 
   _textos() {
     const g = this.s.geo;
+    if (g === 'esfera_seccionada') {
+      return {
+        v: 'y',
+        dos: false,
+        capa: 'disco horizontal',
+        A: 'A(y) = πx² = π(R² − y²)',
+        sep: 'dT = −(H / πk) · dy / (R² − y²)',
+        res: 'T₁ − T₂ = (H / πkR) · ln((R + L)/(R − L))',
+      };
+    }
     const esf = g.startsWith('esfera');
     const cil = g.startsWith('cilindro');
     const forma = Boolean(this.s.forma);
@@ -121,14 +135,19 @@ export class VisualConduccion extends Visual {
   _rotulos(etapa) {
     const t = this._textos();
     const d = `d${t.v}`;
+    const desc2 = this.esferaSec
+      ? 'Por Pitágoras x² + y² = R², cada disco horizontal tiene área:'
+      : this.radial
+        ? (t.capa === 'cáscara' ? 'Es la cáscara de una pelota; su área es:' : 'Desenrollada es un rectángulo de 2πr por L; su área es:')
+        : 'Su área es la cara que cruza el calor:';
+    const lim5 = this.esferaSec ? 'Sumando desde −L hasta +L sale la bajada total:' : `Sumando de ${t.v}₁ a ${t.v}${t.dos ? '₃' : '₂'} sale la bajada total:`;
     const lista = [
       null,
       ['1 · Cortamos en capas delgaditas', [`Cada ${t.capa} es tan fina que adentro la temperatura casi no cambia.`, 'Así se puede usar la fórmula de la hoja en cada una.']],
-      [this.radial ? `2 · Una capa: radio r, grosor ${d}` : `2 · Una rebanada en ${t.v}, grosor ${d}`,
-        [this.radial ? (t.capa === 'cáscara' ? 'Es la cáscara de una pelota; su área es:' : 'Desenrollada es un rectángulo de 2πr por L; su área es:') : 'Su área es la cara que cruza el calor:', t.A]],
+      [this.radial ? `2 · Una capa: radio r, grosor ${d}` : `2 · Una rebanada en ${t.v}, grosor ${d}`, [desc2, t.A]],
       ['3 · Fourier de la hoja en esa capa', [`H = −k·A·dT/${d}`, 'El mismo H cruza todas las capas, una tras otra.']],
       ['4 · Separamos las letras', [t.sep, `Lo que tiene T, a la izquierda; lo que tiene ${t.v}, a la derecha.`]],
-      ['5 · Sumamos todas las capas: la integral', ['Cada capa baja un poquito la temperatura: son los escalones de abajo.', `Sumando de ${t.v}₁ a ${t.v}${t.dos ? '₃' : '₂'} sale la bajada total:`, t.res]],
+      ['5 · Sumamos todas las capas: la integral', ['Cada capa baja un poquito la temperatura: son los escalones de abajo.', lim5, t.res]],
     ];
     return lista[etapa];
   }
@@ -267,7 +286,12 @@ export class VisualConduccion extends Visual {
       if (s.perfil === 'lineal' || s.geo === 'pared' || s.geo === 'paralelo') f = i / N;
       else if (s.geo === 'cilindro') f = Math.log(r / this.a) / Math.log(this.b / this.a);
       else if (s.geo === 'esfera') f = (1 / this.a - 1 / r) / (1 / this.a - 1 / this.b);
-      else f = i / N;
+      else if (s.geo === 'esfera_seccionada') {
+        const R = s.R || 0.10;
+        const L = s.L || 0.08;
+        const lnTot = Math.log((R + L) / (R - L));
+        f = (Math.log((R + r) / (R - r)) + lnTot) / (2 * lnTot);
+      } else f = i / N;
       out.push([r, s.T1 + (this.Tn - s.T1) * f]);
     }
     return out;
@@ -484,10 +508,170 @@ export class VisualConduccion extends Visual {
     if (s.nota) this.texto(s.nota, 280, yc + alto / 2 + 44, { tam: 15, alin: 'center', color: 'tinta2' });
   }
 
+  seccionEsferaSeccionada() {
+    const { s } = this;
+    const c = this.ctx;
+    const cx = 174;
+    const cy = 148;
+    const R = s.R || 0.10;
+    const L = s.L || 0.06;
+    const Rpx = 100;
+    const Lpx = Rpx * (L / R);
+    const yToPy = (y) => cy - (y / R) * Rpx;
+    const xHalf = (y) => Math.sqrt(Math.max(0, R * R - y * y)) * (Rpx / R);
+
+    // Contorno punteado de la esfera original (referencia visual del corte)
+    this.circulo(cx, cy, Rpx, { borde: 'tinta3', grosor: 1.2, guion: [4, 4], a: 0.55 });
+
+    // Rebanadas horizontales coloreadas por temperatura desde y = -L (abajo, T1) hasta y = +L (arriba, T2)
+    const N = 48;
+    for (let i = 0; i < N; i += 1) {
+      const y0 = -L + (2 * L * i) / N;
+      const y1 = -L + (2 * L * (i + 1)) / N;
+      const T = interpola(this.perfil, (y0 + y1) / 2);
+      const w0 = xHalf(y0);
+      const w1 = xHalf(y1);
+      const py0 = yToPy(y0);
+      const py1 = yToPy(y1);
+      this.poligono(
+        [[cx - w0, py0 + 0.5], [cx + w0, py0 + 0.5], [cx + w1, py1 - 0.5], [cx - w1, py1 - 0.5]],
+        { relleno: this.colorT(T, 1), a: 0.82 },
+      );
+    }
+
+    // Contorno grueso de la esfera seccionada + marcas sutiles de aislante lateral
+    const ang = Math.asin(Math.min(0.99, L / R));
+    c.save();
+    c.strokeStyle = color('tinta');
+    c.lineWidth = 2.4;
+    c.beginPath();
+    c.arc(cx, cy, Rpx, -ang, ang);
+    c.stroke();
+    c.beginPath();
+    c.arc(cx, cy, Rpx, Math.PI - ang, Math.PI + ang);
+    c.stroke();
+    c.restore();
+
+    // Trazos cortos de aislante sobre los arcos laterales
+    for (const side of [-1, 1]) {
+      for (let k = -3; k <= 3; k += 1) {
+        const th = (k / 3.6) * ang;
+        const bx = cx + side * Rpx * Math.cos(th);
+        const by = cy - Rpx * Math.sin(th);
+        this.linea(bx, by, bx + side * 8, by - 4, { color: 'tinta3', grosor: 1.3, a: 0.75 });
+      }
+    }
+
+    // Depósitos térmicos planos: abajo T1 (caliente, y = -L) y arriba T2 (fría, y = +L)
+    const wCap = xHalf(L);
+    const pTop = yToPy(L);
+    const pBot = yToPy(-L);
+    const wDep = Math.max(wCap * 2 + 28, 176);
+    this.caja(cx - wDep / 2, pTop - 26, wDep, 26, { r: 4, relleno: this.colorT(this.Tn, 0.88), borde: 'tinta', grosor: 1.8 });
+    this.caja(cx - wDep / 2, pBot, wDep, 26, { r: 4, relleno: this.colorT(this.T1, 0.88), borde: 'tinta', grosor: 1.8 });
+    this.texto('T₂ (y = +L)', cx, pTop - 8, { tam: 15, alin: 'center', negrita: true, halo: true });
+    this.texto('T₁ (y = −L)', cx, pBot + 18, { tam: 15, alin: 'center', negrita: true, halo: true });
+
+    // Ejes x-y centrados con puntas limpias y rótulos despejados
+    this.flecha(cx - Rpx - 18, cy, cx + Rpx + 24, cy, { color: 'tinta2', grosor: 1.25, punta: 6, a: 0.72 });
+    this.flecha(cx, pBot + 30, cx, pTop - 38, { color: 'tinta2', grosor: 1.25, punta: 6, a: 0.72 });
+    this.texto('x', cx + Rpx + 20, cy - 9, { tam: 15, mate: true, color: 'tinta2', halo: true });
+    this.texto('y', cx + 11, pTop - 32, { tam: 15, mate: true, color: 'tinta2', halo: true });
+
+    for (let i = 0; i < 3; i += 1) {
+      const u = this.animado() ? (this.t * 0.42 + i / 3) % 1 : 0.25 + i * 0.25;
+      const py = pBot - 8 - u * (pBot - pTop - 28);
+      const xOff = (i - 1) * 32;
+      this.flecha(cx + xOff, py, cx + xOff, py - 22, { color: 'tinta', grosor: 2.3, punta: 8, a: 0.35 + 0.65 * Math.sin(u * Math.PI) });
+    }
+
+    // Modo "Cómo se arma la integral" (etapas 1..5)
+    const etapa = this._etapa();
+    if (etapa) {
+      const nC = this._nCapas(etapa);
+      for (let i = 1; i < nC; i += 1) {
+        const yi = -L + (2 * L * i) / nC;
+        const wi = xHalf(yi);
+        this.linea(cx - wi, yToPy(yi), cx + wi, yToPy(yi), { color: 'tinta', grosor: 1, a: 0.55 });
+      }
+      if (etapa >= 2 && etapa <= 4) {
+        const idx = this._capaResaltada(nC);
+        const y0 = -L + (2 * L * idx) / nC;
+        const y1 = -L + (2 * L * (idx + 1)) / nC;
+        const ym = (y0 + y1) / 2;
+        const w0 = xHalf(y0);
+        const w1 = xHalf(y1);
+        const pym = yToPy(ym);
+        const wm = xHalf(ym);
+        this.poligono(
+          [[cx - w0, yToPy(y0)], [cx + w0, yToPy(y0)], [cx + w1, yToPy(y1)], [cx - w1, yToPy(y1)]],
+          { relleno: alfa('amarillo', 0.72), borde: 'naranja', grosor: 2 },
+        );
+        this.linea(cx, cy, cx + wm, pym, { color: 'azul', grosor: 1.9, guion: [4, 3] });
+        const rYOff = pym <= cy ? 15 : -8;
+        this.texto('R', cx + wm * 0.48, (cy + pym) / 2 + rYOff, { tam: 16, mate: true, color: 'azul', negrita: true, halo: true });
+        this.texto('dy', cx - Math.max(w0, w1) - 10, pym + 5, { tam: 16, mate: true, alin: 'right', color: 'naranja', negrita: true, halo: true });
+        this.rMarcado = ym;
+        this._capa = [y0, y1];
+      }
+      const [tit, cuerpo] = this._rotulos(etapa);
+      const yTxt = this._parrafo([tit], 324, 38, 224, { tam: 15, color: 'azul', negrita: true });
+      this._parrafo(cuerpo, 324, yTxt + 6, 224, { tam: 14 });
+      return;
+    }
+
+    // Rebanada activa + triángulo rectángulo de Pitágoras (x² + y² = R²) sin solapes
+    const barr = this.foco === 'dx' || this.foco === 'dr' || this.foco === 'barrido';
+    const yAct = this.foco === 'barrido'
+      ? -L + 2 * L * suave((this.tFoco % 3.4) / 2.6)
+      : this.x !== null ? this.x : barr ? this.x0 + L * 0.22 * Math.sin(this.t * 1.6) : this.x0;
+    const yCl = Math.max(-L + 0.002, Math.min(L - 0.002, yAct));
+    this.rMarcado = yCl;
+    const py = yToPy(yCl);
+    const wx = xHalf(yCl);
+    this.caja(cx - wx, py - 5, wx * 2, 10, { r: 2, relleno: alfa('amarillo', 0.65), borde: 'naranja', grosor: 1.7 });
+    // Triángulo (0,0) -> (0,y) -> (x,y)
+    const dyPx = cy - py; // >0 arriba del ecuador, <0 abajo
+    if (Math.abs(dyPx) >= 8) {
+      this.linea(cx, cy, cx, py, { color: 'verde', grosor: 2.2 });
+    }
+    this.linea(cx, cy, cx + wx, py, { color: 'azul', grosor: 2.0, guion: [5, 3] });
+    this.linea(cx, py, cx + wx, py, { color: 'naranja', grosor: 2.2 });
+    if (dyPx >= 0) {
+      // Mitad superior: x arriba de la rebanada, R claramente debajo de la hipotenusa
+      this.texto('x', cx + wx * 0.54, py - 10, { tam: 16, mate: true, alin: 'center', color: 'naranja', negrita: true, halo: true });
+      const rY = Math.abs(dyPx) < 16 ? py + 20 : (cy + py) / 2 + 16;
+      this.texto('R', cx + wx * 0.56, rY, { tam: 16, mate: true, alin: 'center', color: 'azul', negrita: true, halo: true });
+    } else {
+      // Mitad inferior: x abajo de la rebanada, R claramente arriba de la hipotenusa
+      this.texto('x', cx + wx * 0.54, py + 20, { tam: 16, mate: true, alin: 'center', color: 'naranja', negrita: true, halo: true });
+      const rY = Math.abs(dyPx) < 16 ? py - 12 : (cy + py) / 2 - 9;
+      this.texto('R', cx + wx * 0.56, rY, { tam: 16, mate: true, alin: 'center', color: 'azul', negrita: true, halo: true });
+    }
+    if (Math.abs(dyPx) >= 18) {
+      this.texto('y', cx - 12, (cy + py) / 2 + 5, { tam: 15, mate: true, alin: 'right', color: 'verde', negrita: true, halo: true });
+    }
+    if (barr) {
+      this.texto('dy', cx - wx - 10, py + 5, { tam: 16, mate: true, alin: 'right', color: 'naranja', negrita: true, halo: true });
+    }
+
+    // Panel derecho de fórmulas clave (sin encimarse con la esfera)
+    const rx = 326;
+    this.texto('Esfera seccionada', rx, 44, { tam: 17, negrita: true, color: 'tinta' });
+    this.texto('Cortes en y = −L y y = +L', rx, 66, { tam: 14, color: 'tinta2' });
+    this.texto('x² + y² = R²', rx, 102, { tam: 19, mate: true, color: 'tinta', negrita: true });
+    this.texto('A(y) = π(R² − y²)', rx, 134, { tam: 19, mate: true, color: 'azul', negrita: true });
+    this.texto('Pared curva aislada', rx, 168, { tam: 14, color: 'tinta2' });
+    this.texto('Flujo vertical constante H', rx, 190, { tam: 14, color: 'tinta2' });
+    this.texto('0 < L < R', rx, 222, { tam: 15, mate: true, color: 'naranja', negrita: true });
+  }
+
   dibujar() {
     this.rMarcado = null;
     this._capa = null;
-    if (this.radial) this.seccionRadial(); else this.seccionPlana();
+    if (this.radial) this.seccionRadial();
+    else if (this.esferaSec) this.seccionEsferaSeccionada();
+    else this.seccionPlana();
     const { e } = this;
     const c = this.ctx;
     e.dibujar({ tam: 15, corteX: this.a > 0 });
@@ -522,7 +706,10 @@ export class VisualConduccion extends Visual {
       this.linea(e.X(r), e.y + e.h, e.X(r), e.Y(T), { color: 'amarillo', grosor: 2, guion: [5, 4] });
       this.linea(e.x, e.Y(T), e.X(r), e.Y(T), { color: 'amarillo', grosor: 2, guion: [5, 4] });
       this.circulo(e.X(r), e.Y(T), 6, { relleno: 'amarillo', borde: 'tinta' });
-      this.texto(`${num(T, 4)} ${this.uT}`, e.X(r) + 9, e.Y(T) - 9, { tam: 16, negrita: true, halo: true, color: 'naranja' });
+      const izq = Boolean(this._capa) && e.X(r) > e.x + 92;
+      this.texto(`${num(T, 4)} ${this.uT}`, e.X(r) + (izq ? -12 : 12), e.Y(T) - 13, {
+        tam: 15, negrita: true, halo: true, color: 'naranja', alin: izq ? 'right' : 'left',
+      });
     }
   }
 }

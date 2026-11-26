@@ -13,6 +13,17 @@ export const TEMAS = {
 
 export function nombreTema(t) { return TEMAS[t] || t; }
 
+/**
+ * Temas que no entran en lo que se está preparando (III parcial, Extraordinario ≤ 20.5).
+ * Los botones automáticos («Seguir», «Siguiente») no llevan a ellos; el Banco sí los muestra.
+ */
+export const FUERA_DE_CORTE = new Set(['entropia', 'ondas', 'fluidos']);
+
+export function fueraDeCorte(id) {
+  const l = banco.mapa.get(id);
+  return Boolean(l && FUERA_DE_CORTE.has(l.tema));
+}
+
 /** "Ejercicios Recomendados 3 · problema 16 · pág. 5" */
 export function textoFuente(f) {
   if (!f) return '';
@@ -60,11 +71,15 @@ export function estaHecha(id) {
   return Boolean(e && e.hecha);
 }
 
-/** Última lección a medias, para "seguir donde quedé". */
-export function aMedias() {
+/**
+ * Última lección a medias, para "seguir donde quedé". Nunca una de un tema fuera del corte.
+ * Con `dentro` (un Set de ids) solo cuenta las lecciones de ese plan.
+ */
+export function aMedias({ dentro = null } = {}) {
   let mejor = null;
   for (const [id, e] of Object.entries(banco.progreso)) {
-    if (!banco.mapa.has(id) || e.hecha) continue;
+    if (!banco.mapa.has(id) || e.hecha || fueraDeCorte(id)) continue;
+    if (dentro && !dentro.has(id)) continue;
     if (!mejor || (e.cuando || 0) > (mejor.e.cuando || 0)) mejor = { id, e, lec: banco.mapa.get(id) };
   }
   return mejor;
@@ -108,7 +123,10 @@ export function filtrar(q, { tema = '', tipo = '', fuente = '' } = {}) {
   });
 }
 
-/** Lección que sigue dentro de la ruta o del banco. */
+/**
+ * Lección que sigue dentro de la ruta o del banco. En el banco salta los temas fuera del corte,
+ * salvo que la lección actual ya sea de uno de ellos (estudio a propósito).
+ */
 export function siguienteDe(id) {
   for (const r of banco.rutas) {
     const ids = r.items.map((x) => x.id);
@@ -116,5 +134,11 @@ export function siguienteDe(id) {
     if (i >= 0 && i + 1 < ids.length) return ids[i + 1];
   }
   const i = banco.lecciones.findIndex((l) => l.id === id);
-  return i >= 0 && i + 1 < banco.lecciones.length ? banco.lecciones[i + 1].id : null;
+  if (i < 0) return null;
+  const aProposito = fueraDeCorte(id);
+  for (let j = i + 1; j < banco.lecciones.length; j += 1) {
+    const l = banco.lecciones[j];
+    if (aProposito || !FUERA_DE_CORTE.has(l.tema)) return l.id;
+  }
+  return null;
 }

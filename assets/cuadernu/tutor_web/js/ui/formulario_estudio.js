@@ -269,6 +269,8 @@ export class EstudioFormulario {
     const toks = q ? q.split(/\s+/).filter(Boolean) : [];
     return this.guia.celdas.filter((c) => {
       if (this.filtro === 'nuevas' && !['nueva', 'reintroducida', 'reciente'].includes(c.estado_ii_2026)) return false;
+      if (this.filtro === 'virgenes' && c.estado_ordinario_ii_2026 !== 'virgen') return false;
+      if (this.filtro === 'evaluadas' && c.estado_ordinario_ii_2026 !== 'evaluada') return false;
       if (this.filtro === 'criticas' && c.prioridad !== 'critica') return false;
       if (this.filtro === 'constantes' && !c.es_constante) return false;
       if (this.filtro === 'pendientes' && this.dominadas.has(c.id)) return false;
@@ -545,11 +547,15 @@ export class EstudioFormulario {
     const filaFiltros = document.createElement('div');
     filaFiltros.className = 'filtros est-filtros';
     const nNuevas = this.guia.celdas.filter((c) => ['nueva', 'reintroducida', 'reciente'].includes(c.estado_ii_2026)).length;
+    const nVirg = this.guia.celdas.filter((c) => c.estado_ordinario_ii_2026 === 'virgen').length;
+    const nEval = this.guia.celdas.filter((c) => c.estado_ordinario_ii_2026 === 'evaluada').length;
     const nCriticas = this.guia.celdas.filter((c) => c.prioridad === 'critica').length;
     const nConst = this.guia.celdas.filter((c) => c.es_constante).length;
     const nPend = this.guia.celdas.length - this.dominadas.size;
     const defs = [
       ['todas', `Todas (${this.guia.celdas.length})`],
+      ['virgenes', `Vírgenes en II-2026 (${nVirg})`],
+      ['evaluadas', `Evaluadas hoy (${nEval})`],
       ['nuevas', `Novedades II-2026 (${nNuevas})`],
       ['criticas', `Críticas (${nCriticas})`],
       ['constantes', `Constantes (${nConst})`],
@@ -673,6 +679,13 @@ export class EstudioFormulario {
     est.className = `est-tag est-tag-${c.estado_ii_2026}`;
     est.textContent = ESTADO_ETIQUETA[c.estado_ii_2026] || c.estado_ii_2026;
     lineaId.append(cod, blk, est);
+    if (c.estado_ordinario_ii_2026 === 'virgen' || c.estado_ordinario_ii_2026 === 'evaluada') {
+      const ordTag = document.createElement('span');
+      ordTag.className = `est-tag est-tag-${c.estado_ordinario_ii_2026}`;
+      ordTag.textContent = c.estado_ordinario_ii_2026 === 'virgen' ? 'Virgen en Ord. II-2026' : 'Evaluada hoy';
+      if (c.en_ordinario_ii_2026) ordTag.title = c.en_ordinario_ii_2026;
+      lineaId.appendChild(ordTag);
+    }
 
     const h2 = document.createElement('h2');
     h2.className = 'est-ficha-tit';

@@ -147,6 +147,8 @@ const POR_DEFECTO = {
   servidorVozLocal: 'http://127.0.0.1:8880/v1/audio/speech', vozLocalHttp: 'es-default', vozKokoro: 'ef_dora',
   narracion: true, foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-4-hydrogen',
   zoom: 1, autoSeguir: false, sinSaltos: true, simbolos: true,
+  // Plan activo del Inicio «Hoy»: 'extraordinario', 'reposicion' o 'rutas' (las rutas del III parcial)
+  plan: 'extraordinario',
 };
 // Los despejes intermedios se muestran siempre por defecto. Antes venían apagados y se guardaban
 // apagados junto con cualquier otro ajuste; esta marca los enciende una sola vez (luego se respeta lo que elija).

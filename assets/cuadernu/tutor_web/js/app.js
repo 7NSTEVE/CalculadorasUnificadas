@@ -12,9 +12,9 @@ import { Lateral } from './ui/lateral.js';
 import { Inicio } from './ui/inicio.js';
 import { Biblioteca } from './ui/biblioteca.js';
 import { EstudioFormulario } from './ui/formulario_estudio.js';
-import { PreparacionExamenes } from './ui/preparacion.js';
+import { PreparacionExamenes, ponerTextoMate } from './ui/preparacion.js';
 import { armarAjustes } from './ui/ajustes.js';
-import { banco, cargarBanco, idDeTexto, textoFuente } from './ui/banco.js';
+import { banco, cargarBanco, idDeTexto, siguienteDe, textoFuente } from './ui/banco.js';
 import { ponerCierre, ponerPregunta } from './ui/cierre.js';
 import { anunciar, aviso } from './ui/avisos.js';
 import { Lapiz } from './ui/lapiz.js';
@@ -107,7 +107,7 @@ function actualizarResumenAtencion() {
     const dt = document.createElement('dt');
     dt.textContent = et;
     const dd = document.createElement('dd');
-    dd.textContent = val;
+    ponerTextoMate(dd, val);
     dl.append(dt, dd);
   };
 
@@ -117,6 +117,7 @@ function actualizarResumenAtencion() {
   const dt3 = document.createElement('dt');
   dt3.textContent = '3. Fórmula base activa';
   const dd3 = document.createElement('dd');
+  dd3.className = 'atencion-res-celdas';
   if (celdas.length) {
     for (const c of celdas) {
       const b = document.createElement('button');
@@ -189,6 +190,39 @@ async function abrirLeccionSuelta(lec, opt = {}) {
   $('progreso').hidden = rep.total < 2;
 }
 
+/** Título sin marcas de LaTeX ni de sub/superíndices, corto, para el texto de un botón. */
+function textoPlano(t) {
+  return String(t || '')
+    .replace(/\$([^$]*)\$/g, '$1')
+    .replace(/[\\{}]/g, '')
+    .replace(/[_^]\(([^)]*)\)/g, '$1')
+    .replace(/[_^]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60);
+}
+
+/**
+ * A dónde lleva «Siguiente» al terminar una lección.
+ * Si se vino de Preparación: al siguiente pendiente de ese plan (o de vuelta a la preparación).
+ * Si no: a la siguiente de la ruta o del banco, sin entrar a temas fuera del corte.
+ */
+function siguienteTras(lec) {
+  if (contextoAtencion.volverA === 'preparacion') {
+    const r = preparacion.siguienteTras(lec.origenVariante || lec.id);
+    if (r && r.it) {
+      const it = r.it;
+      return { texto: `Siguiente: ${textoPlano(it.titulo)}`, abrir: () => preparacion.abrirItem(it) };
+    }
+    return { texto: 'Volver a la preparación', abrir: () => acciones.preparacion() };
+  }
+  const sig = siguienteDe(lec.id);
+  if (sig && banco.mapa.has(sig)) {
+    return { texto: `Siguiente: ${textoPlano(banco.mapa.get(sig).titulo)}`, abrir: () => abrirLeccion(sig) };
+  }
+  return null;
+}
+
 /** Abre una variante numérica nueva calculada en Python. */
 async function abrirVariante(id) {
   asistente.callar();
@@ -205,6 +239,7 @@ const acciones = {
   abrir: abrirLeccion,
   abrirSuelta: abrirLeccionSuelta,
   variante: abrirVariante,
+  siguiente: siguienteTras,
   abrirProblemaDoc: (doc, pr) => material.abrirProblema(doc, pr),
   inicio: aInicio,
   biblioteca: aBiblioteca,
@@ -256,10 +291,11 @@ const asistente = new Asistente({ rep, tablero, lateral, acciones, miniPaso });
 const material = new Material({ el: $('material'), tablero, acciones, asistente });
 const lapiz = new Lapiz({ tablero, rep, asistente, acciones, svg: $('capa-lapiz') });
 const simulacro = new Simulacro({ el: $('vista-inicio'), acciones });
-const inicio = new Inicio($('vista-inicio'), acciones);
+// Preparación va antes que el Inicio: el Inicio «Hoy» le pide el siguiente ejercicio del plan
+const preparacion = new PreparacionExamenes({ el: $('vista-preparacion'), acciones });
+const inicio = new Inicio($('vista-inicio'), acciones, preparacion);
 const biblioteca = new Biblioteca($('vista-biblioteca'), acciones);
 const estudioFormulario = new EstudioFormulario({ el: $('vista-formulario'), acciones });
-const preparacion = new PreparacionExamenes({ el: $('vista-preparacion'), acciones });
 armarAjustes($('ajustes'), acciones);
 bus.on('formulario:estudiar', ({ celdaId = null, modo = null } = {}) => acciones.estudiarFormulario(celdaId, modo));
 
