@@ -82,7 +82,11 @@ def pr1_1() -> Leccion:
     L.paso("2) Balance de energía")\
         .di("Recipiente aislado: la suma de todos los calores es cero.", M(r"Q_{\text{Al}}+Q_{\text{agua}}+Q_{\text{Fe}}+Q_{\text{Cu}}=0"))\
         .di("Cada uno es su eme ce por el cambio de temperatura.".replace("eme ce", dice("mc", "eme ce")), M(r"\sum m c\,(T_f-T_i)=0"))\
-        .di("Despejamos la temperatura final.", M(r"T_f\sum mc=\sum mc\,T_i\;\Rightarrow\;T_f=\frac{\sum mc\,T_i}{\sum mc}"))
+        .di("Abrimos el paréntesis de cada cuerpo: su eme ce multiplica a las dos temperaturas.".replace("eme ce", dice("mc", "eme ce")),
+            M(r"\sum mc\,T_f-\sum mc\,T_i=0"))\
+        .di("La temperatura final es la misma para todos: sale de la suma como factor común.", M(r"T_f\sum mc-\sum mc\,T_i=0"))\
+        .di("La segunda suma pasa al otro lado sumando.", M(r"T_f\sum mc=\sum mc\,T_i"))\
+        .di("Y la suma de los eme ce pasa a dividir.".replace("eme ce", dice("mc", "eme ce")), M(r"T_f=\frac{\sum mc\,T_i}{\sum mc}"))
     p = L.paso("2) Los productos mc de cada cuerpo")
     for (_, nom, m, c, _), x in zip(comp, mc):
         p.di(f"El {nom}.", M(rf"m c_{{\text{{{nom[:2]}}}}}=({tex(m, 3)})({tex(c, 4)})={tex(x, 5)}\ \text{{J/K}}"))
@@ -222,25 +226,30 @@ def pr1_3() -> Leccion:
         .di("Despejamos la caída de temperatura: es hache por un factor que solo depende de la capa.".replace("hache", dice("H", "hache")),
             M(r"T_{int}-T_{ext}=H\,\frac{\ln(r_{ext}/r_{int})}{2\pi kL}"))\
         .di("A ese factor se le llama resistencia térmica.", M(r"R\equiv\frac{T_{int}-T_{ext}}{H}=\frac{\ln(r_{ext}/r_{int})}{2\pi kL}"))\
-        .di("En estado estacionario no se acumula calor: el mismo hache cruza las dos capas, y las caídas se suman.".replace("hache", dice("H", "hache")),
-            M(r"T_1-T_i=HR_1\qquad T_i-T_2=HR_2\;\Rightarrow\;T_1-T_2=H\,(R_1+R_2)"),
+        .di("En estado estacionario no se acumula calor: el mismo hache cruza las dos capas. Escribimos la caída de cada una.".replace("hache", dice("H", "hache")),
+            M(r"T_1-T_i=HR_1"), M(r"T_i-T_2=HR_2"))\
+        .di("Sumamos las dos ecuaciones: la temperatura de la interfaz entra una vez restando y otra sumando, y se cancela.",
+            M(r"(T_1-T_i)+(T_i-T_2)=HR_1+HR_2"), M(r"T_1-T_2=H\,(R_1+R_2)"),
             NOTA("Por eso se combinan **en serie**: mismo $H$ y caídas de temperatura que se suman."))
     L.paso("3) Las dos resistencias")\
-        .di("Capa uno, lana de vidrio.", M(rf"R_1=\frac{{\ln(4{{,}}50/2{{,}}50)}}{{2\pi(0{{,}}040)(10{{,}}0)}}=\frac{{{tex(l1, 4)}}}{{{tex(d1, 4)}}}={tex(R1, 4)}\ \text{{K/W}}"))\
-        .di("Capa dos, recubrimiento.", M(rf"R_2=\frac{{\ln(5{{,}}50/4{{,}}50)}}{{2\pi(0{{,}}20)(10{{,}}0)}}=\frac{{{tex(l2, 4)}}}{{{tex(d2, 4)}}}={tex(R2, 4)}\ \text{{K/W}}"))\
-        .di("La suma.", M(rf"R_1+R_2={tex(R1, 4)}+{tex(R2, 4)}={tex(R1 + R2, 4)}\ \text{{K/W}}"))
+        .di("Capa uno, lana de vidrio. Llevamos cinco cifras, para que la suma y la división de después cuadren con la calculadora.",
+            M(rf"R_1=\frac{{\ln(4{{,}}50/2{{,}}50)}}{{2\pi(0{{,}}040)(10{{,}}0)}}=\frac{{{tex(l1, 5)}}}{{{tex(d1, 5)}}}={tex(R1, 5)}\ \text{{K/W}}"))\
+        .di("Capa dos, recubrimiento.", M(rf"R_2=\frac{{\ln(5{{,}}50/4{{,}}50)}}{{2\pi(0{{,}}20)(10{{,}}0)}}=\frac{{{tex(l2, 5)}}}{{{tex(d2, 5)}}}={tex(R2, 5)}\ \text{{K/W}}"))\
+        .di("La suma.", M(rf"R_1+R_2={tex(R1, 5)}+{tex(R2, 5)}={tex(R1 + R2, 5)}\ \text{{K/W}}"))
     L.paso("3) Corriente de calor y temperatura de la interfaz")\
-        .di("La caída total entre la suma de resistencias.", V(foco="flujo"), M(rf"H=\frac{{150-30{{,}}0}}{{{tex(R1 + R2, 4)}}}=\frac{{120}}{{{tex(R1 + R2, 4)}}}"),
+        .di("La caída total entre la suma de resistencias.", V(foco="flujo"), M(rf"H=\frac{{150-30{{,}}0}}{{{tex(R1 + R2, 5)}}}=\frac{{120}}{{{tex(R1 + R2, 5)}}}"),
             R(rf"H={tex(H, 4)}\ \text{{W}}", "r3a"))\
-        .di("En la interfaz restamos la caída de la capa uno.", M(rf"T_i=T_1-HR_1=150-({tex(H, 4)})({tex(R1, 4)})=150-{tex(H * R1, 4)}"),
+        .di("En la interfaz restamos la caída de la capa uno.", M(rf"T_i=T_1-HR_1=150-({tex(H, 4)})({tex(R1, 5)})=150-{tex(H * R1, 4)}"),
             R(rf"T_i={tex(ti, 3)}\ {C}", "r3b"))\
-        .di("Revisión con la capa dos.", M(rf"T_i-30{{,}}0=HR_2=({tex(H, 4)})({tex(R2, 4)})={tex(H * R2, 3)}"))
+        .di("Revisión con la capa dos.", M(rf"T_i-30{{,}}0=HR_2=({tex(H, 4)})({tex(R2, 5)})={tex(H * R2, 3)}"))
     L.paso("4) La temperatura a un radio r cualquiera")\
         .di("Repetimos la integral de la parte uno, pero solo desde el radio interno hasta un radio erre dentro de la capa uno.".replace("radio erre", "radio " + dice("r", "erre")), V(foco="punto"),
             M(r"H\int_{r_1}^{r}\frac{dr}{r}=-2\pi k_1L\int_{T_1}^{T}dT"))\
         .di("Las dos integrales salen igual que antes: un logaritmo y una resta.", M(r"H\ln\left(\frac{r}{r_1}\right)=-2\pi k_1L\,(T-T_1)"))\
-        .di("Despejamos te: dividimos entre menos dos pi ka uno ele y pasamos te uno sumando.".replace("te:", dice("T:", "te:")).replace("te uno", dice("T₁", "te uno")),
-            M(r"T-T_1=-\frac{H}{2\pi k_1L}\ln\left(\frac{r}{r_1}\right)\;\Rightarrow\;T(r)=T_1-\frac{H}{2\pi k_1L}\ln\left(\frac{r}{r_1}\right)"))
+        .di("Para despejar te, dividimos los dos lados entre menos dos pi ka uno ele.".replace("despejar te", "despejar " + dice("T", "te")),
+            M(r"T-T_1=-\frac{H}{2\pi k_1L}\ln\left(\frac{r}{r_1}\right)"))\
+        .di("Te uno está restando: pasa al otro lado sumando.".replace("Te uno", dice("T₁", "Te uno")),
+            M(r"T(r)=T_1-\frac{H}{2\pi k_1L}\ln\left(\frac{r}{r_1}\right)"))
     L.paso("4) Temperatura en r = 3,50 cm")\
         .di("Sustituimos.", M(rf"T=150-\frac{{{tex(H, 4)}}}{{{tex(d1, 4)}}}\ln\left(\frac{{3{{,}}50}}{{2{{,}}50}}\right)=150-({tex(H / d1, 4)})({tex(math.log(rm / r1), 4)})"),
             R(rf"T(3{{,}}50\ \text{{cm}})={tex(tm, 3)}\ {C}", "r4"))\
@@ -448,12 +457,21 @@ def pr1_6() -> Leccion:
     from .ayudas import estado_p
     estado_p(p, g, "A", primero=True, voz="Despejamos la presión del gas ideal y la calculamos en A.")
     estado_p(p, g, "B")
-    L.paso("1) Estado C con la adiabática")\
+    L.paso("1) Estado C con la adiabática: temperatura")\
         .di("La hoja da la relación de temperatura y volumen en la adiabática.", V(foco="BC"), F(r"TV^{\gamma-1}=\text{cte}"))\
-        .di("La igualamos entre B y C y despejamos te ce.".replace("te ce", dice("T_C", "te ce")), M(r"T_CV_C^{\gamma-1}=T_BV_B^{\gamma-1}\;\Rightarrow\;T_C=T_B\left(\frac{V_B}{V_C}\right)^{\gamma-1}"),
-            M(rf"T_C=400\,(3)^{{0{{,}}40}}=400\,({tex(3.0 ** 0.4, 4)})={tex(tc, 4)}\ \text{{K}}"))\
-        .di("Y la presión, con la otra relación adiabática de la hoja.", F(r"pV^\gamma=\text{cte}"),
-            M(rf"P_C=P_B\left(\frac{{V_B}}{{V_C}}\right)^{{\gamma}}=({tex(pb, 4)})(3)^{{1{{,}}40}}=({tex(pb, 4)})({tex(3.0 ** 1.4, 4)})={tex(pc, 4)}\ \text{{Pa}}"))
+        .di("La igualamos entre B y C.", M(r"T_CV_C^{\gamma-1}=T_BV_B^{\gamma-1}"))\
+        .di("Dividimos los dos lados entre el volumen de C elevado a gama menos uno, para dejar sola la temperatura de C.",
+            M(r"T_C=T_B\,\frac{V_B^{\gamma-1}}{V_C^{\gamma-1}}"))\
+        .di("Dos potencias con el mismo exponente se dividen dentro de un solo paréntesis.", M(r"T_C=T_B\left(\frac{V_B}{V_C}\right)^{\gamma-1}"))\
+        .di("Sustituimos: treinta litros entre diez da tres, y gama menos uno es cero coma cuarenta.",
+            M(rf"T_C=400\,(3)^{{0{{,}}40}}=400\,({tex(3.0 ** 0.4, 5)})={tex(tc, 4)}\ \text{{K}}"))
+    L.paso("1) Estado C con la adiabática: presión")\
+        .di("Ahora la presión, con la otra relación adiabática de la hoja. La igualamos entre B y C.", F(r"pV^\gamma=\text{cte}"),
+            M(r"P_CV_C^{\gamma}=P_BV_B^{\gamma}"))\
+        .di("Dividimos los dos lados entre el volumen de C a la gama, y juntamos las potencias en un paréntesis.",
+            M(r"P_C=P_B\,\frac{V_B^{\gamma}}{V_C^{\gamma}}=P_B\left(\frac{V_B}{V_C}\right)^{\gamma}"))\
+        .di("Sustituimos: tres elevado a uno coma cuarenta, en la calculadora.",
+            M(rf"P_C=({tex(pb, 4)})(3)^{{1{{,}}40}}=({tex(pb, 4)})({tex(3.0 ** 1.4, 4)})={tex(pc, 4)}\ \text{{Pa}}"))
     L.paso("1) Sentido del ciclo")\
         .di("A y C tienen el mismo volumen, pero C tiene más presión: la adiabática pasa por encima de la isoterma.", V(foco="ciclo"),
             M(rf"P_C={tex(pc, 3)}\ \text{{Pa}}>P_A={tex(g.p('A'), 3)}\ \text{{Pa}}"))\
@@ -480,16 +498,20 @@ def pr1_6() -> Leccion:
             M(r"P_BV_B^{\gamma}V_C^{1-\gamma}=P_CV_C^{\gamma}V_C^{1-\gamma}=P_CV_C\qquad P_BV_B^{\gamma}V_B^{1-\gamma}=P_BV_B"))\
         .di("Queda la fórmula pedida, que es la casilla adiabática de la hoja.", M(r"W_{BC}=\frac{P_CV_C-P_BV_B}{1-\gamma}=\frac{P_BV_B-P_CV_C}{\gamma-1}"),
             F(r"W=\frac{1}{\gamma-1}\left(p_1V_1-p_2V_2\right)"))
+    pbv, pcv = float(f"{pb * 0.03:.6g}"), float(f"{pc * 0.01:.6g}")
     L.paso("2) Trabajo de B a C: números")\
-        .di("Sustituimos.", M(rf"W_{{BC}}=\frac{{({tex(pb, 4)})(0{{,}}0300)-({tex(pc, 4)})(0{{,}}0100)}}{{0{{,}}40}}=\frac{{{tex(pb * 0.03, 4)}-{tex(pc * 0.01, 5)}}}{{0{{,}}40}}"))\
-        .di(f"Es negativo: el gas es comprimido. Da {nu(wbc, 'J', 4)}.", M(rf"W_{{BC}}={tex(wbc, 4)}\ \text{{J}}", "wbc", "verde"))
+        .di("Sustituimos. Llevamos seis cifras en las presiones: la resta de arriba es de dos números parecidos y no debe perder exactitud.",
+            M(rf"W_{{BC}}=\frac{{({tex(pb, 6)})(0{{,}}0300)-({tex(pc, 6)})(0{{,}}0100)}}{{0{{,}}40}}"))\
+        .di("Multiplicamos cada presión por su volumen.", M(rf"=\frac{{{tex(pbv, 6)}-{tex(pcv, 6)}}}{{0{{,}}40}}"))\
+        .di("Restamos arriba.", M(rf"=\frac{{{tex(pbv - pcv, 5)}}}{{0{{,}}40}}"))\
+        .di(f"Dividimos entre cero coma cuarenta. Es negativo: el gas es comprimido. Da {nu(wbc, 'J', 4)}.", M(rf"W_{{BC}}={tex(wbc, 4)}\ \text{{J}}", "wbc", "verde"))
     L.paso("3) A→B y B→C en la tabla")\
         .di("En la isoterma no cambia la energía interna: el calor es el trabajo.", V(foco="AB"), F(r"\Delta U=Q-W"),
             M(rf"\Delta U_{{AB}}=0\;\Rightarrow\;Q_{{AB}}=W_{{AB}}={tex(rab['Q'], 4)}\ \text{{J}}"))\
         .di("En la adiabática no hay calor: la energía interna es menos el trabajo.", V(foco="BC"),
             M(rf"Q_{{BC}}=0\;\Rightarrow\;\Delta U_{{BC}}=-W_{{BC}}={tex(-wbc, 4)}\ \text{{J}}"))\
         .di("Revisión con ce ve.".replace("ce ve", dice("C_V", "ce ve")), F(r"\Delta U=nC_V\,\Delta T"),
-            M(rf"\Delta U_{{BC}}=(2{{,}}00)({tex(g.cv, 5)})({tex(tc, 4)}-400)={tex(rbc['U'], 4)}\ \text{{J}}"))
+            M(rf"\Delta U_{{BC}}=(2{{,}}00)({tex(g.cv, 5)})({tex(tc, dec=2)}-400)={tex(rbc['U'], 4)}\ \text{{J}}"))
     explica_proceso(L.paso("3) C→A (volumen constante)"), g, "C", "A", "isocorico", foco="CA")
     c = cierre_ciclo(L, res, titulo="3) y 4) Tabla y verificación del ciclo", solo_totales=True)
     L.paso("4) ¿Entrega trabajo o lo consume?")\
@@ -510,13 +532,15 @@ def pr2_s1() -> Leccion:
              "Un líquido posee un calor específico de $1800$ J/(kg·K). Su valor en J/(kg·°F) es:",
              {"A": "3240", "B": "1000", "C": "1800", "D": "1768"}, "B", claves=["calor específico", "Fahrenheit"])
     L.paso("Cuánto vale un cambio de un grado")\
-        .di("De la hoja, la conversión a Fahrenheit. Para un cambio de temperatura el treinta y dos se cancela.", DATO("J/(kg·°F)"),
-            F(r"T_{F}=\frac{9}{5}T_{C}+32"), M(r"\Delta T_{F}=\frac{9}{5}\,\Delta T_{C}=1{,}8\,\Delta T_{C}"))\
+        .di("De la hoja, la conversión a Fahrenheit. Restamos la de dos temperaturas: el treinta y dos se cancela.", DATO("J/(kg·°F)"),
+            F(r"T_{F}=\frac{9}{5}T_{C}+32"), M(r"T_{F2}-T_{F1}=\left(\frac{9}{5}T_{C2}+32\right)-\left(\frac{9}{5}T_{C1}+32\right)=\frac{9}{5}\left(T_{C2}-T_{C1}\right)"),
+            M(r"\Delta T_{F}=\frac{9}{5}\,\Delta T_{C}=1{,}8\,\Delta T_{C}"))\
         .di("Y un cambio de un kelvin es un cambio de un grado Celsius.", F(r"T_K=T_C+273{,}15"),
             M(r"\Delta T_K=\Delta T_C\;\Rightarrow\;\Delta T=1\ \text{K}\ \text{equivale a}\ 1{,}8\ ^\circ\text{F}"))
     L.paso("Cambiar la unidad")\
-        .di("El mismo calor reparte su efecto entre uno coma ocho grados Fahrenheit: se divide entre uno coma ocho.",
-            M(r"c=\frac{1800}{1{,}8}"), R(r"c=1000\ \text{J/(kg·°F)}"))
+        .di("En la unidad del calor específico, cambiamos el kelvin por los uno coma ocho grados Fahrenheit que vale.",
+            M(r"c=1800\ \frac{\text{J}}{\text{kg}\cdot\text{K}}=1800\ \frac{\text{J}}{\text{kg}\cdot(1{,}8\ ^\circ\text{F})}"))\
+        .di("El uno coma ocho de abajo divide al mil ochocientos.", M(r"c=\frac{1800}{1{,}8}\ \frac{\text{J}}{\text{kg}\cdot^\circ\text{F}}"), R(r"c=1000\ \text{J/(kg·°F)}"))
     revisar_opciones(L, {
         "A": ("La A multiplicó por uno coma ocho en vez de dividir.", "$1800\\times1{,}8=3240$: al revés."),
         "C": ("La C no convierte nada.", "Un kelvin no es un grado Fahrenheit."),
@@ -640,8 +664,11 @@ def pr2_s7() -> Leccion:
         .di("La hoja trae la eficiencia de Otto en función de la razón de compresión.", DATO("razón de compresión"), F(r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}"))\
         .di("Si erre crece, erre a la gama menos uno crece, la fracción se achica y la eficiencia sube.".replace("Si erre crece, erre a la gama menos uno crece", "Si la razón crece, su potencia crece"),
             M(r"r\uparrow\;\Rightarrow\;r^{\gamma-1}\uparrow\;\Rightarrow\;\frac{1}{r^{\gamma-1}}\downarrow\;\Rightarrow\;e\uparrow"))\
-        .di("Un ejemplo con gama uno coma cuatro.".replace("gama", dice("γ", "gama")),
-            M(rf"r=8:\ e=1-\frac{{1}}{{8^{{0{{,}}40}}}}={tex(e8, 3)}"), M(rf"r=10:\ e=1-\frac{{1}}{{10^{{0{{,}}40}}}}={tex(e10, 3)}"), R(r"\text{La eficiencia aumenta}"))
+        .di("Un ejemplo con gama uno coma cuatro. Primero con erre igual a ocho.".replace("gama", dice("γ", "gama")).replace("erre igual a ocho", dice("r = 8", "erre igual a ocho")),
+            M(rf"r=8:\ e=1-\frac{{1}}{{8^{{0{{,}}40}}}}={tex(e8, 3)}"))\
+        .di("Ahora con erre igual a diez.".replace("erre igual a diez", dice("r = 10", "erre igual a diez")),
+            M(rf"r=10:\ e=1-\frac{{1}}{{10^{{0{{,}}40}}}}={tex(e10, 3)}"))\
+        .di("Con más compresión, la eficiencia sube.", R(r"\text{La eficiencia aumenta}"))
     revisar_opciones(L, {
         "B": ("La B lo dice al revés.", "Más compresión, más eficiencia."),
         "C": ("La C olvida que la eficiencia depende de la razón.", "$e=1-1/r^{\\gamma-1}$."),
@@ -726,7 +753,8 @@ def pr2_s11() -> Leccion:
             F(r"Q=nC\,\Delta T"), M(r"\Delta T=\frac{Q}{nC_V}"))\
         .di("Las capacidades de la hoja.", F(r"C_V=\frac{3}{2}R"), F(r"C_V=\frac{5}{2}R"))\
         .di("Mismo calor y mismos moles: gana el de menor ce ve.".replace("ce ve", dice("C_V", "ce ve")),
-            M(r"\frac{\Delta T_{\text{mono}}}{\Delta T_{\text{dia}}}=\frac{C_{V,\text{dia}}}{C_{V,\text{mono}}}=\frac{5/2}{3/2}=\frac{5}{3}>1"),
+            M(r"\frac{\Delta T_{\text{mono}}}{\Delta T_{\text{dia}}}=\frac{Q/(nC_{V,\text{mono}})}{Q/(nC_{V,\text{dia}})}=\frac{Q}{nC_{V,\text{mono}}}\cdot\frac{nC_{V,\text{dia}}}{Q}=\frac{C_{V,\text{dia}}}{C_{V,\text{mono}}}"),
+            M(r"\frac{C_{V,\text{dia}}}{C_{V,\text{mono}}}=\frac{\frac{5}{2}R}{\frac{3}{2}R}=\frac{5}{3}>1"),
             R(r"\text{El monoatómico aumenta más su temperatura}"))
     revisar_opciones(L, {
         "B": ("La B lo dice al revés: el diatómico reparte energía en rotaciones.", "$C_{V,\\text{dia}}>C_{V,\\text{mono}}$."),
@@ -812,37 +840,62 @@ def pr2_d1() -> Leccion:
             M(r"R(x)=R_1+\frac{R_2-R_1}{L}\,x"))\
         .di("La sección transversal en cada posición es un círculo de radio erre de equis.".replace("erre de equis", dice("R(x)", "erre de equis")),
             M(r"A(x)=\pi\,R(x)^2"), R(r"A(x)=\pi\left(R_1+\frac{R_2-R_1}{L}\,x\right)^2", "ra"))
-    L.paso("b) Fourier y cambio de variable")\
-        .di("Partimos de la ley de Fourier de la hoja.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,\pi R(x)^2\,\frac{dT}{dx}"))\
-        .di("Cambiamos de equis al radio: derivamos erre de equis.".replace("erre de equis", dice("R(x)", "erre de equis")).replace("de equis al", "de " + dice("x", "equis") + " al"),
-            M(r"dR=\frac{R_2-R_1}{L}\,dx\;\Rightarrow\;dx=\frac{L}{R_2-R_1}\,dR"))\
-        .di("Separamos: multiplicamos por de equis y dividimos entre pi erre al cuadrado.".replace("de equis", dice("dx", "de equis")).replace("pi erre al cuadrado", dice("πR²", "pi erre al cuadrado")),
+    L.paso("b) Fourier y separar variables")\
+        .di("Partimos de la ley de Fourier de la hoja. El área es la del círculo de radio erre de equis.".replace("erre de equis", dice("R(x)", "erre de equis")),
+            F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,\pi R(x)^2\,\frac{dT}{dx}"))\
+        .di("Separamos, paso uno: multiplicamos los dos lados por de equis.".replace("de equis", dice("dx", "de equis")), M(r"H\,dx=-k\,\pi R^2\,dT"))\
+        .di("Paso dos: dividimos los dos lados entre pi erre al cuadrado.".replace("pi erre al cuadrado", dice("πR²", "pi erre al cuadrado")),
             M(r"H\,\frac{dx}{\pi R^2}=-k\,dT"))\
-        .di("E integramos toda la barra.", M(r"H\int_0^L\frac{dx}{\pi R^2}=-k\int_{T_1}^{T_2}dT"))
+        .di("Integramos toda la barra: equis de cero a ele, y la temperatura de te uno a te dos.".replace("equis de cero a ele", dice("x de 0 a L", "equis de cero a ele")).replace("te uno a te dos", dice("T₁ a T₂", "te uno a te dos")),
+            M(r"H\int_0^L\frac{dx}{\pi R^2}=-k\int_{T_1}^{T_2}dT"))
+    L.paso("b) Cambio de variable: de x al radio")\
+        .di("El radio es una recta: si equis crece un pedacito, el radio crece la pendiente por ese pedacito.".replace("si equis", "si " + dice("x", "equis")),
+            M(r"dR=\frac{R_2-R_1}{L}\,dx"))\
+        .di("Despejamos de equis: lo que la multiplica pasa al otro lado dividiendo.".replace("de equis", dice("dx", "de equis")), M(r"dx=\frac{L}{R_2-R_1}\,dR"))\
+        .di("Los límites también cambian: donde equis vale cero el radio es erre uno; donde vale ele, erre dos.".replace("equis vale cero", dice("x = 0", "equis vale cero")).replace("erre uno", dice("R₁", "erre uno")).replace("vale ele, erre dos", dice("x = L, R₂", "vale ele, erre dos")),
+            M(r"x=0\;\Rightarrow\;R=R_1\qquad x=L\;\Rightarrow\;R=R_2"))
     L.paso("b) La integral de la izquierda")\
-        .di("Cambiamos de equis por su valor en de erre. Los límites también cambian: en equis cero el radio es erre uno; en equis ele, erre dos.".replace("de equis", dice("dx", "de equis")).replace("de erre", dice("dR", "de erre")).replace("equis cero", dice("x = 0", "equis cero")).replace("equis ele", dice("x = L", "equis ele")),
+        .di("Cambiamos de equis por su valor en de erre, y lo que es constante sale de la integral.".replace("de equis", dice("dx", "de equis")).replace("de erre", dice("dR", "de erre")),
             M(r"\int_0^L\frac{dx}{\pi R^2}=\int_{R_1}^{R_2}\frac{1}{\pi R^2}\cdot\frac{L\,dR}{R_2-R_1}=\frac{L}{\pi(R_2-R_1)}\int_{R_1}^{R_2}R^{-2}\,dR"))\
-        .di("Regla uno con exponente menos dos: da menos uno entre erre. Arriba menos abajo.".replace("entre erre", "entre " + dice("R", "erre")),
-            M(r"\int_{R_1}^{R_2}R^{-2}\,dR=\Big[-\frac{1}{R}\Big]_{R_1}^{R_2}=-\frac{1}{R_2}+\frac{1}{R_1}=\frac{1}{R_1}-\frac{1}{R_2}"),
+        .di("Regla de la potencia con exponente menos dos: se le suma uno y se divide entre el exponente nuevo.",
+            M(r"\int R^{-2}\,dR=\frac{R^{-2+1}}{-2+1}=\frac{R^{-1}}{-1}=-\frac{1}{R}"))\
+        .di("Arriba menos abajo. Menos por menos da más.",
+            M(r"\Big[-\frac{1}{R}\Big]_{R_1}^{R_2}=\left(-\frac{1}{R_2}\right)-\left(-\frac{1}{R_1}\right)=\frac{1}{R_1}-\frac{1}{R_2}"),
             NOTA("Reglas 1 y 3 de la lección **T-MAT2**."))
-    L.paso("b) Simplificar y la derecha")\
-        .di("La resta de inversos es la resta sobre el producto; la resta de radios se cancela.", M(r"\frac{1}{R_1}-\frac{1}{R_2}=\frac{R_2-R_1}{R_1R_2}\;\Rightarrow\;\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi(R_2-R_1)}\cdot\frac{R_2-R_1}{R_1R_2}=\frac{L}{\pi R_1R_2}"))\
-        .di("La de la derecha: la suma de los pedacitos de temperatura.", M(r"-k\int_{T_1}^{T_2}dT=-k\,(T_2-T_1)=k\,(T_1-T_2)"))\
-        .di("Igualamos y despejamos hache.".replace("hache", dice("H", "hache")), M(r"H\,\frac{L}{\pi R_1R_2}=k\,(T_1-T_2)"),
-            R(r"H=\frac{\pi k\,R_1R_2\,(T_1-T_2)}{L}", "rb"))
+    L.paso("b) Simplificar la izquierda")\
+        .di("Restamos las fracciones con el denominador común erre uno por erre dos.".replace("erre uno por erre dos", dice("R₁R₂", "erre uno por erre dos")),
+            M(r"\frac{1}{R_1}-\frac{1}{R_2}=\frac{R_2}{R_1R_2}-\frac{R_1}{R_1R_2}=\frac{R_2-R_1}{R_1R_2}"))\
+        .di("Lo ponemos en la integral: la resta de radios queda arriba y abajo, y se cancela.",
+            M(r"\int_0^L\frac{dx}{\pi R^2}=\frac{L}{\pi(R_2-R_1)}\cdot\frac{R_2-R_1}{R_1R_2}=\frac{L}{\pi R_1R_2}"))
+    L.paso("b) La derecha, juntar y despejar H")\
+        .di("La de la derecha: sumar los pedacitos de temperatura da el cambio total.", M(r"-k\int_{T_1}^{T_2}dT=-k\,(T_2-T_1)=k\,(T_1-T_2)"))\
+        .di("Juntamos los dos lados.", M(r"H\,\frac{L}{\pi R_1R_2}=k\,(T_1-T_2)"))\
+        .di("Multiplicamos los dos lados por pi erre uno erre dos: así deja de dividir.".replace("pi erre uno erre dos", dice("πR₁R₂", "pi erre uno erre dos")),
+            M(r"H\,L=\pi\,k\,R_1R_2\,(T_1-T_2)"))\
+        .di("Y dividimos entre ele.".replace("ele", dice("L", "ele")), R(r"H=\frac{\pi k\,R_1R_2\,(T_1-T_2)}{L}", "rb"))
     L.paso("c) Temperatura a una distancia x")\
-        .di("Ahora integramos solo desde cero hasta equis.".replace("equis", dice("x", "equis")), V(foco="punto"),
-            M(r"H\,\frac{L}{\pi(R_2-R_1)}\left(\frac{1}{R_1}-\frac{1}{R(x)}\right)=k\,(T_1-T(x))"))\
-        .di("Despejamos te de equis.".replace("te de equis", dice("T(x)", "te de equis")),
-            M(r"T(x)=T_1-\frac{HL}{\pi k(R_2-R_1)}\left(\frac{1}{R_1}-\frac{1}{R(x)}\right)"))\
-        .di("Ponemos el hache de la parte be.".replace("hache", dice("H", "hache")).replace("parte be", dice("parte b", "parte be")),
-            M(r"\frac{HL}{\pi k(R_2-R_1)}=\frac{R_1R_2\,(T_1-T_2)}{R_2-R_1}"),
-            M(r"T(x)=T_1-(T_1-T_2)\,\frac{R_2}{R_2-R_1}\left(1-\frac{R_1}{R(x)}\right)"))
+        .di("Ahora integramos solo desde cero hasta una equis cualquiera, donde la temperatura es te de equis.".replace("una equis", "una " + dice("x", "equis")).replace("te de equis", dice("T(x)", "te de equis")), V(foco="punto"),
+            M(r"H\int_0^x\frac{dx}{\pi R^2}=-k\int_{T_1}^{T(x)}dT"))\
+        .di("La izquierda sale igual que antes, pero arriba queda el radio en equis; la derecha es la resta de temperaturas.".replace("en equis", "en " + dice("x", "equis")),
+            M(r"\frac{HL}{\pi(R_2-R_1)}\left(\frac{1}{R_1}-\frac{1}{R(x)}\right)=k\,(T_1-T(x))"))\
+        .di("Dividimos los dos lados entre ka.".replace("ka", dice("k", "ka")), M(r"T_1-T(x)=\frac{HL}{\pi k(R_2-R_1)}\left(\frac{1}{R_1}-\frac{1}{R(x)}\right)"))\
+        .di("Te de equis está restando: pasa sumando, y lo demás pasa restando.".replace("Te de equis", dice("T(x)", "Te de equis")),
+            M(r"T(x)=T_1-\frac{HL}{\pi k(R_2-R_1)}\left(\frac{1}{R_1}-\frac{1}{R(x)}\right)"))
+    L.paso("c) Poner el H de la parte b")\
+        .di("Ponemos el hache de la parte be en el factor de adelante: pi, ka y ele se cancelan.".replace("hache", dice("H", "hache")).replace("parte be", dice("parte b", "parte be")),
+            M(r"\frac{HL}{\pi k(R_2-R_1)}=\frac{\pi kR_1R_2(T_1-T_2)}{L}\cdot\frac{L}{\pi k(R_2-R_1)}=\frac{R_1R_2\,(T_1-T_2)}{R_2-R_1}"))\
+        .di("El erre uno de arriba entra al paréntesis: erre uno por uno entre erre uno da uno.".replace("El erre uno", "El " + dice("R₁", "erre uno")),
+            M(r"R_1\left(\frac{1}{R_1}-\frac{1}{R(x)}\right)=1-\frac{R_1}{R(x)}"))\
+        .di("Así queda.", M(r"T(x)=T_1-(T_1-T_2)\,\frac{R_2}{R_2-R_1}\left(1-\frac{R_1}{R(x)}\right)"))
     L.paso("c) Simplificar y revisar")\
-        .di("Como erre de equis menos erre uno es la pendiente por equis, la fracción se simplifica.".replace("erre de equis menos erre uno", dice("R(x) − R₁", "erre de equis menos erre uno")).replace("por equis", "por " + dice("x", "equis")),
-            M(r"1-\frac{R_1}{R(x)}=\frac{R(x)-R_1}{R(x)}=\frac{(R_2-R_1)\,x}{L\,R(x)}"),
+        .di("Juntamos el paréntesis en una fracción. Erre de equis menos erre uno es la pendiente por equis.".replace("Erre de equis menos erre uno", dice("R(x) − R₁", "Erre de equis menos erre uno")).replace("por equis", "por " + dice("x", "equis")),
+            M(r"1-\frac{R_1}{R(x)}=\frac{R(x)-R_1}{R(x)}=\frac{(R_2-R_1)\,x}{L\,R(x)}"))\
+        .di("Lo ponemos: la resta de radios se cancela otra vez.",
+            M(r"T(x)=T_1-(T_1-T_2)\,\frac{R_2}{R_2-R_1}\cdot\frac{(R_2-R_1)\,x}{L\,R(x)}=T_1-(T_1-T_2)\,\frac{R_2\,x}{L\,R(x)}"))\
+        .di("Y ele por erre de equis se abre con la recta del radio.".replace("ele por erre de equis", dice("L·R(x)", "ele por erre de equis")),
+            M(r"L\,R(x)=L\left(R_1+\frac{R_2-R_1}{L}\,x\right)=R_1L+(R_2-R_1)\,x"),
             R(r"T(x)=T_1-(T_1-T_2)\,\frac{R_2\,x}{R_1L+(R_2-R_1)\,x}", "rc"))\
-        .di("Revisión en los extremos.", M(r"x=0:\ T=T_1\qquad x=L:\ \frac{R_2L}{R_1L+R_2L-R_1L}=1\;\Rightarrow\;T=T_2"))
+        .di("Revisión en los extremos.", M(r"x=0:\ T=T_1"), M(r"x=L:\ \frac{R_2L}{R_1L+R_2L-R_1L}=\frac{R_2L}{R_2L}=1\;\Rightarrow\;T=T_2"))
     L.responde("b", r"H=\frac{\pi kR_1R_2(T_1-T_2)}{L}", None, "").responde("c", r"T(x)=T_1-(T_1-T_2)\frac{R_2x}{R_1L+(R_2-R_1)x}", None, "")
     return L.usa(r"H=-kA\frac{dT}{dx}")
 
@@ -865,16 +918,26 @@ def pr2_d2() -> Leccion:
         .di("La barra se ensancha hacia el extremo frío: en equis igual a ele tiene el doble de área.".replace("equis igual a ele", dice("x = L", "equis igual a ele")), DATO("A₀ = 0,0020 m²"),
             LISTA(["$L=0{,}80$ m, $k=180$ W/(m·K)", "$A(x)=A_0(1+x/L)$, $A_0=0{,}0020\\ \\text{m}^2$", "$T(0)=150\\ ^\\circ$C, $T(L)=30\\ ^\\circ$C"]))
     L.paso("a) De Fourier a la resistencia térmica")\
-        .di("Partimos de la ley de Fourier de la hoja y separamos.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"dT=-\frac{H\,dx}{kA(x)}"))\
-        .di("Integramos de un extremo al otro; hache es constante.".replace("hache", dice("H", "hache")), M(r"T_1-T_2=H\int_0^L\frac{dx}{kA(x)}"))\
+        .di("Partimos de la ley de Fourier de la hoja, con el área que cambia.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,A(x)\,\frac{dT}{dx}"))\
+        .di("Separamos: multiplicamos los dos lados por de equis, y luego dividimos entre ka por A de equis.".replace("de equis,", dice("dx", "de equis") + ",").replace("A de equis", dice("A(x)", "A de equis")),
+            M(r"H\,dx=-k\,A(x)\,dT"), M(r"dT=-\frac{H\,dx}{kA(x)}"))\
+        .di("Integramos de un extremo al otro. Hache es constante y sale de la integral.".replace("Hache", dice("H", "Hache")),
+            M(r"\int_{T_1}^{T_2}dT=-H\int_0^L\frac{dx}{kA(x)}"))\
+        .di("La izquierda es el cambio total de temperatura. Luego cambiamos el signo de los dos lados.",
+            M(r"T_2-T_1=-H\int_0^L\frac{dx}{kA(x)}"), M(r"T_1-T_2=H\int_0^L\frac{dx}{kA(x)}"))\
         .di("La resistencia térmica es la caída de temperatura por cada watt.", M(r"R\equiv\frac{T_1-T_2}{H}=\int_0^L\frac{dx}{kA(x)}"))
     L.paso("a) Resolver la integral (regla 3)")\
         .di("Ka y A cero son constantes: salen de la integral.".replace("Ka y A cero", dice("k y A₀", "Ka y A cero")), V(foco="barrido"),
             M(r"R=\frac{1}{kA_0}\int_0^L\frac{dx}{1+x/L}"))\
-        .di("Cambio de variable: al paréntesis lo llamamos u. Su pedacito es de equis entre ele.".replace("de equis entre ele", dice("dx/L", "de equis entre ele")),
-            M(r"u=1+\frac{x}{L}\;\Rightarrow\;du=\frac{dx}{L}\;\Rightarrow\;dx=L\,du"), M(r"x=0\Rightarrow u=1\qquad x=L\Rightarrow u=2"))\
-        .di("Queda la regla dos: uno entre u da logaritmo. Y logaritmo de uno es cero.",
-            M(r"\int_0^L\frac{dx}{1+x/L}=\int_1^2\frac{L\,du}{u}=L\Big[\ln u\Big]_1^2=L\,(\ln 2-\ln 1)=L\ln 2"))
+        .di("Cambio de variable: al paréntesis lo llamamos u.", M(r"u=1+\frac{x}{L}"))\
+        .di("Si equis crece un pedacito, u crece ese pedacito entre ele. Despejamos de equis.".replace("Si equis", "Si " + dice("x", "equis")).replace("entre ele", "entre " + dice("L", "ele")).replace("de equis.", dice("dx", "de equis") + "."),
+            M(r"du=\frac{dx}{L}"), M(r"dx=L\,du"))\
+        .di("Los límites cambian: con equis cero, u vale uno; con equis igual a ele, u vale dos.".replace("equis cero", dice("x = 0", "equis cero")).replace("equis igual a ele", dice("x = L", "equis igual a ele")),
+            M(r"x=0\Rightarrow u=1\qquad x=L\Rightarrow u=2"))
+    L.paso("a) Resolver la integral: logaritmo")\
+        .di("Cambiamos todo a la letra u. Ele es constante y sale.".replace("Ele", dice("L", "Ele")), M(r"\int_0^L\frac{dx}{1+x/L}=\int_1^2\frac{L\,du}{u}=L\int_1^2\frac{du}{u}"))\
+        .di("Regla dos: uno entre u da logaritmo.", M(r"L\int_1^2\frac{du}{u}=L\Big[\ln u\Big]_1^2"))\
+        .di("Arriba menos abajo. Logaritmo de uno es cero.", M(r"L\,(\ln 2-\ln 1)=L\,(\ln 2-0)=L\ln 2"))
     L.paso("a) Resistencia total con números")\
         .di("Juntamos.", M(r"R=\frac{L}{kA_0}\ln 2"))\
         .di("Sustituimos.", M(rf"R=\frac{{0{{,}}80}}{{(180)(0{{,}}0020)}}\ln 2=({tex(g0, 4)})({tex(math.log(2.0), 4)})"), R(rf"R={tex(Rt, 4)}\ \text{{K/W}}", "ra"))
@@ -882,10 +945,16 @@ def pr2_d2() -> Leccion:
         .di("La caída total entre la resistencia.", M(rf"H=\frac{{T_1-T_2}}{{R}}=\frac{{150-30}}{{{tex(Rt, 4)}}}"), R(rf"H={tex(H, 3)}\ \text{{W}}", "rb"))
     L.paso("c) Temperatura en el punto medio")\
         .di("Integramos solo desde cero hasta una equis cualquiera: u va de uno a uno más equis entre ele.".replace("una equis", "una " + dice("x", "equis")).replace("uno más equis entre ele", dice("1 + x/L", "uno más equis entre ele")), V(foco="punto"),
-            M(r"T_1-T(x)=\frac{H}{kA_0}\int_0^x\frac{dx}{1+x/L}=\frac{HL}{kA_0}\Big[\ln u\Big]_1^{1+x/L}=\frac{HL}{kA_0}\ln\left(1+\frac{x}{L}\right)"))\
-        .di("Despejamos te de equis.".replace("te de equis", dice("T(x)", "te de equis")), M(r"T(x)=T_1-\frac{HL}{kA_0}\ln\left(1+\frac{x}{L}\right)"))\
-        .di("En la mitad el logaritmo es de uno coma cinco.", M(rf"T\left(\tfrac{{L}}{{2}}\right)=150-({tex(H, 4)})({tex(g0, 4)})\ln 1{{,}}5=150-({tex(H * g0, 4)})({tex(math.log(1.5), 4)})"),
-            R(rf"T(L/2)={tex(tm, 3)}\ {C}", "rc"))
+            M(r"T_1-T(x)=\frac{H}{kA_0}\int_0^x\frac{dx}{1+x/L}"))\
+        .di("El mismo cambio de variable; ahora u llega hasta uno más equis entre ele.".replace("uno más equis entre ele", dice("1 + x/L", "uno más equis entre ele")),
+            M(r"T_1-T(x)=\frac{HL}{kA_0}\Big[\ln u\Big]_1^{1+x/L}"))\
+        .di("Arriba menos abajo; logaritmo de uno es cero.", M(r"T_1-T(x)=\frac{HL}{kA_0}\ln\left(1+\frac{x}{L}\right)"))\
+        .di("Despejamos te de equis: pasa sumando, y lo demás pasa restando.".replace("te de equis", dice("T(x)", "te de equis")), M(r"T(x)=T_1-\frac{HL}{kA_0}\ln\left(1+\frac{x}{L}\right)"))
+    _p1 = float(f"{H * g0:.4g}") * float(f"{math.log(1.5):.4g}")
+    L.paso("c) Temperatura en el punto medio: números")\
+        .di("En la mitad, equis entre ele es un medio: el logaritmo es de uno coma cinco.".replace("equis entre ele", dice("x/L", "equis entre ele")),
+            M(rf"T\left(\tfrac{{L}}{{2}}\right)=150-({tex(H, 4)})({tex(g0, 4)})\ln 1{{,}}5=150-({tex(H * g0, 4)})({tex(math.log(1.5), 4)})"))\
+        .di("Multiplicamos y restamos.", M(rf"=150-{tex(_p1, 4)}"), R(rf"T(L/2)={tex(tm, 3)}\ {C}", "rc"))
     L.paso("d) Dónde es mayor el gradiente")\
         .di("De Fourier, la pendiente es hache entre ka por el área: es mayor donde el área es menor.".replace("hache entre ka", dice("H/(kA)", "hache entre ka")),
             M(r"\left|\frac{dT}{dx}\right|=\frac{H}{kA(x)}"))\
@@ -916,15 +985,21 @@ def pr2_d3() -> Leccion:
             TABLA(["Capa", "Espesor", "$k$ (W/(m·K))"], [["A", "$0{,}040$ m", "$0{,}80$"], ["B", "$0{,}080$ m", "$0{,}040$"], ["C", "$0{,}050$ m", "$1{,}20$"]]),
             LISTA(["Área $2{,}50\\ \\text{m}^2$, caras a $100\\ ^\\circ$C y $20\\ ^\\circ$C"]))
     L.paso("Fourier en cada capa")\
-        .di("Partimos de la ley de Fourier de la hoja para una capa y despejamos su caída de temperatura.", F(r"H=kA\,\frac{T_H-T_C}{L}"), M(r"T_H-T_C=H\,\frac{L}{kA}"))\
-        .di("En serie el mismo hache cruza las tres capas, y las caídas se suman.".replace("hache", dice("H", "hache")),
+        .di("Partimos de la ley de Fourier de la hoja para una capa.", F(r"H=kA\,\frac{T_H-T_C}{L}"))\
+        .di("Despejamos su caída de temperatura: multiplicamos los dos lados por ele, y dividimos entre ka por A.".replace("por ele", "por " + dice("L", "ele")).replace("ka por A", dice("kA", "ka por A")),
+            M(r"H\,L=kA\,(T_H-T_C)"), M(r"T_H-T_C=H\,\frac{L}{kA}"))\
+        .di("En serie el mismo hache cruza las tres capas. Llamamos te uno y te dos a las interfaces y escribimos la caída de cada capa.".replace("hache", dice("H", "hache")).replace("te uno y te dos", dice("T₁ y T₂", "te uno y te dos")),
+            M(r"100-T_1=H\,\frac{L_A}{k_AA}\qquad T_1-T_2=H\,\frac{L_B}{k_BA}\qquad T_2-20=H\,\frac{L_C}{k_CA}"))\
+        .di("Sumamos las tres: las temperaturas de las interfaces entran sumando y restando, y se cancelan.",
+            M(r"(100-T_1)+(T_1-T_2)+(T_2-20)=100-20"),
             M(r"100-20=H\left(\frac{L_A}{k_AA}+\frac{L_B}{k_BA}+\frac{L_C}{k_CA}\right)"))
     p = L.paso("Cada término L/(kA)")
     for (nom, l, k), r in zip(capas, Rs):
         p.di(f"Capa {nom}.", M(rf"\frac{{L_{nom}}}{{k_{nom}A}}=\frac{{{tex(l, 2)}}}{{({tex(k, 2)})(2{{,}}50)}}={tex(r, 4)}\ \text{{K/W}}"))
     p.di("Sumamos.", M(r"\sum\frac{L}{kA}=" + "+".join(tex(r, 4) for r in Rs) + rf"={tex(Rt, 4)}\ \text{{K/W}}"))
     L.paso("a) Potencia térmica")\
-        .di("Despejamos hache.".replace("hache", dice("H", "hache")), M(rf"H=\frac{{80{{,}}0}}{{{tex(Rt, 4)}}}"), R(rf"H={tex(H, 3)}\ \text{{W}}", "ra"))
+        .di("Con la suma de los tres términos, la ecuación queda así.", M(rf"80{{,}}0=H\,({tex(Rt, 4)})"))\
+        .di("Despejamos hache: la suma pasa al otro lado dividiendo.".replace("hache", dice("H", "hache")), M(rf"H=\frac{{80{{,}}0}}{{{tex(Rt, 4)}}}"), R(rf"H={tex(H, 3)}\ \text{{W}}", "ra"))
     L.paso("b) Temperaturas de las interfaces")\
         .di("Entre A y B: restamos la caída de A.", V(foco="perfil"), M(rf"T_1=100-H\frac{{L_A}}{{k_AA}}=100-({tex(H, 4)})({tex(Rs[0], 4)})=100-{tex(H * Rs[0], 4)}"), R(rf"T_1={tex(t1, 3)}\ {C}", "rb1"))\
         .di("Entre B y C: restamos la caída de B.", M(rf"T_2=T_1-H\frac{{L_B}}{{k_BA}}={tex(t1, 4)}-({tex(H, 4)})({tex(Rs[1], 3)})={tex(t1, 4)}-{tex(H * Rs[1], 4)}"), R(rf"T_2={tex(t2, 3)}\ {C}", "rb2"))\
@@ -998,14 +1073,16 @@ def pr2_d5() -> Leccion:
     L.paso("a) γ con la adiabática")\
         .di("La hoja da la relación de temperatura y volumen en la adiabática.", V(foco="12"), F(r"TV^{\gamma-1}=\text{cte}"))\
         .di("La igualamos entre los dos estados.", M(r"T_2V_2^{\gamma-1}=T_1V_1^{\gamma-1}"))\
-        .di("Dividimos los dos lados entre te dos y entre el volumen dos elevado a gama menos uno: las razones quedan juntas.".replace("te dos", dice("T₂", "te dos")),
-            M(r"\frac{V_1^{\gamma-1}}{V_2^{\gamma-1}}=\frac{T_2}{T_1}\;\Rightarrow\;\left(\frac{V_1}{V_2}\right)^{\gamma-1}=\frac{T_2}{T_1}"))\
+        .di("Dividimos los dos lados entre te uno y entre el volumen dos elevado a gama menos uno.".replace("te uno", dice("T₁", "te uno")),
+            M(r"\frac{T_2}{T_1}=\frac{V_1^{\gamma-1}}{V_2^{\gamma-1}}"))\
+        .di("Dos potencias con el mismo exponente se dividen dentro de un solo paréntesis.",
+            M(r"\left(\frac{V_1}{V_2}\right)^{\gamma-1}=\frac{T_2}{T_1}"))\
         .di("El volumen se duplica: ve uno entre ve dos es un medio.".replace("ve uno entre ve dos", dice("V₁/V₂", "ve uno entre ve dos")), M(rf"\left(\frac{{1}}{{2}}\right)^{{\gamma-1}}=\frac{{227{{,}}4}}{{300}}={tex(rt, 4)}"))
     L.paso("a) Despejar γ con logaritmos")\
         .di("La incógnita está en el exponente. Sacamos logaritmo a los dos lados.", M(rf"\ln\left(0{{,}}5^{{\gamma-1}}\right)=\ln({tex(rt, 4)})"))\
         .di("Regla de logaritmos: el exponente baja a multiplicar.", M(rf"(\gamma-1)\ln 0{{,}}5=\ln {tex(rt, 4)}"), NOTA("Regla $\\ln(a^n)=n\\ln a$ de la lección **T-MAT3**."))\
         .di("Dividimos entre el logaritmo de un medio. Los dos logaritmos son negativos: menos entre menos da más.",
-            M(rf"\gamma-1=\frac{{\ln {tex(rt, 4)}}}{{\ln 0{{,}}5}}=\frac{{{tex(math.log(rt), 4)}}}{{{tex(math.log(0.5), 4)}}}={tex(gm1, 4)}"))\
+            M(rf"\gamma-1=\frac{{\ln {tex(rt, 4)}}}{{\ln 0{{,}}5}}=\frac{{{tex(math.log(rt), 5)}}}{{{tex(math.log(0.5), 5)}}}={tex(gm1, 4)}"))\
         .di("Le sumamos uno.", M(rf"\gamma={tex(gm1, 4)}+1"), R(rf"\gamma={tex(gamma, 3)}", "ra"))
     L.paso("b) C_V y C_P desde la hoja")\
         .di("Juntamos las dos casillas de la hoja.", F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"))\
@@ -1015,9 +1092,17 @@ def pr2_d5() -> Leccion:
     L.paso("c) Trabajo de la expansión")\
         .di("Adiabática: no hay calor. De la primera ley, el trabajo es menos el cambio de energía interna.", F(r"\Delta U=Q-W"), M(r"Q=0\;\Rightarrow\;W=-\Delta U"))\
         .di("La energía interna con ce ve.".replace("ce ve", dice("C_V", "ce ve")), F(r"\Delta U=nC_V\,\Delta T"),
-            M(rf"W=-(3)({tex(cv, 4)})(227{{,}}4-300)=({tex(nm * cv, 4)})(72{{,}}6)"), R(rf"W={tex(w, 4)}\ \text{{J}}", "rc"))\
-        .di("Revisión con la casilla adiabática de la hoja.", F(r"W=\frac{1}{\gamma-1}\left(p_1V_1-p_2V_2\right)"),
-            M(rf"W=\frac{{nRT_1-nRT_2}}{{\gamma-1}}=\frac{{{tex(nm * 8.314 * t1, 4)}-{tex(nm * 8.314 * t2, 4)}}}{{{tex(gm1, 4)}}}={tex(nm * 8.314 * (t1 - t2) / gm1, 4)}\ \text{{J}}"))
+            M(rf"W=-(3)({tex(cv, 4)})(227{{,}}4-300)"))\
+        .di("Restamos adentro: doscientos veintisiete coma cuatro menos trescientos da menos setenta y dos coma seis.", M(rf"W=-(3)({tex(cv, 4)})(-72{{,}}6)"))\
+        .di("Menos por menos da más.", M(rf"W=(3)({tex(cv, 4)})(72{{,}}6)"))\
+        .di("Multiplicamos tres por ce ve, y luego por setenta y dos coma seis.".replace("ce ve", dice("C_V", "ce ve")),
+            M(rf"W=({tex(nm * float(f'{cv:.4g}'), 4)})(72{{,}}6)"), R(rf"W={tex(w, 4)}\ \text{{J}}", "rc"))
+    L.paso("c) Revisión con la casilla adiabática")\
+        .di("Revisamos con la casilla adiabática de la hoja; con el gas ideal, pe ve es ene erre te.".replace("pe ve es ene erre te", dice("pV = nRT", "pe ve es ene erre te")),
+            F(r"W=\frac{1}{\gamma-1}\left(p_1V_1-p_2V_2\right)"), M(r"W=\frac{nRT_1-nRT_2}{\gamma-1}"))\
+        .di("Sustituimos, con un decimal para que la resta no pierda exactitud.",
+            M(rf"W=\frac{{{tex(nm * 8.314 * t1, dec=1)}-{tex(nm * 8.314 * t2, dec=1)}}}{{{tex(gm1, 4)}}}=\frac{{{tex(round(nm * 8.314 * t1, 1) - round(nm * 8.314 * t2, 1), dec=1)}}}{{{tex(gm1, 4)}}}"))\
+        .di("Dividimos: da lo mismo que antes.", M(rf"W={tex((round(nm * 8.314 * t1, 1) - round(nm * 8.314 * t2, 1)) / float(f'{gm1:.4g}'), 4)}\ \text{{J}}"))
     L.paso("d) Calor del calentamiento")\
         .di("A volumen constante el calor de la hoja va con ce ve.".replace("ce ve", dice("C_V", "ce ve")), V(foco="23"), F(r"Q=nC\,\Delta T"),
             M(rf"Q=(3)({tex(cv, 4)})(300-227{{,}}4)=({tex(nm * cv, 4)})(72{{,}}6)"), R(rf"Q={tex(q, 4)}\ \text{{J}}", "rd"))\
@@ -1099,7 +1184,9 @@ def pr2_d7() -> Leccion:
             M(rf"Q_{{\text{{Fe,máx}}}}={_j(qfe)}\ \text{{J}}<Q_{{\text{{fundir}}}}={_j(qf)}\ \text{{J}}\;\Rightarrow\;\text{{coexisten hielo y agua}}"),
             R(rf"T_f=0\ {C}", "rb"), NOTA("Hielo y agua conviven solo a $0\\ ^\\circ$C (a 1 atm)."))
     L.paso("c) Masas finales")\
-        .di("Todo lo que da el hierro se usa para fundir hielo.", M(rf"m_{{\text{{fundida}}}}=\frac{{Q_{{\text{{Fe}}}}}}{{L_f}}=\frac{{{_j(qfe)}}}{{334\,000}}={tex(mfund, 4)}\ \text{{kg}}"))\
+        .di("Todo lo que da el hierro se usa para fundir hielo. Del calor latente de la hoja despejamos la masa: ele pasa dividiendo.".replace("ele pasa", dice("L", "ele") + " pasa"),
+            F(r"Q=\pm mL"), M(r"m=\frac{Q}{L_f}"))\
+        .di("Sustituimos el calor que dio el hierro.", M(rf"m_{{\text{{fundida}}}}=\frac{{Q_{{\text{{Fe}}}}}}{{L_f}}=\frac{{{_j(qfe)}}}{{334\,000}}={tex(mfund, 4)}\ \text{{kg}}"))\
         .di("Hielo que queda y agua que hay.", M(rf"m_{{\text{{hielo}}}}=0{{,}}200-{tex(mfund, 4)}={tex(mh - mfund, 3)}\ \text{{kg}}"),
             M(rf"m_{{\text{{agua}}}}=0{{,}}400+{tex(mfund, 4)}={tex(mw + mfund, 4)}\ \text{{kg}}"),
             R(rf"m_{{\text{{hielo}}}}={tex(mh - mfund, 3)}\ \text{{kg}}\qquad m_{{\text{{agua}}}}={tex(mw + mfund, 3)}\ \text{{kg}}", "rc"))
@@ -1133,11 +1220,15 @@ def pr2_d8() -> Leccion:
     L.paso("b) Calor que absorbe el recipiente")\
         .di("La capacidad calorífica es el producto de masa por calor específico: ya viene junta.", M(r"C=mc\;\Rightarrow\;Q=C\,\Delta T"),
             M(r"Q_{\text{rec}}=(120)(45{,}0-18{,}0)"), R(rf"Q_{{\text{{rec}}}}={_j(qr)}\ \text{{J}}", "rb"))
-    L.paso("c) Masa de vapor")\
-        .di("Cada kilogramo de vapor se condensa y luego se enfría de cien a cuarenta y cinco.", F(r"Q=\pm mL"),
-            M(rf"Q_{{\text{{vapor}}}}=-m\left[L_v+c_w(100-45{{,}}0)\right]=-m\left[2{{,}}26\times10^6+(4186)(55{{,}}0)\right]=-m\,({_j(por_kg, 7)})"))\
-        .di("Aislado: la suma de calores es cero.", M(rf"m\,({_j(por_kg, 7)})={_j(qa, 6)}+{_j(qr)}={_j(qa + qr, 6)}"))\
-        .di(f"Se despeja la masa: {nu(mv * 1000, 'g', 3)}.", M(rf"m=\frac{{{_j(qa + qr, 6)}}}{{{_j(por_kg, 7)}}}"), R(rf"m={tex(mv, 3)}\ \text{{kg}}={tex(mv * 1000, 3)}\ \text{{g}}", "rc"))
+    L.paso("c) Calor que entrega el vapor")\
+        .di("Cada kilogramo de vapor se condensa y luego, ya como agua, se enfría de cien a cuarenta y cinco. Sale calor: por eso el signo menos.",
+            F(r"Q=\pm mL"), F(r"Q=mc\,\Delta T"), M(r"Q_{\text{vapor}}=-m\left[L_v+c_w(100-45{,}0)\right]"))\
+        .di("Sustituimos. Cien menos cuarenta y cinco es cincuenta y cinco.", M(r"Q_{\text{vapor}}=-m\left[2{,}26\times10^6+(4186)(55{,}0)\right]"))\
+        .di("Multiplicamos adentro y sumamos.", M(rf"Q_{{\text{{vapor}}}}=-m\left[2\,260\,000+{_j(cw * 55.0, 6)}\right]=-m\,({_j(por_kg, 7)})"))
+    L.paso("c) Masa de vapor: balance")\
+        .di("Recipiente aislado: la suma de todos los calores es cero.", F(r"\sum Q=0"), M(rf"{_j(qa, 6)}+{_j(qr)}-m\,({_j(por_kg, 7)})=0"))\
+        .di("Pasamos el término del vapor al otro lado, sumando.", M(rf"m\,({_j(por_kg, 7)})={_j(qa, 6)}+{_j(qr)}={_j(qa + qr, 6)}"))\
+        .di(f"Despejamos la masa: el número que la multiplica pasa dividiendo. Son {nu(mv * 1000, 'g', 3)}.", M(rf"m=\frac{{{_j(qa + qr, 6)}}}{{{_j(por_kg, 7)}}}"), R(rf"m={tex(mv, 3)}\ \text{{kg}}={tex(mv * 1000, 3)}\ \text{{g}}", "rc"))
     L.paso("d) Masa final de agua")\
         .di("El vapor condensado se suma al agua.", M(rf"m_f=0{{,}}750+{tex(mv, 4)}"), R(rf"m_f={tex(mw + mv, 3)}\ \text{{kg}}", "rd"))
     L.responde("a", rf"Q={_j(qa, 6)}\ \text{{J}}", qa, "J").responde("c", rf"m={tex(mv, 3)}\ \text{{kg}}", mv, "kg").responde("d", rf"m_f={tex(mw + mv, 3)}\ \text{{kg}}", mw + mv, "kg")
@@ -1171,21 +1262,37 @@ def pr2_d9() -> Leccion:
             LISTA(["$n=0{,}0250$ mol, $\\gamma=1{,}40$", "$T_1=300$ K, $V_1=500\\ \\text{cm}^3$", "$r=9{,}00$, $Q_H=650$ J"]))
     L.paso("a) Volumen mínimo")\
         .di("La razón de compresión de la hoja es el volumen máximo entre el mínimo; también convertimos el volumen inicial a litros con la equivalencia de la hoja.", F(r"r=\frac{V_{\text{máx}}}{V_{\text{mín}}}"),
-            M(r"1\ \text{L}=1000\ \text{cm}^3\;\Rightarrow\;V_1=500\ \text{cm}^3=0{,}500\ \text{L}"),
-            M(r"V_{\text{mín}}=\frac{V_1}{r}=\frac{500}{9{,}00}"), R(rf"V_{{\text{{mín}}}}={tex(v1 / r * 1e6, 3)}\ \text{{cm}}^3", "ra"))
+            M(r"1\ \text{L}=1000\ \text{cm}^3\;\Rightarrow\;V_1=500\ \text{cm}^3=0{,}500\ \text{L}"))\
+        .di("Despejamos el volumen mínimo: pasa multiplicando a la izquierda, y erre pasa dividiendo.".replace("y erre", "y " + dice("r", "erre")),
+            M(r"r\,V_{\text{mín}}=V_{\text{máx}}"), M(r"V_{\text{mín}}=\frac{V_{\text{máx}}}{r}=\frac{V_1}{r}=\frac{500}{9{,}00}"),
+            R(rf"V_{{\text{{mín}}}}={tex(v1 / r * 1e6, 3)}\ \text{{cm}}^3", "ra"))
     L.paso("b) Temperatura al final de la compresión")\
-        .di("Compresión adiabática: la relación de temperatura y volumen de la hoja.", V(foco="12"), F(r"TV^{\gamma-1}=\text{cte}"),
-            M(r"T_2V_2^{\gamma-1}=T_1V_1^{\gamma-1}\;\Rightarrow\;T_2=T_1\left(\frac{V_1}{V_2}\right)^{\gamma-1}=T_1\,r^{\gamma-1}"))\
-        .di("Sustituimos.", M(rf"T_2=300\,(9{{,}}00)^{{0{{,}}40}}=300\,({tex(f, 4)})"), R(rf"T_2={tex(t2, 4)}\ \text{{K}}", "rb"))
-    L.paso("c) Temperatura máxima")\
-        .di("Para un gas diatómico tomamos ce ve de la hoja y comprobamos que coincide con erre entre gama menos uno.".replace("ce ve", dice("C_V", "ce ve")), F(r"C_{V\text{dia}}=\frac{5}{2}R"), F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"),
-            M(rf"C_V=\frac{{R}}{{\gamma-1}}=\frac{{8{{,}}314}}{{0{{,}}40}}=\frac{{5}}{{2}}(8{{,}}314)={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
-        .di("El calor a volumen constante sube la temperatura.", V(foco="23"), F(r"Q=nC\,\Delta T"),
-            M(rf"T_3=T_2+\frac{{Q_H}}{{nC_V}}={tex(t2, 4)}+\frac{{650}}{{(0{{,}}0250)({tex(cv, 4)})}}={tex(t2, 4)}+{tex(qh / ncv, 4)}"),
+        .di("Compresión adiabática: la relación de temperatura y volumen de la hoja. La igualamos entre 1 y 2.", V(foco="12"), F(r"TV^{\gamma-1}=\text{cte}"),
+            M(r"T_2V_2^{\gamma-1}=T_1V_1^{\gamma-1}"))\
+        .di("Dividimos los dos lados entre el volumen dos elevado a gama menos uno, y juntamos las potencias en un paréntesis.",
+            M(r"T_2=T_1\,\frac{V_1^{\gamma-1}}{V_2^{\gamma-1}}=T_1\left(\frac{V_1}{V_2}\right)^{\gamma-1}"))\
+        .di("Ve uno entre ve dos es el máximo entre el mínimo: la razón de compresión.".replace("Ve uno entre ve dos", dice("V₁/V₂", "Ve uno entre ve dos")),
+            M(r"T_2=T_1\,r^{\gamma-1}"))\
+        .di("Sustituimos: nueve elevado a cero coma cuarenta, en la calculadora.", M(rf"T_2=300\,(9{{,}}00)^{{0{{,}}40}}=300\,({tex(f, 5)})"), R(rf"T_2={tex(t2, 4)}\ \text{{K}}", "rb"))
+    L.paso("c) Temperatura máxima: C_V")\
+        .di("Para un gas diatómico, la capacidad a volumen constante sale de la hoja.".replace("ce ve", dice("C_V", "ce ve")), F(r"C_{V\text{dia}}=\frac{5}{2}R"),
+            M(rf"C_V=\frac{{5}}{{2}}(8{{,}}314)={tex(cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"),
+            NOTA("Coincide con $C_V=\\frac{R}{\\gamma-1}=\\frac{8{,}314}{0{,}40}$, que sale de $C_P=C_V+R$ y $\\gamma=\\frac{C_P}{C_V}$ (despeje completo en PR2-D5)."))
+    L.paso("c) Temperatura máxima: calentamiento")\
+        .di("El calor a volumen constante sube la temperatura: calor de la hoja.", V(foco="23"), F(r"Q=nC\,\Delta T"), M(r"Q_H=nC_V\,(T_3-T_2)"))\
+        .di("Dividimos los dos lados entre ene ce ve, y pasamos te dos sumando.".replace("ene ce ve", dice("nC_V", "ene ce ve")).replace("te dos", dice("T₂", "te dos")),
+            M(r"T_3-T_2=\frac{Q_H}{nC_V}"), M(r"T_3=T_2+\frac{Q_H}{nC_V}"))\
+        .di("Sustituimos.", M(rf"T_3={tex(t2, 4)}+\frac{{650}}{{(0{{,}}0250)({tex(cv, 5)})}}={tex(t2, 4)}+\frac{{650}}{{{tex(ncv, 6)}}}={tex(t2, 4)}+{tex(qh / ncv, 5)}"),
             R(rf"T_3={tex(t3, 4)}\ \text{{K}}", "rc"))
+    # Cifras para que T₃ entre el factor, hecho con lo escrito, dé T₄ como se muestra
+    for d3, cf in ((0, 4), (1, 5), (2, 6), (2, 7)):
+        s3, sf = tex(t3, dec=d3), tex(f, cf)
+        if tex(round(t3, d3) / float(f"{f:.{cf}g}"), 4) == tex(t4, 4):
+            break
     L.paso("d) Temperatura al final de la expansión")\
-        .di("Expansión adiabática: el mismo factor, ahora dividiendo.", V(foco="34"), M(r"T_4=T_3\left(\frac{V_3}{V_4}\right)^{\gamma-1}=\frac{T_3}{r^{\gamma-1}}"),
-            M(rf"T_4=\frac{{{tex(t3, 4)}}}{{{tex(f, 4)}}}"), R(rf"T_4={tex(t4, 4)}\ \text{{K}}", "rd"))
+        .di("Expansión adiabática de 3 a 4: la misma relación de la hoja. Ahora el volumen pasa del mínimo al máximo, así que la razón queda al revés.", V(foco="34"),
+            M(r"T_4=T_3\left(\frac{V_3}{V_4}\right)^{\gamma-1}=T_3\left(\frac{1}{r}\right)^{\gamma-1}=\frac{T_3}{r^{\gamma-1}}"))\
+        .di("Sustituimos y dividimos.", M(rf"T_4=\frac{{{s3}}}{{{sf}}}"), R(rf"T_4={tex(t4, 4)}\ \text{{K}}", "rd"))
     L.paso("e) Trabajo neto")\
         .di("El calor sale en el enfriamiento a volumen constante, de cuatro a uno.", V(foco="41"),
             M(rf"Q_C=nC_V(T_1-T_4)=({tex(ncv, 4)})(300-{tex(t4, 4)})={tex(qc, 4)}\ \text{{J}}"))\
@@ -1194,7 +1301,17 @@ def pr2_d9() -> Leccion:
     L.paso("f) Eficiencia y despeje inverso de r")\
         .di("Lo que se obtiene entre lo que se paga.", F(r"e=\frac{W}{Q_H}"), M(rf"e=\frac{{{tex(w, 4)}}}{{650}}"), R(rf"e={tex(e, 3)}={tex(e * 100, 3)}\ \%", "rf"))\
         .di("Revisión con la eficiencia de Otto de la hoja. Si en el examen te dan la eficiencia y piden la razón de compresión, recuerda el despeje inverso.", F(r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}"), M(rf"1-\frac{{1}}{{{tex(f, 4)}}}=1-{tex(1 / f, 4)}={tex(1 - 1 / f, 3)}"),
-            OJO(r"Trampa inversa frecuente: si conoces $e_{\text{otto}}$ y piden $r$, despeja $r = \left(\frac{1}{1-e_{\text{otto}}}\right)^{1/(\gamma-1)}$."))
+            OJO(r"Trampa inversa frecuente: si conoces $e_{\text{otto}}$ y piden $r$, despeja $r = \left(\frac{1}{1-e_{\text{otto}}}\right)^{1/(\gamma-1)}$ (paso siguiente, sin saltos)."))
+    e4 = float(f"{1 - 1 / f:.4g}")
+    inv = 1.0 / (1.0 - e4)
+    L.paso("f) El despeje inverso: de la eficiencia a r")\
+        .di("Si dan la eficiencia y piden la razón de compresión, partimos de la misma casilla de la hoja.", F(r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}"))\
+        .di("Pasamos la fracción a la izquierda y la eficiencia a la derecha: cada una cambia de signo.", M(r"\frac{1}{r^{\gamma-1}}=1-e"))\
+        .di("Damos vuelta a los dos lados: si dos números son iguales, sus inversos también.", M(r"r^{\gamma-1}=\frac{1}{1-e}"))\
+        .di("Para quitar el exponente gama menos uno, elevamos los dos lados a uno sobre gama menos uno: al multiplicar los exponentes queda uno.",
+            M(r"r=\left(\frac{1}{1-e}\right)^{1/(\gamma-1)}"))\
+        .di("Comprobamos con nuestro motor. Uno entre cero coma cuarenta es dos coma cinco.",
+            M(rf"r=\left(\frac{{1}}{{1-{tex(e4, 4)}}}\right)^{{2{{,}}5}}=({tex(inv, 5)})^{{2{{,}}5}}={tex(float(f'{inv:.5g}') ** 2.5, 3)}"))
     L.responde("a", rf"V={tex(v1 / r * 1e6, 3)}\ \text{{cm}}^3", v1 / r * 1e6, "cm³").responde("b", rf"T_2={tex(t2, 4)}\ \text{{K}}", t2, "K")\
      .responde("c", rf"T_3={tex(t3, 4)}\ \text{{K}}", t3, "K").responde("d", rf"T_4={tex(t4, 4)}\ \text{{K}}", t4, "K")\
      .responde("e", rf"W={tex(w, 4)}\ \text{{J}}", w, "J").responde("f", rf"e={tex(e, 3)}", e, "")
@@ -1215,26 +1332,40 @@ def pr2_d10() -> Leccion:
         .di("El área se achica de forma exponencial: al final es la de inicio dividida entre e.", DATO("A0"),
             M(r"A(0)=A_0\qquad A(L)=A_0e^{-1}=\frac{A_0}{e}"))
     L.paso("a) Fourier y separar variables")\
-        .di("Partimos de la ley de Fourier de la hoja. Separamos: multiplicamos por de equis y dividimos entre ka por el área.".replace("de equis", dice("dx", "de equis")).replace("entre ka", "entre " + dice("k", "ka")),
-            F(r"H=-kA\,\frac{dT}{dx}"), M(r"dT=-\frac{H\,dx}{kA(x)}=-\frac{H\,dx}{kA_0e^{-x/L}}"))\
-        .di("Dividir entre e a la menos algo es multiplicar por e a la más algo.", M(r"\frac{1}{e^{-x/L}}=e^{x/L}\;\Rightarrow\;dT=-\frac{H}{kA_0}\,e^{x/L}\,dx"))\
-        .di("Integramos toda la barra. Pasamos el signo menos al otro lado: te uno menos te dos.".replace("te uno menos te dos", dice("T₁ − T₂", "te uno menos te dos")),
-            M(r"-\int_{T_1}^{T_2}dT=\frac{H}{kA_0}\int_0^Le^{x/L}\,dx\;\Rightarrow\;T_1-T_2=\frac{H}{kA_0}\int_0^Le^{x/L}\,dx"))
+        .di("Partimos de la ley de Fourier de la hoja, con el área que cambia.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,A(x)\,\frac{dT}{dx}"))\
+        .di("Separamos: multiplicamos los dos lados por de equis, y luego dividimos entre ka por el área.".replace("de equis", dice("dx", "de equis")).replace("entre ka", "entre " + dice("k", "ka")),
+            M(r"H\,dx=-k\,A(x)\,dT"), M(r"dT=-\frac{H\,dx}{kA(x)}=-\frac{H\,dx}{kA_0e^{-x/L}}"))\
+        .di("Dividir entre e a la menos algo es multiplicar por e a la más algo.", M(r"\frac{1}{e^{-x/L}}=e^{x/L}"), M(r"dT=-\frac{H}{kA_0}\,e^{x/L}\,dx"))
+    L.paso("a) Integrar los dos lados")\
+        .di("Integramos toda la barra: la temperatura va de te uno a te dos, y equis de cero a ele.".replace("te uno a te dos", dice("T₁ a T₂", "te uno a te dos")).replace("equis de cero a ele", dice("x de 0 a L", "equis de cero a ele")),
+            M(r"\int_{T_1}^{T_2}dT=-\frac{H}{kA_0}\int_0^Le^{x/L}\,dx"))\
+        .di("La izquierda es el cambio total de temperatura. Luego cambiamos el signo de los dos lados.",
+            M(r"T_2-T_1=-\frac{H}{kA_0}\int_0^Le^{x/L}\,dx"), M(r"T_1-T_2=\frac{H}{kA_0}\int_0^Le^{x/L}\,dx"))
     L.paso("a) La integral de la exponencial (regla 4)")\
-        .di("Regla cuatro: la exponencial queda igual, multiplicada por ele. Arriba menos abajo.".replace("por ele", "por " + dice("L", "ele")),
-            M(r"\int_0^Le^{x/L}dx=L\Big[e^{x/L}\Big]_0^L=L\left(e^{L/L}-e^{0/L}\right)"))\
-        .di("E a la uno es e; e a la cero es uno.", M(r"=L\left(e^{1}-e^{0}\right)=L\,(e-1)"), NOTA("Regla 4 de la lección **T-MAT2**."))\
-        .di("La resistencia es la caída entre el flujo; y despejamos hache.".replace("hache", dice("H", "hache")),
-            M(r"T_1-T_2=\frac{H\,L\,(e-1)}{kA_0}\;\Rightarrow\;R=\frac{T_1-T_2}{H}=\frac{L\,(e-1)}{kA_0}"),
-            R(r"H=\frac{kA_0\,(T_1-T_2)}{L\,(e-1)}", "ra"))
+        .di("Para ver de dónde sale la ele: cambio de variable. Al exponente lo llamamos u.".replace("la ele", "la " + dice("L", "ele")),
+            M(r"u=\frac{x}{L}"), M(r"du=\frac{dx}{L}\;\Rightarrow\;dx=L\,du"))\
+        .di("La integral de e a la u es la misma e a la u. Por eso queda la exponencial multiplicada por ele.".replace("por ele", "por " + dice("L", "ele")),
+            M(r"\int e^{x/L}dx=\int e^{u}\,L\,du=L\,e^{u}=L\,e^{x/L}"), NOTA("Regla 4 de la lección **T-MAT2**."))\
+        .di("Arriba menos abajo.", M(r"\int_0^Le^{x/L}dx=L\Big[e^{x/L}\Big]_0^L=L\left(e^{L/L}-e^{0/L}\right)"))\
+        .di("E a la uno es e; e a la cero es uno.", M(r"=L\left(e^{1}-e^{0}\right)=L\,(e-1)"))
+    L.paso("a) Resistencia y despeje de H")\
+        .di("Lo ponemos en la ecuación.", M(r"T_1-T_2=\frac{H}{kA_0}\,L\,(e-1)=\frac{H\,L\,(e-1)}{kA_0}"))\
+        .di("La resistencia es la caída de temperatura entre el flujo: dividimos los dos lados entre hache.".replace("hache", dice("H", "hache")),
+            M(r"R=\frac{T_1-T_2}{H}=\frac{L\,(e-1)}{kA_0}"))\
+        .di("Para despejar hache, multiplicamos los dos lados por ka A cero, y dividimos entre ele por e menos uno.".replace("hache", dice("H", "hache")).replace("ka A cero", dice("kA₀", "ka A cero")).replace("ele por e menos uno", dice("L(e − 1)", "ele por e menos uno")),
+            M(r"kA_0\,(T_1-T_2)=H\,L\,(e-1)"), R(r"H=\frac{kA_0\,(T_1-T_2)}{L\,(e-1)}", "ra"))
     L.paso("b) Comparar con la barra uniforme")\
         .di("La barra uniforme de área A cero sale directo de la hoja.".replace("A cero", dice("A₀", "A cero")), F(r"H=kA\,\frac{T_H-T_C}{L}"), M(r"H_0=\frac{kA_0\,(T_1-T_2)}{L}"))\
-        .di("Dividimos: todo se cancela menos e menos uno.".replace("e menos uno", dice("(e − 1)", "e menos uno")),
-            M(rf"\frac{{H}}{{H_0}}=\frac{{1}}{{e-1}}=\frac{{1}}{{{tex(e1, 4)}}}"), R(rf"\frac{{H}}{{H_0}}={tex(1 / e1, 3)}", "rb"))
+        .di("Dividimos: multiplicar por el inverso del de abajo. Todo se cancela menos e menos uno.".replace("e menos uno", dice("(e − 1)", "e menos uno")),
+            M(r"\frac{H}{H_0}=\frac{kA_0(T_1-T_2)}{L\,(e-1)}\cdot\frac{L}{kA_0(T_1-T_2)}=\frac{1}{e-1}"))\
+        .di("En la calculadora, e menos uno es uno coma siete uno ocho.", M(rf"\frac{{H}}{{H_0}}=\frac{{1}}{{{tex(e1, 4)}}}"), R(rf"\frac{{H}}{{H_0}}={tex(1 / e1, 3)}", "rb"))
     L.paso("c) Temperatura a lo largo")\
         .di("Integramos solo desde cero hasta una equis cualquiera, con la misma regla cuatro.".replace("una equis", "una " + dice("x", "equis")), V(foco="punto"),
-            M(r"\int_0^xe^{x/L}dx=L\Big[e^{x/L}\Big]_0^x=L\left(e^{x/L}-1\right)"), M(r"T_1-T(x)=\frac{H}{kA_0}\,L\left(e^{x/L}-1\right)"))\
-        .di("Ponemos el hache de la parte a.".replace("hache", dice("H", "hache")), R(r"T(x)=T_1-(T_1-T_2)\,\frac{e^{x/L}-1}{e-1}", "rc"))\
+            M(r"\int_0^xe^{x/L}dx=L\Big[e^{x/L}\Big]_0^x=L\left(e^{x/L}-1\right)"), M(r"T_1-T(x)=\frac{H}{kA_0}\,L\left(e^{x/L}-1\right)=\frac{HL}{kA_0}\left(e^{x/L}-1\right)"))\
+        .di("De la parte a, hache por ele entre ka A cero es la caída total entre e menos uno.".replace("hache por ele entre ka A cero", dice("HL/(kA₀)", "hache por ele entre ka A cero")).replace("e menos uno", dice("(e − 1)", "e menos uno")),
+            M(r"\frac{HL}{kA_0}=\frac{kA_0(T_1-T_2)}{L\,(e-1)}\cdot\frac{L}{kA_0}=\frac{T_1-T_2}{e-1}"))\
+        .di("Lo ponemos, y te de equis pasa sumando.".replace("te de equis", dice("T(x)", "te de equis")),
+            M(r"T_1-T(x)=(T_1-T_2)\,\frac{e^{x/L}-1}{e-1}"), R(r"T(x)=T_1-(T_1-T_2)\,\frac{e^{x/L}-1}{e-1}", "rc"))\
         .di("Revisión: en cero da te uno y en ele da te dos.".replace("te uno", dice("T₁", "te uno")).replace("en ele", "en " + dice("L", "ele")).replace("te dos", dice("T₂", "te dos")),
             M(r"x=0:\ e^0-1=0\qquad x=L:\ \frac{e-1}{e-1}=1"))
     L.paso("c) Dónde es mayor el gradiente")\
@@ -1279,15 +1410,18 @@ def pr2_d11() -> Leccion:
     estado_T(p, g, "C")
     estado_T(p, g, "D")
     L.paso("a) Trabajo neto")\
-        .di("Solo hay trabajo en los tramos a presión constante: el de la hoja.", F(r"W=p\,(V_2-V_1)"),
-            M(rf"W_{{AB}}=(200\times10^3)(0{{,}}0750-0{{,}}0300)={_j(rab['W'])}\ \text{{J}}"), M(rf"W_{{CD}}=(80{{,}}0\times10^3)(0{{,}}0300-0{{,}}0750)={_j(rcd['W'])}\ \text{{J}}"))\
+        .di("Solo hay trabajo en los tramos a presión constante: el de la hoja. De A a B, a la presión alta.", F(r"W=p\,(V_2-V_1)"),
+            M(rf"W_{{AB}}=(200\times10^3)(0{{,}}0750-0{{,}}0300)={_j(rab['W'])}\ \text{{J}}"))\
+        .di("De C a D, a la presión baja: el volumen baja, así que el trabajo sale negativo.",
+            M(rf"W_{{CD}}=(80{{,}}0\times10^3)(0{{,}}0300-0{{,}}0750)={_j(rcd['W'])}\ \text{{J}}"))\
         .di("Los de volumen constante no hacen trabajo. Sumamos: es el área del rectángulo.", M(r"W_{BC}=W_{DA}=0"),
             M(rf"W_{{\text{{neto}}}}={_j(rab['W'])}+({_j(rcd['W'])})={_j(wnet)}\ \text{{J}}"), R(rf"W_{{\text{{neto}}}}={_j(wnet)}\ \text{{J}}", "ra"))
     L.paso("b) C_P desde el calor de A a B")\
-        .di("A presión constante el calor de la hoja va con ce pe.".replace("ce pe", dice("C_P", "ce pe")), F(r"Q=nC\,\Delta T"), M(r"Q_{AB}=nC_P\,(T_B-T_A)\;\Rightarrow\;C_P=\frac{Q_{AB}}{n\,(T_B-T_A)}"))\
-        .di("Sustituimos.", M(rf"C_P=\frac{{31\,500}}{{(3)({tex(dt_ab, 4)})}}={tex(cp, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
+        .di("A presión constante el calor de la hoja va con ce pe.".replace("ce pe", dice("C_P", "ce pe")), F(r"Q=nC\,\Delta T"), M(r"Q_{AB}=nC_P\,(T_B-T_A)"))\
+        .di("Despejamos ce pe: lo que lo multiplica pasa al otro lado dividiendo.".replace("ce pe", dice("C_P", "ce pe")), M(r"C_P=\frac{Q_{AB}}{n\,(T_B-T_A)}"))\
+        .di("Sustituimos.", M(rf"C_P=\frac{{31\,500}}{{(3)({tex(dt_ab, 5)})}}={tex(cp, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"))\
         .di("Con las otras dos casillas de la hoja sacamos ce ve y gama.".replace("ce ve y gama", dice("C_V y γ", "ce ve y gama")), F(r"C_P=C_V+R"), F(r"\gamma=\frac{C_P}{C_V}"),
-            M(rf"C_V={tex(cp, 4)}-8{{,}}314={tex(cv, 4)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"), M(rf"\gamma=\frac{{{tex(cp, 4)}}}{{{tex(cv, 4)}}}={tex(gamma, 3)}"))\
+            M(rf"C_V={tex(cp, 5)}-8{{,}}314={tex(cv, 5)}\ \frac{{\text{{J}}}}{{\text{{mol}}\cdot\text{{K}}}}"), M(rf"\gamma=\frac{{{tex(cp, 5)}}}{{{tex(cv, 5)}}}={tex(gamma, 3)}"))\
         .di("Cinco medios de erre y gama uno coma cuatro: es diatómico.".replace("gama", dice("γ", "gama")), F(r"C_V=\frac{5}{2}R"),
             R(rf"C_P={tex(cp, 3)}\quad C_V={tex(cv, 3)}\quad \gamma={tex(gamma, 3)}\ \Rightarrow\ \text{{diatómico}}", "rb"))
     explica_proceso(L.paso("c) B→C (volumen constante)"), g, "B", "C", "isocorico", foco="BC")
@@ -1328,12 +1462,12 @@ def pr2_d12() -> Leccion:
         .di("Alcanza y sobra energía.", M(rf"{_j(e)}>{_j(q1)}\;\Rightarrow\;\text{{sobra}}={_j(e)}-{_j(q1)}={_j(sobra)}\ \text{{J}}"))
     L.paso("a) Etapa 2: ¿llega a cien grados?")\
         .di("Ahora hay cero coma cuatro dos kilogramos de agua más el calorímetro. Calor sensible de la hoja.", F(r"Q=mc\,\Delta T"),
-            M(rf"(m_w+m_h)c_w+C_{{cal}}=(0{{,}}420)(4186)+150={tex(cap, 5)}\ \text{{J/K}}"),
-            M(rf"Q_{{100}}=({tex(cap, 5)})(100-0)={_j(q100, 6)}\ \text{{J}}"))\
+            M(rf"(m_w+m_h)c_w+C_{{cal}}=(0{{,}}420)(4186)+150={tex(cap, 6)}\ \text{{J/K}}"),
+            M(rf"Q_{{100}}=({tex(cap, 6)})(100-0)={_j(q100, 6)}\ \text{{J}}"))\
         .di("Lo que sobra es mucho menos: no llega a hervir.", M(rf"{_j(sobra)}<{_j(q100, 6)}"), R(r"\text{Se funde todo el hielo y no llega a hervir}", "ra"))
     L.paso("b) Temperatura final y masas")\
-        .di("La energía que sobró calienta el agua y el calorímetro desde cero.", M(rf"{_j(sobra)}=({tex(cap, 5)})(T_f-0)"),
-            M(rf"T_f=\frac{{{_j(sobra)}}}{{{tex(cap, 5)}}}"), R(rf"T_f={tex(tf, 3)}\ {C}", "rb"))\
+        .di("La energía que sobró calienta el agua y el calorímetro desde cero.", M(rf"{_j(sobra)}=({tex(cap, 6)})(T_f-0)"),
+            M(rf"T_f=\frac{{{_j(sobra)}}}{{{tex(cap, 6)}}}"), R(rf"T_f={tex(tf, 3)}\ {C}", "rb"))\
         .di("Al apagar el calentador no queda hielo ni vapor.", R(r"m_{\text{hielo}}=0\quad m_{\text{agua}}=0{,}420\ \text{kg}\quad m_{\text{vapor}}=0", "rb2"))
     L.responde("b", rf"T_f={tex(tf, 3)}\ {C}", tf, "°C")
     return L.usa(r"Q=mc\Delta T", r"Q=\pm mL", r"H=\frac{dQ}{dt}")

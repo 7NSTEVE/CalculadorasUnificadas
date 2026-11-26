@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .dsl import DATO, F, LISTA, M, MARCA, NOTA, OJO, OPCION, Leccion, Paso, R, T, TABLA, V
@@ -124,10 +125,39 @@ def signo_voz(x: float) -> str:
     return "positivo" if x > 0 else "negativo"
 
 
-def _par_T(Ta: float, Tb: float, dec_T: int) -> Tuple[str, str]:
-    """Temperaturas para sustituir en (T_b - T_a): con los decimales justos para que la resta no pierda exactitud."""
+def _num_tex(t: str) -> float:
+    """Lee un número escrito en TeX por tex(): '1{,}013\\times 10^{5}', '20{,}785', '12\\,000'."""
+    m = re.search(r"\\times\s*10\^\{?(-?\d+)\}?", t)
+    base = t[: m.start()] if m else t
+    base = base.replace("\\,", "").replace("{,}", ".").replace("{", "").replace("}", "").strip()
+    return float(base) * (10.0 ** int(m.group(1)) if m else 1.0)
+
+
+def _media_ulp_tex(t: str) -> float:
+    """Media unidad de la última cifra con que se escribe un número (12{,}35 → 0,005; 9176 → 0,5)."""
+    m = re.search(r"\\times\s*10\^\{?(-?\d+)\}?", t)
+    exp = int(m.group(1)) if m else 0
+    base = t[: m.start()] if m else t
+    dec = re.search(r"\{,\}(\d+)", base)
+    return 0.5 * 10.0 ** (exp - (len(dec.group(1)) if dec else 0))
+
+
+def _par_T(Ta: float, Tb: float, dec_T: int, factor: Optional[float] = None, cifras: int = 4) -> Tuple[str, str]:
+    """Temperaturas para sustituir en (T_b - T_a): con los decimales justos para que la resta no pierda exactitud.
+
+    Con `factor` (lo que multiplica a la resta, tal como se escribe) se exige además que la cuenta hecha con
+    calculadora sobre lo escrito dé el resultado que se muestra, a sus cifras.
+    """
+    dT = Tb - Ta
     d = dec_T
-    while d < 4 and abs((round(Tb, d) - round(Ta, d)) - (Tb - Ta)) > 5e-4 * max(abs(Tb - Ta), 1e-9):
+    while d < 4:
+        dTv = _rd(Tb, d) - _rd(Ta, d)
+        ok = abs(dTv - dT) <= 5e-4 * max(abs(dT), 1e-9)
+        if ok and factor is not None:
+            res = factor * dT
+            ok = abs(factor * dTv - res) <= _media_ulp_tex(tex(res, cifras))
+        if ok:
+            break
         d += 1
     return tex(Ta, dec=d), tex(Tb, dec=d)
 
@@ -140,11 +170,12 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
     foco = foco or ab
     nT, nV = tex(g.n, 3, recorta=False), None
     Ta, Tb = g.t(a), g.t(b)
-    sTa, sTb = _par_T(Ta, Tb, dec_T)
     ntx = tex(g.n, 4, recorta=True)
     cvx, cpx = TX_CV.get(g.gas, r"C_V"), TX_CP.get(g.gas, r"C_P")
     cv_num = tex(g.cv, 5)
     cp_num = tex(g.cp, 5)
+    # Las temperaturas llevan los decimales necesarios para que n·C_V·(T_b − T_a), con lo escrito, dé lo que se muestra
+    sTa, sTb = _par_T(Ta, Tb, dec_T, factor=_num_tex(ntx) * _num_tex(cv_num), cifras=cifras)
     if tipo == "isotermico":
         p.di(f"De {a} a {b} la temperatura no cambia, así que la energía interna tampoco.",
              V(foco=foco), M(rf"\Delta U_{{{ab}}} = nC_V\,\Delta T = 0"))
@@ -154,20 +185,24 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
         p.di("Sustituimos.", M(rf"= ({ntx})(8{{,}}314)({tex(Ta, dec=dec_T, recorta=True)})\ln\left(\frac{{{tex(g.v(b), cifras, recorta=True)}}}{{{tex(g.v(a), cifras, recorta=True)}}}\right)"))
         nrt = g.n * R_GAS * Ta
         lnv = math.log(g.v(b) / g.v(a))
+        # Cifras justas para que el producto, hecho con lo escrito, dé el trabajo que se muestra
+        snrt, sln = _datos_justos([(nrt, "c"), (lnv, "c")], lambda x, y: x * y, lambda x: qtx(x, cifras=cifras))
         p.di("Multiplicamos adelante y sacamos el logaritmo.",
-             M(rf"= ({tex(nrt, 4)})\,({tex(lnv, 4)})"))
+             M(rf"= ({snrt})\,({sln})"))
         p.di(f"Da {nu(r['W'], 'J', cifras)}, {'positivo porque el gas se expande' if r['W'] > 0 else 'negativo porque el gas se comprime'}.",
              M(rf"W_{{{ab}}} = Q_{{{ab}}} = {qtx(r['W'], cifras=cifras)}", color="verde"))
     elif tipo == "isobarico":
         p.di(f"De {a} a {b} la presión no cambia, entonces el trabajo es el área de un rectángulo.", V(foco=foco),
              F(rf"W_{{{ab}}} = p\,(V_{b}-V_{a})"))
+        sp, svb, sva = _datos_justos([(g.p(a), "c"), (g.v(b), "cr"), (g.v(a), "cr")], lambda pp, vb, va: pp * (vb - va),
+                                     lambda x: qtx(x, cifras=cifras))
         p.di("Sustituimos en pascales y metros cúbicos.",
-             M(rf"= ({tex(g.p(a), cifras)})({tex(g.v(b), cifras, recorta=True)}-{tex(g.v(a), cifras, recorta=True)}) = {qtx(r['W'], cifras=cifras)}"))
+             M(rf"= ({sp})({svb}-{sva}) = {qtx(r['W'], cifras=cifras)}"))
         p.di(f"El cambio de energía interna siempre lleva {dice('Cv', 'ce ve')}, aunque no sea a volumen constante.",
              F(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"),
              M(rf"= ({ntx})({cv_num})({sTb}-{sTa}) = {qtx(r['U'], cifras=cifras)}"))
         p.di("Y el calor sale de la primera ley: la suma de los dos.", F(r"\Delta U = Q - W \;\Rightarrow\; Q = \Delta U + W"),
-             M(rf"Q_{{{ab}}} = ({qtx(r['U'], cifras=cifras, u='')})+({qtx(r['W'], cifras=cifras, u='')}) = {qtx(r['Q'], cifras=cifras)}", color="verde"))
+             M(rf"Q_{{{ab}}} = " + _suma_tex([r["U"], r["W"]], cifras), color="verde"))
     elif tipo == "isocorico":
         p.di(f"De {a} a {b} el volumen no cambia: el gas no empuja nada, el trabajo es cero.", V(foco=foco), M(rf"W_{{{ab}}} = 0"))
         p.di("Entonces el calor es igual al cambio de energía interna.", F(rf"Q_{{{ab}}} = \Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"))
@@ -186,11 +221,13 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
              F(r"W = \int_{V_1}^{V_2} p\,dV"))
         p.di("Bajo una recta esa área es un trapecio: el promedio de las dos alturas por la base. No hace falta integrar.",
              M(rf"W_{{{ab}}} = \frac{{p_{a}+p_{b}}}{{2}}\,(V_{b}-V_{a})"))
-        p.di("Sustituimos.", M(rf"= \frac{{{tex(g.p(a), cifras)}+{tex(g.p(b), cifras)}}}{{2}}\,({tex(g.v(b), cifras, recorta=True)}-{tex(g.v(a), cifras, recorta=True)}) = {qtx(r['W'], cifras=cifras)}"))
+        spa, spb, svb, sva = _datos_justos([(g.p(a), "c"), (g.p(b), "c"), (g.v(b), "cr"), (g.v(a), "cr")],
+                                           lambda pa, pb, vb, va: (pa + pb) / 2 * (vb - va), lambda x: qtx(x, cifras=cifras))
+        p.di("Sustituimos.", M(rf"= \frac{{{spa}+{spb}}}{{2}}\,({svb}-{sva}) = {qtx(r['W'], cifras=cifras)}"))
         p.di("La energía interna solo mira las temperaturas.", F(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"),
              M(rf"= ({ntx})({cv_num})({sTb}-{sTa}) = {qtx(r['U'], cifras=cifras)}"))
         p.di("Y el calor sale de la primera ley.", F(r"\Delta U = Q - W \;\Rightarrow\; Q = \Delta U + W"),
-             M(rf"Q_{{{ab}}} = ({qtx(r['U'], cifras=cifras, u='')})+({qtx(r['W'], cifras=cifras, u='')}) = {qtx(r['Q'], cifras=cifras)}", color="verde"))
+             M(rf"Q_{{{ab}}} = " + _suma_tex([r["U"], r["W"]], cifras), color="verde"))
     return r
 
 
@@ -221,30 +258,63 @@ def revisar_opciones(L: Leccion, motivos: Dict[str, Tuple[str, str]], titulo: st
 
 # ---------------------------------------------------------------- estados, cierre de ciclo y derivaciones desde la hoja
 
+def _datos_justos(vals: Sequence[Tuple[float, str]], cuenta, muestra) -> List[str]:
+    """Escribe los datos de una cuenta con las cifras justas (desde las de siempre, subiendo de una en una) para
+    que la cuenta hecha con calculadora sobre lo escrito dé el resultado que se muestra.
+
+    vals: (valor, 'c' para cifras significativas | 'd<n>' para n decimales fijos)."""
+    objetivo = muestra(cuenta(*[v for v, _ in vals]))
+    txts: List[str] = []
+    for extra in range(0, 4):
+        txts = []
+        for v, modo in vals:
+            if modo == "c":
+                txts.append(tex(v, 4 + extra))
+            elif modo == "cr":
+                txts.append(tex(v, 4 + extra, recorta=True))
+            else:
+                txts.append(tex(v, dec=int(modo[1:]) + extra, recorta=extra == 0))
+        try:
+            if muestra(cuenta(*[_num_tex(t) for t in txts])) == objetivo:
+                break
+        except (ValueError, ZeroDivisionError):
+            break
+    return txts
+
+
 def estado_T(p: Paso, g: Gas, k: str, *, voz: str = "", primero: bool = False, dec: int = 1) -> float:
     """T_k = p_k V_k / (nR), con la sustitución escrita (p y V en SI)."""
     t = g.t(k)
+    ntx = tex(g.n, 4, recorta=True)
+    nR = _num_tex(ntx) * R_GAS
+    sp, sv = _datos_justos([(g.p(k), "c"), (g.v(k), "c")], lambda a, b: a * b / nR, lambda x: tex(x, dec=dec))
     acc = [F(r"pV=nRT\;\Rightarrow\;T=\frac{pV}{nR}")] if primero else []
     p.di(voz or f"Temperatura de {k} con el gas ideal.", *acc,
-         M(rf"T_{k}=\frac{{p_{k}V_{k}}}{{nR}}=\frac{{({tex(g.p(k), 4)})({tex(g.v(k), 4)})}}{{({tex(g.n, 4, recorta=True)})(8{{,}}314)}}={tex(t, dec=dec, u='K')}"))
+         M(rf"T_{k}=\frac{{p_{k}V_{k}}}{{nR}}=\frac{{({sp})({sv})}}{{({ntx})(8{{,}}314)}}={tex(t, dec=dec, u='K')}"))
     return t
 
 
 def estado_V(p: Paso, g: Gas, k: str, *, voz: str = "", primero: bool = False, dec_T: int = 1) -> float:
     """V_k = nRT_k / p_k, con la sustitución escrita."""
     v = g.v(k)
+    ntx = tex(g.n, 4, recorta=True)
+    nR = _num_tex(ntx) * R_GAS
+    sT, sp = _datos_justos([(g.t(k), f"d{dec_T}"), (g.p(k), "c")], lambda T, pp: nR * T / pp, lambda x: tex(x, 4))
     acc = [F(r"pV=nRT\;\Rightarrow\;V=\frac{nRT}{p}")] if primero else []
     p.di(voz or f"Volumen de {k} con el gas ideal.", *acc,
-         M(rf"V_{k}=\frac{{nRT_{k}}}{{p_{k}}}=\frac{{({tex(g.n, 4, recorta=True)})(8{{,}}314)({tex(g.t(k), dec=dec_T, recorta=True)})}}{{{tex(g.p(k), 4)}}}={tex(v, 4, u='m^3')}"))
+         M(rf"V_{k}=\frac{{nRT_{k}}}{{p_{k}}}=\frac{{({ntx})(8{{,}}314)({sT})}}{{{sp}}}={tex(v, 4, u='m^3')}"))
     return v
 
 
 def estado_p(p: Paso, g: Gas, k: str, *, voz: str = "", primero: bool = False, dec_T: int = 1) -> float:
     """p_k = nRT_k / V_k, con la sustitución escrita."""
     pk = g.p(k)
+    ntx = tex(g.n, 4, recorta=True)
+    nR = _num_tex(ntx) * R_GAS
+    sT, sv = _datos_justos([(g.t(k), f"d{dec_T}"), (g.v(k), "c")], lambda T, vv: nR * T / vv, lambda x: tex(x, 4))
     acc = [F(r"pV=nRT\;\Rightarrow\;p=\frac{nRT}{V}")] if primero else []
     p.di(voz or f"Presión de {k} con el gas ideal.", *acc,
-         M(rf"p_{k}=\frac{{nRT_{k}}}{{V_{k}}}=\frac{{({tex(g.n, 4, recorta=True)})(8{{,}}314)({tex(g.t(k), dec=dec_T, recorta=True)})}}{{{tex(g.v(k), 4)}}}={tex(pk, 4, u='Pa')}"))
+         M(rf"p_{k}=\frac{{nRT_{k}}}{{V_{k}}}=\frac{{({ntx})(8{{,}}314)({sT})}}{{{sv}}}={tex(pk, 4, u='Pa')}"))
     return pk
 
 
