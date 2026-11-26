@@ -13,14 +13,14 @@ Cada hoja de ecuaciones de los 12 parciales (`23-II` a `26-I`, ordinario y extra
 |---|---|---|---|---|
 | `F1C3` Esfuerzo térmico $F/A = -Y\alpha\Delta T$ | `0/10` | **`0/17`** | **Nueva** | **CONFIRMED** — 100 % inédita en la serie histórica (`0` págs. en el Folleto). Cubierta por `PR2-S13`, `P26-1` y arquetipo `esfuerzo_termico`. |
 | `F12C2` Escala Fahrenheit $T_{^\circ\text{F}} = \frac{9}{5}T_{^\circ\text{C}} + 32$ | `0/10` | **`0/17`** | **Nueva** | **CONFIRMED** — 100 % inédita (`0` págs. en el Folleto). Cubierta por `PR2-S1` y `P26-2`. |
-| `F1C2` Dilatación volumétrica $\Delta V = \beta V_0\Delta T$ | `0/10` | `3/17` (`23-II-O/E/R`) | **Reintroducida** | **CORRECCIÓN A `Patrones.txt`**: sí apareció en II-2023 junto con $\Delta A = 2\alpha A_0\Delta T$ (que **no** volvió en II-2026). |
-| `F1C1` Dilatación lineal $\Delta L = \alpha L_0\Delta T$ | `1/10` (`26-I-E`) | `5/17` | **Sí** | **CONFIRMED** — en `26-I-O` se evaluó en desarrollo (8 pts) antes de imprimirla. |
+| `F1C2` Dilatación volumétrica $\Delta V = \beta V_0\Delta T$ | `0/10` | `4/17` (`23-II-O/E/R`, `24-I-R`) | **Reintroducida** | **CORRECCIÓN A `Patrones.txt`**: sí apareció en II-2023 junto con $\Delta A = 2\alpha A_0\Delta T$ (que **no** volvió en II-2026). |
+| `F1C1` Dilatación lineal $\Delta L = \alpha L_0\Delta T$ | `1/10` (`26-I-E`) | `6/17` (`23-II` ×3, `24-I-R`, `26-I-E`, `26-I-R`) | **Sí** | **CONFIRMED** — en `26-I-O` se evaluó en desarrollo (8 pts) antes de imprimirla. |
 | `F11C3`, `F12C1` Ciclo Otto ($e_{\text{otto}}, r$) | `2/10` (`26-I-O/E`) | `3/17` (`26-I-O/E/R`) | **Sí** | **CONFIRMED** — fija desde I-2026 (`0` págs. en el Folleto); cubierta por `E21`, `PR2-S7`, `PR2-D9` y `otto_completo_inverso`. |
 | `F11C1`, `F11C2` ($dQ = nC_V dT$, $dQ = nC_p dT$) | `2/10` (`26-I-O/E`) | `3/17` (`26-I-O/E/R`) | **Sí** | **OMITIDO en `Patrones.txt`**: introducidas en I-2026 y mantenidas en II-2026. |
 | `F14C2` ($1\text{ L}=1000\text{ cm}^3$) y `F14C1` ($101325\text{ Pa}$) | `0/10` | **`0/17`** | **Cambiadas** | **OMITIDO en `Patrones.txt`**: cambio de notación exacto en II-2026; cubiertas por `PR2-D9`, `P26-3` y `otto_completo_inverso`. |
 | Carnot ($e_{\text{Carnot}}, K_{\text{Carnot}}$) | `10/10` | **`17/17`** | **Eliminadas** | **CONFIRMED** — retiradas tras 17/17 exámenes previos (corte hasta sección 20.5). |
 | Entropía ($\Delta S = \int dQ/T$) | `8/10` (ausente en `25-II-O/E`) | `15/17` | **Eliminada** | **CONFIRMED** — también omitida en `25-II-O/E`. |
-| Van der Waals y $C_V = 3R$ (poliatómico) | `4/10` | `6/17` | **Ausentes** | **CONFIRMED** — ausentes en `25-II`, `26-I` y `II-2026`. |
+| Van der Waals y $C_V = 3R$ (poliatómico) | `4/10` | VdW `5/17`, $C_V=3R$ `5/17` | **Ausentes** | **CONFIRMED** — ausentes en `25-II`, `26-I` y `II-2026`. |
 
 ---
 
@@ -67,3 +67,6 @@ Ambos exámenes más recientes siguen una estructura ranura por ranura (implemen
    - Publicada la ruta `estrategia_ii_2026` (*Top 12 Estrategia II-2026 · Patrones + Fórmulas nuevas*).
 4. **Simulacro Predictivo II-2026 (`simulacro.js`):**
    - Excluye por defecto Entropía, Carnot (`Q118`, `Q125`) y Van der Waals (`Q071..Q073`), ofrece el formato exacto de I-2026 (`4×2 pts + 3×3 pts = 17 pts` + `3` desarrollos sugeridos con enlace directo a la pizarra) y una casilla opt-in para incluir el histórico completo.
+
+
+> **Corrección (26-nov-2026, verificación independiente):** las cifras de ΔV (4/17), ΔL (6/17) y Van der Waals (5/17) se corrigieron tras releer los 17 formularios; el detalle está en `docs/VERIFICACION_PATRONES_II_2026.md`.

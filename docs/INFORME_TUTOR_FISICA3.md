@@ -1,7 +1,7 @@
 # Informe de Verificación · Tutor Audiovisual de Física General III (CuadernU)
 
 **Rama:** `feat/tutor-audiovisual`  
-**Alcance:** Reconstrucción determinista, banco verificado de **204 lecciones** (21 Recomendados + 137 Superexamen + 32 Prácticas II-2026 + 3 Blindaje II-2026 + 11 Teoría y Cálculo), cobertura **42/42 casillas** del formulario oficial II-2026, 15 arquetipos paramétricos, Simulacro Predictivo II-2026, motor matemático 2D con trazado sincronizado a la voz, reconocimiento `Ctrl+V`, endurecimiento de seguridad loopback y arranque no bloqueante en C++.
+**Alcance:** Reconstrucción determinista, banco verificado de **207 lecciones** (21 Recomendados + 137 Superexamen + 32 Prácticas II-2026 + 5 Blindaje II-2026 + 12 Teoría y Cálculo, con T-CONO), cobertura **42/42 casillas** del formulario oficial II-2026, 15 arquetipos paramétricos, Simulacro Predictivo II-2026, motor matemático 2D con trazado sincronizado a la voz, reconocimiento `Ctrl+V`, endurecimiento de seguridad loopback y arranque no bloqueante en C++.
 
 ---
 
