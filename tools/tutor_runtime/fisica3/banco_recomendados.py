@@ -768,24 +768,26 @@ def e17() -> Leccion:
     Qh = W + Qc
     e, ec = W / Qh, 1 - Tc / Th
     L = Leccion("E17", "Motor entre 630 K y 300 K", tema="6.14", nivel=2, fuente=_f(17, 6), claves=["eficiencia", "Carnot", "máquina térmica"],
-                aviso="El formulario de mañana no trae la eficiencia de Carnot: e = 1 − Tc/Th hay que saberla.",
+                aviso="El inciso c) es el ciclo de Carnot (sección 20.6): no entra en el III parcial, que llega hasta 20.5. Los incisos a) y b) sí entran.",
                 enunciado="Un motor opera entre 630 K y 300 K. En cada ciclo produce 120 J de trabajo y rechaza 180 J a la fuente fría. a) Calor absorbido, b) eficiencia, c) eficiencia máxima posible.",
                 visual={"tipo": "maquina", "modo": "motor", "QH": Qh, "QC": Qc, "W": W, "TH": Th, "TC": Tc, "u": "J"})
     L.paso("Qué nos dan y qué piden")\
         .di("Un motor: entra calor de la fuente caliente, sale trabajo y lo que sobra va a la fría.", DATO("120 J"),
             LISTA(["$W=120$ J", "$|Q_C|=180$ J", "$T_H=630$ K, $T_C=300$ K"]), V(foco="todo"))
     L.paso("a) Calor absorbido")\
-        .di("La energía se conserva: lo que entra es igual a lo que sale.", V(foco="balance"), M(r"|Q_H|=W+|Q_C|", "b", "azul"))\
+        .di("Partimos de la primera ley de la hoja.", V(foco="balance"), F(r"\Delta U=Q-W"))\
+        .di("En un ciclo el motor vuelve a su estado inicial: la energía interna no cambia y el calor neto es el que entra menos el que sale.", M(r"\Delta U_{\text{ciclo}}=0\;\Rightarrow\;W=Q_{\text{neto}}=|Q_H|-|Q_C|"))\
+        .di("Despejamos el calor que entra.", M(r"|Q_H|=W+|Q_C|", "b", "azul"))\
         .di("Sumamos.", M(r"|Q_H|=120+180"), R(r"Q_H=300\ \text{J}", "ra"))\
         .por_que("En un ciclo el motor vuelve a su estado inicial, no guarda energía: $\\Delta U=0$.")
     L.paso("b) Eficiencia")\
-        .di("Lo que obtengo entre lo que pago.", F(r"e=\frac{W}{Q_H}"), M(r"e=\frac{120}{300}"))\
+        .di("Lo que obtengo entre lo que pago: la eficiencia de la hoja.", F(r"e=\frac{W}{Q_H}=1-\left|\frac{Q_C}{Q_H}\right|"), M(r"e=\frac{120}{300}"))\
         .di("Cuarenta por ciento.", R(r"e=0{,}40=40\,\%", "rb"), V(foco="eficiencia"))
-    L.paso("c) Lo máximo posible: Carnot")\
-        .di("Ninguna máquina entre esas dos temperaturas le gana a la de Carnot.", M(r"e_{\text{máx}}=1-\frac{T_C}{T_H}", "c", "azul"), V(foco="carnot"))\
+    L.paso("c) Lo máximo posible: Carnot (no entra en el parcial)")\
+        .di("Este inciso es de la sección veinte punto seis y no entra en el tercer parcial. Ninguna máquina entre esas dos temperaturas le gana a la de Carnot.", M(r"e_{\text{máx}}=1-\frac{T_C}{T_H}", "c", "azul"), V(foco="carnot"))\
         .di("Con temperaturas en kelvin.", M(r"e_{\text{máx}}=1-\frac{300}{630}=1-0{,}476"))\
         .di(f"El tope es {n(ec * 100, 3)} por ciento.", R(rf"e_{{\text{{máx}}}}={tex(ec, 3)}={tex(ec * 100, 3)}\,\%", "rc"))\
-        .di("Cuarenta es menor que cincuenta y dos: el motor es posible.", OJO("Carnot **solo** con kelvin. Y esa fórmula no está en el formulario: apréndetela."))\
+        .di("Cuarenta es menor que cincuenta y dos: el motor es posible.", OJO("Carnot **solo** con kelvin. No viene en la hoja y no entra en el III parcial (corte en la sección 20.5)."))\
         .sale_de(("$1-\\frac{T_C}{T_H}$", "eficiencia de Carnot, viene de la segunda ley"))
     L.responde("a", r"Q_H=300\ \text{J}", 300.0, "J").responde("b", r"e=40\,\%", 40.0, "%").responde("c", rf"e_{{\text{{máx}}}}={tex(ec * 100, 3)}\,\%", ec * 100, "%")
     L.usa(r"e=W/Q_H=1-|Q_C/Q_H|")

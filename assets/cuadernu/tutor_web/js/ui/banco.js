@@ -7,7 +7,7 @@ export const banco = { lecciones: [], mapa: new Map(), progreso: {}, practicas: 
 export const TEMAS = {
   dilatacion: 'Dilatación', calorimetria: 'Calorimetría', conduccion: 'Conducción', radiacion: 'Radiación',
   gases: 'Gases y teoría cinética', primera_ley: 'Primera ley', ciclos: 'Ciclos p-V',
-  maquinas: 'Máquinas y refrigeradores', entropia: 'Entropía', teoria: 'Teoría',
+  maquinas: 'Máquinas y refrigeradores', entropia: 'Entropía (no entra en el III parcial)', teoria: 'Teoría',
 };
 
 export function nombreTema(t) { return TEMAS[t] || t; }

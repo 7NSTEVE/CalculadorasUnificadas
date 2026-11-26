@@ -124,6 +124,14 @@ def signo_voz(x: float) -> str:
     return "positivo" if x > 0 else "negativo"
 
 
+def _par_T(Ta: float, Tb: float, dec_T: int) -> Tuple[str, str]:
+    """Temperaturas para sustituir en (T_b - T_a): con los decimales justos para que la resta no pierda exactitud."""
+    d = dec_T
+    while d < 4 and abs((round(Tb, d) - round(Ta, d)) - (Tb - Ta)) > 5e-4 * max(abs(Tb - Ta), 1e-9):
+        d += 1
+    return tex(Ta, dec=d), tex(Tb, dec=d)
+
+
 def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optional[str] = None, dec_T: int = 1,
                     datos_pv: bool = False, cifras: int = 4, corto: bool = False) -> Dict[str, float]:
     """Escribe el desarrollo completo de un proceso: ΔU, W y Q, un movimiento por renglón."""
@@ -132,6 +140,7 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
     foco = foco or ab
     nT, nV = tex(g.n, 3, recorta=False), None
     Ta, Tb = g.t(a), g.t(b)
+    sTa, sTb = _par_T(Ta, Tb, dec_T)
     ntx = tex(g.n, 4, recorta=True)
     cvx, cpx = TX_CV.get(g.gas, r"C_V"), TX_CP.get(g.gas, r"C_P")
     cv_num = tex(g.cv, 5)
@@ -143,6 +152,10 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
         p.di("El trabajo isotérmico es ene erre te por el logaritmo de los volúmenes: final entre inicial.".replace("ene erre te", dice("nRT", "ene erre te")),
              F(rf"W_{{{ab}}} = nRT\ln\left(\frac{{V_{b}}}{{V_{a}}}\right)", f"w{ab}"))
         p.di("Sustituimos.", M(rf"= ({ntx})(8{{,}}314)({tex(Ta, dec=dec_T, recorta=True)})\ln\left(\frac{{{tex(g.v(b), cifras, recorta=True)}}}{{{tex(g.v(a), cifras, recorta=True)}}}\right)"))
+        nrt = g.n * R_GAS * Ta
+        lnv = math.log(g.v(b) / g.v(a))
+        p.di("Multiplicamos adelante y sacamos el logaritmo.",
+             M(rf"= ({tex(nrt, 4)})\,({tex(lnv, 4)})"))
         p.di(f"Da {nu(r['W'], 'J', cifras)}, {'positivo porque el gas se expande' if r['W'] > 0 else 'negativo porque el gas se comprime'}.",
              M(rf"W_{{{ab}}} = Q_{{{ab}}} = {qtx(r['W'], cifras=cifras)}", color="verde"))
     elif tipo == "isobarico":
@@ -152,19 +165,20 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
              M(rf"= ({tex(g.p(a), cifras)})({tex(g.v(b), cifras, recorta=True)}-{tex(g.v(a), cifras, recorta=True)}) = {qtx(r['W'], cifras=cifras)}"))
         p.di(f"El cambio de energía interna siempre lleva {dice('Cv', 'ce ve')}, aunque no sea a volumen constante.",
              F(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"),
-             M(rf"= ({ntx})({cv_num})({tex(Tb, dec=dec_T)}-{tex(Ta, dec=dec_T)}) = {qtx(r['U'], cifras=cifras)}"))
-        p.di("Y el calor es la suma de los dos.", M(rf"Q_{{{ab}}} = \Delta U_{{{ab}}}+W_{{{ab}}} = {qtx(r['Q'], cifras=cifras)}", color="verde"))
+             M(rf"= ({ntx})({cv_num})({sTb}-{sTa}) = {qtx(r['U'], cifras=cifras)}"))
+        p.di("Y el calor sale de la primera ley: la suma de los dos.", F(r"\Delta U = Q - W \;\Rightarrow\; Q = \Delta U + W"),
+             M(rf"Q_{{{ab}}} = ({qtx(r['U'], cifras=cifras, u='')})+({qtx(r['W'], cifras=cifras, u='')}) = {qtx(r['Q'], cifras=cifras)}", color="verde"))
     elif tipo == "isocorico":
         p.di(f"De {a} a {b} el volumen no cambia: el gas no empuja nada, el trabajo es cero.", V(foco=foco), M(rf"W_{{{ab}}} = 0"))
         p.di("Entonces el calor es igual al cambio de energía interna.", F(rf"Q_{{{ab}}} = \Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"))
-        p.di("Sustituimos.", M(rf"= ({ntx})({cv_num})({tex(Tb, dec=dec_T)}-{tex(Ta, dec=dec_T)})"))
+        p.di("Sustituimos.", M(rf"= ({ntx})({cv_num})({sTb}-{sTa})"))
         p.di(f"Sale {signo_voz(r['Q'])}: el gas {'se calienta y recibe calor' if r['Q'] > 0 else 'se enfría y entrega calor'}.",
              M(rf"Q_{{{ab}}} = \Delta U_{{{ab}}} = {qtx(r['Q'], cifras=cifras)}", color="verde"))
     elif tipo == "adiabatico":
         p.di(f"De {a} a {b} es adiabático: no hay intercambio de calor.", V(foco=foco), M(rf"Q_{{{ab}}} = 0"))
         p.di("Partimos de la primera ley del formulario con calor cero.", F(r"\Delta U = Q - W"), F(rf"\Delta U_{{{ab}}} = 0 - W_{{{ab}}} \;\Rightarrow\; W_{{{ab}}} = -\Delta U_{{{ab}}}"))
         p.di("Calculamos el cambio de energía interna.",
-             M(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a}) = ({ntx})({cv_num})({tex(Tb, dec=dec_T)}-{tex(Ta, dec=dec_T)}) = {qtx(r['U'], cifras=cifras)}"))
+             M(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a}) = ({ntx})({cv_num})({sTb}-{sTa}) = {qtx(r['U'], cifras=cifras)}"))
         p.di(f"El trabajo es lo mismo con el signo cambiado: {'el gas se comprime' if r['W'] < 0 else 'el gas se expande a costa de su energía'}.",
              M(rf"W_{{{ab}}} = {qtx(r['W'], cifras=cifras)}", color="verde"))
     elif tipo == "recta":
@@ -172,8 +186,10 @@ def explica_proceso(p: Paso, g: Gas, a: str, b: str, tipo: str, *, foco: Optiona
              F(r"W = \int_{V_1}^{V_2} p\,dV"),
              F(rf"W_{{{ab}}} = \frac{{p_{a}+p_{b}}}{{2}}\,(V_{b}-V_{a})"))
         p.di("Sustituimos.", M(rf"= \frac{{{tex(g.p(a), cifras)}+{tex(g.p(b), cifras)}}}{{2}}\,({tex(g.v(b), cifras, recorta=True)}-{tex(g.v(a), cifras, recorta=True)}) = {qtx(r['W'], cifras=cifras)}"))
-        p.di("La energía interna solo mira las temperaturas.", M(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a}) = {qtx(r['U'], cifras=cifras)}"))
-        p.di("Y el calor sale de la primera ley.", M(rf"Q_{{{ab}}} = \Delta U_{{{ab}}}+W_{{{ab}}} = {qtx(r['Q'], cifras=cifras)}", color="verde"))
+        p.di("La energía interna solo mira las temperaturas.", F(rf"\Delta U_{{{ab}}} = nC_V\,(T_{b}-T_{a})"),
+             M(rf"= ({ntx})({cv_num})({sTb}-{sTa}) = {qtx(r['U'], cifras=cifras)}"))
+        p.di("Y el calor sale de la primera ley.", F(r"\Delta U = Q - W \;\Rightarrow\; Q = \Delta U + W"),
+             M(rf"Q_{{{ab}}} = ({qtx(r['U'], cifras=cifras, u='')})+({qtx(r['W'], cifras=cifras, u='')}) = {qtx(r['Q'], cifras=cifras)}", color="verde"))
     return r
 
 
@@ -200,3 +216,133 @@ def revisar_opciones(L: Leccion, motivos: Dict[str, Tuple[str, str]], titulo: st
         voz_, txt = motivos[letra]
         p.di(voz_, OPCION(letra, "correcta" if letra == L.correcta else "descartada", txt))
     return p
+
+
+# ---------------------------------------------------------------- estados, cierre de ciclo y derivaciones desde la hoja
+
+def estado_T(p: Paso, g: Gas, k: str, *, voz: str = "", primero: bool = False, dec: int = 1) -> float:
+    """T_k = p_k V_k / (nR), con la sustitución escrita (p y V en SI)."""
+    t = g.t(k)
+    acc = [F(r"pV=nRT\;\Rightarrow\;T=\frac{pV}{nR}")] if primero else []
+    p.di(voz or f"Temperatura de {k} con el gas ideal.", *acc,
+         M(rf"T_{k}=\frac{{p_{k}V_{k}}}{{nR}}=\frac{{({tex(g.p(k), 4)})({tex(g.v(k), 4)})}}{{({tex(g.n, 4, recorta=True)})(8{{,}}314)}}={tex(t, dec=dec, u='K')}"))
+    return t
+
+
+def estado_V(p: Paso, g: Gas, k: str, *, voz: str = "", primero: bool = False, dec_T: int = 1) -> float:
+    """V_k = nRT_k / p_k, con la sustitución escrita."""
+    v = g.v(k)
+    acc = [F(r"pV=nRT\;\Rightarrow\;V=\frac{nRT}{p}")] if primero else []
+    p.di(voz or f"Volumen de {k} con el gas ideal.", *acc,
+         M(rf"V_{k}=\frac{{nRT_{k}}}{{p_{k}}}=\frac{{({tex(g.n, 4, recorta=True)})(8{{,}}314)({tex(g.t(k), dec=dec_T, recorta=True)})}}{{{tex(g.p(k), 4)}}}={tex(v, 4, u='m^3')}"))
+    return v
+
+
+def estado_p(p: Paso, g: Gas, k: str, *, voz: str = "", primero: bool = False, dec_T: int = 1) -> float:
+    """p_k = nRT_k / V_k, con la sustitución escrita."""
+    pk = g.p(k)
+    acc = [F(r"pV=nRT\;\Rightarrow\;p=\frac{nRT}{V}")] if primero else []
+    p.di(voz or f"Presión de {k} con el gas ideal.", *acc,
+         M(rf"p_{k}=\frac{{nRT_{k}}}{{V_{k}}}=\frac{{({tex(g.n, 4, recorta=True)})(8{{,}}314)({tex(g.t(k), dec=dec_T, recorta=True)})}}{{{tex(g.v(k), 4)}}}={tex(pk, 4, u='Pa')}"))
+    return pk
+
+
+def _sub(k: str) -> str:
+    return k.replace("→", "").replace(" ", "")
+
+
+def cierre_ciclo(L: Leccion, res: Sequence[Tuple[str, Dict[str, float]]], *, refri: bool = False, cifras: int = 4,
+                 titulo: str = "", id_e: str = "re", solo_totales: bool = False) -> Dict[str, float]:
+    """Paso final de un ciclo: suma de trabajos, calores que entran y salen, y e (o K), todo sustituido."""
+    ws = [(_sub(k), r["W"]) for k, r in res]
+    wnet = sum(w for _, w in ws)
+    qin = [(_sub(k), r["Q"]) for k, r in res if r["Q"] > 1e-9]
+    qout = [(_sub(k), r["Q"]) for k, r in res if r["Q"] < -1e-9]
+    qh = sum(q for _, q in qin)
+    qc = sum(q for _, q in qout)
+    p = L.paso(titulo or ("Coeficiente de rendimiento" if refri else "Trabajo neto, calores y eficiencia"))
+    p.di("Primero la tabla de los procesos, para ver los signos.", tabla_quw(res, cifras=cifras), V(foco="ciclo"))
+    p.di("El trabajo neto es la suma de los trabajos de cada proceso.",
+         M(r"W_{\text{neto}}=" + "+".join(f"W_{{{k}}}" for k, _ in ws)),
+         M("=" + "+".join(f"({tex(w, cifras)})" for _, w in ws) + f"={tex(wnet, cifras, u='J')}"))
+    ent, sal = ("Q_C", "Q_H") if refri else ("Q_H", "Q_C")
+    p.di("Los calores positivos son los que entran al gas; los negativos, los que salen." + (" En el refrigerador, el que entra viene del foco frío." if refri else ""),
+         M(ent + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qin) + "=" + "+".join(f"({tex(q, cifras)})" for _, q in qin) + f"={tex(qh, cifras, u='J')}"),
+         M(sal + "=" + "+".join(f"Q_{{{k}}}" for k, _ in qout) + "=" + "+".join(f"({tex(q, cifras)})" for _, q in qout) + f"={tex(qc, cifras, u='J')}"))
+    p.di("Revisión con la primera ley: en un ciclo la energía interna vuelve a su valor, así que el trabajo neto es el calor neto.",
+         F(r"\Delta U_{\text{ciclo}}=0=Q-W\;\Rightarrow\;W_{\text{neto}}=Q_{\text{neto}}"),
+         M(rf"Q_{{\text{{neto}}}}=({tex(qh, cifras)})+({tex(qc, cifras)})={tex(qh + qc, cifras, u='J')}"))
+    out = {"W": wnet, "QH": qh, "QC": qc}
+    if solo_totales:
+        return out
+    if refri:
+        K = abs(qh) / abs(wnet)
+        p.di("En el refrigerador lo que sirve es el calor que el gas le saca al foco frío, que es el que entra al gas; lo que se paga es el trabajo.",
+             F(r"K=\frac{|Q_C|}{|W|}"),
+             M(rf"K=\frac{{{tex(abs(qh), cifras)}}}{{{tex(abs(wnet), cifras)}}}"),
+             R(rf"K={tex(K, 3)}", id_e))
+        out["K"] = K
+    else:
+        e = wnet / qh
+        p.di("La eficiencia es lo que se obtiene entre lo que se paga.",
+             F(r"e=\frac{W}{Q_H}=1-\left|\frac{Q_C}{Q_H}\right|"),
+             M(rf"e=\frac{{{tex(wnet, cifras)}}}{{{tex(qh, cifras)}}}"),
+             R(rf"e={tex(e, 3)}={tex(e * 100, 3)}\,\%", id_e))
+        p.di("Y la misma cuenta con los calores, para comprobar.",
+             M(rf"e=1-\frac{{{tex(abs(qc), cifras)}}}{{{tex(qh, cifras)}}}={tex(1 - abs(qc) / qh, 3)}"))
+        out["e"] = e
+    return out
+
+
+def deriva_carnot(p: Paso, *, refri: bool = False) -> None:
+    """Escribe, desde la hoja, por qué |Q_C|/|Q_H| = T_C/T_H en un ciclo de Carnot (no viene impreso)."""
+    p.di("La eficiencia de Carnot no viene en la hoja; la armamos desde la eficiencia general, que sí viene.",
+         F(r"e=1-\left|\frac{Q_C}{Q_H}\right|"))
+    p.di("En Carnot el calor entra y sale solo en las isotermas, donde el calor es igual al trabajo isotérmico.",
+         F(r"\Delta U=Q-W=0\;\Rightarrow\;Q=W=nRT\ln\left(\frac{V_2}{V_1}\right)"),
+         M(r"Q_H=nRT_H\ln\left(\frac{V_b}{V_a}\right)\qquad |Q_C|=nRT_C\ln\left(\frac{V_c}{V_d}\right)"))
+    p.di("Las otras dos son adiabáticas y cumplen la relación de la hoja.",
+         F(r"TV^{\gamma-1}=\text{cte}"),
+         M(r"T_HV_b^{\gamma-1}=T_CV_c^{\gamma-1}\qquad T_HV_a^{\gamma-1}=T_CV_d^{\gamma-1}"))
+    p.di("Dividimos una entre otra: se cancelan las temperaturas.",
+         M(r"\left(\frac{V_b}{V_a}\right)^{\gamma-1}=\left(\frac{V_c}{V_d}\right)^{\gamma-1}\;\Rightarrow\;\frac{V_b}{V_a}=\frac{V_c}{V_d}"))
+    p.di("Los logaritmos son iguales: la razón de calores es la razón de temperaturas.",
+         M(r"\frac{|Q_C|}{Q_H}=\frac{nRT_C\ln(V_c/V_d)}{nRT_H\ln(V_b/V_a)}=\frac{T_C}{T_H}"))
+    if refri:
+        p.di("Para el refrigerador, el rendimiento de la hoja con el trabajo de la primera ley del ciclo.",
+             F(r"K=\frac{|Q_C|}{|W|}"), M(r"|W|=|Q_H|-|Q_C|\;\Rightarrow\;K=\frac{|Q_C|}{|Q_H|-|Q_C|}"),
+             M(r"K_{\text{Carnot}}=\frac{T_C}{T_H-T_C}"))
+    else:
+        p.di("Sustituimos en la eficiencia general.", M(r"e_{\text{Carnot}}=1-\frac{T_C}{T_H}"))
+
+
+_ENTROPIA_CASOS = {
+    "cp": ("A presión constante, la hoja da el calor de cada pedacito.",
+           r"dQ=nC_p\,dT", r"\Delta S=\int_{T_1}^{T_2}\frac{nC_p\,dT}{T}=nC_p\ln\left(\frac{T_2}{T_1}\right)"),
+    "cv": ("A volumen constante, también viene en la hoja.",
+           r"dQ=nC_V\,dT", r"\Delta S=\int_{T_1}^{T_2}\frac{nC_V\,dT}{T}=nC_V\ln\left(\frac{T_2}{T_1}\right)"),
+    "mc": ("Para un sólido o un líquido, el calor sensible de la hoja en un pedacito.",
+           r"Q=mc\,\Delta T\;\Rightarrow\;dQ=mc\,dT", r"\Delta S=\int_{T_1}^{T_2}\frac{mc\,dT}{T}=mc\ln\left(\frac{T_2}{T_1}\right)"),
+    "lat": ("En un cambio de fase la temperatura no cambia; el calor es el latente.",
+            r"Q=\pm mL", r"\Delta S=\frac{1}{T}\int dQ=\frac{Q}{T}=\pm\frac{mL}{T}"),
+    "iso": ("En una isoterma el calor es el trabajo isotérmico.",
+            r"Q=W=nRT\ln\left(\frac{V_2}{V_1}\right)", r"\Delta S=\frac{Q}{T}=nR\ln\left(\frac{V_2}{V_1}\right)"),
+    "adi": ("En una adiabática reversible no entra calor.",
+            r"Q=0", r"dQ=0\;\Rightarrow\;\Delta S=0"),
+    "foco": ("Un depósito enorme no cambia su temperatura: su calor entre esa temperatura.",
+             "", r"\Delta S_{\text{dep}}=\frac{Q_{\text{dep}}}{T_{\text{dep}}}"),
+}
+
+
+def deriva_entropia(p: Paso, *casos: str, con_definicion: bool = True) -> None:
+    """Escribe de dónde sale cada fórmula de ΔS: la definición dS = dQ/T más el dQ que sí da la hoja."""
+    if con_definicion:
+        p.di("La entropía no viene en la hoja: se parte de su definición, calor entre temperatura en cada pedacito.",
+             M(r"dS=\frac{dQ}{T}\qquad \Delta S=\int\frac{dQ}{T}"),
+             NOTA("$dS=dQ/T$ es la definición de entropía para un proceso reversible. El $dQ$ de cada caso sí sale de la hoja."))
+    for c in casos:
+        voz_, base, res = _ENTROPIA_CASOS[c]
+        if base:
+            p.di(voz_, F(base), M(res))
+        else:
+            p.di(voz_, M(res))
