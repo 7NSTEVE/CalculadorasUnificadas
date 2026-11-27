@@ -272,6 +272,7 @@ CALENDARIO: Tuple[_Dia, ...] = (
          ("26-I-R", "9", "Q110", "Refrigerador de 2,50 mol de helio: tabla pVT, W, Q y K (salió en I-2026, 16 pts)."),
          ("25-II-R", "4", "Q109", "Ciclo isocórico, adiabático e isobárico de 0,378 mol diatómico."),
          ("26-II-O", "2", "O26-2", "Selección P3: con 20 % de eficiencia, ¿qué relación hay entre W y Q_H?"),
+         ("Teoría", "1", "T-MAT1", "Integrales 1 de 9: qué es dT/dx y qué es una integral, sin saber nada antes."),
      )),
     ("D2", 2, "2026-11-28", "Día 2 · sáb 28-nov · Más ciclos y las selecciones del Parcial 3",
      "Dos ciclos más, las 2 selecciones de termo de I-2026 y dos preguntas del III parcial.", False, (
@@ -281,6 +282,8 @@ CALENDARIO: Tuple[_Dia, ...] = (
          ("26-I-R", "6", "Q020", "Selección: temperatura final de un bloque con Q = mcΔT."),
          ("26-II-O", "6", "O26-6", "Selección P3: por qué C_V de un diatómico sube al calentarlo."),
          ("26-II-O", "10", "O26-10", "Desarrollo P3: agua y aluminio a 38,3 °C con hielo a −15,0 °C."),
+         ("26-II-O", "7", "O26-7", "Selección P3: dos motores Otto con la misma razón de compresión (pregunta 7)."),
+         ("Teoría", "2", "T-INT0", "Integrales 2 de 9: integrar es sumar franjas; con más franjas la suma se acerca al número exacto."),
      )),
     ("D3", 3, "2026-11-29", "Día 3 · dom 29-nov · Fluidos 1: presión, flotación y continuidad",
      "Selecciones cortas: casi todas se resuelven con una sola casilla.", False, (
@@ -291,6 +294,7 @@ CALENDARIO: Tuple[_Dia, ...] = (
          ("26-II-2E", "1", "P2E26-1", "Escultura sacada del mar: tensión del cable con el empuje."),
          ("26-II-2O", "7", "P2O26-7", "Cuerpo a 2000 m de profundidad: cuánto se comprime con B."),
          ("26-II-2O", "3", "P2O26-3", "Selección: qué supone el modelo de fluido ideal."),
+         ("Teoría", "3", "T-INT1", "Integrales 3 de 9: una sola regla, ∫hⁿ dh = hⁿ⁺¹/(n+1), y «arriba menos abajo»."),
      )),
     ("D4", 4, "2026-11-30", "Día 4 · lun 30-nov · Fluidos 2: Bernoulli en tanques y tubos",
      "El desarrollo de fluidos de I-2026 fue un tanque con Bernoulli.", False, (
@@ -301,15 +305,16 @@ CALENDARIO: Tuple[_Dia, ...] = (
          ("26-II-2E", "6", "P2E26-6", "Tubo de Pitot: rapidez del aire desde dos presiones."),
          ("26-II-2E", "7", "P2E26-7", "Agua que baja por un tubo que se ensancha: P_A frente a P_B."),
          ("26-II-2E", "5", "P2E26-5", "Tubo que se angosta con dos tubos verticales: diferencia de alturas."),
+         ("Teoría", "4", "T-PLANTEO", "Integrales 4 de 9: cómo se plantea, con 5 preguntas y 3 pedacitos (franja, disco y cascarón)."),
      )),
-    ("D5", 5, "2026-12-01", "Día 5 · mar 1-dic · Integrales desde cero",
-     "Sin reglas primero: integrar es sumar franjas. Después, una sola regla y una pared.", False, (
-         ("Teoría", "1", "T-INT0", "Integrar es sumar franjas: con 4, 10 y 100 franjas la suma se acerca al número exacto."),
-         ("Teoría", "2", "T-INT1", "Una sola regla: ∫hⁿ dh = hⁿ⁺¹/(n+1) y «arriba menos abajo»."),
-         ("Teoría", "3", "T-PARED", "Armar la fuerza sobre una pared en 5 pasos: franja, ancho, presión, dF y suma."),
+    ("D5", 5, "2026-12-01", "Día 5 · mar 1-dic · Integrales: la franja en paredes y compuertas",
+     "Las cinco integrales del curso y la franja con todas sus formas: rectángulo, trapecio, ventana y semicírculo.", False, (
+         ("Teoría", "5", "T-MAT2", "Integrales 5 de 9: las cinco integrales que salen en el curso, con un ejemplo cada una."),
+         ("Teoría", "6", "T-PARED", "Armar la fuerza sobre una pared en 5 pasos: franja, ancho, presión, dF y suma."),
          ("26-II-2E", "8", "P2E26-8", "Ventana cuadrada en un tanque: la integral más corta que pueden pedir."),
+         ("Rec-26", "8", "E2-8", "Puerta semicircular: el ancho de la franja sale de la ecuación del círculo."),
      )),
-    ("D6", 6, "2026-12-02", "Día 6 · mié 2-dic · Compuertas, represas y manómetros",
+    ("D6", 6, "2026-12-02", "Día 6 · mié 2-dic · Integrales: compuertas, represas y la esfera cortada",
      "Las dos integrales que ya salieron en reposición, presión con varios líquidos y la esfera cortada del III parcial.", False, (
          ("24-I-R", "2", "RP-24I-2", "Compuerta mitad rectángulo y mitad parábola: dF y fuerza total."),
          ("25-II-R", "2", "RP-25II-2", "Represa trapezoidal con integral y tubería con Bernoulli."),
@@ -328,6 +333,7 @@ CALENDARIO: Tuple[_Dia, ...] = (
          ("26-II-1O", "7", "P1O26-7", "Selección: resorte vertical, dónde es máxima la energía potencial."),
          ("26-II-1E", "4", "P1E26-4", "Selección: qué es cierto en un oscilador masa-resorte."),
          ("26-II-1E", "6", "P1E26-6", "Selección: en x = A/2, relación entre K y U."),
+         ("Teoría", "7", "T-MAT3", "Integrales 7 de 9: logaritmos y separar variables en la ley de Fourier."),
      )),
     ("D8", 8, "2026-12-04", "Día 8 · vie 4-dic · Simulacro A (2 h 30 min, como I-2026)",
      "De corrido y sin mirar soluciones: 6 selecciones y 3 desarrollos. Después revisá con el tutor.", True, (
@@ -364,6 +370,11 @@ CALENDARIO: Tuple[_Dia, ...] = (
          ("26-II-1O", "9", "P1O26-9", "Desarrollo P1: cuerda de instrumento que se presiona contra un traste."),
          ("26-I-SUF", "4", "SUF26-4", "Desarrollo P2: tubería que baja 2,50 m y cambia de diámetro."),
          ("24-I-R", "3", "Q107", "Desarrollo P3: ciclo rectangular en términos de p₀ y V₀."),
+     )),
+    ("D11", 11, "2026-12-07", "Día 11 · lun 7-dic · Repaso final: el cono y el tubo",
+     "Mañana es la reposición (martes 8-dic). Dos integrales de conducción y las recetas de la hoja resumen; nada nuevo pesado.", False, (
+         ("Teoría", "8", "T-CONO", "Integrales 8 de 9: el tronco de cono desde cero, con disco de radio que crece en línea recta."),
+         ("25-II-E", "6", "Q045", "Integrales 9 de 9: tubo de aluminio, cascarón cilíndrico, flujo y temperatura a 6 cm."),
      )),
 )
 
@@ -486,10 +497,11 @@ def construir_ruta(arma_item: Callable[[str, str, str, str], Dict[str, Any]]) ->
         })
     total = sum(len(b["items"]) for b in bloques)
     return {
-        "titulo": "Reposición II-2026 · plan de 10 días",
+        "titulo": "Reposición II-2026 · plan hasta el examen (martes 8-dic)",
         "descripcion": (
             "Todo el curso hasta la sección 20.5, ordenado por lo que más vale en la reposición: "
-            "el ciclo, fluidos, integrales desde cero, MAS y dos simulacros."
+            "el ciclo, fluidos, integrales desde cero (una por día), MAS y dos simulacros. "
+            "El examen es el martes 8 de diciembre de 2026."
         ),
         "examenes": examenes,
         "total": total,

@@ -342,7 +342,7 @@ DATOS: Dict[str, Tuple[_Dato, ...]] = {
         ("material aislante", r"H\ \text{igual en cada rebanada}",
          "La superficie curva está aislada: el calor no se escapa por los lados, así que el mismo flujo cruza cada rebanada."),
         ("estado estacionario", r"H=\text{constante}", "Estado estacionario: el flujo de calor no cambia con el tiempo."),
-        ("provistas", r"\int\frac{du}{a^2-u^2}=\frac{1}{2a}\ln\left|\frac{a+u}{a-u}\right|",
+        ("integrales indefinidas", r"\int\frac{du}{a^2-u^2}=\frac{1}{2a}\ln\left|\frac{a+u}{a-u}\right|",
          "Dan tres integrales. Hay que elegir la que tiene exactamente la forma que aparece: aquí, la del logaritmo."),
     ),
     # ---------------------------------------------------------------- Parcial 1: MAS y péndulos
@@ -513,9 +513,9 @@ DATOS: Dict[str, Tuple[_Dato, ...]] = {
         ("proceso cíclico", r"\textstyle\sum\Delta U=0",
          "Es un ciclo: el gas vuelve a A, así que la suma de los cambios de energía interna es cero."),
         ("es adiabático", r"Q_{AB}=0", "De A a B no entra ni sale calor."),
-        ("kJ entrando como calor", r"Q_{BC}=+328{,}5\ \text{kJ}", "De B a C entra calor: va con signo más."),
-        ("es isotérmico", r"\Delta U_{CD}=0", "De C a D la temperatura no cambia: su cambio de energía interna es cero."),
-        ("kJ saliendo como calor", r"Q_{DA}=-354{,}6\ \text{kJ}", "De D a A sale calor: va con signo menos. Es el tramo que más sirve."),
+        ("entrando al sistema", r"Q_{BC}=+328{,}5\ \text{kJ}", "De B a C entra calor: va con signo más."),
+        ("proceso isotérmico", r"\Delta U_{CD}=0", "De C a D la temperatura no cambia: su cambio de energía interna es cero."),
+        ("saliendo del sistema", r"Q_{DA}=-354{,}6\ \text{kJ}", "De D a A sale calor: va con signo menos. Es el tramo que más sirve."),
     ),
     "Q050": (
         ("4,00 m2", r"A=4{,}00\ \text{m}^2", "Área de la lámina: es la misma en todas las capas."),
@@ -596,6 +596,40 @@ DATOS: Dict[str, Tuple[_Dato, ...]] = {
         ("", r"1(V_0,p_0)\quad 2(V_0,2p_0)\quad 3(2V_0,2p_0)\quad 4(2V_0,p_0)",
          "La figura da los cuatro puntos en términos de [[p_0]] y [[V_0]]."),
         ("eficiencia térmica de la máquina", r"e=\dfrac{W_{neto}}{Q_H}", "Es una máquina: al final se pide la eficiencia."),
+    ),
+    # ---------------------------------------------------------------- ruta de integrales y pregunta 7 del III parcial
+    "O26-7": (
+        ("ciclo Otto", r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}",
+         "Ciclo Otto: su eficiencia está en la hoja y solo depende de la razón de compresión y de [[γ]]."),
+        ("gas diatómico", r"\gamma_A=1{,}4", "El motor A usa un gas diatómico: [[γ]] igual a uno coma cuatro."),
+        ("gas monoatómico", r"\gamma_B=1{,}67", "El motor B usa un gas monoatómico: [[γ]] igual a uno coma sesenta y siete."),
+        ("misma razón de compresión", r"r_A=r_B=r", "La razón de compresión es la misma: lo único distinto es [[γ]]."),
+    ),
+    "E2-8": (
+        ("850 kg/m3", r"\rho_1=850\ \text{kg/m}^3", "Densidad del aceite, la capa de arriba."),
+        ("profundidad de 0,30 m", r"h_{ac}=0{,}30\ \text{m}",
+         "El aceite tiene treinta centímetros. Su peso aprieta toda la puerta por igual."),
+        ("1000 kg/m3", r"\rho_2=1000\ \text{kg/m}^3", "Densidad del agua, donde está la puerta."),
+        ("radio R", r"R=0{,}30\ \text{m}",
+         "Radio del semicírculo. También es lo más hondo que llega la puerta, porque el arco baja desde la interfaz."),
+        ("borde recto horizontal", r"y=0\ \text{en la interfaz}",
+         "El borde recto está en la interfaz: ahí empieza la puerta y desde ahí se mide la profundidad en el agua."),
+        ("arco curvo", r"\text{ancho}(y)=2\sqrt{R^2-y^2}",
+         "El arco va hacia abajo: el ancho de cada franja sale de la ecuación del círculo."),
+    ),
+    "Q045": (
+        ("flujo radial de calor", r"\text{cascarón: }A=2\pi r L",
+         "El calor sale del centro hacia afuera: el pedacito es un cascarón cilíndrico."),
+        ("235", r"k=235\ \tfrac{\text{W}}{\text{m}\cdot\text{K}}", "Conductividad del aluminio."),
+        ("5,00 m", r"L=5{,}00\ \text{m}", "Largo del tubo: va en el área del cascarón."),
+        ("radio interno de 4,00 cm", r"r_1=4{,}00\ \text{cm}", "Radio de adentro: el límite de abajo de la integral."),
+        ("radio externo de 8,00 cm", r"r_2=8{,}00\ \text{cm}", "Radio de afuera: el límite de arriba."),
+        ("150 °C", r"T_1=150\ ^\circ\text{C}", "Temperatura de adentro, la caliente."),
+        ("45 °C", r"T_2=45\ ^\circ\text{C}", "Temperatura de afuera."),
+        ("estado estacionario", r"H\ \text{igual en cada cascarón}",
+         "Estacionario: el mismo calor por segundo cruza todos los cascarones."),
+        ("10,0 min", r"t=600\ \text{s}", "Tiempo para la energía del inciso B."),
+        ("6,00 cm", r"r=6{,}00\ \text{cm}", "Radio donde piden la temperatura."),
     ),
 }
 
@@ -1410,6 +1444,184 @@ PORQUE: Dict[str, Dict[str, str]] = {
         "C) Eficiencia":
             "Es una máquina, así que $e = W_{neto}/Q_H$. El trabajo neto es el área del rectángulo, $p_0V_0$, y $Q_H$ es lo "
             "que entra, no el calor neto.",
+    },
+    # ---------------------------------------------------------------- ruta de integrales y pregunta 7 del III parcial
+    "O26-7": {
+        "La casilla del ciclo Otto":
+            "La pregunta compara eficiencias de dos ciclos Otto y la hoja trae justo esa casilla: "
+            "$e = 1 - 1/r^{\\gamma-1}$. Como $r$ es igual en los dos, la comparación depende solo del exponente $\\gamma - 1$.",
+        "Probar con un número":
+            "La respuesta no puede depender del valor de $r$, así que basta probar con uno cualquiera mayor que 1. Con "
+            "más exponente, $r^{\\gamma-1}$ crece, la fracción $1/r^{\\gamma-1}$ se achica y la eficiencia sube.",
+    },
+    "E2-8": {
+        "Presión manométrica y ancho de franja":
+            "La presión cambia con la profundidad y el ancho de la puerta también, así que hay que usar franjas. Con $y$ "
+            "hacia abajo desde la interfaz, la presión de una franja es la del aceite más $\\rho_2 g y$, y el ancho sale del "
+            "círculo: $x^2 + y^2 = R^2$ da medio ancho $\\sqrt{R^2-y^2}$.",
+        "Separar la integral en dos aportes":
+            "La presión tiene dos partes: la del aceite, que es la misma en toda la puerta, y la del agua, que crece con $y$. "
+            "Separarlas deja una cuenta fácil (presión fija por el área del semicírculo, $\\pi R^2/2$) y una integral que se "
+            "resuelve con $u = R^2 - y^2$.",
+        "Suma total":
+            "Las dos partes empujan la misma puerta en la misma dirección, así que la fuerza total es su suma.",
+    },
+    "Q045": {
+        "A) Fourier en un cascarón":
+            "El calor sale del centro hacia afuera y el área por donde pasa crece con el radio, así que $H = kA\\,\\Delta T/L$ "
+            "no sirve. Se usa la forma diferencial en un cascarón delgado, donde el área es una sola: la pared del "
+            "cilindro, $2\\pi r L$.",
+        "A) Separar variables":
+            "$H$ es el mismo en todos los cascarones (estado estacionario), así que se separa: lo que depende de $r$ con "
+            "$dr$ a un lado y $dT$ al otro, para integrar cada lado por su cuenta.",
+        "A) Resolver las dos integrales":
+            "La de la izquierda es uno entre $r$, que da logaritmo; la de la derecha es la suma de los $dT$, que da el "
+            "cambio total. Los límites salen del dibujo: de $r_1$ a $r_2$ y de $T_1$ a $T_2$.",
+        "A) Despejar el flujo":
+            "Con las dos integrales hechas, la única incógnita es $H$: se despeja "
+            "$H = 2\\pi k L(T_1-T_2)/\\ln(r_2/r_1)$.",
+        "A) Por cada metro":
+            "Piden el flujo «por unidad de longitud», así que se divide entre el largo del tubo. Es lo mismo que poner "
+            "$L = 1$ m en la fórmula.",
+        "B) Energía":
+            "La tasa de flujo es energía por segundo: $H = Q/t$. Por eso $Q = Ht$, con los 10,0 min pasados a segundos.",
+        "C) Temperatura":
+            "Para la temperatura en un radio intermedio se repite la misma integral, pero solo hasta ese radio: de $r_1$ "
+            "a $r$ y de $T_1$ a $T(r)$. Con el $H$ del inciso A, la única incógnita es $T(r)$.",
+    },
+    "T-PLANTEO": {
+        "1. Por qué aparece una integral":
+            "Entender por qué aparece la integral evita memorizar casos: siempre es porque algo de la fórmula de la hoja "
+            "cambia de un punto a otro.",
+        "2. Las 5 preguntas":
+            "Un orden fijo le quita al planteo la parte de adivinar: cada pregunta tiene una respuesta concreta en el "
+            "dibujo, y la siguiente sale de la anterior.",
+        "3. Solo hay tres pedacitos":
+            "Casi todos los problemas del curso usan uno de estos tres cortes. Elegir bien el pedacito es lo que hace que "
+            "adentro nada cambie.",
+        "4. Ejemplo con franja":
+            "La pared es el caso más simple: el ancho no cambia, así que se ve solo la idea (la presión crece con $h$) "
+            "sin geometría complicada.",
+        "5. Ejemplo con disco":
+            "Es la pregunta 8 del III parcial (16 puntos). El área cambia con la altura y Pitágoras da el radio de cada "
+            "disco: ahí está la geometría.",
+        "6. La esfera cortada":
+            "Con el área del disco escrita, el resto es la receta de siempre: Fourier, separar, integrar con los límites "
+            "del dibujo y despejar.",
+        "7. Ejemplo con cascarón":
+            "En un tubo el calor no va de una cara a otra sino del centro hacia afuera, así que el pedacito cambia a "
+            "cascarón. Su área, $2\\pi r L$, es el largo de la vuelta por el largo del tubo.",
+        "8. Lo que se escribe en el examen":
+            "El examen pide el procedimiento completo. Escribir estos renglones en orden muestra el planteo aunque la "
+            "cuenta final tenga un error.",
+    },
+    "T-MAT1": {
+        "La pendiente":
+            "Antes de integrar hay que entender qué mide $dT/dx$, porque aparece en la ley de Fourier de la hoja. La "
+            "pendiente es lo más concreto: cuánto cambia la temperatura por cada metro.",
+        "dT/dx":
+            "En los problemas la temperatura no cambia parejo, así que hace falta la pendiente en cada punto. $dT/dx$ es "
+            "eso: la pendiente con una distancia pequeñísima.",
+        "Pedacitos":
+            "Pensar $dx$ y $dT$ como pedacitos permite pasarlos de un lado al otro como números. Eso es lo que después "
+            "se llama separar variables.",
+        "La integral":
+            "Si se suman todos los pedacitos de cambio, sale el cambio total. Esa suma es la integral; los límites dicen "
+            "desde dónde y hasta dónde se suma.",
+        "Calcular una integral":
+            "Para no sumar pedacito por pedacito, se busca una función cuya resta entre los dos límites da la suma "
+            "completa. Por eso se evalúa «arriba menos abajo».",
+        "Los números constantes":
+            "Lo que no cambia ($k$, $\\pi$, un área fija) multiplica a todos los pedacitos por igual, así que sale de la "
+            "suma. Adentro queda solo lo que cambia.",
+        "Derivada de una potencia":
+            "La derivada aparece pocas veces en el curso. Basta con la regla de la potencia, que es la idea de la "
+            "integral al revés.",
+    },
+    "T-MAT2": {
+        "Regla 1 · Potencia":
+            "Es la regla que más se usa: paredes, compuertas y conos terminan en potencias de la variable. Por eso va primero.",
+        "Regla 1 con exponentes negativos":
+            "En las esferas el área es $4\\pi r^2$ y al separar queda $1/r^2$. Escrito como $r^{-2}$ es la misma regla de "
+            "la potencia, sin aprender nada nuevo.",
+        "Regla 2":
+            "Con exponente $-1$ la regla de la potencia dividiría entre cero, así que esa integral es distinta: da "
+            "logaritmo. Aparece en los tubos ($A = 2\\pi r L$) y con $k$ variable.",
+        "Regla 3 · Cambio":
+            "Cuando abajo hay un paréntesis $a + bx$, ponerle nombre $u$ convierte la integral en una de las reglas 1 o 2. "
+            "El precio es el factor $1/b$ y los límites nuevos.",
+        "Regla 3: para qué sirve":
+            "Esa forma aparece cuando el radio o el área crecen en línea recta (conos truncados, barras de área lineal). "
+            "Reconocerla en el enunciado dice qué regla usar.",
+        "Regla 4":
+            "Algunas tareas tienen áreas o coeficientes exponenciales. La exponencial casi no cambia al integrar: solo se "
+            "divide entre lo que multiplica a $x$ en el exponente.",
+        "La tabla completa":
+            "Tener todas las reglas juntas evita buscar: cada integral del curso es una de estas, y las lecciones las "
+            "nombran por número.",
+    },
+    "T-MAT3": {
+        "Qué es un logaritmo":
+            "Las integrales de tubos y de $k$ variable dan logaritmos, y para despejar hay que saber qué son. El logaritmo "
+            "natural responde a qué potencia hay que elevar $e$.",
+        "Las tres reglas":
+            "Estas reglas juntan o separan logaritmos: la resta $\\ln r_2 - \\ln r_1$ se vuelve $\\ln(r_2/r_1)$, que es como "
+            "aparece en las respuestas.",
+        "Despejar un exponente":
+            "Cuando la incógnita está en un exponente (como $\\gamma$ en $p_AV_A^\\gamma = p_BV_B^\\gamma$), el logaritmo la "
+            "baja a multiplicar y se puede despejar.",
+        "Separar variables":
+            "La ley de Fourier mezcla $T$ y $x$ en $dT/dx$. Separar deja cada variable con su pedacito, para integrar cada "
+            "lado por su cuenta.",
+        "Integrar los dos lados":
+            "Los dos lados describen el mismo camino, de un extremo al otro, así que los límites son los mismos dos "
+            "puntos: posición y temperatura del inicio y del final.",
+        "Cuando el área cambia":
+            "Si el área depende de $x$ no puede salir de la integral: se escribe $A(x)$ y se elige la regla según su forma. "
+            "Esa es la diferencia entre una pared y un cono o un tubo.",
+    },
+    "T-CONO": {
+        "1. Qué es un tronco de cono":
+            "Sin ver la forma no se puede plantear nada. Lo clave es la dirección del calor: va a lo largo del cono, así "
+            "que el pedacito es una rebanada perpendicular a esa dirección, un disco.",
+        "2. El radio crece parejo":
+            "El área de cada rebanada depende del radio, así que primero hay que saber cómo cambia el radio. La tabla "
+            "muestra que crece lo mismo por cada centímetro: es una recta.",
+        "3. La fórmula del radio":
+            "Para meter el radio en la integral hace falta una fórmula, no una tabla. Como crece parejo, es una recta, "
+            "$r(x) = r_1 + bx$. Revisar los extremos confirma que está bien.",
+        "4. El área de cada rebanada":
+            "Cada rebanada es un círculo, así que su área es $\\pi r(x)^2$. Es la pregunta 4 de las 5: el tamaño del "
+            "pedacito escrito con la variable.",
+        "5. La idea que destraba todo":
+            "En estado estacionario $H$ es el mismo en todas las rebanadas, así que es una constante que puede salir de la "
+            "integral. Eso es lo que permite separar.",
+        "6. La receta de 6 pasos":
+            "La receta fija evita pensar desde cero en el examen: solo cambia la fórmula del área. Es la misma idea de las "
+            "5 preguntas, escrita para conducción.",
+        "7. Pasos 3 y 4":
+            "Fourier con el área del cono da una ecuación con $T$ y $x$ mezclados. Separar deja lo de $x$, con el área, a "
+            "un lado y $dT$ al otro.",
+        "8. Paso 5":
+            "Integrar los dos lados es sumar todas las rebanadas, de una cara a la otra. Los límites salen del dibujo: $x$ "
+            "de 0 a $L$ y $T$ de $T_1$ a $T_2$.",
+        "9. La integral de la izquierda (1)":
+            "Con el radio como variable la integral queda como una potencia simple, $1/u^2$. El cambio de $x$ a $u$ trae "
+            "el factor $1/b$ y cambia los límites a los dos radios.",
+        "10. La integral de la izquierda (2)":
+            "$1/u^2$ es $u^{-2}$: la regla de la potencia sirve tal cual. Después se evalúa arriba menos abajo con los radios.",
+        "11. Simplificar":
+            "Simplificar deja el resultado en su forma más corta, $L/(\\pi r_1 r_2)$, que es fácil de reconocer y de revisar.",
+        "12. Paso 6":
+            "Es lo que piden: con la integral resuelta, $H$ es la única incógnita.",
+        "13. Truco para recordarlo":
+            "Comparar con la pared de la hoja es un control rápido: si los dos radios son iguales, el cono es un cilindro "
+            "y tiene que salir $H = kA\\,\\Delta T/L$.",
+        "14. Con números":
+            "Los números van al final y en metros, para no arrastrar errores de unidades en el álgebra.",
+        "15. Lo que se escribe en el examen":
+            "En el examen se evalúa el procedimiento: estos renglones, en orden, muestran cada paso del planteo sin "
+            "saltarse nada.",
     },
 }
 

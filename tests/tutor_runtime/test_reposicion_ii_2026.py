@@ -32,10 +32,12 @@ from tools.tutor_runtime.verificador_fisico import auditar_leccion  # noqa: E402
 NODE_EXE = pathlib.Path(r"D:\DevTools\node\node.exe")
 
 PARCIALES = [f"P{p}{t}26-{i}" for p in (1, 2) for t in ("O", "E") for i in range(1, 10)]
-TEORIA = ["T-INT0", "T-INT1", "T-PARED", "T-INT2"]
+TEORIA = ["T-INT0", "T-INT1", "T-PLANTEO", "T-PARED", "T-INT2"]
+# Pregunta 7 del III parcial ordinario II-2026: llegó con el PDF de la solución oficial (27-nov)
+III_PARCIAL_NUEVA = ["O26-7"]
 SUFICIENCIA = [f"SUF26-{i}" for i in range(1, 8)]
 CORREGIDAS = ["RP-24I-2", "RP-25II-2"]
-NUEVAS = PARCIALES + TEORIA + SUFICIENCIA
+NUEVAS = PARCIALES + TEORIA + SUFICIENCIA + III_PARCIAL_NUEVA
 
 # Selecciones del I parcial extraordinario cuya clave publicada no corresponde al enunciado
 CLAVE_DE_OTRA_VERSION = {"P1E26-1", "P1E26-2", "P1E26-3", "P1E26-4", "P1E26-5", "P1E26-7"}
@@ -62,7 +64,7 @@ class TestLeccionesReposicion(unittest.TestCase):
         self.assertEqual(faltas, {}, f"Lecciones con faltas: {faltas}")
 
     def test_cotejo_con_las_soluciones_publicadas(self) -> None:
-        for lid in PARCIALES + CORREGIDAS:
+        for lid in PARCIALES + CORREGIDAS + III_PARCIAL_NUEVA:
             j = registro.obtener(lid).a_json()
             if lid in CLAVE_DE_OTRA_VERSION:
                 # Sin cotejo, y el aviso lo explica
@@ -135,12 +137,12 @@ class TestRutaReposicion(unittest.TestCase):
         from tools.tutor_runtime.fisica3.preparacion_examenes import preparacion_completa
 
         r26 = preparacion_completa()["reposicion_ii_2026"]
-        self.assertEqual(len(r26["bloques"]), 10)
+        self.assertEqual(len(r26["bloques"]), 11)
         self.assertEqual(r26["pendientes"], [])
         self.assertEqual(r26["total"], len(ids_del_calendario()))
         fechas = [b["fecha"] for b in r26["bloques"]]
         self.assertEqual(fechas[0], "2026-11-27")
-        self.assertEqual(fechas[-1], "2026-12-06")
+        self.assertEqual(fechas[-1], "2026-12-07")  # el examen es el martes 8-dic
         self.assertEqual(fechas, sorted(fechas))
         for b in r26["bloques"]:
             for it in b["items"]:
@@ -193,17 +195,18 @@ class TestRutaReposicion(unittest.TestCase):
         r = client.get("/api/preparacion?token=tok-r26", headers={"Origin": "http://127.0.0.1:8765"})
         self.assertEqual(r.status_code, 200)
         r26 = r.json()["reposicion_ii_2026"]
-        self.assertEqual(len(r26["bloques"]), 10)
+        self.assertEqual(len(r26["bloques"]), 11)
         self.assertIn("prediccion", r26)
 
 
 class TestDocumentosYPantalla(unittest.TestCase):
     def test_fuentes_y_enlace_pregunta_leccion(self) -> None:
-        for doc in ("26-II-1O", "26-II-1E", "26-II-2O", "26-II-2E", "26-I-SUF"):
+        for doc in ("26-II-1O", "26-II-1E", "26-II-2O", "26-II-2E", "26-II-O", "26-I-SUF"):
             self.assertIn(doc, FUENTES)
             self.assertIn(doc, PARCIALES_REPO26)
         docs = Documentos(REPO_ROOT, cache=None)
         self.assertEqual(docs.leccion_de("26-II-2O", "8"), "P2O26-8")
+        self.assertEqual(docs.leccion_de("26-II-O", "7"), "O26-7")
         self.assertEqual(docs.leccion_de("26-I-SUF", "3"), "SUF26-3")
 
     def test_recorte_de_los_pdf_nuevos(self) -> None:
@@ -214,6 +217,8 @@ class TestDocumentosYPantalla(unittest.TestCase):
             self.skipTest(f"PDF no presentes en esta máquina: {faltan}")
         for doc in ("26-II-1O", "26-II-1E", "26-II-2O", "26-II-2E"):
             self.assertEqual([p.clave for p in docs.problemas(doc)], [str(i) for i in range(1, 10)], doc)
+        if "26-II-O" in rutas:
+            self.assertEqual([p.clave for p in docs.problemas("26-II-O")], [str(i) for i in range(1, 11)])
         self.assertEqual([p.clave for p in docs.problemas("26-I-SUF")], [str(i) for i in range(1, 9)])
         self.assertTrue(docs.png("26-II-2E", "8").startswith(b"\x89PNG"))
 

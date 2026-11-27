@@ -2,8 +2,9 @@
 
 Todas las lecciones parten estrictamente de las 42 casillas de
 `documentos-ii-2026_Ecuaciones_Tercer_Parcial_FG3.pdf` y cumplen el corte ≤ 20.5:
-  - O26-1..O26-6: 6 ítems confirmados de selección única (págs. 1–2 del examen real II-2026;
-    la pág. 3 con la pregunta 7 no se incluyó en las fotografías).
+  - O26-1..O26-6: 6 ítems confirmados de selección única (págs. 1–2 del examen real II-2026).
+  - O26-7: selección 7 (ciclo Otto con dos gases), tomada del PDF de la solución oficial del 26-nov-2026,
+    que trae la pág. 3 que faltaba en las fotografías. Clave oficial: B.
   - O26-8: Desarrollo 8 (16 pts) — Esfera seccionada con cortes planos en y = ±L (Fourier integral).
   - O26-9: Desarrollo 9 (20 pts) — Ciclo de 4 procesos (Q096 recalibrado a γ = 1,40 con n = 10,0 mol).
   - O26-10: Desarrollo 10 (10 pts) — Calorimetría agua + aluminio + hielo (fusión completa, 11,94 °C).
@@ -355,6 +356,59 @@ def o26_6() -> Leccion:
         "D": ("La D es la correcta: al subir la temperatura las moléculas acceden a niveles rotacionales y vibracionales.", "Activación progresiva de grados de libertad."),
     })
     return L.oficial("III Parcial ordinario II-2026", "D").usa(r"C_{V\text{mono}}=\frac{3}{2}R", r"C_{V\text{dia}}=\frac{5}{2}R")
+
+
+# ============================================================================ O26-7
+@leccion("O26-7")
+def o26_7() -> Leccion:
+    r = 8.0
+    eA = 1 - 1 / r ** 0.4
+    eB = 1 - 1 / r ** 0.67
+    L = Leccion(
+        "O26-7",
+        "Dos motores Otto con la misma razón de compresión: diatómico contra monoatómico",
+        tema="6.14",
+        tipo="seleccion",
+        nivel=2,
+        fuente=_fuente_o26("7", 3),
+        enunciado=(
+            "Considere dos motores térmicos A y B que atraviesan un ciclo Otto. El motor A utiliza un gas diatómico "
+            "con $\\gamma = 1{,}4$ y el motor B utiliza un gas monoatómico con $\\gamma = 1{,}67$. Si ambos motores "
+            "operan exactamente con la misma razón de compresión ($r > 1$), ¿cuál de las siguientes afirmaciones "
+            "respecto a sus eficiencias térmicas ($e_A$ y $e_B$) es correcta?"
+        ),
+        opciones={
+            "A": "$e_A > e_B$",
+            "B": "$e_A < e_B$",
+            "C": "$e_A = e_B$",
+            "D": "$e_B = 2e_A$",
+        },
+        correcta="B",
+        claves=["ciclo Otto", "razón de compresión", "gamma", "eficiencia", "monoatómico", "diatómico"],
+    )
+    L.paso("La casilla del ciclo Otto")\
+        .di("La hoja trae la eficiencia del ciclo Otto: solo depende de la razón de compresión y de gama.",
+            DATO("misma razón de compresión"),
+            F(r"e_{\text{otto}} = 1 - \frac{1}{r^{\gamma - 1}}"))\
+        .di("La razón de compresión es la misma en los dos motores. Lo único que cambia es el exponente: gama menos uno.",
+            M(r"\gamma_A - 1 = 1{,}4 - 1 = 0{,}4"),
+            M(r"\gamma_B - 1 = 1{,}67 - 1 = 0{,}67"))
+    L.paso("Probar con un número")\
+        .di("Con cualquier número mayor que uno se ve quién gana. Probamos con una razón de compresión de ocho.",
+            M(rf"8^{{0{{,}}4}} = {tex(r ** 0.4, 4)}"),
+            M(rf"e_A = 1 - \frac{{1}}{{{tex(r ** 0.4, 4)}}} = {tex(eA, 3)}"))\
+        .di("Para el monoatómico el exponente es mayor, así que la potencia crece más y la fracción se achica.",
+            M(rf"8^{{0{{,}}67}} = {tex(r ** 0.67, 4)}"),
+            M(rf"e_B = 1 - \frac{{1}}{{{tex(r ** 0.67, 4)}}} = {tex(eB, 3)}"),
+            R(r"e_A < e_B"))
+    revisar_opciones(L, {
+        "A": ("La A está al revés: el diatómico tiene gama menor y por eso menos eficiencia.", "Menor $\\gamma$, menor $e$."),
+        "C": ("La C solo sería cierta si los dos gases tuvieran el mismo gama.", "La razón de compresión igual no alcanza."),
+        "D": ("La D no sale de la casilla: la eficiencia no se duplica.", "Con $r = 8$: $0{,}752 \\neq 2(0{,}565)$."),
+        "B": ("La B es la correcta: con la misma razón de compresión, el monoatómico, de gama mayor, es más eficiente.",
+              "$e_A < e_B$."),
+    })
+    return L.oficial("III Parcial ordinario II-2026", "B").usa(r"e_{\text{otto}}=1-\frac{1}{r^{\gamma-1}}")
 
 
 # ============================================================================ O26-8

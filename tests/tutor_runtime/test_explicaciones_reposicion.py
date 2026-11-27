@@ -1,7 +1,7 @@
 """Pruebas del paso «Datos» y del «¿Por qué?» de las lecciones del plan Reposición II-2026.
 
 Lo que se vigila:
-  * toda lección del plan (68) tiene «¿Por qué?» en cada paso, y las que no son teoría empiezan con
+  * toda lección del plan (76) tiene «¿Por qué?» en cada paso, y las que no son teoría empiezan con
     el paso «Datos»;
   * cada frase subrayada se encuentra en el recorte del PDF (o en el enunciado, si la lección no
     tiene recorte), con la misma regla que usa la pizarra;
@@ -56,7 +56,7 @@ def _calza_en_enunciado(frase: str, enunciado: str) -> bool:
 
 class TestPlanCompleto(unittest.TestCase):
     def test_el_plan_tiene_explicaciones_para_todas(self) -> None:
-        self.assertEqual(len(PLAN), 68)
+        self.assertEqual(len(PLAN), 76)
         self.assertEqual(set(E.lecciones_con_explicaciones()), set(PLAN))
 
     def test_porque_en_cada_paso_y_datos_al_empezar(self) -> None:
@@ -149,6 +149,23 @@ class TestFrasesYRevisiones(unittest.TestCase):
         res = json.loads(proc.stdout)
         self.assertGreater(res["total"], 700)
         self.assertEqual(res["bad"], [], f"TeX desconocido: {res['bad'][:5]}")
+
+    def test_sin_caracteres_de_control_escondidos(self) -> None:
+        # Un "\n" o "\f" metido por error en un string normal ("\neq", "\frac") rompe el texto sin que el TeX falle
+        control = re.compile(r"[\x00-\x08\x0b-\x1f]|\n")
+        malos = []
+        for lid in PLAN:
+            j = registro.obtener(lid).a_json()
+            textos = [j["enunciado"], j["titulo"], *(j.get("opciones") or {}).values()]
+            for p in j["pasos"]:
+                textos.append(p.get("porque") or "")
+                for t in p["tramos"]:
+                    textos.append(t["v"])
+                    for a in t["acc"]:
+                        textos += [a[k] for k in ("tex", "txt", "motivo", "frase") if isinstance(a.get(k), str)]
+                        textos += [x for x in a.get("items") or [] if isinstance(x, str)]
+            malos += [f"{lid}: {x[:60]!r}" for x in textos if control.search(x)]
+        self.assertEqual(malos, [])
 
     def test_la_voz_no_lleva_latex_ni_dolares(self) -> None:
         for lid, datos in E.DATOS.items():

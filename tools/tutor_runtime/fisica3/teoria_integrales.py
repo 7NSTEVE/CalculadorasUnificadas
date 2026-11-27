@@ -1,10 +1,12 @@
-"""Integrales desde cero, solo las que salen en la reposición (T-INT0, T-INT1, T-PARED, T-INT2).
+"""Integrales desde cero, solo las que salen en la reposición (T-INT0, T-INT1, T-PLANTEO, T-PARED, T-INT2).
 
 Para quien no sabe integrar ni relacionar la geometría con la integral. Orden fijo:
-  T-INT0  la idea, sin reglas: partir la pared en franjas y sumar (la suma se acerca al valor exacto);
-  T-INT1  una sola regla (la de la potencia) y «arriba menos abajo»;
-  T-PARED la receta de 5 pasos para la fuerza sobre una pared: rectángulo, trapecio y parábola;
-  T-INT2  la integral del logaritmo para la conducción con k(y) = a + by (el posible 4.º problema).
+  T-INT0    la idea, sin reglas: partir la pared en franjas y sumar (la suma se acerca al valor exacto);
+  T-INT1    una sola regla (la de la potencia) y «arriba menos abajo»;
+  T-PLANTEO cómo se plantea cualquier integral del curso: 5 preguntas y 3 pedacitos (franja, disco,
+            cascarón), con la pared, la esfera cortada del III parcial II-2026 y un tubo;
+  T-PARED   la receta de 5 pasos para la fuerza sobre una pared: rectángulo, trapecio y parábola;
+  T-INT2    la integral del logaritmo para la conducción con k(y) = a + by (el posible 4.º problema).
 
 Todos los números vienen de problemas reales: la represa de la Reposición II-2025, la compuerta de
 la Reposición I-2024, la ventana del II parcial extraordinario II-2026 y la lámina de la Reposición II-2025.
@@ -135,6 +137,107 @@ def t_int1() -> Leccion:
     L.usa(r"F_\perp=\int p\,dA")
     return L
 
+
+
+# ============================================================================ T-PLANTEO
+@leccion("T-PLANTEO")
+def t_planteo() -> Leccion:
+    Lw, Hw = 2.00, 3.00
+    mitad = Hw ** 2 / 2                                  # 4,50
+    F_pared = RHO * G * Lw * mitad                       # 88 200
+    L = _teo("T-PLANTEO", "Plantear una integral: 5 preguntas y 3 pedacitos (pared, esfera cortada y tubo)", 3,
+             claves=["plantear integral", "franja", "disco", "cascarón", "geometría", "Pitágoras", "desde cero",
+                     "esfera seccionada", "tubo"],
+             enunciado=(
+                 "Cómo pasar del dibujo del problema a la integral, sin saber cálculo. Siempre son las mismas 5 preguntas "
+                 "y solo hay 3 formas de cortar: franja, disco y cascarón. Con tres ejemplos: una pared con agua, la esfera "
+                 "cortada del III parcial ordinario II-2026 (pregunta 8, 16 puntos) y un tubo que pierde calor."),
+             visual={"tipo": "pared", "forma": "rectangulo", "H": Hw, "ancho": Lw,
+                     "titulo": "Pared de 2,00 m de ancho y 3,00 m de agua"})
+    L.paso("1. Por qué aparece una integral")\
+        .di("Las fórmulas de la hoja piden un solo valor: una presión, un área.",
+            M(r"F=p\,A\qquad H=kA\,\frac{T_H-T_C}{L}"))\
+        .di("Si en el problema ese valor cambia de un punto a otro, la fórmula no se puede usar de una vez.",
+            OJO("Señal de integral: algo de la fórmula cambia de un punto a otro (la presión con la profundidad, el área con la altura o con el radio)."))\
+        .di("Entonces se corta el objeto en pedacitos donde no cambia, se usa la fórmula en uno y se suman todos.",
+            M(r"\int=\text{sumar todos los pedacitos}"))
+    L.paso("2. Las 5 preguntas, siempre en este orden")\
+        .di("Estas cinco preguntas sirven para cualquier integral del curso.",
+            LISTA([
+                "1. ¿Qué cambia de un punto a otro?",
+                "2. ¿Hacia dónde cambia? Esa dirección es la variable: $h$, $y$ o $r$. Dibujar el eje.",
+                "3. Cortar en pedacitos perpendiculares a esa dirección, tan delgados que adentro nada cambie.",
+                "4. Escribir la fórmula de la hoja para un solo pedacito. El tamaño del pedacito sale del dibujo.",
+                "5. Sumar todos los pedacitos con $\\int$, desde donde empieza el objeto hasta donde termina.",
+            ]))\
+        .di("Las preguntas tres y cuatro son la geometría. Ahí está casi toda la nota del problema.",
+            NOTA("La integral en sí la da el examen o sale con una sola regla. Lo que se evalúa es el planteo."))
+    L.paso("3. Solo hay tres pedacitos")\
+        .di("Franja para paredes con agua. Disco cuando el calor va de una cara plana a la otra. Cascarón cuando el calor sale del centro.",
+            TABLA(["pedacito", "cuándo", "área del pedacito"],
+                  [["franja", "pared o compuerta con agua", "$\\text{ancho}(h)\\,dh$"],
+                   ["disco", "el calor va de una cara plana a la otra", "$\\pi r^2$"],
+                   ["cascarón", "el calor sale del centro de un tubo o una esfera", "$2\\pi r L$ o $4\\pi r^2$"]]))
+    L.paso("4. Ejemplo con franja: una pared con agua")\
+        .di("Una pared de dos metros de ancho con agua hasta tres metros. Pregunta uno: cambia la presión. Pregunta dos: cambia con la profundidad hache.",
+            V(modo="franja"),
+            M(r"p=\rho g h"))\
+        .di("Pregunta tres: franjas horizontales de alto de hache. Pregunta cuatro: la fuerza de una franja es presión por su área, ancho por alto.",
+            M(r"dF=\rho g h\,(2{,}00)\,dh"))\
+        .di("Pregunta cinco: sumar desde la superficie, hache cero, hasta el fondo, hache tres.",
+            M(r"F=\int_0^{3{,}00}\rho g\,(2{,}00)\,h\,dh=\rho g\,(2{,}00)\left[\frac{h^2}{2}\right]_0^{3{,}00}"),
+            M(rf"\frac{{(3{{,}}00)^2}}{{2}}-\frac{{0^2}}{{2}}={tex(mitad, 3)}"),
+            M(rf"F=(1000)(9{{,}}80)(2{{,}}00)({tex(mitad, 3)})={tex(F_pared, 3)}\ \text{{N}}"),
+            R(rf"F={tex(F_pared, 3)}\ \text{{N}}"))
+    L.paso("5. Ejemplo con disco: la esfera cortada del III parcial")\
+        .di("Pregunta uno: cambia el área por donde pasa el calor. La esfera es angosta cerca de los cortes y ancha en el centro.",
+            VISUAL("conduccion", geo="esfera_seccionada", R=0.1, L=0.08, T1=100.0, T2=20.0, k=200.0, eje="y", uT="°C",
+                   xm=0.036, etA="A(y) = π(R² − y²)"),
+            M(r"-L\le y\le L"))\
+        .di("Pregunta dos: cambia hacia arriba, con la altura ye. Pregunta tres: discos horizontales de grosor de ye.",
+            M(r"\text{disco a la altura }y,\ \text{grosor }dy"))\
+        .di("Pregunta cuatro, la geometría: del centro al borde del disco hay un triángulo rectángulo. La hipotenusa es erre mayúscula; los catetos, ye y el radio del disco.",
+            M(r"r^2+y^2=R^2\;\Rightarrow\;r^2=R^2-y^2"),
+            M(r"A(y)=\pi r^2=\pi\,(R^2-y^2)"))
+    L.paso("6. La esfera cortada: la fórmula del disco y la suma")\
+        .di("La fórmula de la hoja para un disco es la ley de Fourier con el área del disco.",
+            F(r"H=-kA\frac{dT}{dx}"),
+            M(r"H=-k\,\pi\,(R^2-y^2)\,\frac{dT}{dy}"))\
+        .di("Separamos: lo de ye con de ye a un lado, de te al otro. Pregunta cinco: sumar de menos ele a ele, y de te uno a te dos.",
+            M(r"\frac{H}{\pi k}\,\frac{dy}{R^2-y^2}=-dT"),
+            M(r"\frac{H}{\pi k}\int_{-L}^{L}\frac{dy}{R^2-y^2}=-\int_{T_1}^{T_2}dT=T_1-T_2"))\
+        .di("Esa integral la da el examen. Al despejar sale el mismo resultado que la solución oficial.",
+            M(r"\int_{-L}^{L}\frac{dy}{R^2-y^2}=\frac{1}{R}\ln\frac{R+L}{R-L}"),
+            R(r"H=\frac{\pi k R\,(T_1-T_2)}{\ln\dfrac{R+L}{R-L}}"))
+    L.paso("7. Ejemplo con cascarón: un tubo que pierde calor")\
+        .di("En un tubo el calor sale del centro hacia afuera. Pregunta uno: cambia el área, que crece con el radio. Pregunta dos: la variable es erre.",
+            VISUAL("conduccion", geo="cilindro", r1=0.04, r2=0.08, L=5.0, T1=150.0, T2=45.0, k=235.0, r=0.06, uT="°C"),
+            M(r"r_1\le r\le r_2"))\
+        .di("Pregunta tres: cascarones de grosor de erre. Pregunta cuatro: el área del cascarón es la vuelta, dos pi erre, por el largo del tubo.",
+            M(r"A(r)=2\pi r L"),
+            M(r"H=-k\,(2\pi r L)\,\frac{dT}{dr}"))\
+        .di("Pregunta cinco: separar y sumar de erre uno a erre dos. Uno entre erre da logaritmo.",
+            M(r"H\int_{r_1}^{r_2}\frac{dr}{r}=-2\pi k L\int_{T_1}^{T_2}dT"),
+            M(r"H\,\ln\frac{r_2}{r_1}=2\pi k L\,(T_1-T_2)"),
+            R(r"H=\frac{2\pi k L\,(T_1-T_2)}{\ln(r_2/r_1)}"))
+    L.paso("8. Lo que se escribe en el examen")\
+        .di("En el examen se escriben estos renglones, en este orden. Cada uno responde una de las preguntas.",
+            LISTA([
+                "Dibujo con el eje y el pedacito ($dh$, $dy$ o $dr$).",
+                "Tamaño del pedacito sacado del dibujo: $\\text{ancho}(h)$, $r^2=R^2-y^2$ o $2\\pi r L$.",
+                "Fórmula de la hoja para un pedacito: $dF=p\\,dA$ o $H=-kA\\frac{dT}{dx}$.",
+                "Separar y poner $\\int$ con los límites del dibujo.",
+                "Integrar, evaluar arriba menos abajo y despejar.",
+            ]))\
+        .pregunta_rapida("Una barra cuyo radio cambia a lo largo de x, con el calor viajando a lo largo de x: ¿qué pedacito se usa?",
+                         ["Discos perpendiculares a x", "Cascarones alrededor del eje", "Franjas verticales"], 0,
+                         "El calor viaja a lo largo de x y el área cambia con x: se corta en discos perpendiculares a x, de área $\\pi r(x)^2$.")
+    L.te_toca("Una pared de 1,50 m de ancho tiene agua hasta 2,00 m de profundidad. ¿Con qué fuerza empuja el agua?",
+              RHO * G * 1.50 * 2.00 ** 2 / 2, "N", tol=0.02,
+              pista="Franja horizontal: dF = ρg·h·(1,50)·dh. Sumar de h = 0 a h = 2,00.",
+              solucion="F = ρg(1,50)·(2,00)²/2 = (1000)(9,80)(1,50)(2,00) = 29 400 N")
+    L.usa(r"p=\rho g h", r"F_\perp=\int p\,dA", r"H=-kA\frac{dT}{dx}")
+    return L
 
 # ============================================================================ T-PARED
 @leccion("T-PARED")

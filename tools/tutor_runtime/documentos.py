@@ -65,6 +65,7 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "26-II-1E": (("documentos-ii-2026_i_examen__ext___2s_2026_solucion.pdf", "i_examen__ext___2s_2026_solucion.pdf"), "I parcial extraordinario II-2026", "examen26"),
     "26-II-2O": (("documentos-ii-2026_ii_examen__ord___2s_2026_solucion.pdf", "ii_examen__ord___2s_2026_solucion.pdf"), "II parcial ordinario II-2026", "examen26"),
     "26-II-2E": (("documentos-ii-2026_ii_examen__ext___2s_2026_solucion.pdf", "ii_examen__ext___2s_2026_solucion.pdf"), "II parcial extraordinario II-2026", "examen26"),
+    "26-II-O": (("documentos-ii-2026_iii_examen__ord___2s_2026_solucion.pdf", "iii_examen__ord___2s_2026_solucion.pdf"), "III parcial ordinario II-2026", "examen26"),
     "26-I-SUF": (("documentos-i-2026_examenes_2026i_fg3_examen_suficiencia.pdf", "2026i_fg3_examen_suficiencia.pdf"), "Examen de suficiencia I-2026", "examen"),
     "26-F": (("documentos-i-2026_material-complementario_folleto-fisica3_(1).pdf", "documentos-i-2026_material-complementario_folleto-fisica3_.pdf"), "Folleto de Física III", "folleto"),
     "26-II-P1": (("practica del parcial 3_iis2026.pdf",), "Práctica del Parcial 3 (II-2026)", "practica"),
@@ -75,7 +76,7 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
 PRACTICAS = {"26-II-P1": "PR1", "26-II-P2": "PR2"}
 
 # Parciales del II-2026 y suficiencia I-2026 (Reposición II-2026): la pregunta N es la lección <prefijo>-N.
-PARCIALES_REPO26 = {"26-II-1O": "P1O26", "26-II-1E": "P1E26", "26-II-2O": "P2O26", "26-II-2E": "P2E26", "26-I-SUF": "SUF26"}
+PARCIALES_REPO26 = {"26-II-1O": "P1O26", "26-II-1E": "P1E26", "26-II-2O": "P2O26", "26-II-2E": "P2E26", "26-II-O": "O26", "26-I-SUF": "SUF26"}
 
 # Recomendados P1/P2 II-2026 y Tareas Termo ≤ 20.5 (2024–2026): el problema N enlaza a <prefijo>-N.
 TAREAS_Y_REC = {

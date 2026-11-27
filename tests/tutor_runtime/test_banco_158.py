@@ -93,7 +93,8 @@ class TestBanco158YTeoria(unittest.TestCase):
             | {f"E2-{i}" for i in range(1, 15)}
         )
         self.assertTrue(esperados_olas12.issubset(ids), f"Faltan Olas 1+2: {sorted(esperados_olas12 - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7 + 18 + 16 + 14)  # 326 lecciones totales
+        # + T-PLANTEO (plantear una integral) y O26-7 (pregunta 7 del III parcial, del PDF oficial)
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7 + 18 + 16 + 14 + 2)  # 328 lecciones totales
 
         faltas = {}
         for lid in sorted(ids):
