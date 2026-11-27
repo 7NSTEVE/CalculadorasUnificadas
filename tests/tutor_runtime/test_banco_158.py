@@ -80,7 +80,11 @@ class TestBanco158YTeoria(unittest.TestCase):
         self.assertTrue(esperados_b.issubset(ids), f"Faltan blindaje II-2026: {sorted(esperados_b - ids)}")
         self.assertTrue(esperados_rp.issubset(ids), f"Faltan reposición P1/P2: {sorted(esperados_rp - ids)}")
         self.assertTrue(esperados_o26.issubset(ids), f"Faltan Ordinario II-2026 / C26-1: {sorted(esperados_o26 - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10)  # 231 lecciones totales
+        # Reposición II-2026: I y II parcial del semestre (ordinario y extraordinario), integrales desde cero y suficiencia I-2026
+        esperados_r26 = ({f"P{p}{t}26-{i}" for p in (1, 2) for t in ("O", "E") for i in range(1, 10)}
+                         | {"T-INT0", "T-INT1", "T-PARED", "T-INT2"} | {f"SUF26-{i}" for i in range(1, 8)})
+        self.assertTrue(esperados_r26.issubset(ids), f"Faltan lecciones de la Reposición II-2026: {sorted(esperados_r26 - ids)}")
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7)  # 278 lecciones totales
 
         faltas = {}
         for lid in sorted(ids):

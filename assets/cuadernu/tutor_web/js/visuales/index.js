@@ -2,6 +2,7 @@ import { VisualPV } from './pv.js';
 import { VisualConduccion } from './conduccion.js';
 import { VisualDilatacion } from './dilatacion.js';
 import { VisualCalentamiento, VisualCalor } from './calor.js';
+import { VisualPared } from './fluidos.js';
 import {
   VisualDistribucion, VisualEntropia, VisualFuncion, VisualGas, VisualMaquina, VisualOtto, VisualRadiacion,
 } from './otros.js';
@@ -10,6 +11,7 @@ const TIPOS = {
   pv: VisualPV, conduccion: VisualConduccion, dilatacion: VisualDilatacion, calor: VisualCalor,
   calentamiento: VisualCalentamiento, gas: VisualGas, distribucion: VisualDistribucion, radiacion: VisualRadiacion,
   maquina: VisualMaquina, otto: VisualOtto, entropia: VisualEntropia, funcion: VisualFuncion,
+  pared: VisualPared,
 };
 
 export function hayVisual(tipo) {

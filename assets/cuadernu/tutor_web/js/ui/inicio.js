@@ -8,11 +8,21 @@ import { aMedias, banco, estaHecha, nombreTema } from './banco.js';
 import { ponerTextoMate } from './preparacion.js';
 
 const PLANES = [
+  ['repo26', 'Reposición II-2026'],
   ['radar', 'Radar Cartago II-2026'],
   ['extraordinario', 'Extraordinario'],
-  ['reposicion', 'Reposición'],
+  ['reposicion', 'Reposiciones anteriores'],
   ['rutas', 'Rutas del III parcial'],
 ];
+
+// Una sola vez: quien venía estudiando para el III parcial pasa al plan de la reposición.
+// Si después elige otro plan, se respeta.
+try {
+  if (!localStorage.getItem('tutor.plan.repo26.migrado')) {
+    localStorage.setItem('tutor.plan.repo26.migrado', '1');
+    if (['extraordinario', 'radar'].includes(ajustes.plan)) guardarAjuste('plan', 'repo26');
+  }
+} catch { /* modo privado */ }
 
 const ICO = {
   seguir: 'M8 5v14l11-7L8 5Z',
@@ -53,7 +63,7 @@ function repiteTitulo(nota, titulo) {
 }
 
 function planActual() {
-  return PLANES.some(([k]) => k === ajustes.plan) ? ajustes.plan : 'extraordinario';
+  return PLANES.some(([k]) => k === ajustes.plan) ? ajustes.plan : 'repo26';
 }
 
 export class Inicio {

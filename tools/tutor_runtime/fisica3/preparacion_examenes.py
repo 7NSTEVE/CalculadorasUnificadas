@@ -687,4 +687,9 @@ def preparacion_completa() -> Dict[str, Any]:
             "mixtos_recortados": [{"id": "Q108", "nota": _MIXTOS_20_5["Q108"][0]}],
         },
     })
+
+    # Plan por días para la Reposición II-2026 (calendario, predicción y hoja esperada)
+    from .reposicion_ii_2026 import construir_ruta
+
+    _CACHE_PREP["reposicion_ii_2026"] = construir_ruta(_arma_item)
     return _CACHE_PREP

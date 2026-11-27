@@ -147,8 +147,9 @@ const POR_DEFECTO = {
   servidorVozLocal: 'http://127.0.0.1:8880/v1/audio/speech', vozLocalHttp: 'es-default', vozKokoro: 'ef_dora',
   narracion: true, foco: true, menosMovimiento: false, resolverAlPegar: true, modelo: 'gemini-4-hydrogen',
   zoom: 1, autoSeguir: false, sinSaltos: true, simbolos: true,
-  // Plan activo del Inicio «Hoy»: 'extraordinario', 'reposicion' o 'rutas' (las rutas del III parcial)
-  plan: 'extraordinario',
+  // Plan activo del Inicio «Hoy»: 'repo26' (Reposición II-2026), 'extraordinario', 'radar',
+  // 'reposicion' (reposiciones anteriores) o 'rutas' (las rutas del III parcial)
+  plan: 'repo26',
   // La lección abre en modo enfoque (la pizarra manda) y se recuerda si la persona lo apaga
   enfoque: true,
   // Panel de apoyo (visual, enunciado, fórmulas) junto a la pizarra en ventanas anchas

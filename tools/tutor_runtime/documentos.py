@@ -13,6 +13,7 @@ import os
 import pathlib
 import re
 import threading
+import unicodedata
 import zipfile
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -52,6 +53,12 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "26-I-O": (("documentos-i-2026_examenes_2026i_fg3_solucion_exam3_ordinario.pdf",), "III Parcial ordinario I-2026", "examen"),
     "26-I-E": (("documentos-i-2026_examenes_2026i_fg3_solucion_exam3_extraordinario.pdf",), "III Parcial extraordinario I-2026", "examen"),
     "26-I-R": (("documentos-i-2026_examenes_2026i_fg3_solucion_examen_reposicion_ordinario.pdf",), "Reposición I-2026", "examen"),
+    # Reposición II-2026: I y II parcial del semestre (hechos en LaTeX, preguntas «1)», «2)»…) y la suficiencia I-2026
+    "26-II-1O": (("documentos-ii-2026_i_examen__ord___2s_2026_solucion.pdf", "i_examen__ord___2s_2026_solucion.pdf"), "I parcial ordinario II-2026", "examen26"),
+    "26-II-1E": (("documentos-ii-2026_i_examen__ext___2s_2026_solucion.pdf", "i_examen__ext___2s_2026_solucion.pdf"), "I parcial extraordinario II-2026", "examen26"),
+    "26-II-2O": (("documentos-ii-2026_ii_examen__ord___2s_2026_solucion.pdf", "ii_examen__ord___2s_2026_solucion.pdf"), "II parcial ordinario II-2026", "examen26"),
+    "26-II-2E": (("documentos-ii-2026_ii_examen__ext___2s_2026_solucion.pdf", "ii_examen__ext___2s_2026_solucion.pdf"), "II parcial extraordinario II-2026", "examen26"),
+    "26-I-SUF": (("documentos-i-2026_examenes_2026i_fg3_examen_suficiencia.pdf", "2026i_fg3_examen_suficiencia.pdf"), "Examen de suficiencia I-2026", "examen"),
     "26-F": (("documentos-i-2026_material-complementario_folleto-fisica3_(1).pdf", "documentos-i-2026_material-complementario_folleto-fisica3_.pdf"), "Folleto de Física III", "folleto"),
     "26-II-P1": (("practica del parcial 3_iis2026.pdf",), "Práctica del Parcial 3 (II-2026)", "practica"),
     "26-II-P2": (("practica tercer parcial fiii.pdf",), "Práctica del tercer examen (II-2026)", "practica"),
@@ -59,6 +66,9 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
 
 # Prácticas del II-2026: cada problema tiene su lección PR1-N, PR2-SN (selección) o PR2-DN (desarrollo).
 PRACTICAS = {"26-II-P1": "PR1", "26-II-P2": "PR2"}
+
+# Parciales del II-2026 y suficiencia I-2026 (Reposición II-2026): la pregunta N es la lección <prefijo>-N.
+PARCIALES_REPO26 = {"26-II-1O": "P1O26", "26-II-1E": "P1E26", "26-II-2O": "P2O26", "26-II-2E": "P2E26", "26-I-SUF": "SUF26"}
 
 # Reposición Parcial 1 y Parcial 2: enlace directo (examen, número) -> ID de lección RP-*.
 REPOSICION_MAPA: Dict[Tuple[str, str], str] = {
@@ -292,6 +302,36 @@ def segmenta_examen(doc: fitz.Document) -> List[Problema]:
     return _arma(doc, "examen", anclas, sorted(fines), cache)
 
 
+_RE_NUM_PAREN = re.compile(r"^(\d{1,2})\)\s+\S")
+
+
+def segmenta_examen_latex(doc: fitz.Document) -> List[Problema]:
+    """Parciales del II-2026, hechos en LaTeX: cada pregunta empieza con «1)», «2)», … en el margen izquierdo.
+
+    La solución viene al final, después de «Solución …», que corta la última pregunta.
+    """
+    anclas: List[Dict[str, Any]] = []
+    fines: List[Tuple[int, float]] = []
+    cache: Dict[int, Tuple[List[Linea], List[fitz.Rect]]] = {}
+    esperado = 1
+    for i in range(len(doc)):
+        ls = _lineas(doc[i])
+        cache[i] = (ls, _graficos(doc[i]))
+        z0, z1 = _zona("examen", doc[i])
+        for k in ls:
+            if k.y0 < z0 or k.y0 > z1:
+                continue
+            t = k.texto
+            m = _RE_NUM_PAREN.match(t)
+            if m and k.x0 < 95 and k.tam > 10.4 and int(m.group(1)) == esperado:
+                anclas.append({"p": i, "y": k.y0, "num": m.group(1), "clave": m.group(1)})
+                esperado += 1
+                continue
+            if k.x0 < 360 and _RE_FIN.match(fold_accents(t)) and len(t) < 110:
+                fines.append((i, k.y0))
+    return _arma(doc, "examen", anclas, sorted(fines), cache)
+
+
 def segmenta_recomendados(doc: fitz.Document) -> List[Problema]:
     anclas: List[Dict[str, Any]] = []
     cache: Dict[int, Tuple[List[Linea], List[fitz.Rect]]] = {}
@@ -519,8 +559,92 @@ def segmenta_practica(doc: fitz.Document) -> List[Problema]:
 
 SEGMENTADORES = {
     "superexamen": segmenta_superexamen, "recomendados": segmenta_recomendados, "examen": segmenta_examen,
+    "examen26": segmenta_examen_latex,
     "folleto": segmenta_folleto, "general": segmenta_general, "hoja": lambda d: [], "practica": segmenta_practica,
 }
+
+
+# ---------------------------------------------------------------------- datos subrayados en el recorte
+#
+# La pizarra subraya un dato buscando su frase entre las palabras del recorte (cajaDeFrase en
+# leccion/enunciado.js). Los PDF hechos en LaTeX parten los números: «0,141» sale como «0,» y «141»,
+# y «m³» como «m» y «3». Antes de mandar la lección, cada frase se cambia por las palabras exactas del
+# PDF para que el subrayado caiga donde debe.
+
+_RE_MARCAS = re.compile("[̀-ͯ]")
+_RE_GUIONES = re.compile("[‐-―−]")
+_RE_BORDES = re.compile(r"^[(\[{\"'¿¡]+|[)\]}\"'.,;:!?]+$")
+
+
+def _norma_frase(s: str) -> str:
+    """Igual que norma() de enunciado.js: sin tildes, en minúscula y con un solo tipo de guion."""
+    s = unicodedata.normalize("NFD", str(s or ""))
+    s = _RE_MARCAS.sub("", s).lower()
+    s = _RE_GUIONES.sub("-", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _limpia_palabra(t: str) -> str:
+    return _RE_BORDES.sub("", _norma_frase(t))
+
+
+def caja_de_frase(frase: str, palabras: Sequence[Dict[str, Any]]) -> Optional[int]:
+    """Dónde empieza la frase entre las palabras del recorte, con la misma regla que la pizarra."""
+    if not frase or not palabras:
+        return None
+    q = [x for x in (_limpia_palabra(t) for t in _norma_frase(frase).split(" ")) if x]
+    if not q:
+        return None
+    ws = [_limpia_palabra(w.get("t", "")) for w in palabras]
+    for i in range(len(ws) - len(q) + 1):
+        if all(ws[i + k] == q[k] or (len(q[k]) > 3 and ws[i + k].startswith(q[k])) for k in range(len(q))):
+            return i
+    return None
+
+
+def _aplasta(s: str) -> str:
+    """Sin espacios y con los superíndices como dígitos comunes: «1,26 m³» y «1,26 m 3» quedan iguales."""
+    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", _norma_frase(s)))
+
+
+def ajustar_frase(frase: str, palabras: Sequence[Dict[str, Any]]) -> str:
+    """La frase escrita con las palabras del PDF. Si ya calza o no aparece, se devuelve igual."""
+    if not frase or not palabras or caja_de_frase(frase, palabras) is not None:
+        return frase
+    meta = _RE_BORDES.sub("", _aplasta(frase))
+    if not meta:
+        return frase
+    crudas = [_aplasta(w.get("t", "")) for w in palabras]
+    for i in range(len(crudas)):
+        junto = ""
+        for j in range(i, min(len(crudas), i + 12)):
+            # Una palabra que es solo un signo («(», «=») no la puede encontrar la pizarra
+            if not _limpia_palabra(palabras[j].get("t", "")):
+                break
+            junto += crudas[j]
+            limpio = _RE_BORDES.sub("", junto)
+            if limpio == meta:
+                nueva = " ".join(str(w.get("t", "")) for w in palabras[i:j + 1])
+                if caja_de_frase(nueva, palabras) is not None:
+                    return nueva
+                break
+            if len(limpio) > len(meta) + 2:
+                break
+    return frase
+
+
+def ajustar_datos(j: Dict[str, Any], palabras: Sequence[Dict[str, Any]]) -> int:
+    """Pasa todas las frases de subrayado de una lección a las palabras del PDF. Devuelve cuántas cambió."""
+    n = 0
+    for p in j.get("pasos") or []:
+        for t in p.get("tramos") or []:
+            for a in t.get("acc") or []:
+                if a.get("a") == "dato" and a.get("frase"):
+                    nueva = ajustar_frase(a["frase"], palabras)
+                    if nueva != a["frase"]:
+                        a["frase"] = nueva
+                        n += 1
+    return n
 
 
 # ---------------------------------------------------------------------- servicio
@@ -924,6 +1048,9 @@ class Documentos:
             return f"E{clave}" if registro.existe(f"E{clave}") else None
         if id in PRACTICAS:
             lid = f"{PRACTICAS[id]}-{clave}"
+            return lid if registro.existe(lid) else None
+        if id in PARCIALES_REPO26:
+            lid = f"{PARCIALES_REPO26[id]}-{clave}"
             return lid if registro.existe(lid) else None
         rp = REPOSICION_MAPA.get((id, str(clave)))
         if rp and registro.existe(rp):

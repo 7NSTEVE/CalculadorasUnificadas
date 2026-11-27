@@ -19,7 +19,7 @@ from .fisica3.formulario_ii_2026 import catalogo_formulario
 from .fisica3.formularios_p1_p2 import mapear_formulario_por_parcial
 from .fisica3.guia_formulario_ii_2026 import guia_completa
 from .fisica3.preparacion_examenes import filtrar_leccion_corte_20_5, preparacion_completa
-from .documentos import MAX_PDF
+from .documentos import MAX_PDF, ajustar_datos
 from .pdf_rag import fold_accents
 from .verificador_fisico import auditar_leccion
 from .vision import MAX_IMAGEN_BYTES, reconocer_imagen
@@ -225,6 +225,8 @@ def crear_router(
             rec = await asyncio.to_thread(documentos.recorte_de_leccion, lec)
             if rec:
                 j["recorte"] = rec
+                # Las frases de los datos, escritas con las palabras exactas del PDF (ver documentos.py)
+                ajustar_datos(j, rec.get("palabras") or [])
         return j
 
     @r.get("/preparacion")

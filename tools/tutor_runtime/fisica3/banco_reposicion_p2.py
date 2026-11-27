@@ -138,6 +138,8 @@ def rp_24i_2() -> Leccion:
             "en lugar de la expresión diferencial de la mitad rectangular ρg(H − y)(L/2) dy."
         ),
         claves=["fuerza hidrostática", "integral", "compuerta parabólica", "presión manométrica", "reposición"],
+        visual={"tipo": "pared", "forma": "mixta", "H": 4.0, "rect": 1.0, "k": 2.0,
+                "titulo": "Compuerta: mitad rectángulo (1,00 m) y mitad parábola y = 2x²"},
     )
 
     L.paso("Planteo con presión hidrostática y franjas horizontales")\
@@ -160,16 +162,29 @@ def rp_24i_2() -> Leccion:
             R(r"dF_{\text{parab}}=\rho g(H-y)\sqrt{\frac{y}{2}}\,dy"))
 
     L.paso("C) Fuerza en la mitad rectangular")\
-        .di("Integramos el diferencial rectangular desde ye igual cero hasta cuatro metros usando la casilla de fuerza hidrostática de la hoja.",
+        .di("Sumamos las franjas desde ye igual cero hasta cuatro metros. Ro, ge y ele medios no cambian de franja a franja: salen de la integral.",
             F(r"F_\perp=\int p\,dA"),
-            M(r"F_{\text{rect}}=\rho g\frac{L}{2}\int_0^H (H-y)\,dy=\rho g\frac{L}{2}\frac{H^2}{2}"),
+            M(r"F_{\text{rect}}=\int_0^H \rho g(H-y)\frac{L}{2}\,dy=\rho g\frac{L}{2}\int_0^H (H-y)\,dy"))\
+        .di("Integramos cada parte: hache es un número fijo y da hache por ye; ye da ye al cuadrado entre dos.",
+            M(r"\int (H-y)\,dy=H\,y-\frac{y^2}{2}"),
+            M(r"\left[H\,y-\frac{y^2}{2}\right]_0^H=\left(H^2-\frac{H^2}{2}\right)-0=\frac{H^2}{2}"))\
+        .di("Ahora sustituimos los números.",
             M(rf"F_{{\text{{rect}}}}=(1000)(9{{,}}80)(1{{,}}00)\frac{{4{{,}}00^2}}{{2}}={tex(f_rect, 4)}\ \text{{N}}"))
 
-    L.paso("C) Fuerza en la mitad parabólica y total")\
-        .di("Escribimos la raíz de ye como potencia un medio, distribuimos H menos ye e integramos término a término de cero a cuatro.",
-            M(r"F_{\text{parab}}=\frac{\rho g}{\sqrt{2}}\int_0^4 \left(4y^{1/2}-y^{3/2}\right)dy"),
-            M(r"F_{\text{parab}}=\frac{\rho g}{\sqrt{2}}\left[\frac{8}{3}y^{3/2}-\frac{2}{5}y^{5/2}\right]_0^4"),
-            M(rf"F_{{\text{{parab}}}}=\frac{{9800}}{{\sqrt{{2}}}}\left(\frac{{64}}{{3}}-\frac{{64}}{{5}}\right)={tex(f_parab, 4)}\ \text{{N}}"))\
+    L.paso("C) Fuerza en la mitad parabólica")\
+        .di("Escribimos la raíz como potencia un medio. La raíz de dos no cambia: sale afuera.",
+            M(r"\sqrt{\frac{y}{2}}=\frac{y^{1/2}}{\sqrt{2}}"),
+            M(r"F_{\text{parab}}=\frac{\rho g}{\sqrt{2}}\int_0^4 (4-y)\,y^{1/2}\,dy"))\
+        .di("Multiplicamos: ye por ye a la un medio suma exponentes, uno más un medio es tres medios.",
+            M(r"(4-y)\,y^{1/2}=4\,y^{1/2}-y^{3/2}"),
+            M(r"\int 4\,y^{1/2}\,dy=4\,\frac{y^{3/2}}{3/2}=\frac{8}{3}\,y^{3/2}"),
+            M(r"\int y^{3/2}\,dy=\frac{y^{5/2}}{5/2}=\frac{2}{5}\,y^{5/2}"))\
+        .di("Evaluamos en cuatro: la raíz de cuatro es dos, dos al cubo es ocho y dos a la quinta es treinta y dos. En cero todo vale cero.",
+            M(r"\frac{8}{3}(4)^{3/2}=\frac{8}{3}(8)=\frac{64}{3}"),
+            M(r"\frac{2}{5}(4)^{5/2}=\frac{2}{5}(32)=\frac{64}{5}"),
+            M(rf"F_{{\text{{parab}}}}=\frac{{9800}}{{\sqrt{{2}}}}\left(\frac{{64}}{{3}}-\frac{{64}}{{5}}\right)={tex(f_parab, 4)}\ \text{{N}}"))
+
+    L.paso("C) Fuerza total sobre la compuerta")\
         .di("Sumamos las dos mitades para obtener la fuerza hidrostática total sobre la compuerta.",
             M(rf"F_{{\text{{total}}}}=F_{{\text{{rect}}}}+F_{{\text{{parab}}}}={tex(f_rect, 4)}+{tex(f_parab, 4)}={tex(f_tot, 4)}\ \text{{N}}"),
             R(r"F_{\text{total}}=1{,}38\times 10^5\ \text{N}"))
@@ -286,6 +301,8 @@ def rp_25ii_2() -> Leccion:
             "C) la rapidez $v_1$ y el caudal en $D_1$."
         ),
         claves=["represa trapezoidal", "integral hidrostática", "Bernoulli", "continuidad", "reposición"],
+        visual={"tipo": "pared", "forma": "trapecio", "H": 50.0, "ancho_sup": 45.0, "ancho_inf": 30.0,
+                "titulo": "Represa: 45 m arriba, 30 m abajo, 50 m de agua"},
     )
 
     L.paso("A) Ancho lineal de la pared trapezoidal")\
@@ -297,12 +314,24 @@ def rp_25ii_2() -> Leccion:
         .di("El ancho baja linealmente de cuarenta y cinco metros arriba a treinta metros en el fondo, quince metros en cincuenta metros de bajada.",
             M(r"L(h)=45{,}0-\frac{45{,}0-30{,}0}{50{,}0}\,h=45{,}0-0{,}30\,h"))
 
-    L.paso("A) Integral de la fuerza hidrostática neta")\
-        .di("Sustituimos el área de cada franja horizontal en la integral de fuerza de la hoja y evaluamos de cero a cincuenta metros.",
+    L.paso("A) La fuerza de una franja")\
+        .di("Cada franja horizontal a profundidad hache tiene ancho ele de hache y alto de hache. Su fuerza es la presión por su área.",
+            F(r"p=\frac{dF_\perp}{dA}"),
+            M(r"dA=L(h)\,dh=(45{,}0-0{,}30\,h)\,dh"),
+            M(r"dF=\rho g h\,(45{,}0-0{,}30\,h)\,dh"))\
+        .di("Multiplicamos hache por el paréntesis para que queden potencias sueltas.",
+            M(r"h\,(45{,}0-0{,}30\,h)=45{,}0\,h-0{,}30\,h^2"))
+
+    L.paso("A) Sumar las franjas: la integral")\
+        .di("Sumamos de la superficie hasta el fondo. Ro y ge salen afuera, y cada potencia se integra con la regla.",
             F(r"F_\perp=\int p\,dA"),
-            M(r"F_{\text{neta}}=\int_0^{50} \rho gh\,(45-0{,}3h)\,dh=\rho g\left[\frac{45}{2}h^2-\frac{0{,}3}{3}h^3\right]_0^{50}"),
-            M(r"F_{\text{neta}}=(1000)(9{,}80)\left[22{,}5(50)^2-0{,}1(50)^3\right]"),
-            M(rf"F_{{\text{{neta}}}}=(9800)(56\,250-12\,500)={tex(f_neta, 4)}\ \text{{N}}"),
+            M(r"F_{\text{neta}}=\rho g\int_0^{50}\left(45{,}0\,h-0{,}30\,h^2\right)dh"),
+            M(r"\int 45{,}0\,h\,dh=45{,}0\,\frac{h^2}{2}=22{,}5\,h^2"),
+            M(r"\int 0{,}30\,h^2\,dh=0{,}30\,\frac{h^3}{3}=0{,}10\,h^3"))\
+        .di("Arriba menos abajo: en cincuenta, y en cero todo vale cero.",
+            M(r"22{,}5\,(50)^2=56\,250"),
+            M(r"0{,}10\,(50)^3=12\,500"),
+            M(rf"F_{{\text{{neta}}}}=(1000)(9{{,}}80)(56\,250-12\,500)={tex(f_neta, 4)}\ \text{{N}}"),
             R(r"F_{\text{neta}}=4{,}288\times 10^8\ \text{N}=428{,}75\ \text{MN}"))
 
     L.paso("B) Rapidez de salida v2 por Bernoulli")\

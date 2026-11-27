@@ -13,6 +13,19 @@ import { ajustes, bus, guardarAjuste, pedir } from '../nucleo/api.js';
 import { banco, estaHecha, nombreTema } from './banco.js';
 
 const CLAVE_PREP = 'tutor.preparacion.atencion.v1';
+// 'repo26' es el plan por días de la Reposición II-2026 (fisica3/reposicion_ii_2026.py)
+const TABS = ['repo26', 'extraordinario', 'radar', 'reposicion'];
+
+/** Nombre del tipo de ejercicio para las etiquetas. */
+function tipoTexto(t) {
+  return t === 'seleccion' ? 'Selección' : t === 'teoria' ? 'Teoría' : 'Desarrollo';
+}
+
+/** Fecha local de hoy en formato AAAA-MM-DD (para marcar el día del calendario). */
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 const ICO = {
   play: 'M8 5v14l11-7L8 5Z',
@@ -27,11 +40,11 @@ function svg(d) {
 }
 
 function cargarEstado() {
-  const base = { tab: 'extraordinario', sprintMin: 10, filtroEx: '', filtroPilar: 0, filtroRadar: 'todos', soloPend: false, calOk: {} };
+  const base = { tab: 'repo26', sprintMin: 10, filtroEx: '', filtroPilar: 0, filtroRadar: 'todos', soloPend: false, calOk: {} };
   try {
     const raw = JSON.parse(localStorage.getItem(CLAVE_PREP) || '{}');
     if (raw && typeof raw === 'object') {
-      if (['extraordinario', 'radar', 'reposicion'].includes(raw.tab)) base.tab = raw.tab;
+      if (TABS.includes(raw.tab)) base.tab = raw.tab;
       if ([0, 10, 15].includes(raw.sprintMin)) base.sprintMin = raw.sprintMin;
       if (typeof raw.filtroEx === 'string') base.filtroEx = raw.filtroEx;
       if ([0, 1, 2, 3].includes(raw.filtroPilar)) base.filtroPilar = raw.filtroPilar;
@@ -114,7 +127,7 @@ export class PreparacionExamenes {
   }
 
   async abrir({ tab = null } = {}) {
-    if (['extraordinario', 'radar', 'reposicion'].includes(tab)) {
+    if (TABS.includes(tab)) {
       if (this.st.tab !== tab) {
         this.st.filtroEx = '';
         this.st.filtroPilar = 0;
@@ -156,11 +169,13 @@ export class PreparacionExamenes {
     } catch {
       return { error: true };
     }
-    const mod = plan === 'reposicion'
-      ? this.datos.reposicion
-      : plan === 'radar'
-        ? this.datos.radar_ii_2026
-        : this.datos.extraordinario;
+    const mod = plan === 'repo26'
+      ? this.datos.reposicion_ii_2026
+      : plan === 'reposicion'
+        ? this.datos.reposicion
+        : plan === 'radar'
+          ? this.datos.radar_ii_2026
+          : this.datos.extraordinario;
     if (!mod) return { error: true };
     const todos = this._todosItems(mod);
     const it = this._siguientePendiente(mod);
@@ -179,10 +194,12 @@ export class PreparacionExamenes {
    */
   siguienteTras(id) {
     if (!this.datos) return null;
+    const r26 = this.datos.reposicion_ii_2026;
     const ordenMods = {
-      radar: [this.datos.radar_ii_2026, this.datos.extraordinario, this.datos.reposicion],
-      reposicion: [this.datos.reposicion, this.datos.radar_ii_2026, this.datos.extraordinario],
-      extraordinario: [this.datos.extraordinario, this.datos.radar_ii_2026, this.datos.reposicion],
+      repo26: [r26, this.datos.reposicion, this.datos.radar_ii_2026, this.datos.extraordinario],
+      radar: [this.datos.radar_ii_2026, this.datos.extraordinario, this.datos.reposicion, r26],
+      reposicion: [this.datos.reposicion, r26, this.datos.radar_ii_2026, this.datos.extraordinario],
+      extraordinario: [this.datos.extraordinario, this.datos.radar_ii_2026, this.datos.reposicion, r26],
     };
     const mods = ordenMods[this.st.tab] || ordenMods.extraordinario;
     const pendiente = (x) => x.id !== id && !estaHecha(x.id);
@@ -297,6 +314,7 @@ export class PreparacionExamenes {
   /* ---------------------------------------------------------------- helpers de datos */
 
   _moduloActivo() {
+    if (this.st.tab === 'repo26' && this.datos.reposicion_ii_2026) return this.datos.reposicion_ii_2026;
     if (this.st.tab === 'reposicion') return this.datos.reposicion;
     if (this.st.tab === 'radar' && this.datos.radar_ii_2026) return this.datos.radar_ii_2026;
     return this.datos.extraordinario;
@@ -338,6 +356,8 @@ export class PreparacionExamenes {
     const mod = this._moduloActivo();
     const esRepos = this.st.tab === 'reposicion';
     const esRadar = this.st.tab === 'radar';
+    const esRepo26 = this.st.tab === 'repo26';
+    const hoy = hoyISO();
     const todos = this._todosItems(mod);
     const hechos = todos.filter((x) => estaHecha(x.id)).length;
     const total = todos.length;
@@ -355,9 +375,11 @@ export class PreparacionExamenes {
     seg.className = 'seg est-modos';
     seg.setAttribute('role', 'tablist');
     seg.setAttribute('aria-label', 'Módulo de preparación');
-    const pestanas = [
-      ['extraordinario', `Extraordinario (${this.datos.extraordinario.total_activos})`],
-    ];
+    const pestanas = [];
+    if (this.datos.reposicion_ii_2026) {
+      pestanas.push(['repo26', `Reposición II-2026 (${this.datos.reposicion_ii_2026.total})`]);
+    }
+    pestanas.push(['extraordinario', `Extraordinario (${this.datos.extraordinario.total_activos})`]);
     if (this.datos.radar_ii_2026) {
       pestanas.push(['radar', `Radar Cartago (${this.datos.radar_ii_2026.total})`]);
     }
@@ -453,6 +475,12 @@ export class PreparacionExamenes {
     // 2. Tarjeta única protagonista: "Tu siguiente paso ahora"
     wrap.appendChild(this._construirHero(mod, siguiente, hechos, total));
 
+    // 2a. Reposición II-2026: qué viene en el examen y las recetas fijas (plegados)
+    if (esRepo26 && mod.prediccion) {
+      wrap.appendChild(this._construirPrediccion(mod.prediccion));
+      wrap.appendChild(this._construirRecetas(mod.prediccion));
+    }
+
     // 2b. Protocolo anti-bloqueo de 30 s (solo en Radar Cartago Extremo, colapsado por defecto)
     if (esRadar && Array.isArray(mod.protocolo_30s) && mod.protocolo_30s.length) {
       wrap.appendChild(this._construirProtocolo30s(mod));
@@ -487,13 +515,21 @@ export class PreparacionExamenes {
     const fil = document.createElement('div');
     fil.className = 'filtros prep-filtros';
 
-    if (esRepos) {
-      const pilares = [
-        [0, `Todos (${mod.total})`],
-        [1, 'Parcial 1 · Ondas (7)'],
-        [2, 'Parcial 2 · Fluidos (7)'],
-        [3, 'Parcial 3 · Termo ≤ 20.5 (8)'],
-      ];
+    if (esRepos || esRepo26) {
+      const nP = (p) => todos.filter((x) => x.parcial === p).length;
+      const pilares = esRepo26
+        ? [
+          [0, `Todos (${mod.total})`],
+          [1, `Parcial 1 · MAS y ondas (${nP(1)})`],
+          [2, `Parcial 2 · Fluidos (${nP(2)})`],
+          [3, `Parcial 3 · Termo (${nP(3)})`],
+        ]
+        : [
+          [0, `Todos (${mod.total})`],
+          [1, 'Parcial 1 · Ondas (7)'],
+          [2, 'Parcial 2 · Fluidos (7)'],
+          [3, 'Parcial 3 · Termo ≤ 20.5 (8)'],
+        ];
       for (const [pnum, lbl] of pilares) {
         const bp = document.createElement('button');
         bp.type = 'button';
@@ -575,15 +611,18 @@ export class PreparacionExamenes {
       if (esRadar && this.st.filtroRadar !== 'todos' && blk.categoria !== this.st.filtroRadar) return;
       const items = blk.items.filter((it) => {
         if (this.st.filtroEx && it.examen !== this.st.filtroEx) return false;
+        if (esRepo26 && this.st.filtroPilar && it.parcial !== this.st.filtroPilar) return false;
         if (this.st.soloPend && estaHecha(it.id)) return false;
         return true;
       });
-      if (!items.length) return;
+      const pendientes = esRepo26 && !hayFiltro ? (blk.pendientes || []) : [];
+      if (!items.length && !pendientes.length) return;
       bloquesVisibles += 1;
+      const esHoy = esRepo26 && blk.fecha === hoy;
 
       const det = document.createElement('details');
       det.className = 'est-det prep-bloque';
-      if (hayFiltro || idx === bloqueActivoIdx) det.open = true;
+      if (hayFiltro || idx === bloqueActivoIdx || esHoy) det.open = true;
 
       const sum = document.createElement('summary');
       sum.className = 'prep-bloque-sum';
@@ -593,8 +632,17 @@ export class PreparacionExamenes {
       sumTxt.textContent = blk.titulo;
       const sumMeta = document.createElement('span');
       sumMeta.className = 'prep-bloque-meta';
-      sumMeta.textContent = `${nHech}/${blk.items.length} · ~${blk.minutos} min`;
-      sum.append(sumTxt, sumMeta);
+      sumMeta.textContent = blk.simulacro
+        ? `${nHech}/${blk.items.length} · 2 h 30 min`
+        : `${nHech}/${blk.items.length} · ~${blk.minutos} min`;
+      sum.append(sumTxt);
+      if (esHoy || blk.simulacro) {
+        const bDia = document.createElement('span');
+        bDia.className = `prep-badge ${esHoy ? 'prep-hoy' : 'prep-ext'}`;
+        bDia.textContent = esHoy ? 'Hoy' : 'Simulacro';
+        sum.appendChild(bDia);
+      }
+      sum.appendChild(sumMeta);
       det.appendChild(sum);
 
       const cuerpo = document.createElement('div');
@@ -623,7 +671,7 @@ export class PreparacionExamenes {
         const est = document.createElement('span');
         est.className = 'prep-item-est';
         est.innerHTML = hecha ? svg(ICO.check) : '';
-        if (!hecha) est.textContent = `P${it.num}`;
+        if (!hecha) est.textContent = it.tipo === 'teoria' ? 'T' : `P${it.num}`;
 
         const mid = document.createElement('span');
         mid.className = 'prep-item-mid';
@@ -637,7 +685,7 @@ export class PreparacionExamenes {
         bEx.className = 'prep-badge';
         bEx.textContent = `${it.examen} · ${it.id}`;
         tags.appendChild(bEx);
-        if (esRepos) {
+        if (esRepos || esRepo26) {
           const bP = document.createElement('span');
           bP.className = `prep-badge prep-p${it.parcial}`;
           bP.textContent = `Parcial ${it.parcial}`;
@@ -650,7 +698,7 @@ export class PreparacionExamenes {
         }
         const bTipo = document.createElement('span');
         bTipo.className = 'prep-badge';
-        bTipo.textContent = it.tipo === 'seleccion' ? 'Selección' : 'Desarrollo';
+        bTipo.textContent = tipoTexto(it.tipo);
         tags.appendChild(bTipo);
         if (it.inciso_omitido) {
           const bC = document.createElement('span');
@@ -674,6 +722,14 @@ export class PreparacionExamenes {
         ul.appendChild(li);
       }
       cuerpo.appendChild(ul);
+      if (pendientes.length) {
+        const pp = document.createElement('p');
+        pp.className = 'prep-bloque-sub';
+        pp.textContent = pendientes.length === 1
+          ? 'Hay 1 ejercicio más de este día en preparación; aparece aquí solo cuando esté listo.'
+          : `Hay ${pendientes.length} ejercicios más de este día en preparación; aparecen aquí solos cuando estén listos.`;
+        cuerpo.appendChild(pp);
+      }
       det.appendChild(cuerpo);
       secBloques.appendChild(det);
     });
@@ -686,8 +742,10 @@ export class PreparacionExamenes {
     }
     wrap.appendChild(secBloques);
 
-    // 6. Transparencia de corte ≤ 20.5 (y 19 casillas vírgenes en Radar)
-    wrap.appendChild(this._construirTransparencia(mod, esRepos, esRadar));
+    // 6. Transparencia de corte ≤ 20.5 (y 19 casillas vírgenes en Radar; casillas nuevas en Reposición II-2026)
+    wrap.appendChild(esRepo26 && mod.prediccion
+      ? this._construirNuevas(mod.prediccion)
+      : this._construirTransparencia(mod, esRepos, esRadar));
 
     this.el.replaceChildren(wrap);
   }
@@ -739,9 +797,12 @@ export class PreparacionExamenes {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'btn btn-principal';
-      b.textContent = this.st.tab === 'extraordinario' ? 'Ir a Reposición (3 Parciales)' : 'Ir a Extraordinario ≤ 20.5';
+      const destino = this.st.tab === 'repo26' ? 'reposicion' : this.st.tab === 'extraordinario' ? 'reposicion' : 'extraordinario';
+      b.textContent = this.st.tab === 'repo26'
+        ? 'Repasar las reposiciones de semestres anteriores'
+        : this.st.tab === 'extraordinario' ? 'Ir a Reposición (3 Parciales)' : 'Ir a Extraordinario ≤ 20.5';
       b.addEventListener('click', () => {
-        this.st.tab = this.st.tab === 'extraordinario' ? 'reposicion' : 'extraordinario';
+        this.st.tab = destino;
         guardarEstado(this.st);
         this.pintar();
       });
@@ -756,10 +817,10 @@ export class PreparacionExamenes {
     lbl.textContent = it._enCurso ? 'Retoma donde quedaste' : 'Tu siguiente paso ahora';
     const bEx = document.createElement('span');
     bEx.className = 'prep-badge';
-    bEx.textContent = `${it.examen} · P${it.num} · ${it.id}`;
+    bEx.textContent = it.tipo === 'teoria' ? `Teoría · ${it.id}` : `${it.examen} · P${it.num} · ${it.id}`;
     const bMin = document.createElement('span');
     bMin.className = 'prep-badge';
-    bMin.textContent = `~${it.minutos} min · ${it.tipo === 'seleccion' ? 'Selección' : 'Desarrollo'}`;
+    bMin.textContent = `~${it.minutos} min · ${tipoTexto(it.tipo)}`;
     eye.append(lbl, bEx, bMin);
     if (it.parcial !== 3) {
       const bP = document.createElement('span');
@@ -867,6 +928,151 @@ export class PreparacionExamenes {
     acc.append(bStart, bVerBloques);
     hero.appendChild(acc);
     return hero;
+  }
+
+  /** «Qué viene en el examen»: formato probable, tipos que más se repiten y estado de la hoja. */
+  _construirPrediccion(pred) {
+    const det = document.createElement('details');
+    det.className = 'est-det prep-excl';
+    const f = pred.formato || {};
+    const sum = document.createElement('summary');
+    sum.textContent = `Qué viene en el examen · ${f.puntos || 52} puntos en 2 h 30 min · 6 selecciones y 3 desarrollos`;
+    det.appendChild(sum);
+
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'est-det-cuerpo';
+    const p0 = document.createElement('p');
+    p0.className = 'prep-excl-sub';
+    p0.textContent = f.titulo || '';
+    cuerpo.appendChild(p0);
+    const ul = document.createElement('ul');
+    ul.className = 'prep-excl-lista';
+    for (const parte of f.partes || []) {
+      const li = document.createElement('li');
+      const st = document.createElement('strong');
+      st.textContent = `${parte.nombre} (${parte.puntos} pts)`;
+      const sp = document.createElement('span');
+      ponerTextoMate(sp, ` — ${parte.detalle}`);
+      li.append(st, sp);
+      ul.appendChild(li);
+    }
+    if (f.otra_posibilidad) {
+      const li = document.createElement('li');
+      ponerTextoMate(li, `Otra posibilidad: ${f.otra_posibilidad}`);
+      ul.appendChild(li);
+    }
+    cuerpo.appendChild(ul);
+
+    const p1 = document.createElement('p');
+    p1.className = 'prep-excl-sub';
+    const nRep = ((pred.arquetipos || [])[0] || {}).de || 5;
+    p1.textContent = `Cuántas de las ${nRep} reposiciones con preguntas trajeron cada tipo de problema:`;
+    cuerpo.appendChild(p1);
+    const ul2 = document.createElement('ul');
+    ul2.className = 'prep-excl-lista';
+    for (const a of pred.arquetipos || []) {
+      const li = document.createElement('li');
+      const st = document.createElement('strong');
+      st.textContent = `${a.veces} de ${a.de}`;
+      const sp = document.createElement('span');
+      ponerTextoMate(sp, ` · Parcial ${a.parcial} · ${a.nombre}`);
+      li.append(st, sp);
+      ul2.appendChild(li);
+    }
+    cuerpo.appendChild(ul2);
+
+    if (pred.hoja) {
+      const p2 = document.createElement('p');
+      p2.className = 'prep-excl-sub';
+      p2.textContent = `Formulario: ${pred.hoja.estado} ${pred.hoja.prediccion}`;
+      cuerpo.appendChild(p2);
+    }
+    const ul3 = document.createElement('ul');
+    ul3.className = 'prep-excl-lista';
+    for (const r of pred.reglas || []) {
+      const li = document.createElement('li');
+      ponerTextoMate(li, r);
+      ul3.appendChild(li);
+    }
+    cuerpo.appendChild(ul3);
+    det.appendChild(cuerpo);
+    return det;
+  }
+
+  /** Recetas fijas por tipo de problema: qué escribir primero, renglón por renglón. */
+  _construirRecetas(pred) {
+    const det = document.createElement('details');
+    det.className = 'est-det prep-excl prep-proto';
+    const sum = document.createElement('summary');
+    sum.textContent = 'Recetas: qué escribir primero en cada tipo de problema';
+    det.appendChild(sum);
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'est-det-cuerpo prep-proto-grid';
+    for (const r of pred.recetas || []) {
+      const card = document.createElement('div');
+      card.className = 'prep-proto-card';
+      const cab = document.createElement('div');
+      cab.className = 'prep-proto-cab';
+      const tit = document.createElement('strong');
+      tit.textContent = r.titulo;
+      const cels = document.createElement('span');
+      cels.className = 'prep-proto-cels';
+      cels.textContent = (r.casillas || []).join(' · ');
+      cab.append(tit, cels);
+      const ol = document.createElement('ol');
+      ol.className = 'prep-proto-pasos';
+      for (const paso of r.pasos || []) {
+        const li = document.createElement('li');
+        ponerTextoMate(li, paso);
+        ol.appendChild(li);
+      }
+      card.append(cab, ol);
+      cuerpo.appendChild(card);
+    }
+    det.appendChild(cuerpo);
+    return det;
+  }
+
+  /** Casillas nuevas del II-2026 y lo que quedó fuera de la hoja. */
+  _construirNuevas(pred) {
+    const det = document.createElement('details');
+    det.className = 'est-det prep-excl';
+    const sum = document.createElement('summary');
+    const n = (pred.casillas_nuevas || []).length;
+    sum.textContent = `Casillas nuevas del II-2026 (${n}) y lo que ya no entra`;
+    det.appendChild(sum);
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'est-det-cuerpo';
+    const p0 = document.createElement('p');
+    p0.className = 'prep-excl-sub';
+    p0.textContent = 'Nunca estuvieron en una hoja de reposición. Son candidatas fuertes para las selecciones:';
+    cuerpo.appendChild(p0);
+    const ul = document.createElement('ul');
+    ul.className = 'prep-excl-lista';
+    for (const c of [...(pred.casillas_nuevas || []), ...(pred.casillas_que_vuelven || [])]) {
+      const li = document.createElement('li');
+      const st = document.createElement('strong');
+      st.textContent = `${c.id} · ${c.tex}`;
+      const sp = document.createElement('span');
+      ponerTextoMate(sp, ` — ${c.salio_en}`);
+      li.append(st, sp);
+      ul.appendChild(li);
+    }
+    cuerpo.appendChild(ul);
+    const p1 = document.createElement('p');
+    p1.className = 'prep-excl-sub';
+    p1.textContent = 'Ya no está en la hoja, así que no se pregunta:';
+    cuerpo.appendChild(p1);
+    const ul2 = document.createElement('ul');
+    ul2.className = 'prep-excl-lista';
+    for (const t of pred.fuera || []) {
+      const li = document.createElement('li');
+      ponerTextoMate(li, t);
+      ul2.appendChild(li);
+    }
+    cuerpo.appendChild(ul2);
+    det.appendChild(cuerpo);
+    return det;
   }
 
   _construirTransparencia(mod, esRepos, esRadar = false) {

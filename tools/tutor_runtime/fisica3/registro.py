@@ -31,7 +31,12 @@ MODULOS = [
     "banco_ordinario_ii_2026",
     "banco_reposicion_p1",
     "banco_reposicion_p2",
+    # Reposición II-2026: parciales del semestre (fluidos) con la misma hoja que traerá la reposición
+    "banco_parciales_ii_2026_p2",
+    "banco_parciales_ii_2026_p1",
+    "banco_suficiencia_26i",
     "teoria",
+    "teoria_integrales",
 ]
 
 
@@ -93,9 +98,11 @@ def obtener(id: str) -> Leccion:
                 raise RuntimeError(f"La lección {clave} se llama {lec.id}")
             # Preguntas conceptuales razonadas desde la hoja (conceptos.py) y ninguna cuenta de varias
             # operaciones en un solo renglón (desglose.py)
-            from . import conceptos, desglose
+            from . import conceptos, desglose, explicaciones_reposicion
             conceptos.aplicar(lec)
             desglose.aplicar(lec)
+            # Plan «Reposición II-2026»: paso «Datos» con cada dato subrayado y el «¿Por qué?» de cada paso
+            explicaciones_reposicion.aplicar(lec)
             _CACHE[clave] = lec
         return _CACHE[clave]
 
