@@ -256,7 +256,7 @@ bool TutorSidecarBridge::StartWithSnapshot(
         }
         DWORD exitCode = 0;
         if (GetExitCodeProcess(pi.hProcess, &exitCode) && exitCode != STILL_ACTIVE) {
-            readyErr = "El proceso Python Tutor Runtime termin\xC3\xB3 prematuramente (exit=" + std::to_string(exitCode) + ").";
+            readyErr = "El motor del tutor se cerr\xC3\xB3 al arrancar (c\xC3\xB3" "digo " + std::to_string(exitCode) + "). Cierre esta ventana y vuelva a abrir la Pizarra.";
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
@@ -268,7 +268,9 @@ bool TutorSidecarBridge::StartWithSnapshot(
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
         if (hJob) CloseHandle(hJob);
-        const std::string msg = readyErr.empty() ? "Timeout esperando arranque del Tutor Runtime." : readyErr;
+        const std::string msg = readyErr.empty()
+            ? "El tutor tard\xC3\xB3 demasiado en arrancar. Cierre esta ventana y vuelva a abrir la Pizarra."
+            : readyErr;
         if (outErr) *outErr = msg;
         std::lock_guard<std::mutex> lk(impl_->mtx);
         impl_->endpoint.lastErrorUtf8 = msg;

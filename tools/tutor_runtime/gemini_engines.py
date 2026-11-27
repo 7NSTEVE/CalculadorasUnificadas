@@ -21,8 +21,56 @@ import uuid
 import wave
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
-from google import genai
-from google.genai import types
+
+class _ModuloPerezoso:
+    """Importa un módulo pesado la primera vez que se usa uno de sus nombres.
+
+    `google-genai` tarda varios segundos en importarse (arrastra requests, httpx, mcp…) y el tutor
+    solo lo necesita al llamar a Gemini. Importarlo al arrancar hacía que CuadernU se rindiera
+    esperando el motor ("Timeout esperando arranque del Tutor Runtime").
+    """
+
+    def __init__(self, nombre: str) -> None:
+        self.__dict__["_nombre"] = nombre
+        self.__dict__["_modulo"] = None
+
+    def __getattr__(self, atributo: str):
+        if atributo.startswith("__"):
+            raise AttributeError(atributo)
+        modulo = self.__dict__.get("_modulo")
+        if modulo is None:
+            import importlib
+
+            modulo = importlib.import_module(self.__dict__["_nombre"])
+            self.__dict__["_modulo"] = modulo
+        return getattr(modulo, atributo)
+
+
+genai = _ModuloPerezoso("google.genai")
+types = _ModuloPerezoso("google.genai.types")
+
+_SIN_CREAR = object()
+
+
+class _ClienteGeminiPerezoso:
+    """Atributo `_client` que crea `genai.Client` la primera vez que se usa, no al construir.
+
+    Con una clave guardada, crear los clientes al arrancar importaba `google-genai` igual y
+    alargaba el arranque del motor. Sin clave vale `None`, como antes.
+    """
+
+    def __get__(self, obj, owner=None):
+        if obj is None:
+            return self
+        cliente = obj.__dict__.get("_client_creado", _SIN_CREAR)
+        if cliente is _SIN_CREAR:
+            clave = getattr(obj, "_api_key", "") or ""
+            cliente = genai.Client(api_key=clave) if clave else None
+            obj.__dict__["_client_creado"] = cliente
+        return cliente
+
+    def __set__(self, obj, valor) -> None:
+        obj.__dict__["_client_creado"] = valor
 
 from .secrets_dpapi import sanitize_text
 from .sympy_verifier import build_verified_integral_plan, verify_student_step
@@ -475,14 +523,15 @@ def normalize_gemini_voice(voice_name: Optional[str], default: str = "Kore") -> 
 class AlignedSpanishTts:
     """Synthesizes natural Latin American Spanish audio via Gemini Native TTS with exact WAV cue alignment."""
 
+    _client = _ClienteGeminiPerezoso()
+
     def __init__(self, api_key: str = "", voice: str = "Kore") -> None:
         self._api_key = (api_key or "").strip()
         self.voice = normalize_gemini_voice(voice, "Kore")
-        self._client = genai.Client(api_key=self._api_key) if self._api_key else None
 
     @property
     def configured(self) -> bool:
-        return self._client is not None
+        return bool(self._api_key)
 
     async def _synth_single_segment_wav(self, clean_text: str, chosen_voice: str) -> Tuple[bytes, int, str]:
         """Synthesize one text segment to WAV via Gemini Native TTS failover chain."""
@@ -806,14 +855,15 @@ def _try_extract_integral_from_text(text: str) -> Optional[Dict[str, Any]]:
 class GeminiVisualDirector:
     """Fast cloud multimodal director generating SymPy-grounded cuadernu.tutor.v1.1 beats."""
 
+    _client = _ClienteGeminiPerezoso()
+
     def __init__(self, api_key: str, primary_model: str = VISUAL_MODEL_DEFAULT) -> None:
         self._api_key = (api_key or "").strip()
         self.primary_model = normalizar_modelo_visual(primary_model)
-        self._client = genai.Client(api_key=self._api_key) if self._api_key else None
 
     @property
     def configured(self) -> bool:
-        return self._client is not None
+        return bool(self._api_key)
 
     async def generate_beat(
         self,
@@ -1021,6 +1071,8 @@ class GeminiVisualDirector:
 class GeminiLiveVoiceBridge:
     """Real-time full-duplex Gemini 3.8 Live voice tutor with NON_BLOCKING whiteboard tools and native barge-in."""
 
+    _client = _ClienteGeminiPerezoso()
+
     def __init__(
         self,
         api_key: str,
@@ -1034,7 +1086,6 @@ class GeminiLiveVoiceBridge:
         self._on_pcm_out = on_pcm_out
         self._on_event_out = on_event_out
         self._on_tool_beat = on_tool_beat
-        self._client = genai.Client(api_key=self._api_key) if self._api_key else None
         self._session: Any = None
         self._ctx_mgr: Any = None
         self._recv_task: Optional[asyncio.Task[Any]] = None

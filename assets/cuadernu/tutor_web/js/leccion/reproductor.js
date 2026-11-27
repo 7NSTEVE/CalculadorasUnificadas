@@ -298,8 +298,8 @@ export class Reproductor {
     }
     this.vistas.length = Math.min(this.vistas.length, i);
     if (i === 0 && this.enun) { this.enun.reiniciarOpciones(); this.lateral.quitarDatos(); }
-    if (i === 0 && this.lec.recorte) this.lateral.ver('enunciado');
-    else if (i === 1 && this.lateral.visual) this.lateral.ver('visual');
+    // El enunciado ya está en la pizarra: el panel no se cambia solo a «Enunciado» (se vería dos veces)
+    if (i === 1 && this.lateral.visual) this.lateral.ver('visual');
     for (let k = this.vistas.length; k < i; k += 1) this._pintarCompleto(k);
 
     this.i = i;
@@ -358,6 +358,9 @@ export class Reproductor {
       return;
     }
     if (gen !== this.gen) return;
+    // Si se pausó y luego se pidió otro paso (Siguiente, Repetir, un punto de progreso), el visual
+    // también vuelve a moverse: antes se quedaba congelado hasta pulsar «Continuar»
+    if (this.lateral.visual) this.lateral.visual.seguir();
     this._estado('hablando');
     bus.emit('voz:motor', voz.tipo);
     this._antes = performance.now();

@@ -149,6 +149,10 @@ const POR_DEFECTO = {
   zoom: 1, autoSeguir: false, sinSaltos: true, simbolos: true,
   // Plan activo del Inicio «Hoy»: 'extraordinario', 'reposicion' o 'rutas' (las rutas del III parcial)
   plan: 'extraordinario',
+  // La lección abre en modo enfoque (la pizarra manda) y se recuerda si la persona lo apaga
+  enfoque: true,
+  // Panel de apoyo (visual, enunciado, fórmulas) junto a la pizarra en ventanas anchas
+  apoyo: true,
 };
 // Los despejes intermedios se muestran siempre por defecto. Antes venían apagados y se guardaban
 // apagados junto con cualquier otro ajuste; esta marca los enciende una sola vez (luego se respeta lo que elija).

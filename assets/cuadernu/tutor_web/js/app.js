@@ -12,7 +12,7 @@ import { Lateral } from './ui/lateral.js';
 import { Inicio } from './ui/inicio.js';
 import { Biblioteca } from './ui/biblioteca.js';
 import { EstudioFormulario } from './ui/formulario_estudio.js';
-import { PreparacionExamenes, ponerTextoMate } from './ui/preparacion.js';
+import { PreparacionExamenes } from './ui/preparacion.js';
 import { armarAjustes } from './ui/ajustes.js';
 import { banco, cargarBanco, idDeTexto, siguienteDe, textoFuente } from './ui/banco.js';
 import { ponerCierre, ponerPregunta } from './ui/cierre.js';
@@ -22,6 +22,7 @@ import { Asistente } from './ui/asistente.js';
 import { Material } from './ui/material.js';
 import { Simulacro } from './ui/simulacro.js';
 import { guardarEnCuaderno } from './ui/cuaderno.js';
+import { AyudaLeccion } from './ui/ayuda.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -33,6 +34,26 @@ const rep = new Reproductor({ tablero, lateral });
 
 let vista = 'inicio';
 
+/**
+ * Modo enfoque: encendido por defecto en cada lección y recordado (si la persona lo apaga con el
+ * botón, la tecla F o Ajustes, las siguientes lecciones abren sin él). Solo aplica en la pizarra con
+ * una lección abierta; en las preguntas libres la barra de preguntar siempre se ve.
+ */
+let enfoqueLeccion = ajustes.enfoque;
+
+function aplicarEnfoque() {
+  const si = vista === 'pizarra' && Boolean(rep.lec) && enfoqueLeccion;
+  document.body.classList.toggle('enfoque', si);
+  $('btn-enfoque').setAttribute('aria-pressed', String(si));
+  $('btn-enfoque').hidden = vista !== 'pizarra' || !rep.lec;
+}
+
+function alternarEnfoque() {
+  enfoqueLeccion = !enfoqueLeccion;
+  guardarAjuste('enfoque', enfoqueLeccion);
+  aplicarEnfoque();
+}
+
 function verVista(v) {
   vista = v;
   document.body.dataset.vista = v;
@@ -43,9 +64,9 @@ function verVista(v) {
   $('vista-pizarra').hidden = v !== 'pizarra';
   $('transporte').hidden = v !== 'pizarra' || !rep.lec;
   $('progreso').hidden = v !== 'pizarra' || !rep.lec || rep.total < 2;
+  aplicarEnfoque();
+  lateral.actualizarBoton();
   if (v !== 'pizarra') {
-    document.body.classList.remove('enfoque');
-    $('btn-enfoque').setAttribute('aria-pressed', 'false');
     $('titulo').textContent = v === 'biblioteca'
       ? 'Banco de ejercicios'
       : v === 'formulario'
@@ -56,7 +77,6 @@ function verVista(v) {
     $('subtitulo-barra').textContent = '';
     $('subtitulo').hidden = true;
   }
-  $('btn-enfoque').hidden = v !== 'pizarra';
 }
 
 function aInicio() {
@@ -77,98 +97,12 @@ function aPizarra() {
   verVista('pizarra');
 }
 
-let contextoAtencion = { meta: '', corte: '', volverA: '' };
-
-function actualizarResumenAtencion() {
-  const caja = $('resumen-atencion');
-  if (!caja || !rep.lec) return;
-  const lec = rep.lec;
-  const paso = (lec.pasos && lec.pasos[rep.i]) || null;
-  const mapa = lec.formulario_mapa || null;
-  const pasoCids = (mapa && mapa.por_paso && mapa.por_paso[rep.i]) || [];
-  const celdasPorId = new Map(((mapa && mapa.celdas) || []).map((c) => [c.id, c]));
-  const cidsMostrar = pasoCids.length ? pasoCids : ((mapa && mapa.celdas && mapa.celdas[0]) ? [mapa.celdas[0].id] : []);
-  const celdas = cidsMostrar.map((id) => celdasPorId.get(id)).filter(Boolean).slice(0, 2);
-
-  caja.replaceChildren();
-  const cab = document.createElement('div');
-  cab.className = 'atencion-res-cab';
-  const h = document.createElement('strong');
-  h.textContent = 'Retoma el hilo en 3 segundos';
-  const num = document.createElement('span');
-  num.textContent = rep.total ? `Paso ${rep.i + 1} de ${rep.total}` : '';
-  cab.append(h, num);
-  caja.appendChild(cab);
-
-  const dl = document.createElement('dl');
-  dl.className = 'atencion-res-lista';
-
-  const fila = (et, val) => {
-    const dt = document.createElement('dt');
-    dt.textContent = et;
-    const dd = document.createElement('dd');
-    ponerTextoMate(dd, val);
-    dl.append(dt, dd);
-  };
-
-  fila('1. Meta del ejercicio', contextoAtencion.meta || lec.titulo.replace(/\$([^$]*)\$/g, '$1').replace(/[\\{}]/g, ''));
-  fila('2. Dónde vas ahora', paso ? `Paso ${rep.i + 1} de ${rep.total}: ${paso.titulo}` : 'Inicio del problema');
-
-  const dt3 = document.createElement('dt');
-  dt3.textContent = '3. Fórmula base activa';
-  const dd3 = document.createElement('dd');
-  dd3.className = 'atencion-res-celdas';
-  if (celdas.length) {
-    for (const c of celdas) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = `atencion-res-celda form-c-${c.color}`;
-      b.textContent = `${c.id} · ${c.nombre}`;
-      b.addEventListener('click', () => {
-        caja.hidePopover?.();
-        lateral.enfocarFormulario(c.id);
-      });
-      dd3.appendChild(b);
-    }
-  } else {
-    dd3.textContent = 'Razonamiento paso a paso en la pizarra';
-  }
-  dl.append(dt3, dd3);
-  caja.appendChild(dl);
-
-  if (lec.inciso_omitido) {
-    const nota = document.createElement('p');
-    nota.className = 'atencion-res-corte';
-    nota.textContent = `Corte ≤ 20.5: ${lec.inciso_omitido}`;
-    caja.appendChild(nota);
-  }
-
-  const pie = document.createElement('div');
-  pie.className = 'atencion-res-pie';
-  const bSeg = document.createElement('button');
-  bSeg.type = 'button';
-  bSeg.className = 'btn btn-principal';
-  bSeg.textContent = 'Seguir desde aquí';
-  bSeg.addEventListener('click', () => caja.hidePopover?.());
-  pie.appendChild(bSeg);
-
-  if (contextoAtencion.volverA === 'preparacion') {
-    const bVol = document.createElement('button');
-    bVol.type = 'button';
-    bVol.className = 'btn btn-suave';
-    bVol.textContent = 'Volver a preparación';
-    bVol.addEventListener('click', () => {
-      caja.hidePopover?.();
-      acciones.preparacion();
-    });
-    pie.appendChild(bVol);
-  }
-  caja.appendChild(pie);
-}
+/** De dónde se abrió la lección: la meta del plan («meta_1_linea») y a dónde volver. */
+let contextoAtencion = { id: '', meta: '', corte: '', volverA: '' };
 
 async function abrirLeccion(id, { desde = 0, corte = '', meta = '', volverA = '' } = {}) {
   asistente.callar();
-  contextoAtencion = { meta, corte, volverA };
+  contextoAtencion = { id, meta, corte, volverA };
   try {
     const qs = corte ? `?corte=${encodeURIComponent(corte)}` : '';
     const lec = await pedir(`/api/banco/${encodeURIComponent(id)}${qs}`, { tiempo: 20000 });
@@ -176,7 +110,7 @@ async function abrirLeccion(id, { desde = 0, corte = '', meta = '', volverA = ''
     await rep.cargar(lec, { desde });
     $('transporte').hidden = false;
     $('progreso').hidden = rep.total < 2;
-    actualizarResumenAtencion();
+    ayuda.actualizar();
   } catch (err) {
     aviso(err.estado === 404 ? `${id} todavía no está en el banco.` : 'No pude abrir la lección. Revisa que el motor siga abierto.', { mal: true });
   }
@@ -264,7 +198,13 @@ const acciones = {
     verVista('preparacion');
     return preparacion.abrir({ tab });
   },
-  preguntar: () => { aPizarra(); $('pregunta').focus(); },
+  // En modo enfoque la barra de preguntar está oculta: se muestra para esta lección (sin cambiar el ajuste)
+  preguntar: () => {
+    if (rep.estado === 'hablando') rep.pausar();
+    enfoqueLeccion = false;
+    aPizarra();
+    $('pregunta').focus();
+  },
   cambioVoz: () => { rep.motorLec = null; if (rep.lec && ['hablando', 'pausado'].includes(rep.estado)) rep.irA(rep.i, { reproducir: rep.estado === 'hablando' }); },
   cambioModelo: (m) => enviar({ type: 'UPDATE_SETTINGS', visual_model: m }),
   modelos: () => [
@@ -288,6 +228,15 @@ const acciones = {
 };
 
 const asistente = new Asistente({ rep, tablero, lateral, acciones, miniPaso });
+const ayuda = new AyudaLeccion({
+  boton: $('btn-ayuda'), menu: $('menu-ayuda'), resumen: $('resumen-atencion'), rep, asistente, lateral, acciones,
+  // La meta del plan solo vale para la lección (o su variante) que se abrió desde el plan
+  contexto: () => {
+    const l = rep.lec;
+    const propia = Boolean(l && contextoAtencion.id && (l.id === contextoAtencion.id || l.origenVariante === contextoAtencion.id));
+    return { meta: propia ? contextoAtencion.meta : '', volverA: contextoAtencion.volverA };
+  },
+});
 const material = new Material({ el: $('material'), tablero, acciones, asistente });
 const lapiz = new Lapiz({ tablero, rep, asistente, acciones, svg: $('capa-lapiz') });
 const simulacro = new Simulacro({ el: $('vista-inicio'), acciones });
@@ -328,28 +277,32 @@ bus.on('leccion:abierta', (lec) => {
   $('titulo').textContent = lec.titulo.replace(/\$([^$]*)\$/g, '$1').replace(/[\\{}]/g, '');
   $('subtitulo-barra').textContent = [/^([EQ]\d|PR\d|P26-|RP-)/.test(lec.id) ? lec.id : '', textoFuente(lec.fuente)].filter(Boolean).join(' · ');
   $('transporte').hidden = false;
-  $('btn-enfoque').hidden = false;
-  actualizarResumenAtencion();
+  // Cada lección abre con el modo enfoque que la persona dejó guardado
+  enfoqueLeccion = ajustes.enfoque;
+  aplicarEnfoque();
+  ayuda.actualizar();
 });
 
 bus.on('leccion:paso', ({ i, total, paso }) => {
   pintarProgreso();
-  actualizarResumenAtencion();
+  ayuda.alPaso();
+  ayuda.actualizar();
   anunciar(`Paso ${i + 1} de ${total}: ${paso.titulo}`);
-  $('btn-despacio').disabled = false;
-  $('btn-origen').hidden = !(paso.origen && paso.origen.length) && !(rep.lec.formulas && rep.lec.formulas.length);
-  $('btn-porque').hidden = !paso.porque;
 });
 
-bus.on('leccion:estado', ({ estado, i, total }) => {
+bus.on('leccion:estado', ({ estado, i, total, lec }) => {
   const hablando = estado === 'hablando' || estado === 'cargando';
   $('ico-pausa').setAttribute('d', hablando ? ICO_PAUSA : ICO_SEGUIR);
   $('txt-pausa').textContent = hablando ? 'Pausa' : estado === 'espera' || estado === 'fin' ? 'Escuchar otra vez' : 'Continuar';
   $('btn-pausa').disabled = estado === 'cargando';
   $('btn-anterior').disabled = i <= 0;
   const ultimo = i >= total - 1;
-  $('txt-siguiente').textContent = ultimo ? 'Ver respuestas' : 'Siguiente';
-  $('btn-siguiente').disabled = estado === 'fin';
+  $('txt-siguiente').textContent = !ultimo ? 'Siguiente'
+    : lec && lec.sinCierre ? 'Terminar'
+      : lec && lec.tipo === 'teoria' ? 'Ver resumen' : 'Ver respuestas';
+  // Con las respuestas a la vista, el «Siguiente» que sirve es el del cierre: aquí no queda uno apagado
+  $('btn-siguiente').hidden = estado === 'fin';
+  $('btn-siguiente').disabled = false;
   $('btn-siguiente').classList.toggle('llama', estado === 'espera');
   document.body.dataset.estado = estado;
   pintarProgreso();
@@ -402,16 +355,11 @@ $('btn-pausa').addEventListener('click', () => {
 $('btn-repetir').addEventListener('click', () => rep.repetir());
 $('btn-siguiente').addEventListener('click', () => rep.siguiente());
 $('btn-anterior').addEventListener('click', () => rep.anterior());
-$('btn-despacio').addEventListener('click', () => asistente.despacio());
-$('btn-origen').addEventListener('click', () => asistente.origen());
-$('btn-porque').addEventListener('click', () => asistente.porque());
 $('btn-inicio').addEventListener('click', aInicio);
 
-$('btn-enfoque').addEventListener('click', () => {
-  const si = !document.body.classList.contains('enfoque');
-  document.body.classList.toggle('enfoque', si);
-  $('btn-enfoque').setAttribute('aria-pressed', String(si));
-});
+$('btn-enfoque').addEventListener('click', alternarEnfoque);
+// La casilla de Ajustes cambia el modo de esta lección y de las siguientes
+bus.on('ajuste:enfoque', (v) => { enfoqueLeccion = Boolean(v); aplicarEnfoque(); });
 
 $('btn-menos').addEventListener('click', () => zoom(1 / 1.12));
 $('btn-mas').addEventListener('click', () => zoom(1.12));
@@ -430,6 +378,8 @@ async function preguntar() {
   if (id) { abrirLeccion(id); return; }
   const doc = await material.resolverPedido(q);
   if (doc) return;
+  // Quien está preguntando necesita la barra para la siguiente pregunta: el enfoque se quita en esta lección
+  enfoqueLeccion = false;
   aPizarra();
   asistente.preguntar(q);
 }
@@ -463,15 +413,25 @@ window.addEventListener('keydown', (e) => {
     if (e.key === '0') { e.preventDefault(); zoom(0); return; }
   }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && /^b$/i.test(e.key)) { e.preventDefault(); asistente.reportar('Marcado con Ctrl+Shift+B'); return; }
-  if (e.key === 'Escape') { lapiz.cerrarMenu(); return; }
-  if (escribiendo() || e.ctrlKey || e.metaKey || e.altKey || visor.open || vista !== 'pizarra' || !rep.lec) return;
+  if (e.key === 'Escape') {
+    lapiz.cerrarMenu();
+    // Esc cierra el cajón del panel (ventana angosta), salvo que haya un diálogo o menú encima
+    if (lateral.esCajon && lateral.abierto && !lateral.el.hidden && !capaAbierta()) lateral.plegar({ devolverFoco: true });
+    return;
+  }
+  if (escribiendo() || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]') || vista !== 'pizarra' || !rep.lec) return;
   const enBoton = document.activeElement && document.activeElement.tagName === 'BUTTON';
   if (e.code === 'Space' && !enBoton) { e.preventDefault(); if (rep.estado === 'fin') rep.repetir(); else rep.alternar(); }
   else if (e.key === 'ArrowRight' && !e.target.closest?.('[role="tablist"]')) { e.preventDefault(); rep.siguiente(); }
   else if (e.key === 'ArrowLeft' && !e.target.closest?.('[role="tablist"]')) { e.preventDefault(); rep.anterior(); }
   else if (/^r$/i.test(e.key)) rep.repetir();
-  else if (/^f$/i.test(e.key)) $('btn-enfoque').click();
+  else if (/^f$/i.test(e.key)) alternarEnfoque();
+  else if (ayuda.tecla(e)) e.preventDefault(); // A: menú Ayuda · I, D, O, P: sus opciones
 });
+
+function capaAbierta() {
+  try { return Boolean(document.querySelector(':popover-open, dialog[open]')); } catch { return Boolean(document.querySelector('dialog[open]')); }
+}
 
 /* ------------------------------------------------------------------ conexión y anfitrión */
 
@@ -528,4 +488,4 @@ const pedida = new URLSearchParams(window.location.search).get('leccion');
 })();
 
 /* Gancho de pruebas: no se usa en la aplicación */
-window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario, preparacion };
+window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario, preparacion, ayuda };

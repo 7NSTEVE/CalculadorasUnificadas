@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -48,10 +49,22 @@ try:
 except Exception:  # pragma: no cover
     _edge_tts = None  # type: ignore[assignment]
 
-try:
-    import kokoro_onnx as _kokoro_onnx  # type: ignore[import-not-found]
-except Exception:
-    _kokoro_onnx = None
+# kokoro-onnx (voz local) tarda segundos en importarse y alargaba el arranque del motor:
+# se carga la primera vez que se usa. Para saber si está instalado basta con buscarlo.
+_KOKORO_INSTALADO = importlib.util.find_spec("kokoro_onnx") is not None
+_kokoro_onnx = None
+
+
+def _cargar_kokoro():
+    global _kokoro_onnx
+    if _kokoro_onnx is None and _KOKORO_INSTALADO:
+        try:
+            import kokoro_onnx as modulo  # type: ignore[import-not-found]
+
+            _kokoro_onnx = modulo
+        except Exception:
+            _kokoro_onnx = None
+    return _kokoro_onnx
 
 VERSION_CACHE = "v4"
 TOPE_CACHE_MB = 600
@@ -272,7 +285,7 @@ class ServicioVoz:
 
     @property
     def kokoro_disponible(self) -> bool:
-        return _kokoro_onnx is not None and _buscar_pesos_kokoro(self._kokoro_dir) is not None
+        return _KOKORO_INSTALADO and _buscar_pesos_kokoro(self._kokoro_dir) is not None
 
     @property
     def configurada(self) -> bool:
@@ -513,7 +526,8 @@ class ServicioVoz:
         return wav, "audio/wav"
 
     def _sintetiza_kokoro_bloqueante(self, texto: str, voz: str, estilo: str) -> bytes:
-        if _kokoro_onnx is None:
+        kokoro = _cargar_kokoro()
+        if kokoro is None:
             raise RuntimeError("kokoro-onnx no instalado")
         pesos = _buscar_pesos_kokoro(self._kokoro_dir)
         if pesos is None:
@@ -534,8 +548,8 @@ class ServicioVoz:
                 ew = EspeakWrapper()
                 ew.set_voice("es")
                 self._espeak_wrapper = ew
-                cfg = _kokoro_onnx.EspeakConfig(lib_path=lib_path, data_path=data_dir)
-                self._kokoro_inst = _kokoro_onnx.Kokoro(str(pesos[0]), str(pesos[1]), espeak_config=cfg)
+                cfg = kokoro.EspeakConfig(lib_path=lib_path, data_path=data_dir)
+                self._kokoro_inst = kokoro.Kokoro(str(pesos[0]), str(pesos[1]), espeak_config=cfg)
 
             raw_ph = self._espeak_wrapper.text_to_phonemes(texto.strip())
             raw_ph = re.sub(r"\s+", " ", raw_ph.replace("\n", " ").replace("_", "")).strip()

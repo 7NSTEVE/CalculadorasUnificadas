@@ -20,6 +20,7 @@ import re
 import socket
 import struct
 import sys
+import threading
 import time
 import uuid
 from typing import Any, Dict, List, Optional
@@ -2265,6 +2266,18 @@ def _bind_ephemeral_port(host: str, requested_port: int) -> int:
         return int(s.getsockname()[1])
 
 
+def _precalentar_gemini() -> None:
+    """Carga google-genai en segundo plano cuando el motor ya está listo.
+
+    El arranque ya no lo importa (tardaba segundos); así la primera pregunta a la IA tampoco espera.
+    """
+    time.sleep(3.0)
+    try:
+        import google.genai  # noqa: F401
+    except Exception:
+        pass
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="CuadernU Audiovisual Tutor Runtime")
     ap.add_argument("--bootstrap-stdin", action="store_true", help="Read JSON bootstrap config from stdin pipe")
@@ -2290,6 +2303,7 @@ def main() -> int:
             for _ in range(200):
                 if server.started:
                     print(json.dumps({"ready": True, "host": host, "port": port}), flush=True)
+                    threading.Thread(target=_precalentar_gemini, name="precalentar-gemini", daemon=True).start()
                     return
                 await asyncio.sleep(0.025)
         asyncio.create_task(_announce_when_ready())

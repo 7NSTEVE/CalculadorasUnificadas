@@ -16,7 +16,9 @@ struct SidecarLaunchConfig {
     std::string visualModelUtf8 = "gemini-2.5-flash";
     std::string liveAudioModelUtf8 = "gemini-3.8-live";
     bool bindLan = false;
-    int startupTimeoutMs = 15000;
+    // El motor Python suele estar listo en ~5 s, pero con el equipo ocupado llegó a tardar 30 s.
+    // Con 15 s la ventana se rendía y quedaba en blanco; la Pizarra muestra los segundos mientras espera.
+    int startupTimeoutMs = 90000;
 };
 
 struct SidecarEndpointInfo {

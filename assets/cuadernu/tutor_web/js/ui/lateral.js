@@ -1,13 +1,26 @@
 /**
  * Panel lateral: el visual animado que evoluciona con la explicación, el enunciado a mano y el
  * formulario oficial II-2026 con círculos de colores sincronizados paso a paso.
+ *
+ * La pizarra manda: el panel se pliega y se abre con el botón «Apoyo» de la barra (en ventanas
+ * angostas es un cajón que se abre encima de la pizarra), el visual se ve en grande al tocarlo y el
+ * panel nunca se pone solo en «Enunciado», que ya está escrito en la pizarra.
  */
 
 import { TintaMate, TintaTexto } from '../mate/tinta.js';
-import { bus, urlApi } from '../nucleo/api.js';
+import { ajustes, bus, guardarAjuste, urlApi } from '../nucleo/api.js';
 import { crearVisual } from '../visuales/index.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** Por debajo de este ancho el panel es un cajón (debe coincidir con la media query de tutor.css). */
+const ANGOSTA = window.matchMedia('(max-width: 760px)');
+/**
+ * Solo en ventana ancha cabe una columna en la que el visual se lea (≥ 440 px): ahí el panel empieza
+ * abierto si hay visual. En ventanas medianas empieza plegado; así no ocupa espacio con un dibujo diminuto.
+ */
+const ANCHA = window.matchMedia('(min-width: 1101px)');
+const ICO_AMPLIAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11V3h-8l3.29 3.29-10 10L3 13v8h8l-3.29-3.29 10-10L21 11Z"/></svg>';
 
 function svgEl(tag, attrs = {}) {
   const el = document.createElementNS(SVG_NS, tag);
@@ -137,6 +150,18 @@ export class Lateral {
     this._hojaEl = null;
     this._leyendaEl = null;
     this._visorForm = null;
+    this._dlgVisual = null;
+    this._cuerpoVisual = null;
+    this._anchoForm = 0;
+    // Abierto o plegado. En ventanas anchas se recuerda lo que la persona elige con el botón.
+    this.abierto = true;
+    this._aMano = false;
+    this.boton = document.getElementById('btn-apoyo');
+    this.fondo = document.getElementById('apoyo-fondo');
+    if (this.boton) this.boton.addEventListener('click', () => this.alternar());
+    if (this.fondo) this.fondo.addEventListener('click', () => this.plegar({ devolverFoco: true }));
+    ANGOSTA.addEventListener('change', () => this._alCambiarAncho());
+    ANCHA.addEventListener('change', () => this._alCambiarAncho());
     this.barra = el.querySelector('.lateral-tabs');
     this.paneles = {
       visual: el.querySelector('#panel-visual'),
@@ -184,9 +209,69 @@ export class Lateral {
     if (tab === 'formulas') this.resaltarPasoFormulario(this.pasoActual);
   }
 
+  /** ¿Hay panel en esta lección? (que esté abierto o plegado lo decide `abrir`). */
   mostrar(si) {
     this.el.hidden = !si;
     document.body.classList.toggle('sin-lateral', !si);
+    this._aplicar();
+  }
+
+  /** En ventanas angostas el panel es un cajón encima de la pizarra. */
+  get esCajon() { return ANGOSTA.matches; }
+
+  /** Abierto por defecto solo si hay un visual que acompañe la explicación (y en ventana ancha). */
+  _abiertoPorDefecto() {
+    return ANCHA.matches && ajustes.apoyo !== false && Boolean(this.visual);
+  }
+
+  /**
+   * Abre o pliega el panel. `recordar`: guarda la preferencia (solo en ventana ancha; en ventanas
+   * medianas y en el cajón siempre empieza plegado). `foco`: lleva el foco a la pestaña activa.
+   */
+  abrir(si = true, { recordar = false, foco = false, devolverFoco = false } = {}) {
+    this.abierto = Boolean(si);
+    if (recordar && ANCHA.matches) guardarAjuste('apoyo', this.abierto);
+    this._aplicar();
+    if (this.abierto && foco) (this.barra.querySelector('[aria-selected="true"]:not([hidden])') || this.el).focus?.();
+    if (!this.abierto && devolverFoco && this.boton && !this.boton.hidden) this.boton.focus();
+  }
+
+  plegar(opt = {}) { this.abrir(false, opt); }
+
+  /** Botón «Apoyo» de la barra. */
+  alternar() {
+    this._aMano = true;
+    const abrir = !this.abierto;
+    this.abrir(abrir, { recordar: true, foco: abrir && this.esCajon, devolverFoco: !abrir && this.esCajon });
+  }
+
+  /** Muestra u oculta el botón «Apoyo» (solo en la pizarra y si la lección tiene panel). */
+  actualizarBoton() {
+    if (!this.boton) return;
+    this.boton.hidden = this.el.hidden || document.body.dataset.vista !== 'pizarra';
+    this.boton.setAttribute('aria-pressed', String(!this.el.hidden && this.abierto));
+  }
+
+  _aplicar() {
+    const visible = !this.el.hidden && this.abierto;
+    document.body.classList.toggle('apoyo-oculto', !visible);
+    this.actualizarBoton();
+    // Las fórmulas se dibujaron con el panel plegado (sin ancho): se rehacen al abrirlo
+    if (visible && this.lec && this.paneles.formulas.childElementCount) {
+      requestAnimationFrame(() => {
+        if (this.lec && Math.abs(this.el.clientWidth - this._anchoForm) > 40) {
+          this._formulas(this.lec);
+          this.resaltarPasoFormulario(this.pasoActual);
+        }
+      });
+    }
+  }
+
+  _alCambiarAncho() {
+    if (!this.lec) return;
+    // Al angostar la ventana el panel se pliega; al volver a ancha se respeta la preferencia guardada
+    this.abierto = this._aMano && ANCHA.matches ? ajustes.apoyo !== false : this._abiertoPorDefecto();
+    this._aplicar();
   }
 
   _boton(tab, visible) {
@@ -204,10 +289,81 @@ export class Lateral {
     const v = crearVisual(spec);
     this.paneles.visual.replaceChildren();
     this._boton('visual', Boolean(v));
-    if (!v) { if (this.tab === 'visual') this.ver('enunciado'); return; }
+    if (!v) {
+      if (this._dlgVisual) this._dlgVisual.close();
+      if (this.tab === 'visual') this.ver(this._pestanaSinVisual());
+      return;
+    }
     this.visual = v;
-    this.paneles.visual.appendChild(v.el);
+    this._prepararAmpliar(v);
+    // Si el visual está en grande, el nuevo también se ve en grande
+    (this._dlgVisual ? this._cuerpoVisual : this.paneles.visual).appendChild(v.el);
     this.ver('visual');
+    // Un visual que aparece a media lección abre el panel, salvo que la persona lo haya plegado
+    if (this.lec && !this.abierto && !this._aMano && this._abiertoPorDefecto()) this.abrir(true);
+  }
+
+  /** Pestaña para cuando no hay visual: las fórmulas; el enunciado solo si no hay nada más. */
+  _pestanaSinVisual() {
+    const f = this.barra.querySelector('[data-tab="formulas"]');
+    return f && !f.hidden && this.paneles.formulas.childElementCount ? 'formulas' : 'enunciado';
+  }
+
+  /** El dibujo se toca (o Enter) para verlo en grande; un icono discreto en su esquina lo dice. */
+  _prepararAmpliar(v) {
+    if (!v.canvas || !v.marco) return;
+    const lienzo = document.createElement('span');
+    lienzo.className = 'visual-lienzo';
+    lienzo.tabIndex = 0;
+    lienzo.setAttribute('role', 'button');
+    lienzo.setAttribute('aria-label', 'Ver el visual en grande');
+    lienzo.title = 'Ver en grande';
+    v.canvas.replaceWith(lienzo);
+    const ico = document.createElement('span');
+    ico.className = 'visual-ampliar';
+    ico.innerHTML = ICO_AMPLIAR;
+    lienzo.append(v.canvas, ico);
+    const ir = () => { if (!this._dlgVisual) this.ampliarVisual(); };
+    lienzo.addEventListener('click', ir);
+    lienzo.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      e.stopPropagation(); // que el Espacio no pause la lección
+      ir();
+    });
+  }
+
+  /** El mismo visual (vivo, sigue a la explicación) pasa a un diálogo grande y vuelve al cerrarlo. */
+  ampliarVisual() {
+    if (!this.visual || this._dlgVisual) return;
+    const dlg = document.createElement('dialog');
+    dlg.className = 'visor visor-visual';
+    dlg.setAttribute('aria-label', 'Visual en grande');
+    const cab = document.createElement('div');
+    cab.className = 'visor-form-cab';
+    const tit = document.createElement('strong');
+    tit.textContent = 'Visual';
+    const cerrar = document.createElement('button');
+    cerrar.type = 'button';
+    cerrar.className = 'btn';
+    cerrar.textContent = 'Cerrar';
+    cerrar.addEventListener('click', () => dlg.close());
+    cab.append(tit, cerrar);
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'visor-visual-cuerpo';
+    dlg.append(cab, cuerpo);
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', () => {
+      if (this.visual && this.visual.el.parentElement === cuerpo) this.paneles.visual.appendChild(this.visual.el);
+      dlg.remove();
+      if (this._dlgVisual === dlg) { this._dlgVisual = null; this._cuerpoVisual = null; }
+    });
+    document.body.appendChild(dlg);
+    this._dlgVisual = dlg;
+    this._cuerpoVisual = cuerpo;
+    cuerpo.appendChild(this.visual.el);
+    dlg.showModal();
+    cerrar.focus();
   }
 
   /** `mostrar` = traer la pestaña del visual al frente. */
@@ -239,14 +395,20 @@ export class Lateral {
   }
 
   abrirLeccion(lec) {
-    this.lec = lec;
+    this.lec = null; // mientras se arma, ponerVisual no decide si abrir o plegar
     this.pasoActual = 0;
-    this.mostrar(true);
+    this._aMano = false;
     this.ponerVisual(lec.visual);
+    this.lec = lec;
+    // Abierto solo si hay un visual que acompañe (en ventana ancha y si la persona no lo plegó antes)
+    this.abierto = this._abiertoPorDefecto();
+    this.mostrar(true); // con su ancho real antes de dibujar las fórmulas
     this._enunciado(lec);
     this._formulas(lec);
     this.resaltarPasoFormulario(0);
-    this.ver(this.capa || !this.visual ? 'enunciado' : 'visual');
+    // El enunciado ya está escrito en la pizarra: el panel empieza en el visual o en las fórmulas
+    this.ver(this.visual ? 'visual' : this._pestanaSinVisual());
+    if (![...this.barra.querySelectorAll('[data-tab]')].some((b) => !b.hidden)) this.mostrar(false);
   }
 
   _enunciado(lec) {
@@ -277,6 +439,7 @@ export class Lateral {
     p.replaceChildren();
     this._hojaEl = null;
     this._leyendaEl = null;
+    this._anchoForm = this.el.clientWidth;
 
     const mapa = lec.formulario_mapa;
     if (mapa && Array.isArray(mapa.celdas)) {
@@ -452,7 +615,8 @@ export class Lateral {
   /** Abre la pestaña Fórmulas, enfoca la celda circulada y la desplaza al centro. */
   enfocarFormulario(celdaId) {
     if (!this._hojaEl) return;
-    this.mostrar(true);
+    if (this.el.hidden) this.mostrar(true);
+    if (!this.abierto) this.abrir(true); // lo pidió la persona: se abre (sin cambiar su preferencia)
     if (this.tab !== 'formulas') this.ver('formulas');
     this._hojaEl.querySelectorAll('.form-celda').forEach((g) => {
       const es = g.dataset.celda === celdaId;
@@ -516,6 +680,7 @@ export class Lateral {
   }
 
   cerrar() {
+    if (this._dlgVisual) this._dlgVisual.close();
     if (this.visual) { this.visual.destruir(); this.visual = null; }
     if (this._visorForm) { this._visorForm.close(); this._visorForm = null; }
     this.lec = null;

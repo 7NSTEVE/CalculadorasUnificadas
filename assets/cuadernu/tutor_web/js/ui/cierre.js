@@ -62,38 +62,33 @@ export function ponerCierre(rep, lec, acciones) {
   if (lec.tipo === 'seleccion' && lec.correcta) {
     v.cuerpo.appendChild(texto(`Opción correcta: **${lec.correcta}**`, { px: tab.px * 0.7 }));
   }
+  // Respuestas agrupadas por inciso: la letra se escribe una sola vez («b) agua…» y debajo «vapor…»)
+  let grupo = null;
+  let letraGrupo = '';
   for (const r of lec.respuestas || []) {
-    const fila = document.createElement('div');
-    if (r.inciso) fila.appendChild(texto(`**${r.inciso}**`, { px: tab.px * 0.56 }));
-    const m = new TintaMate(r.tex, { px: tab.px * 0.92, color: 'verde', maxAncho: tab.anchoUtil(v.cuerpo) });
+    const letra = r.inciso ? String(r.inciso).trim() : '';
+    const m = new TintaMate(r.tex, { px: tab.px * 0.92, color: 'verde', maxAncho: tab.anchoUtil(v.cuerpo) - (letra ? tab.px : 0) });
     tab.agregar(m, { paso: v });
     m.progreso(1);
-    if (r.inciso) v.cuerpo.insertBefore(fila, m.el);
+    if (!letra) { grupo = null; letraGrupo = ''; continue; }
+    if (!grupo || letra !== letraGrupo) {
+      const fila = document.createElement('div');
+      fila.className = 'resp-inciso';
+      const marca = texto(`**${letra})**`, { px: tab.px * 0.62, etiqueta: 'span' });
+      marca.classList.add('resp-letra');
+      grupo = document.createElement('div');
+      grupo.className = 'resp-valores';
+      fila.append(marca, grupo);
+      v.cuerpo.insertBefore(fila, m.el);
+      letraGrupo = letra;
+    }
+    grupo.appendChild(m.el);
   }
   if (lec.cotejo) {
     const s = document.createElement('p');
     s.className = `sello${lec.cotejo.estado === 'difiere' ? ' difiere' : ''}`;
     s.textContent = lec.cotejo.texto;
     v.cuerpo.appendChild(s);
-  }
-  if (lec.auditoria_fisica && Array.isArray(lec.auditoria_fisica.niveles)) {
-    const det = document.createElement('details');
-    det.className = `auditoria-fisica${lec.auditoria_fisica.alertas && lec.auditoria_fisica.alertas.length ? ' con-alerta' : ''}`;
-    const sum = document.createElement('summary');
-    sum.textContent = lec.auditoria_fisica.resumen || 'Comprobaciones físicas y matemáticas';
-    det.appendChild(sum);
-    const ul = document.createElement('ul');
-    for (const n of lec.auditoria_fisica.niveles) {
-      const li = document.createElement('li');
-      li.className = `niv-${n.estado}`;
-      const tag = n.estado === 'comprobado' ? 'OK' : n.estado === 'alerta' ? 'ALERTA' : '—';
-      const b = document.createElement('strong');
-      b.textContent = `${n.nivel}. ${n.nombre} (${tag}): `;
-      li.append(b, document.createTextNode(n.detalle || ''));
-      ul.appendChild(li);
-    }
-    det.appendChild(ul);
-    v.cuerpo.appendChild(det);
   }
   if (lec.practica) ponerPractica(v.cuerpo, lec, tab);
   const fila = document.createElement('div');
@@ -131,8 +126,40 @@ export function ponerCierre(rep, lec, acciones) {
   otra.addEventListener('click', () => rep.irA(0));
   fila.appendChild(otra);
   v.cuerpo.appendChild(fila);
+  if (lec.auditoria_fisica && Array.isArray(lec.auditoria_fisica.niveles)) v.cuerpo.appendChild(detalleRevisado(lec.auditoria_fisica));
   tab.seguir(v.el);
   return v;
+}
+
+/**
+ * Las comprobaciones automáticas de la solución, como un detalle discreto al pie: «Revisado».
+ * El conteo técnico («7 de 7 comprobaciones… · 0 alertas físicas») queda adentro, para quien lo abra.
+ */
+function detalleRevisado(af) {
+  const n = Array.isArray(af.alertas) ? af.alertas.length : 0;
+  const det = document.createElement('details');
+  det.className = `auditoria-fisica${n ? ' con-alerta' : ''}`;
+  const sum = document.createElement('summary');
+  sum.textContent = n ? `Revisado · ${n === 1 ? '1 aviso' : `${n} avisos`}` : 'Revisado';
+  det.appendChild(sum);
+  if (af.resumen) {
+    const p = document.createElement('p');
+    p.className = 'auditoria-resumen';
+    p.textContent = af.resumen;
+    det.appendChild(p);
+  }
+  const ul = document.createElement('ul');
+  for (const nv of af.niveles) {
+    const li = document.createElement('li');
+    li.className = `niv-${nv.estado}`;
+    const tag = nv.estado === 'comprobado' ? 'OK' : nv.estado === 'alerta' ? 'ALERTA' : '—';
+    const b = document.createElement('strong');
+    b.textContent = `${nv.nivel}. ${nv.nombre} (${tag}): `;
+    li.append(b, document.createTextNode(nv.detalle || ''));
+    ul.appendChild(li);
+  }
+  det.appendChild(ul);
+  return det;
 }
 
 export function ponerPractica(cuerpo, lec, tab) {

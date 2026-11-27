@@ -197,6 +197,7 @@ export function armarAjustes(el, acciones) {
       })),
       bloque('Tema', seg([['light', 'Claro'], ['dark', 'Oscuro'], ['high-contrast', 'Contraste']], ajustes.tema, (v) => { guardarAjuste('tema', v); aplicarTema(v); })),
       titulo('Ritmo'),
+      fila('Abrir las lecciones en modo enfoque', casilla('enfoque')),
       fila('Plegar los pasos anteriores', casilla('foco')),
       fila('Modo sin saltos (mostrar despejes)', casilla('sinSaltos')),
       fila('Mostrar qué es cada letra al escribir', casilla('simbolos')),
