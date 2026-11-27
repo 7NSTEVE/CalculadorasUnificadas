@@ -1,6 +1,7 @@
 #include "tec_academic_store.hpp"
 
 #include "../../core/cudoc_storage.hpp"
+#include "../../core/studio_profile_store.hpp"
 #include "../../core/utf_conv.hpp"
 #include "../../pdf/pdf_writer.hpp"
 #include "academic/tec_digital/crypto.hpp"
@@ -189,15 +190,11 @@ void SanitizeJsonUtf8InPlace(json& node) {
 }  // namespace
 
 std::string TecAcademicStore::DefaultStorageRootUtf8() {
-#ifdef _WIN32
-    PWSTR appData = nullptr;
-    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &appData)) && appData) {
-        std::wstring ws(appData);
-        CoTaskMemFree(appData);
-        fs::path root = fs::path(ws) / L"CuadernU" / L"tec_digital";
+    const std::wstring profileRoot = DocStudio::StudioProfileStore::DefaultProfileRootDir();
+    if (!profileRoot.empty()) {
+        fs::path root = fs::path(profileRoot) / L"tec_digital";
         return WideToUtf8(root.wstring());
     }
-#endif
     return (fs::temp_directory_path() / "CuadernU" / "tec_digital").string();
 }
 

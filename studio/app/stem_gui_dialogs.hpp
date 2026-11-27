@@ -367,12 +367,14 @@ inline void ShowQrCodeDialog(
 }
 
 // Track E: Multi-Format Notebook Migration with Pre-Conversion Compatibility Warnings Dialog (F-012)
+// confirmReplace se llama justo antes de reemplazar el documento abierto; false = no se toca nada.
 inline bool RunNotebookMigrationDialog(
     HWND owner,
     DocumentModel& doc,
     AudioTimelineSession& audioSession,
     NotebookVault& vault,
-    std::string& outStatus)
+    std::string& outStatus,
+    const std::function<bool()>& confirmReplace = {})
 {
     wchar_t fileBuf[MAX_PATH * 2]{};
     OPENFILENAMEW ofn{};
@@ -415,6 +417,12 @@ inline bool RunNotebookMigrationDialog(
     if (!Interop::NotebookMigrationEngine::ImportAndMigrateFile(pathW, migrated, migRes)) {
         ShowReportDialog(owner, L"Error al importar", Utf8ToWide(migRes.errorUtf8));
         outStatus = "Error de importaci\xC3\xB3n: " + migRes.errorUtf8;
+        return false;
+    }
+
+    // Antes del audio y de la biblioteca: si la persona cancela, nada del documento actual cambia.
+    if (confirmReplace && !confirmReplace()) {
+        outStatus = "Se mantuvo el documento actual";
         return false;
     }
 
@@ -1702,12 +1710,14 @@ inline void RunExamVariantsAndLmsDialog(
 }
 
 // Track D: Security (AES-256-GCM Encrypted Save/Open + LAN QR Broadcast) (F-210, F-211, F-215)
+// confirmReplace (solo mode 1) se llama ya descifrado, justo antes de reemplazar el documento abierto.
 inline bool RunSecurityOrLanFlow(
     HWND owner,
     DocumentModel& doc,
     int mode, // 0=EncryptSave, 1=DecryptOpen, 2=LanQrBroadcast
     PasswordPromptFn passPrompt,
-    std::string& outStatus)
+    std::string& outStatus,
+    const std::function<bool()>& confirmReplace = {})
 {
     if (mode == 0) {
         std::wstring passW;
@@ -1744,6 +1754,10 @@ inline bool RunSecurityOrLanFlow(
         DocumentModel dec;
         std::string err;
         if (CudocCrypto::LoadEncryptedCudocFile(WideToUtf8(fileBuf), WideToUtf8(passW), dec, &err)) {
+            if (confirmReplace && !confirmReplace()) {
+                outStatus = "Se mantuvo el documento actual";
+                return false;
+            }
             doc = std::move(dec);
             outStatus = "Cuaderno cifrado abierto correctamente.";
             return true;

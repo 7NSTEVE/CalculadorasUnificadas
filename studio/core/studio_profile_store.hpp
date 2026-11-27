@@ -51,6 +51,8 @@ class StudioProfileStore {
 public:
     // A caller can select an absolute profile path before initializing the application.
     static bool SetProfileRootOverride(const std::wstring& path);
+    static bool HasProfileRootOverride() noexcept;
+    static void ClearProfileRootOverride() noexcept;
 
     // Resolves the selected profile, %LOCALAPPDATA%\CuadernU\, or ./CuadernU_Profile.
     static std::wstring DefaultProfileRootDir();

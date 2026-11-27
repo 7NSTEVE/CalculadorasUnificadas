@@ -1260,6 +1260,15 @@ bool GeminiNotebookMcpClient::SendRpc(
     std::string* outErr)
 {
     outResultJsonUtf8.clear();
+    {
+        auto& tok = store_.MutableTokens();
+        const std::int64_t now = NowEpochSeconds();
+        if (!tok.HasUsableAccessToken(now) && !tok.refreshTokenUtf8.empty()) {
+            if (GoogleOAuthPkceHelper::RefreshAccessToken(store_.Config(), *transport_, tok, outErr)) {
+                store_.SaveTokensDpapi(nullptr);
+            }
+        }
+    }
     if (store_.Tokens().accessTokenUtf8.empty()) {
         if (outErr) *outErr = "No hay token OAuth activo para conectar al servidor MCP de Google.";
         return false;

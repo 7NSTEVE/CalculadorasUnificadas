@@ -375,11 +375,10 @@ body[data-vista="inicio"] .transporte, body[data-vista="inicio"] .subtitulo { di
 .vacio { color: var(--tinta2); padding: 2em 0; }
 
 /* ------------------------------------------------------------------ modo enfoque */
-/* El botón «Ayuda» se queda: es el salvavidas cuando se pierde el hilo */
-body.enfoque .herramientas, body.enfoque .preguntar { display: none; }
-body.enfoque .vista-pizarra { grid-template-columns: minmax(0, 1fr) var(--ancho-apoyo); }
-body.enfoque.sin-lateral .vista-pizarra, body.enfoque.apoyo-oculto .vista-pizarra { grid-template-columns: minmax(0, 1fr); }
-body.enfoque .tablero { grid-column: 1; } body.enfoque .lateral { grid-column: 2; }
+/* Se quedan el botón «Ayuda» (el salvavidas cuando se pierde el hilo) y las herramientas: «Encerrar»
+   lo que no se entendió y el lápiz son parte de estudiar. El enfoque solo quita la barra de preguntar
+   (vuelve con Ayuda → «Preguntar al profesor») y el estado de conexión. */
+body.enfoque .preguntar { display: none; }
 body.enfoque .estado { display: none; }
 
 /* ------------------------------------------------------------------ adaptación */
@@ -402,8 +401,9 @@ body.enfoque .estado { display: none; }
   body.enfoque .vista-pizarra, body.enfoque.sin-lateral .vista-pizarra, body.enfoque.apoyo-oculto .vista-pizarra { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
   .tablero, body.enfoque .tablero { grid-column: 1; grid-row: 1; }
   .herramientas { flex-direction: row; grid-column: 1; grid-row: 2; border-right: 0; border-top: 1px solid var(--borde); overflow-x: auto; padding: 0.25em; }
-  .lateral, body.enfoque .lateral { position: absolute; grid-column: 1; grid-row: 1; top: 0; right: 0; bottom: 0; z-index: 30; width: min(30em, 92%); border-left: 1px solid var(--borde); }
-  .apoyo-fondo { display: block; position: absolute; grid-column: 1; grid-row: 1; inset: 0; z-index: 29; background: rgba(10, 15, 28, 0.38); }
+  /* «1 / 2»: con posición absoluta, «grid-row: 1» llegaría hasta el borde y taparía la fila de herramientas */
+  .lateral, body.enfoque .lateral { position: absolute; grid-column: 1 / 2; grid-row: 1 / 2; top: 0; right: 0; bottom: 0; z-index: 30; width: min(30em, 92%); border-left: 1px solid var(--borde); }
+  .apoyo-fondo { display: block; position: absolute; grid-column: 1 / 2; grid-row: 1 / 2; inset: 0; z-index: 29; background: rgba(10, 15, 28, 0.38); }
   body.apoyo-oculto .apoyo-fondo, body.sin-lateral .apoyo-fondo { display: none; }
   body:not(.sin-lateral):not(.apoyo-oculto) .volver { left: 50%; }
   .herr { width: 3.9em; min-height: 2.9em; }

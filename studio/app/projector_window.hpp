@@ -25,6 +25,7 @@ public:
     ~SecondaryProjectorWindow() { Close(); }
 
     bool IsOpen() const noexcept { return hwnd_ != nullptr && IsWindow(hwnd_); }
+    HWND Hwnd() const noexcept { return hwnd_; }
     bool IsFrozen() const noexcept { return frozen_; }
     void SetFrozen(bool f) {
         if (f && !frozen_ && doc_ && cam_) {
@@ -48,7 +49,8 @@ public:
               const DocumentModel* doc,
               const Camera2D* cam,
               PageRenderCache* cache,
-              const ViewportOverlayState* baseOverlay)
+              const ViewportOverlayState* baseOverlay,
+              bool backgroundStealth = false)
     {
         doc_ = doc;
         cam_ = cam;
@@ -59,8 +61,10 @@ public:
         }
         if (IsOpen()) {
             UiGlass::ApplyGoldenGateWindowFrame(hwnd_, overlay_.darkTheme);
-            ShowWindow(hwnd_, SW_SHOWNORMAL);
-            SetForegroundWindow(hwnd_);
+            if (!backgroundStealth) {
+                ShowWindow(hwnd_, SW_SHOWNORMAL);
+                SetForegroundWindow(hwnd_);
+            }
             RefreshNow();
             return true;
         }
@@ -79,31 +83,48 @@ public:
         }
 
         // Open on secondary monitor when available, else clean 1280x720 window
-        int wx = CW_USEDEFAULT, wy = CW_USEDEFAULT, ww = 1280, wh = 720;
-        struct MonPick { RECT primary{}; RECT secondary{}; bool hasSecondary = false; } mp{};
-        EnumDisplayMonitors(nullptr, nullptr, [](HMONITOR hMon, HDC, LPRECT lprc, LPARAM lp) -> BOOL {
-            auto* p = reinterpret_cast<MonPick*>(lp);
-            MONITORINFO mi{};
-            mi.cbSize = sizeof(mi);
-            if (GetMonitorInfoW(hMon, &mi)) {
-                if (mi.dwFlags & MONITORINFOF_PRIMARY) p->primary = *lprc;
-                else if (!p->hasSecondary) { p->secondary = *lprc; p->hasSecondary = true; }
+        int wx = backgroundStealth ? 64 : CW_USEDEFAULT;
+        int wy = backgroundStealth ? 64 : CW_USEDEFAULT;
+        int ww = 1280, wh = 720;
+        if (!backgroundStealth) {
+            struct MonPick { RECT primary{}; RECT secondary{}; bool hasSecondary = false; } mp{};
+            EnumDisplayMonitors(nullptr, nullptr, [](HMONITOR hMon, HDC, LPRECT lprc, LPARAM lp) -> BOOL {
+                auto* p = reinterpret_cast<MonPick*>(lp);
+                MONITORINFO mi{};
+                mi.cbSize = sizeof(mi);
+                if (GetMonitorInfoW(hMon, &mi)) {
+                    if (mi.dwFlags & MONITORINFOF_PRIMARY) p->primary = *lprc;
+                    else if (!p->hasSecondary) { p->secondary = *lprc; p->hasSecondary = true; }
+                }
+                return TRUE;
+            }, reinterpret_cast<LPARAM>(&mp));
+            if (mp.hasSecondary) {
+                wx = mp.secondary.left;
+                wy = mp.secondary.top;
+                ww = mp.secondary.right - mp.secondary.left;
+                wh = mp.secondary.bottom - mp.secondary.top;
             }
-            return TRUE;
-        }, reinterpret_cast<LPARAM>(&mp));
-        if (mp.hasSecondary) {
-            wx = mp.secondary.left;
-            wy = mp.secondary.top;
-            ww = mp.secondary.right - mp.secondary.left;
-            wh = mp.secondary.bottom - mp.secondary.top;
         }
 
+        const DWORD exStyle = backgroundStealth ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) : 0u;
         hwnd_ = CreateWindowExW(
-            0, L"CuadernUProjectorWndClass", L"CuadernU \u2014 Proyector (Vista Limpia)",
-            WS_OVERLAPPEDWINDOW, wx, wy, ww, wh, owner, nullptr, hInst, this);
+            exStyle, L"CuadernUProjectorWndClass", L"CuadernU \u2014 Proyector (Vista Limpia)",
+            WS_OVERLAPPEDWINDOW, wx, wy, ww, wh, backgroundStealth ? nullptr : owner, nullptr, hInst, this);
         if (!hwnd_) return false;
         UiGlass::ApplyGoldenGateWindowFrame(hwnd_, overlay_.darkTheme);
-        ShowWindow(hwnd_, SW_SHOWNORMAL);
+        if (backgroundStealth) {
+            if (HMODULE hDwm = LoadLibraryW(L"dwmapi.dll")) {
+                using DwmSetAttrFn = HRESULT(WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+                if (auto fn = reinterpret_cast<DwmSetAttrFn>(GetProcAddress(hDwm, "DwmSetWindowAttribute"))) {
+                    BOOL cloak = TRUE;
+                    fn(hwnd_, 13 /*DWMWA_CLOAK*/, &cloak, sizeof(cloak));
+                }
+                FreeLibrary(hDwm);
+            }
+            ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
+        } else {
+            ShowWindow(hwnd_, SW_SHOWNORMAL);
+        }
         UpdateWindow(hwnd_);
         return true;
     }

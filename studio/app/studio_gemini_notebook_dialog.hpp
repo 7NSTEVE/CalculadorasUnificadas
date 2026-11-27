@@ -10,8 +10,10 @@
 
 #include "../integrations/gemini_notebook/gemini_notebook_client.hpp"
 #include "../integrations/gemini_notebook/gemini_notebook_sync_store.hpp"
+#include "../mcp/mcp_server.hpp"
 #include "../core/document_model.hpp"
 #include "../core/utf_conv.hpp"
+#include "../pdf/winrt_adapters.hpp"
 #include "studio_feature_dialogs.hpp"
 #include "../../ui_glass/hig_dialog_theme.hpp"
 #include "../../ui_glass/translucent_tokens.hpp"
@@ -100,30 +102,136 @@ inline bool PickFolderWin32(HWND owner, const wchar_t* title, std::wstring& outF
     return !outFolder.empty();
 }
 
+inline bool CaptureDialogStealthPng(HWND dlg, const wchar_t* outPathW) {
+    if (!dlg || !IsWindow(dlg) || !outPathW || !outPathW[0]) return false;
+    UpdateWindow(dlg);
+    RedrawWindow(dlg, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+    MSG pmsg{};
+    for (int i = 0; i < 64 && PeekMessageW(&pmsg, nullptr, 0, 0, PM_REMOVE); ++i) {
+        TranslateMessage(&pmsg);
+        DispatchMessageW(&pmsg);
+    }
+    RedrawWindow(dlg, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+    RECT rc{};
+    GetWindowRect(dlg, &rc);
+    const int w = (std::max)(1, static_cast<int>(rc.right - rc.left));
+    const int h = (std::max)(1, static_cast<int>(rc.bottom - rc.top));
+    HDC hdcScr = GetDC(nullptr);
+    HDC hdcMem = CreateCompatibleDC(hdcScr);
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = w;
+    bmi.bmiHeader.biHeight = -h;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    void* bits = nullptr;
+    HBITMAP hbmp = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+    bool ok = false;
+    if (hbmp && bits) {
+        HGDIOBJ old = SelectObject(hdcMem, hbmp);
+        // Use software GDI PrintWindow(0) first so cloaked Win32 child controls
+        // (STATIC, BUTTON, EDIT, LISTBOX) render immediately without waiting for DWM.
+        if (!PrintWindow(dlg, hdcMem, 0)) {
+            PrintWindow(dlg, hdcMem, PW_RENDERFULLCONTENT);
+        }
+        // Explicitly composite visible child controls via WM_PRINT so themed Win32 controls always appear crisp
+        POINT dlgOrigin{ rc.left, rc.top };
+        struct ChildPrintCtx {
+            HDC hdc;
+            POINT parentScreenOrigin;
+        } cpCtx{ hdcMem, dlgOrigin };
+        EnumChildWindows(dlg, [](HWND hChild, LPARAM lp) -> BOOL {
+            if (!IsWindowVisible(hChild)) return TRUE;
+            auto* c = reinterpret_cast<ChildPrintCtx*>(lp);
+            RECT crc{};
+            if (!GetWindowRect(hChild, &crc)) return TRUE;
+            const int dx = crc.left - c->parentScreenOrigin.x;
+            const int dy = crc.top - c->parentScreenOrigin.y;
+            const int saved = SaveDC(c->hdc);
+            SetViewportOrgEx(c->hdc, dx, dy, nullptr);
+            SendMessageW(hChild, WM_PRINT, reinterpret_cast<WPARAM>(c->hdc),
+                PRF_NONCLIENT | PRF_CLIENT | PRF_ERASEBKGND | PRF_CHILDREN);
+            RestoreDC(c->hdc, saved);
+            return TRUE;
+        }, reinterpret_cast<LPARAM>(&cpCtx));
+        GdiFlush();
+        RasterImageBgra32 img;
+        img.width = w;
+        img.height = h;
+        img.pixels.resize(static_cast<std::size_t>(w) * static_cast<std::size_t>(h) * 4u);
+        std::memcpy(img.pixels.data(), bits, img.pixels.size());
+        for (std::size_t i = 3; i < img.pixels.size(); i += 4) img.pixels[i] = 255u;
+        std::vector<std::uint8_t> png;
+        if (WinRtPdfRenderer::EncodeBgra32ToPngBytes(img, png) && !png.empty()) {
+            std::error_code dirEc;
+            const std::filesystem::path outP(outPathW);
+            if (outP.has_parent_path()) std::filesystem::create_directories(outP.parent_path(), dirEc);
+            HANDLE hf = CreateFileW(outPathW, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+            if (hf != INVALID_HANDLE_VALUE) {
+                DWORD wr = 0;
+                ok = WriteFile(hf, png.data(), static_cast<DWORD>(png.size()), &wr, nullptr) && wr == png.size();
+                CloseHandle(hf);
+            }
+        }
+        SelectObject(hdcMem, old);
+        DeleteObject(hbmp);
+    }
+    if (hdcMem) DeleteDC(hdcMem);
+    if (hdcScr) ReleaseDC(nullptr, hdcScr);
+    return ok;
+}
+
+inline void ApplyStealthCloakToDialog(HWND dlg) {
+    if (!dlg) return;
+    if (HMODULE hDwm = LoadLibraryW(L"dwmapi.dll")) {
+        using DwmSetAttrFn = HRESULT(WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+        if (auto fn = reinterpret_cast<DwmSetAttrFn>(GetProcAddress(hDwm, "DwmSetWindowAttribute"))) {
+            BOOL cloak = TRUE;
+            fn(dlg, 13 /*DWMWA_CLOAK*/, &cloak, sizeof(cloak));
+        }
+        FreeLibrary(hDwm);
+    }
+}
+
 // ============================================================================
 // 1. Agent MCP Configuration & Roadmap Status Dialog
 // ============================================================================
 inline void ShowGeminiNotebookMcpConfigDialog(
     HWND owner,
     const GeminiNotebook::GeminiNotebookConfig& cfg,
-    const GeminiNotebook::GeminiNotebookCapabilities* caps = nullptr)
+    const GeminiNotebook::GeminiNotebookCapabilities* caps = nullptr,
+    const wchar_t* autoScreenshotPathW = nullptr,
+    bool backgroundStealth = false,
+    const UiGlass::GlassSettings* overrideGlass = nullptr)
 {
     wchar_t exeBuf[MAX_PATH]{};
     GetModuleFileNameW(nullptr, exeBuf, MAX_PATH);
-    const std::string snippet = GeminiNotebook::CuadernUMcpBridge::GenerateAgentMcpConfigJson(exeBuf, cfg);
+    const std::string snippet = Mcp::McpServer::GenerateAgentMcpConfigJson(exeBuf, cfg.mcpEndpointUrlUtf8);
+
+    std::string editSnippet;
+    editSnippet.reserve(snippet.size() + 32u);
+    for (std::size_t i = 0; i < snippet.size(); ++i) {
+        if (snippet[i] == '\n' && (i == 0 || snippet[i - 1] != '\r')) editSnippet.push_back('\r');
+        editSnippet.push_back(snippet[i]);
+    }
 
     struct St {
         std::string jsonSnippet;
+        std::string editSnippet;
         GeminiNotebook::GeminiNotebookCapabilities capInfo{};
         bool done = false;
         UINT dpi = 96;
+        const UiGlass::GlassSettings* overrideGlass = nullptr;
         UiGlass::HigDialogTheme theme{};
         HFONT fNorm = nullptr, fBold = nullptr, fMono = nullptr;
         HWND hCode = nullptr;
     } st{};
     st.jsonSnippet = snippet;
+    st.editSnippet = std::move(editSnippet);
     if (caps) st.capInfo = *caps;
     st.dpi = DpiOf(owner);
+    st.overrideGlass = overrideGlass;
 
     static bool reg = false;
     if (!reg) {
@@ -138,7 +246,7 @@ inline void ShowGeminiNotebookMcpConfigDialog(
             if (!s) return DefWindowProcW(hwnd, msg, wp, lp);
 
             if (msg == WM_CREATE) {
-                s->theme.Init(hwnd);
+                s->theme.Init(hwnd, s->overrideGlass);
                 s->fNorm = UiGlass::CreateHigUiFont(Sc(13, s->dpi), FW_NORMAL);
                 s->fBold = UiGlass::CreateHigUiFont(Sc(13, s->dpi), FW_SEMIBOLD);
                 s->fMono = CreateFontW(-Sc(12, s->dpi), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
@@ -154,12 +262,12 @@ inline void ShowGeminiNotebookMcpConfigDialog(
                 y += Sc(24, s->dpi);
 
                 HWND hSub = CreateWindowExW(0, L"STATIC",
-                    L"Incluye el puente local de CuadernU (que sube PDF, DOCX, PPTX y cursos de TEC Digital) y el servidor oficial de Gemini Notebook.",
-                    WS_CHILD | WS_VISIBLE, pad, y, fw, Sc(32, s->dpi), hwnd, nullptr, nullptr, nullptr);
+                    L"Incluye el servidor completo de CuadernU (cuadernos, dibujo, capturas en segundo plano, TEC Digital y estudio) y el servidor oficial de Gemini Notebook.",
+                    WS_CHILD | WS_VISIBLE, pad, y, fw, Sc(40, s->dpi), hwnd, nullptr, nullptr, nullptr);
                 SendMessageW(hSub, WM_SETFONT, reinterpret_cast<WPARAM>(s->fNorm), TRUE);
-                y += Sc(38, s->dpi);
+                y += Sc(46, s->dpi);
 
-                s->hCode = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", Utf8ToWide(s->jsonSnippet).c_str(),
+                s->hCode = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", Utf8ToWide(s->editSnippet).c_str(),
                     WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY,
                     pad, y, fw, Sc(210, s->dpi), hwnd, reinterpret_cast<HMENU>(801), nullptr, nullptr);
                 SendMessageW(s->hCode, WM_SETFONT, reinterpret_cast<WPARAM>(s->fMono ? s->fMono : s->fNorm), TRUE);
@@ -174,9 +282,9 @@ inline void ShowGeminiNotebookMcpConfigDialog(
                     L") y borrado remoto (" +
                     std::wstring(s->capInfo.deleteNotebookOrSourceApi ? L"disponible" : L"pendiente") + L").";
                 HWND hCap = CreateWindowExW(0, L"STATIC", capTxt.c_str(),
-                    WS_CHILD | WS_VISIBLE, pad, y, fw, Sc(44, s->dpi), hwnd, nullptr, nullptr, nullptr);
+                    WS_CHILD | WS_VISIBLE, pad, y, fw, Sc(78, s->dpi), hwnd, nullptr, nullptr, nullptr);
                 SendMessageW(hCap, WM_SETFONT, reinterpret_cast<WPARAM>(s->fNorm), TRUE);
-                y += Sc(54, s->dpi);
+                y += Sc(86, s->dpi);
 
                 HWND bCopy = CreateWindowExW(0, L"BUTTON", L"Copiar configuraci\u00F3n",
                     WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
@@ -223,15 +331,30 @@ inline void ShowGeminiNotebookMcpConfigDialog(
     }
 
     const int w = Sc(608, st.dpi);
-    const int h = Sc(438, st.dpi);
+    const int h = Sc(494, st.dpi);
     RECT orc{};
     GetWindowRect(owner, &orc);
     const int x = (orc.left + orc.right - w) / 2;
     const int y = (orc.top + orc.bottom - h) / 2;
-    EnableWindow(owner, FALSE);
-    HWND dlg = CreateWindowExW(WS_EX_DLGMODALFRAME, L"CuadernU_GnMcpCfgDlg",
-        L"Puente de Agentes — Gemini Notebook", WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
-        x, y, w, h, owner, nullptr, GetModuleHandleW(nullptr), &st);
+    if (owner && !backgroundStealth) EnableWindow(owner, FALSE);
+    const DWORD exSt = backgroundStealth ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) : WS_EX_DLGMODALFRAME;
+    const DWORD wSt = backgroundStealth ? (WS_POPUP | WS_CAPTION | WS_SYSMENU) : (WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE);
+    HWND dlg = CreateWindowExW(exSt, L"CuadernU_GnMcpCfgDlg",
+        L"Puente de Agentes — CuadernU y Gemini Notebook", wSt,
+        x, y, w, h, backgroundStealth ? nullptr : owner, nullptr, GetModuleHandleW(nullptr), &st);
+    if (backgroundStealth && dlg) {
+        ApplyStealthCloakToDialog(dlg);
+        ShowWindow(dlg, SW_SHOWNOACTIVATE);
+    }
+    if (autoScreenshotPathW && autoScreenshotPathW[0] && dlg) {
+        CaptureDialogStealthPng(dlg, autoScreenshotPathW);
+        DestroyWindow(dlg);
+        if (owner && !backgroundStealth) {
+            EnableWindow(owner, TRUE);
+            SetForegroundWindow(owner);
+        }
+        return;
+    }
     MSG msg{};
     while (!st.done && IsWindow(dlg) && GetMessageW(&msg, nullptr, 0, 0) > 0) {
         if (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE) {
@@ -243,24 +366,33 @@ inline void ShowGeminiNotebookMcpConfigDialog(
             DispatchMessageW(&msg);
         }
     }
-    EnableWindow(owner, TRUE);
-    SetForegroundWindow(owner);
+    if (owner && !backgroundStealth) {
+        EnableWindow(owner, TRUE);
+        SetForegroundWindow(owner);
+    }
 }
 
 // ============================================================================
 // 2. Connect Personal Google Account Dialog (OAuth Browser + Token/ADC)
 // ============================================================================
-inline bool ShowGeminiNotebookConnectDialog(HWND owner, GeminiNotebook::GeminiNotebookSyncStore& store) {
+inline bool ShowGeminiNotebookConnectDialog(
+    HWND owner,
+    GeminiNotebook::GeminiNotebookSyncStore& store,
+    const wchar_t* autoScreenshotPathW = nullptr,
+    bool backgroundStealth = false,
+    const UiGlass::GlassSettings* overrideGlass = nullptr) {
     struct St {
         GeminiNotebook::GeminiNotebookSyncStore* store = nullptr;
         bool changed = false, done = false;
         UINT dpi = 96;
+        const UiGlass::GlassSettings* overrideGlass = nullptr;
         UiGlass::HigDialogTheme theme{};
         HFONT fNorm = nullptr, fBold = nullptr;
         HWND hProj = nullptr, hClientId = nullptr, hClientSec = nullptr, hToken = nullptr, hEmail = nullptr;
     } st{};
     st.store = &store;
     st.dpi = DpiOf(owner);
+    st.overrideGlass = overrideGlass;
 
     static bool reg = false;
     if (!reg) {
@@ -275,7 +407,7 @@ inline bool ShowGeminiNotebookConnectDialog(HWND owner, GeminiNotebook::GeminiNo
             if (!s) return DefWindowProcW(hwnd, msg, wp, lp);
 
             if (msg == WM_CREATE) {
-                s->theme.Init(hwnd);
+                s->theme.Init(hwnd, s->overrideGlass);
                 s->fNorm = UiGlass::CreateHigUiFont(Sc(13, s->dpi), FW_NORMAL);
                 s->fBold = UiGlass::CreateHigUiFont(Sc(13, s->dpi), FW_SEMIBOLD);
                 const int pad = Sc(16, s->dpi);
@@ -441,10 +573,25 @@ inline bool ShowGeminiNotebookConnectDialog(HWND owner, GeminiNotebook::GeminiNo
     GetWindowRect(owner, &orc);
     const int x = (orc.left + orc.right - w) / 2;
     const int y = (orc.top + orc.bottom - h) / 2;
-    EnableWindow(owner, FALSE);
-    HWND dlg = CreateWindowExW(WS_EX_DLGMODALFRAME, L"CuadernU_GnConnectDlg",
-        L"Conectar cuenta personal — Gemini Notebook", WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
-        x, y, w, h, owner, nullptr, GetModuleHandleW(nullptr), &st);
+    if (owner && !backgroundStealth) EnableWindow(owner, FALSE);
+    const DWORD exSt = backgroundStealth ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) : WS_EX_DLGMODALFRAME;
+    const DWORD wSt = backgroundStealth ? (WS_POPUP | WS_CAPTION | WS_SYSMENU) : (WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE);
+    HWND dlg = CreateWindowExW(exSt, L"CuadernU_GnConnectDlg",
+        L"Conectar cuenta personal — Gemini Notebook", wSt,
+        x, y, w, h, backgroundStealth ? nullptr : owner, nullptr, GetModuleHandleW(nullptr), &st);
+    if (backgroundStealth && dlg) {
+        ApplyStealthCloakToDialog(dlg);
+        ShowWindow(dlg, SW_SHOWNOACTIVATE);
+    }
+    if (autoScreenshotPathW && autoScreenshotPathW[0] && dlg) {
+        CaptureDialogStealthPng(dlg, autoScreenshotPathW);
+        DestroyWindow(dlg);
+        if (owner && !backgroundStealth) {
+            EnableWindow(owner, TRUE);
+            SetForegroundWindow(owner);
+        }
+        return false;
+    }
     MSG msg{};
     while (!st.done && IsWindow(dlg) && GetMessageW(&msg, nullptr, 0, 0) > 0) {
         if (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE) {
@@ -456,8 +603,10 @@ inline bool ShowGeminiNotebookConnectDialog(HWND owner, GeminiNotebook::GeminiNo
             DispatchMessageW(&msg);
         }
     }
-    EnableWindow(owner, TRUE);
-    SetForegroundWindow(owner);
+    if (owner && !backgroundStealth) {
+        EnableWindow(owner, TRUE);
+        SetForegroundWindow(owner);
+    }
     return st.changed;
 }
 
@@ -469,7 +618,10 @@ inline void ShowGeminiNotebookHubDialog(
     GeminiNotebook::GeminiNotebookSyncStore& store,
     const DocumentModel* openDoc,
     std::string& outStatusBannerUtf8,
-    bool* outRequestAiStudy = nullptr)
+    bool* outRequestAiStudy = nullptr,
+    const wchar_t* autoScreenshotPathW = nullptr,
+    bool backgroundStealth = false,
+    const UiGlass::GlassSettings* overrideGlass = nullptr)
 {
     if (outRequestAiStudy) *outRequestAiStudy = false;
     store.LoadAll(nullptr);
@@ -482,6 +634,7 @@ inline void ShowGeminiNotebookHubDialog(
         GeminiNotebook::GeminiNotebookCapabilities caps{};
         bool done = false;
         UINT dpi = 96;
+        const UiGlass::GlassSettings* overrideGlass = nullptr;
         UiGlass::HigDialogTheme theme{};
         HFONT fNorm = nullptr, fBold = nullptr;
         HWND hBanner = nullptr, hNbList = nullptr, hSrcList = nullptr, hBundleChk = nullptr, hUrlEdit = nullptr;
@@ -491,6 +644,7 @@ inline void ShowGeminiNotebookHubDialog(
     st.statusOut = &outStatusBannerUtf8;
     st.reqAiStudy = outRequestAiStudy;
     st.dpi = DpiOf(owner);
+    st.overrideGlass = overrideGlass;
 
     static bool reg = false;
     if (!reg) {
@@ -552,7 +706,7 @@ inline void ShowGeminiNotebookHubDialog(
             };
 
             if (msg == WM_CREATE) {
-                s->theme.Init(hwnd);
+                s->theme.Init(hwnd, s->overrideGlass);
                 s->fNorm = UiGlass::CreateHigUiFont(Sc(13, s->dpi), FW_NORMAL);
                 s->fBold = UiGlass::CreateHigUiFont(Sc(13, s->dpi), FW_SEMIBOLD);
                 const int pad = Sc(16, s->dpi);
@@ -560,15 +714,15 @@ inline void ShowGeminiNotebookHubDialog(
                 int y = Sc(14, s->dpi);
 
                 s->hBanner = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE,
-                    pad, y, fw - Sc(168, s->dpi), Sc(24, s->dpi), hwnd, nullptr, nullptr, nullptr);
+                    pad, y, fw - Sc(168, s->dpi), Sc(44, s->dpi), hwnd, nullptr, nullptr, nullptr);
                 SendMessageW(s->hBanner, WM_SETFONT, reinterpret_cast<WPARAM>(s->fBold), TRUE);
 
                 HWND bConn = CreateWindowExW(0, L"BUTTON", L"Conectar cuenta...",
                     WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-                    pad + fw - Sc(158, s->dpi), y - Sc(3, s->dpi), Sc(158, s->dpi), Sc(28, s->dpi),
+                    pad + fw - Sc(158, s->dpi), y, Sc(158, s->dpi), Sc(28, s->dpi),
                     hwnd, reinterpret_cast<HMENU>(851), nullptr, nullptr);
                 SendMessageW(bConn, WM_SETFONT, reinterpret_cast<WPARAM>(s->fBold), TRUE);
-                y += Sc(34, s->dpi);
+                y += Sc(48, s->dpi);
 
                 const int colL = Sc(250, s->dpi);
                 const int colR = fw - colL - Sc(12, s->dpi);
@@ -922,15 +1076,30 @@ inline void ShowGeminiNotebookHubDialog(
     }
 
     const int w = Sc(756, st.dpi);
-    const int h = Sc(496, st.dpi);
+    const int h = Sc(518, st.dpi);
     RECT orc{};
     GetWindowRect(owner, &orc);
     const int x = (orc.left + orc.right - w) / 2;
     const int y = (orc.top + orc.bottom - h) / 2;
-    EnableWindow(owner, FALSE);
-    HWND dlg = CreateWindowExW(WS_EX_DLGMODALFRAME, L"CuadernU_GnHubDlg",
-        L"Gemini Notebook — Centro de Estudio y Sincronizaci\u00F3n", WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
-        x, y, w, h, owner, nullptr, GetModuleHandleW(nullptr), &st);
+    if (owner && !backgroundStealth) EnableWindow(owner, FALSE);
+    const DWORD exSt = backgroundStealth ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) : WS_EX_DLGMODALFRAME;
+    const DWORD wSt = backgroundStealth ? (WS_POPUP | WS_CAPTION | WS_SYSMENU) : (WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE);
+    HWND dlg = CreateWindowExW(exSt, L"CuadernU_GnHubDlg",
+        L"Gemini Notebook — Centro de Estudio y Sincronizaci\u00F3n", wSt,
+        x, y, w, h, backgroundStealth ? nullptr : owner, nullptr, GetModuleHandleW(nullptr), &st);
+    if (backgroundStealth && dlg) {
+        ApplyStealthCloakToDialog(dlg);
+        ShowWindow(dlg, SW_SHOWNOACTIVATE);
+    }
+    if (autoScreenshotPathW && autoScreenshotPathW[0] && dlg) {
+        CaptureDialogStealthPng(dlg, autoScreenshotPathW);
+        DestroyWindow(dlg);
+        if (owner && !backgroundStealth) {
+            EnableWindow(owner, TRUE);
+            SetForegroundWindow(owner);
+        }
+        return;
+    }
     MSG msg{};
     while (!st.done && IsWindow(dlg) && GetMessageW(&msg, nullptr, 0, 0) > 0) {
         if (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE) {
@@ -942,8 +1111,10 @@ inline void ShowGeminiNotebookHubDialog(
             DispatchMessageW(&msg);
         }
     }
-    EnableWindow(owner, TRUE);
-    SetForegroundWindow(owner);
+    if (owner && !backgroundStealth) {
+        EnableWindow(owner, TRUE);
+        SetForegroundWindow(owner);
+    }
 }
 
 } // namespace DocStudio::GeminiNotebookUi

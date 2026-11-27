@@ -17,9 +17,34 @@
 #include <shlwapi.h>
 #include <wrl.h>
 #include <WebView2.h>
+#include <WebView2EnvironmentOptions.h>
 #endif
 
 namespace DocStudio {
+
+namespace {
+std::atomic<bool> gUsePidIsolatedWebViewCache{ false };
+
+std::wstring ResolveWebView2UserDataDir() {
+    const std::filesystem::path root(StudioProfileStore::DefaultProfileRootDir());
+    if (gUsePidIsolatedWebViewCache.load(std::memory_order_acquire)) {
+#ifdef _WIN32
+        return (root / (L"WebView2Cache_" + std::to_wstring(GetCurrentProcessId()))).wstring();
+#else
+        return (root / L"WebView2Cache_isolated").wstring();
+#endif
+    }
+    return (root / L"WebView2Cache").wstring();
+}
+} // namespace
+
+void WebView2HtmlHost::SetUsePidIsolatedCache(bool isolated) noexcept {
+    gUsePidIsolatedWebViewCache.store(isolated, std::memory_order_release);
+}
+
+bool WebView2HtmlHost::UsePidIsolatedCache() noexcept {
+    return gUsePidIsolatedWebViewCache.load(std::memory_order_acquire);
+}
 
 #if defined(_WIN32) && defined(DOC_STUDIO_HAS_WEBVIEW2)
 namespace {
@@ -63,6 +88,7 @@ struct WebView2HtmlHost::Impl {
         bool isTutorHost = false;
         bool allowNetwork = false;
         bool ready = false;
+        bool navigationCompleted = false;
         bool suspended = false;
         bool visible = true;
         ComPtr<ICoreWebView2Controller> controller;
@@ -75,6 +101,8 @@ struct WebView2HtmlHost::Impl {
         bool hasPermHandler = false;
         EventRegistrationToken msgToken{};
         bool hasMsgHandler = false;
+        EventRegistrationToken navCompletedToken{};
+        bool hasNavCompletedHandler = false;
         std::function<void(const std::string&)> onWebMessageJson;
         std::function<void(std::uint64_t, bool)> onReady;
     };
@@ -103,6 +131,27 @@ struct WebView2HtmlHost::Impl {
         if (blk.hasMsgHandler) {
             blk.webview->remove_WebMessageReceived(blk.msgToken);
             blk.hasMsgHandler = false;
+        }
+        if (blk.hasNavCompletedHandler) {
+            blk.webview->remove_NavigationCompleted(blk.navCompletedToken);
+            blk.hasNavCompletedHandler = false;
+        }
+        blk.navigationCompleted = false;
+        {
+            auto aliveTok = alive;
+            const std::uint64_t objId = blk.objectId;
+            blk.webview->add_NavigationCompleted(
+                Callback<ICoreWebView2NavigationCompletedEventHandler>(
+                    [this, aliveTok, objId](ICoreWebView2*, ICoreWebView2NavigationCompletedEventArgs*) -> HRESULT {
+                        if (!aliveTok || !aliveTok->load()) return S_OK;
+                        auto it = blocks.find(objId);
+                        if (it != blocks.end()) {
+                            it->second.navigationCompleted = true;
+                        }
+                        return S_OK;
+                    }).Get(),
+                &blk.navCompletedToken);
+            blk.hasNavCompletedHandler = true;
         }
 
         if (blk.isTutorHost) {
@@ -344,6 +393,17 @@ bool WebView2HtmlHost::IsBlockSuspended(std::uint64_t objectId) const noexcept {
 #endif
 }
 
+bool WebView2HtmlHost::IsNavigationCompleted(std::uint64_t objectId) const noexcept {
+#if defined(_WIN32) && defined(DOC_STUDIO_HAS_WEBVIEW2)
+    if (!impl_) return false;
+    auto it = impl_->blocks.find(objectId);
+    return it != impl_->blocks.end() && it->second.navigationCompleted;
+#else
+    (void)objectId;
+    return false;
+#endif
+}
+
 std::size_t WebView2HtmlHost::ActiveBlockCount() const noexcept {
 #if defined(_WIN32) && defined(DOC_STUDIO_HAS_WEBVIEW2)
     return impl_ ? impl_->blocks.size() : 0u;
@@ -395,12 +455,21 @@ bool WebView2HtmlHost::ActivateBlock(
 
     if (!impl_->envCreating) {
         impl_->envCreating = true;
-        const std::wstring userDataDir = (std::filesystem::path(StudioProfileStore::DefaultProfileRootDir()) / L"WebView2Cache").wstring();
+        const std::wstring userDataDir = ResolveWebView2UserDataDir();
+        ComPtr<ICoreWebView2EnvironmentOptions> envOpts;
+        if (gUsePidIsolatedWebViewCache.load(std::memory_order_acquire)) {
+            auto opts = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
+            if (opts) {
+                opts->put_AdditionalBrowserArguments(
+                    L"--disable-features=CalculateNativeWinOcclusion --disable-backgrounding-occluded-windows --disable-renderer-backgrounding");
+                envOpts = opts;
+            }
+        }
         auto aliveTok = impl_->alive;
         const HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
             nullptr,
             userDataDir.c_str(),
-            nullptr,
+            envOpts.Get(),
             Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
                 [this, aliveTok](HRESULT envHr, ICoreWebView2Environment* createdEnv) -> HRESULT {
                     if (!aliveTok || !aliveTok->load()) return S_OK;
@@ -506,6 +575,51 @@ void WebView2HtmlHost::CaptureSnapshotAndSuspend(
 #endif
 }
 
+void WebView2HtmlHost::CaptureSnapshot(
+    std::uint64_t objectId,
+    std::function<void(std::uint64_t, std::vector<std::uint8_t>)> onSnapshotPng)
+{
+#if defined(DOC_STUDIO_HAS_WEBVIEW2)
+    if (!impl_) return;
+    auto it = impl_->blocks.find(objectId);
+    if (it == impl_->blocks.end() || !it->second.webview) {
+        if (onSnapshotPng) onSnapshotPng(objectId, {});
+        return;
+    }
+    ComPtr<IStream> memStream;
+    memStream.Attach(SHCreateMemStream(nullptr, 0));
+    if (!memStream) {
+        if (onSnapshotPng) onSnapshotPng(objectId, {});
+        return;
+    }
+    auto aliveTok = impl_->alive;
+    it->second.webview->CapturePreview(
+        COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG,
+        memStream.Get(),
+        Callback<ICoreWebView2CapturePreviewCompletedHandler>(
+            [aliveTok, objectId, memStream, cb = std::move(onSnapshotPng)](HRESULT hr) -> HRESULT {
+                if (!aliveTok || !aliveTok->load()) return S_OK;
+                std::vector<std::uint8_t> png;
+                if (SUCCEEDED(hr) && memStream) {
+                    STATSTG stg{};
+                    if (SUCCEEDED(memStream->Stat(&stg, STATFLAG_NONAME)) && stg.cbSize.QuadPart > 0 && stg.cbSize.QuadPart < 32ull * 1024ull * 1024ull) {
+                        png.resize(static_cast<std::size_t>(stg.cbSize.QuadPart));
+                        LARGE_INTEGER zero{};
+                        memStream->Seek(zero, STREAM_SEEK_SET, nullptr);
+                        ULONG got = 0;
+                        memStream->Read(png.data(), static_cast<ULONG>(png.size()), &got);
+                        png.resize(got);
+                    }
+                }
+                if (cb) cb(objectId, std::move(png));
+                return S_OK;
+            }).Get());
+#else
+    (void)objectId;
+    if (onSnapshotPng) onSnapshotPng(objectId, {});
+#endif
+}
+
 void WebView2HtmlHost::ResumeBlock(std::uint64_t objectId, const RECT& boundsPx) {
     SyncBlockBounds(objectId, boundsPx, true);
 }
@@ -584,12 +698,21 @@ bool WebView2HtmlHost::ActivateTutorHost(
 
     if (!impl_->envCreating) {
         impl_->envCreating = true;
-        const std::wstring userDataDir = (std::filesystem::path(StudioProfileStore::DefaultProfileRootDir()) / L"WebView2Cache").wstring();
+        const std::wstring userDataDir = ResolveWebView2UserDataDir();
+        ComPtr<ICoreWebView2EnvironmentOptions> envOpts;
+        if (gUsePidIsolatedWebViewCache.load(std::memory_order_acquire)) {
+            auto opts = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
+            if (opts) {
+                opts->put_AdditionalBrowserArguments(
+                    L"--disable-features=CalculateNativeWinOcclusion --disable-backgrounding-occluded-windows --disable-renderer-backgrounding");
+                envOpts = opts;
+            }
+        }
         auto aliveTok = impl_->alive;
         const HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
             nullptr,
             userDataDir.c_str(),
-            nullptr,
+            envOpts.Get(),
             Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
                 [this, aliveTok](HRESULT envHr, ICoreWebView2Environment* createdEnv) -> HRESULT {
                     if (!aliveTok || !aliveTok->load()) return S_OK;

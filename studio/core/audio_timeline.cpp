@@ -751,7 +751,16 @@ bool TryTranscribeWavViaWhisperOrSapi(
     outRecognizedTextUtf8.clear();
     if (wavBytes.size() < 44) return false;
 
-    const std::filesystem::path tmpWav = std::filesystem::temp_directory_path() / "cuadernu_asr_tmp.wav";
+    static std::atomic<std::uint64_t> sAsrSeq{ 0 };
+    const std::uint64_t seq = ++sAsrSeq;
+    const unsigned long pid =
+#ifdef _WIN32
+        static_cast<unsigned long>(GetCurrentProcessId());
+#else
+        static_cast<unsigned long>(::getpid());
+#endif
+    const std::string tag = std::to_string(pid) + "_" + std::to_string(seq);
+    const std::filesystem::path tmpWav = std::filesystem::temp_directory_path() / ("cuadernu_asr_tmp_" + tag + ".wav");
     {
         std::ofstream ofs(tmpWav, std::ios::binary | std::ios::trunc);
         if (!ofs.is_open()) return false;
@@ -762,7 +771,7 @@ bool TryTranscribeWavViaWhisperOrSapi(
     if (!whisperExeUtf8.empty() && !whisperModelUtf8.empty() &&
         std::filesystem::exists(std::filesystem::u8path(whisperExeUtf8)) &&
         std::filesystem::exists(std::filesystem::u8path(whisperModelUtf8))) {
-        const std::filesystem::path outTxtBase = std::filesystem::temp_directory_path() / "cuadernu_whisper_out";
+        const std::filesystem::path outTxtBase = std::filesystem::temp_directory_path() / ("cuadernu_whisper_out_" + tag);
         std::wstring cmd = L"\"" + Utf8ToWide(whisperExeUtf8) + L"\" -m \"" + Utf8ToWide(whisperModelUtf8) +
             L"\" -f \"" + tmpWav.wstring() + L"\" -otxt -of \"" + outTxtBase.wstring() + L"\" -nt";
         STARTUPINFOW si{};

@@ -11771,7 +11771,8 @@ bool RunTecDigitalCenterDialog(
     SearchActiveDocFn onSearchActiveDoc,
     const UiGlass::GlassSettings* glassSettings,
     const wchar_t* autoScreenshotPathW,
-    int initialInnerTab) {
+    int initialInnerTab,
+    bool backgroundStealth) {
     static bool registered = false;
     if (!registered) {
         WNDCLASSEXW wc{};
@@ -11827,14 +11828,33 @@ bool RunTecDigitalCenterDialog(
                             std::max<int>(static_cast<int>(workRc.top), static_cast<int>(workRc.bottom) - winH));
     }
 
+    const DWORD exStyle = backgroundStealth
+        ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)
+        : WS_EX_DLGMODALFRAME;
+    const DWORD style = backgroundStealth
+        ? (WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN)
+        : (WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VISIBLE);
+
     HWND hDlg = CreateWindowExW(
-        WS_EX_DLGMODALFRAME,
+        exStyle,
         L"CuadernUCentroAcademicoTecWnd",
         L"TEC Digital — CuadernU",
-        WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VISIBLE,
+        style,
         x, y, winW, winH,
-        owner, nullptr, GetModuleHandleW(nullptr), &st);
+        backgroundStealth ? nullptr : owner, nullptr, GetModuleHandleW(nullptr), &st);
     if (!hDlg) return false;
+
+    if (backgroundStealth) {
+        if (HMODULE hDwm = LoadLibraryW(L"dwmapi.dll")) {
+            using DwmSetAttrFn = HRESULT(WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+            if (auto fn = reinterpret_cast<DwmSetAttrFn>(GetProcAddress(hDwm, "DwmSetWindowAttribute"))) {
+                BOOL cloak = TRUE;
+                fn(hDlg, 13 /*DWMWA_CLOAK*/, &cloak, sizeof(cloak));
+            }
+            FreeLibrary(hDwm);
+        }
+        ShowWindow(hDlg, SW_SHOWNOACTIVATE);
+    }
 
     if (autoScreenshotPathW && autoScreenshotPathW[0]) {
         RedrawWindow(hDlg, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
@@ -11850,7 +11870,7 @@ bool RunTecDigitalCenterDialog(
         return false;
     }
 
-    if (owner) EnableWindow(owner, FALSE);
+    if (owner && !backgroundStealth) EnableWindow(owner, FALSE);
     MSG msg{};
     while (!st.done && GetMessageW(&msg, nullptr, 0, 0) > 0) {
         if (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE) {
@@ -11862,7 +11882,7 @@ bool RunTecDigitalCenterDialog(
             DispatchMessageW(&msg);
         }
     }
-    if (owner) {
+    if (owner && !backgroundStealth) {
         EnableWindow(owner, TRUE);
         SetForegroundWindow(owner);
     }

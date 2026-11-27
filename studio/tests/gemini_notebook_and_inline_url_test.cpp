@@ -690,8 +690,10 @@ int main(int argc, char** argv) {
                 "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\",\"params\":{}}\n";
             std::string childOut;
             Check(RunChildStdioProcess(cmd, reqs, childOut), "Real CuadernU.exe --mcp-stdio exits cleanly with code 0");
-            Check(childOut.find("cuadernu-notebook-bridge") != std::string::npos &&
-                  childOut.find("cuadernu_export_cudoc_to_markdown") != std::string::npos,
+            Check((childOut.find("\"name\":\"cuadernu\"") != std::string::npos ||
+                   childOut.find("cuadernu-notebook-bridge") != std::string::npos) &&
+                  childOut.find("cuadernu_export_cudoc_to_markdown") != std::string::npos &&
+                  childOut.find("cuadernu_capture") != std::string::npos,
                   "Real CuadernU.exe --mcp-stdio responds to initialize and tools/list over stdio");
         }
     }

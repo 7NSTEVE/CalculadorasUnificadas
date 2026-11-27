@@ -37,9 +37,14 @@ public:
     // Non-invasive check (does NOT launch browser process)
     static bool IsWebView2RuntimeInstalled(std::string* outVersionUtf8 = nullptr);
 
+    // Enable per-PID WebView2Cache_<pid> directory isolation for background GUI instances
+    static void SetUsePidIsolatedCache(bool isolated) noexcept;
+    static bool UsePidIsolatedCache() noexcept;
+
     bool IsEnvironmentInitialized() const noexcept;
     bool IsBlockActive(std::uint64_t objectId) const noexcept;
     bool IsBlockSuspended(std::uint64_t objectId) const noexcept;
+    bool IsNavigationCompleted(std::uint64_t objectId) const noexcept;
     std::size_t ActiveBlockCount() const noexcept;
 
 #ifdef _WIN32
@@ -58,6 +63,11 @@ public:
 
     // Captures crisp PNG preview (for zero-CPU frozen rendering & PDF export) and calls TrySuspend().
     void CaptureSnapshotAndSuspend(
+        std::uint64_t objectId,
+        std::function<void(std::uint64_t, std::vector<std::uint8_t>)> onSnapshotPng);
+
+    // Captures crisp PNG preview WITHOUT suspending the active WebView2 control.
+    void CaptureSnapshot(
         std::uint64_t objectId,
         std::function<void(std::uint64_t, std::vector<std::uint8_t>)> onSnapshotPng);
 

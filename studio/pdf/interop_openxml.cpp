@@ -816,8 +816,7 @@ bool OpenXmlInterop::ExportToPptxBytes(
         ct << "<Override PartName=\"/ppt/slides/slide" << (i + 1)
            << ".xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>";
     }
-    ct << "</Types>";
-    zip.SetTextEntry("[Content_Types].xml", ct.str());
+    std::vector<std::size_t> notesSlideIndices1;
 
     zip.SetTextEntry("_rels/.rels",
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
@@ -923,12 +922,23 @@ bool OpenXmlInterop::ExportToPptxBytes(
             slideXml << "</p:txBody></p:sp>\n";
         };
 
+        std::ostringstream speakerNotes;
         auto appendObjectsToSlide = [&](const std::vector<AnnotationObject>& objs, double srcW, double srcH,
                                         std::int64_t offX, std::int64_t offY, std::int64_t boxW, std::int64_t boxH) {
             const double sx = static_cast<double>(boxW) / (std::max)(72.0, srcW);
             const double sy = static_cast<double>(boxH) / (std::max)(72.0, srcH);
             const double s = (std::min)(sx, sy);
             for (const auto& obj : objs) {
+                if (!doc.IsLayerExportable(obj.layerId)) {
+                    if (!obj.textUtf8.empty()) {
+                        if (speakerNotes.tellp() > 0) speakerNotes << "\n";
+                        speakerNotes << obj.textUtf8;
+                    } else if (!obj.formulaExprUtf8.empty()) {
+                        if (speakerNotes.tellp() > 0) speakerNotes << "\n";
+                        speakerNotes << obj.formulaExprUtf8;
+                    }
+                    continue;
+                }
                 const std::int64_t ox = offX + static_cast<std::int64_t>(obj.bounds.x * s);
                 const std::int64_t oy = offY + static_cast<std::int64_t>(obj.bounds.y * s);
                 const std::int64_t ow = (std::max<std::int64_t>)(91440, static_cast<std::int64_t>(obj.bounds.w * s));
@@ -1080,11 +1090,45 @@ bool OpenXmlInterop::ExportToPptxBytes(
             }
         }
 
+        const std::string notesText = speakerNotes.str();
+        if (!notesText.empty()) {
+            const std::string notesRelId = "rId" + std::to_string(++sRelCounter);
+            const std::size_t sNum = i + 1;
+            notesSlideIndices1.push_back(sNum);
+            sRels << "<Relationship Id=\"" << notesRelId
+                  << "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide\" Target=\"../notesSlides/notesSlide"
+                  << sNum << ".xml\"/>\n";
+            std::ostringstream nRels;
+            nRels << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+                  << "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                  << "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"../slides/slide"
+                  << sNum << ".xml\"/></Relationships>";
+            std::ostringstream nXml;
+            nXml << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+                 << "<p:notes xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\">"
+                 << "<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>"
+                 << "<p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"Notas del Orador\"/><p:cNvSpPr txBox=\"1\"/><p:nvPr><p:ph type=\"body\" idx=\"1\"/></p:nvPr></p:nvSpPr>"
+                 << "<p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/>";
+            for (const auto& line : SplitParagraphs(notesText)) {
+                nXml << "<a:p><a:r><a:rPr lang=\"es-ES\" sz=\"1200\"/><a:t>" << XmlEscape(line) << "</a:t></a:r></a:p>";
+            }
+            nXml << "</p:txBody></p:sp></p:spTree></p:cSld></p:notes>";
+            zip.SetTextEntry("ppt/notesSlides/_rels/notesSlide" + std::to_string(sNum) + ".xml.rels", nRels.str());
+            zip.SetTextEntry("ppt/notesSlides/notesSlide" + std::to_string(sNum) + ".xml", nXml.str());
+        }
+
         slideXml << "</p:spTree></p:cSld></p:sld>";
         sRels << "</Relationships>";
         zip.SetTextEntry("ppt/slides/_rels/slide" + std::to_string(i + 1) + ".xml.rels", sRels.str());
         zip.SetTextEntry("ppt/slides/slide" + std::to_string(i + 1) + ".xml", slideXml.str());
     }
+
+    for (std::size_t nIdx : notesSlideIndices1) {
+        ct << "<Override PartName=\"/ppt/notesSlides/notesSlide" << nIdx
+           << ".xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml\"/>";
+    }
+    ct << "</Types>";
+    zip.SetTextEntry("[Content_Types].xml", ct.str());
 
     presXml << "</p:sldIdLst>\n<p:sldSz cx=\"12192000\" cy=\"6858000\"/><p:notesSz cx=\"6858000\" cy=\"9144000\"/></p:presentation>";
     presRels << "</Relationships>";

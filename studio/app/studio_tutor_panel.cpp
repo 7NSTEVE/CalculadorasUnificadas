@@ -7,8 +7,10 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <thread>
+#include "../pdf/winrt_adapters.hpp"
 
 namespace DocStudio::Tutor {
 
@@ -84,6 +86,8 @@ struct StudioTutorPanel::Impl {
     BakeCallbackFn onBake;
     StatusCallbackFn onStatus;
     bool webReady = false;
+    bool webActivating = false;
+    bool startupFailed = false;
     SidecarLaunchConfig pendingCfg{};
     std::thread startupThread;
     std::atomic<bool> startupCancel{false};
@@ -163,6 +167,8 @@ struct StudioTutorPanel::Impl {
         KillTimer(hwnd, kTimerArranque);
 
         if (!ok) {
+            startupFailed = true;
+            webActivating = false;
             std::string errMsg;
             {
                 std::lock_guard<std::mutex> lk(startupMtx);
@@ -173,6 +179,7 @@ struct StudioTutorPanel::Impl {
             return;
         }
 
+        webActivating = true;
         RECT rc{};
         GetClientRect(hwnd, &rc);
         const auto ep = sidecar.Endpoint();
@@ -189,8 +196,11 @@ struct StudioTutorPanel::Impl {
             query,
             [this](const std::string& jsonMsg) { HandleWebMessage(jsonMsg); },
             [this](std::uint64_t, bool readyOk) {
+                webActivating = false;
                 webReady = readyOk;
-                if (readyOk) {
+                if (!readyOk) {
+                    startupFailed = true;
+                } else {
                     webHost.PostMessageJson(kTutorHostId, BuildThemeMessageJson(glass));
                     if (onStatus) {
                         onStatus("Pizarra Tutor Audiovisual lista");
@@ -296,7 +306,8 @@ bool StudioTutorPanel::OpenOrFocus(
     const AiProviderVault* optionalVault,
     BakeCallbackFn onBakeToDocument,
     StatusCallbackFn onStatusUpdate,
-    std::string* outErr)
+    std::string* outErr,
+    bool backgroundStealth)
 {
     impl_->glass = glassSettings;
     impl_->ownerHwnd = ownerHwnd;
@@ -304,9 +315,11 @@ bool StudioTutorPanel::OpenOrFocus(
     impl_->onStatus = std::move(onStatusUpdate);
 
     if (impl_->hwnd && IsWindow(impl_->hwnd)) {
-        // Solo restaurar si estaba minimizada: SW_RESTORE sacaría a una ventana maximizada de ese estado
-        if (IsIconic(impl_->hwnd)) ShowWindow(impl_->hwnd, SW_RESTORE);
-        SetForegroundWindow(impl_->hwnd);
+        if (!backgroundStealth) {
+            // Solo restaurar si estaba minimizada: SW_RESTORE sacaría a una ventana maximizada de ese estado
+            if (IsIconic(impl_->hwnd)) ShowWindow(impl_->hwnd, SW_RESTORE);
+            SetForegroundWindow(impl_->hwnd);
+        }
         SyncAppearance(glassSettings);
         return true;
     }
@@ -325,6 +338,9 @@ bool StudioTutorPanel::OpenOrFocus(
     const SidecarVaultSnapshot vaultSnap = SidecarVaultSnapshot::Capture(optionalVault);
     impl_->JoinStartupThread();
     impl_->pendingCfg = cfg;
+    impl_->startupFailed = false;
+    impl_->webActivating = false;
+    impl_->webReady = false;
     impl_->startupCancel.store(false, std::memory_order_relaxed);
     impl_->starting.store(true, std::memory_order_relaxed);
     impl_->inicioArranque = std::chrono::steady_clock::now();
@@ -363,16 +379,17 @@ bool StudioTutorPanel::OpenOrFocus(
             if (maxH > 0 && h > maxH) h = maxH;
         }
     }
+    const DWORD exStyle = backgroundStealth ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) : 0u;
     impl_->hwnd = CreateWindowExW(
-        0,
+        exStyle,
         kTutorWndClass,
         L"CuadernU \u00B7 Pizarra Tutor Audiovisual",
         WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
+        backgroundStealth ? 64 : CW_USEDEFAULT,
+        backgroundStealth ? 64 : CW_USEDEFAULT,
         w,
         h,
-        ownerHwnd,
+        backgroundStealth ? nullptr : ownerHwnd,
         nullptr,
         hInst,
         impl_);
@@ -384,7 +401,19 @@ bool StudioTutorPanel::OpenOrFocus(
     }
 
     UiGlass::ApplyWindowsNativeMicaBackdrop(impl_->hwnd, glassSettings.IsDark(), glassSettings.reduceTransparency);
-    ShowWindow(impl_->hwnd, SW_SHOWMAXIMIZED);
+    if (backgroundStealth) {
+        if (HMODULE hDwm = LoadLibraryW(L"dwmapi.dll")) {
+            using DwmSetAttrFn = HRESULT(WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+            if (auto fn = reinterpret_cast<DwmSetAttrFn>(GetProcAddress(hDwm, "DwmSetWindowAttribute"))) {
+                BOOL cloak = TRUE;
+                fn(impl_->hwnd, 13 /*DWMWA_CLOAK*/, &cloak, sizeof(cloak));
+            }
+            FreeLibrary(hDwm);
+        }
+        ShowWindow(impl_->hwnd, SW_SHOWNOACTIVATE);
+    } else {
+        ShowWindow(impl_->hwnd, SW_SHOWMAXIMIZED);
+    }
     UpdateWindow(impl_->hwnd);
     SetTimer(impl_->hwnd, kTimerArranque, 1000, nullptr);
 
@@ -431,6 +460,110 @@ void StudioTutorPanel::SendActionToWeb(const std::string& actionTypeUtf8, const 
         j["payload"] = json::object();
     }
     impl_->webHost.PostMessageJson(kTutorHostId, j.dump());
+}
+
+bool StudioTutorPanel::IsWebReady() const noexcept {
+    return impl_ && impl_->webReady;
+}
+
+bool StudioTutorPanel::CaptureWebViewPng(const std::wstring& outPathW, int timeoutMs) {
+    if (!impl_ || !impl_->hwnd || !IsWindow(impl_->hwnd) || outPathW.empty()) return false;
+
+    auto pumpOnce = []() {
+        MSG m{};
+        while (PeekMessageW(&m, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&m);
+            DispatchMessageW(&m);
+        }
+    };
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(250, timeoutMs));
+    while ((!impl_->webReady || !impl_->webHost.IsNavigationCompleted(kTutorHostId)) &&
+           !impl_->startupFailed &&
+           std::chrono::steady_clock::now() < deadline &&
+           IsWindow(impl_->hwnd)) {
+        pumpOnce();
+        if (!impl_->starting.load(std::memory_order_relaxed) && !impl_->webActivating && !impl_->webReady) {
+            // Sidecar finished without starting WebView2; give one more message pump for kWmTutorSidecarReady
+            pumpOnce();
+            if (!impl_->starting.load(std::memory_order_relaxed) && !impl_->webActivating && !impl_->webReady && impl_->startupFailed) {
+                break;
+            }
+        }
+        Sleep(20);
+    }
+
+    std::vector<std::uint8_t> capturedPng;
+    if (impl_->webReady) {
+        auto doCapture = [&](int settleMs) {
+            const auto settleEnd = std::chrono::steady_clock::now() + std::chrono::milliseconds(settleMs);
+            while (std::chrono::steady_clock::now() < settleEnd && IsWindow(impl_->hwnd)) {
+                pumpOnce();
+                Sleep(20);
+            }
+            capturedPng.clear();
+            bool done = false;
+            impl_->webHost.CaptureSnapshot(kTutorHostId, [&](std::uint64_t, std::vector<std::uint8_t> bytes) {
+                capturedPng = std::move(bytes);
+                done = true;
+            });
+            const auto capDeadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(8000);
+            while (!done && std::chrono::steady_clock::now() < capDeadline && IsWindow(impl_->hwnd)) {
+                pumpOnce();
+                Sleep(15);
+            }
+        };
+
+        // Allow Chromium WebView2 time to complete DOM layout, stylesheet paint & WebSocket connect
+        doCapture(1800);
+        // If first capture caught a pre-paint solid blank frame (<28 KB for a large viewport), settle and retry once
+        if (capturedPng.size() < 28000u && IsWindow(impl_->hwnd)) {
+            doCapture(1500);
+        }
+    }
+
+    if (capturedPng.empty()) {
+        // Fallback: capture Win32 client area (e.g. loading banner or GDI host) via PrintWindow
+        RECT rc{};
+        GetClientRect(impl_->hwnd, &rc);
+        const int w = std::max(1, static_cast<int>(rc.right - rc.left));
+        const int h = std::max(1, static_cast<int>(rc.bottom - rc.top));
+        HDC hdcScreen = GetDC(nullptr);
+        HDC hdcMem = CreateCompatibleDC(hdcScreen);
+        BITMAPINFO bmi{};
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = w;
+        bmi.bmiHeader.biHeight = -h;
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+        void* bits = nullptr;
+        HBITMAP hbmp = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+        if (hbmp && bits) {
+            HGDIOBJ old = SelectObject(hdcMem, hbmp);
+            PrintWindow(impl_->hwnd, hdcMem, PW_CLIENTONLY | PW_RENDERFULLCONTENT);
+            RasterImageBgra32 img;
+            img.width = w;
+            img.height = h;
+            img.pixels.resize(static_cast<std::size_t>(w) * static_cast<std::size_t>(h) * 4u);
+            std::memcpy(img.pixels.data(), bits, img.pixels.size());
+            for (std::size_t i = 3; i < img.pixels.size(); i += 4) img.pixels[i] = 255u;
+            WinRtPdfRenderer::EncodeBgra32ToPngBytes(img, capturedPng);
+            SelectObject(hdcMem, old);
+            DeleteObject(hbmp);
+        }
+        if (hdcMem) DeleteDC(hdcMem);
+        if (hdcScreen) ReleaseDC(nullptr, hdcScreen);
+    }
+
+    if (capturedPng.empty()) return false;
+    std::error_code ec;
+    const std::filesystem::path p(outPathW);
+    if (p.has_parent_path()) std::filesystem::create_directories(p.parent_path(), ec);
+    std::ofstream ofs(p, std::ios::binary | std::ios::trunc);
+    if (!ofs.is_open()) return false;
+    ofs.write(reinterpret_cast<const char*>(capturedPng.data()), static_cast<std::streamsize>(capturedPng.size()));
+    return ofs.good();
 }
 
 void StudioTutorPanel::Close() {

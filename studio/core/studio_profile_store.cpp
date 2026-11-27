@@ -78,6 +78,14 @@ bool StudioProfileStore::SetProfileRootOverride(const std::wstring& path) {
     return true;
 }
 
+bool StudioProfileStore::HasProfileRootOverride() noexcept {
+    return !profileRootOverride.empty();
+}
+
+void StudioProfileStore::ClearProfileRootOverride() noexcept {
+    profileRootOverride.clear();
+}
+
 std::wstring StudioProfileStore::DefaultProfileRootDir() {
     if (!profileRootOverride.empty()) return profileRootOverride;
 #ifdef _WIN32

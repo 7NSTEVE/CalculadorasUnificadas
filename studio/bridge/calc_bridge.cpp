@@ -1,4 +1,5 @@
 #include "calc_bridge.hpp"
+#include "../core/studio_profile_store.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -2179,6 +2180,8 @@ bool CalcIpcChannel::Open(const CalcIpcConfig& cfg, std::string* outErr)
     fs::path baseDir;
     if (!cfg.directoryOverrideUtf8.empty()) {
         baseDir = fs::path(cfg.directoryOverrideUtf8);
+    } else if (DocStudio::StudioProfileStore::HasProfileRootOverride()) {
+        baseDir = fs::path(DocStudio::StudioProfileStore::DefaultProfileRootDir()) / L"ipc" / cleanName;
     } else {
         std::error_code ec;
         const std::string xdg = GetEnvVarUtf8("XDG_RUNTIME_DIR");

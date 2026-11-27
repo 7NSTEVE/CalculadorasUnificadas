@@ -167,6 +167,31 @@ target_link_libraries(CuadernuTecIntegration PUBLIC
     academic_horarios_tec
 )
 
+add_library(CuadernuMcp STATIC
+    mcp/mcp_protocol.cpp
+    mcp/mcp_server.cpp
+    mcp/mcp_gui_ipc.cpp
+    mcp/mcp_tools_document.cpp
+    mcp/mcp_tools_knowledge.cpp
+    mcp/mcp_tools_interop_stem.cpp
+    mcp/mcp_tools_academic_ai.cpp
+    mcp/mcp_tools_capture_test.cpp
+)
+target_compile_definitions(CuadernuMcp PUBLIC DOC_STUDIO_HAS_ACADEMIC=1)
+target_compile_definitions(CuadernuMcp PRIVATE _UNICODE UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+if(MSVC)
+    target_compile_options(CuadernuMcp PRIVATE /W4 /utf-8 /EHsc)
+endif()
+target_link_libraries(CuadernuMcp PUBLIC
+    DocumentCore
+    CuadernuTecIntegration
+    academic_tec_digital
+    academic_horarios_tec
+    gdiplus
+    dwmapi
+    psapi
+)
+
 set(CUADERNU_APP_SOURCES
     app/main_studio.cpp
     app/studio_tec_digital_dialog.cpp
@@ -184,10 +209,12 @@ endif()
 target_link_libraries(CuadernU PRIVATE
     DocumentCore
     CuadernuTecIntegration
+    CuadernuMcp
     academic_tec_digital
     academic_horarios_tec
     comctl32
     gdiplus
+    dwmapi
 )
 
 # Produce DocumentStudio.exe compatibility alias alongside official CuadernU.exe
@@ -353,6 +380,19 @@ if(MSVC)
 endif()
 target_link_libraries(TutorWhiteboardTest PRIVATE DocumentCore tinta_nucleo)
 add_test(NAME TutorWhiteboardTest COMMAND TutorWhiteboardTest)
+
+add_executable(CuadernuMcpServerTest tests/cuadernu_mcp_server_test.cpp)
+target_compile_definitions(CuadernuMcpServerTest PRIVATE _UNICODE UNICODE NOMINMAX WIN32_LEAN_AND_MEAN DOC_STUDIO_HAS_ACADEMIC=1)
+if(MSVC)
+    target_compile_options(CuadernuMcpServerTest PRIVATE /W4 /utf-8 /EHsc)
+endif()
+target_link_libraries(CuadernuMcpServerTest PRIVATE CuadernuMcp DocumentCore CuadernuTecIntegration tinta_nucleo gdiplus dwmapi)
+add_dependencies(CuadernuMcpServerTest CuadernU)
+add_test(
+    NAME CuadernuMcpServerTest
+    COMMAND CuadernuMcpServerTest "${CMAKE_CURRENT_SOURCE_DIR}" "$<TARGET_FILE:CuadernU>"
+)
+set_tests_properties(CuadernuMcpServerTest PROPERTIES ENVIRONMENT "MUTATION_MASK=0")
 
 
 

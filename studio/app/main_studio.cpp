@@ -69,6 +69,8 @@
 #include "../media/native_video_engine.hpp"
 #include "../media/webview2_html_host.hpp"
 #include "../render/d2d_renderer.hpp"
+#include "../mcp/mcp_gui_ipc.hpp"
+#include "../mcp/mcp_server.hpp"
 #ifdef DOC_STUDIO_HAS_GEMINI_NOTEBOOK
 #include "studio_gemini_notebook_dialog.hpp"
 #endif
@@ -83,6 +85,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -111,6 +114,7 @@ constexpr UINT WM_APP_TAKE_SCREENSHOT = WM_APP + 102;
 constexpr UINT WM_APP_CASIO_INBOX_READY = WM_APP + 103;
 constexpr UINT WM_APP_HTML_SNAPSHOT_READY = WM_APP + 104;
 constexpr UINT WM_APP_DRAFT_RECOVERY = WM_APP + 105;
+constexpr UINT WM_APP_MCP_DISPATCH = Mcp::kWmAppMcpDispatch;
 
 struct HtmlSnapshotPayload {
     std::uint64_t objectId = 0;
@@ -427,6 +431,15 @@ struct StudioAppState {
     std::wstring screenshotOutPath;
     int initialPage1Based = 1;
     std::string cliCalcCardSpec;
+
+    // MCP Stealth Background GUI & Live IPC state
+    bool backgroundStealth = false;
+    bool noProfileWrite = false;
+    int cliWinWidth = 0;
+    int cliWinHeight = 0;
+    std::string mcpPipeNameUtf8;
+    std::unique_ptr<Mcp::McpGuiPipeServer> mcpPipeServer;
+    HANDLE mcpShutdownEvent = nullptr;
 };
 
 // ---------------- Small Win32 Helpers ----------------
@@ -979,7 +992,7 @@ DocumentExtensionBundle BuildExtensionBundle(StudioAppState* st) {
 }
 
 void PersistStudioProfileNow(StudioAppState* st) {
-    if (!st) return;
+    if (!st || st->noProfileWrite || st->backgroundStealth) return;
     const std::wstring rootDir = StudioProfileStore::DefaultProfileRootDir();
     st->audioSession.SetWhisperCliConfig(st->uiPrefs.whisperExePathUtf8, st->uiPrefs.whisperModelPathUtf8);
     StudioProfileStore::SaveAllProfileState(
@@ -1610,7 +1623,7 @@ void SyncActiveHtmlBounds(StudioAppState* st) {
 // preguntan ni escriben borradores, para que nada se quede esperando a una persona.
 bool IsAutomationRun(const StudioAppState* st) noexcept {
     return st && (st->smokeTestMode || st->testDpiCycleCli || !st->screenshotOutPath.empty() ||
-                  st->cliTecPreviewSection >= 0);
+                  st->cliTecPreviewSection >= 0 || st->backgroundStealth);
 }
 
 void SyncDynamicTimers(StudioAppState* st) {
@@ -4155,10 +4168,14 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         break;
     }
     case CMD_MIGRATE_NOTEBOOK: {
-        if (GuiDialogs::RunNotebookMigrationDialog(st->hwndMain, st->doc, st->audioSession, st->vault, st->statusBannerUtf8)) {
+        // Como «Abrir»: se pregunta ya elegido el archivo, justo antes de reemplazar el documento.
+        const auto confirmReplace = [st] { return ConfirmUnsavedChanges(st, L"abrir otro documento"); };
+        if (GuiDialogs::RunNotebookMigrationDialog(st->hwndMain, st->doc, st->audioSession, st->vault,
+                                                   st->statusBannerUtf8, confirmReplace)) {
             st->cmdStack.Clear();
             st->pageCache.InvalidateAll(++st->asyncGen);
             st->currentDocPath.clear();
+            DiscardSessionDraft(st); // era del documento anterior, que ya quedó guardado o con copia
             CenterCameraOnPage(st, 0);
             LayoutMainChildren(st);
         }
@@ -4170,14 +4187,20 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
     case CMD_SAVE_ENCRYPTED:
         GuiDialogs::RunSecurityOrLanFlow(st->hwndMain, st->doc, 0, MakePasswordPromptAdapter(st), st->statusBannerUtf8);
         break;
-    case CMD_OPEN_ENCRYPTED:
-        if (GuiDialogs::RunSecurityOrLanFlow(st->hwndMain, st->doc, 1, MakePasswordPromptAdapter(st), st->statusBannerUtf8)) {
+    case CMD_OPEN_ENCRYPTED: {
+        const auto confirmReplace = [st] { return ConfirmUnsavedChanges(st, L"abrir otro documento"); };
+        if (GuiDialogs::RunSecurityOrLanFlow(st->hwndMain, st->doc, 1, MakePasswordPromptAdapter(st),
+                                             st->statusBannerUtf8, confirmReplace)) {
             st->cmdStack.Clear();
             st->pageCache.InvalidateAll(++st->asyncGen);
+            // Sin esto «Guardar» escribía el cuaderno descifrado, sin cifrar, encima del archivo anterior.
+            st->currentDocPath.clear();
+            DiscardSessionDraft(st);
             CenterCameraOnPage(st, 0);
             LayoutMainChildren(st);
         }
         break;
+    }
     case CMD_VERSION_HISTORY:
         GuiDialogs::RunVersionHistoryOrMerge(st->hwndMain, st->doc, st->versionHistory, st->activePageIndex, false, MakePromptAdapter(st), st->statusBannerUtf8);
         break;
@@ -10372,6 +10395,782 @@ void PaintRibbonAndStatus(StudioAppState* st, HDC hdc) {
     }
 }
 
+static nlohmann::json RectToJson(const RECT& r) {
+    return nlohmann::json{
+        { "left", r.left }, { "top", r.top },
+        { "right", r.right }, { "bottom", r.bottom },
+        { "width", r.right - r.left }, { "height", r.bottom - r.top }
+    };
+}
+
+static bool RectsOverlapStrict(const RECT& a, const RECT& b) noexcept {
+    if (a.right <= a.left || a.bottom <= a.top || b.right <= b.left || b.bottom <= b.top) return false;
+    return (a.left < b.right) && (a.right > b.left) && (a.top < b.bottom) && (a.bottom > b.top);
+}
+
+static const char* ToolKindToUtf8(ToolKind t) noexcept {
+    switch (t) {
+    case ToolKind::Hand: return "hand";
+    case ToolKind::Pen: return "pen";
+    case ToolKind::Highlighter: return "highlighter";
+    case ToolKind::Eraser: return "eraser";
+    case ToolKind::Lasso: return "lasso";
+    case ToolKind::Laser: return "laser";
+    case ToolKind::ShapeRect: return "rect";
+    case ToolKind::ShapeArrow: return "arrow";
+    case ToolKind::TextBox: return "text";
+    case ToolKind::Crop: return "crop";
+    }
+    return "pen";
+}
+
+static nlohmann::json HandleMcpGuiDispatch(StudioAppState* st, const nlohmann::json& req) {
+    using json = nlohmann::json;
+    if (!st || !st->hwndMain || !IsWindow(st->hwndMain)) {
+        return json{ { "ok", false }, { "error", "Ventana principal no disponible." } };
+    }
+    const std::string action = req.value("action", "");
+
+    if (action == "ping") {
+        return json{
+            { "ok", true },
+            { "pid", static_cast<std::uint32_t>(GetCurrentProcessId()) },
+            { "background_stealth", st->backgroundStealth },
+            { "title", st->doc.Title() }
+        };
+    }
+
+    if (action == "get_state") {
+        const char* themeStr = (st->glassSettings.mode == UiGlass::AppearanceMode::Dark)
+            ? "dark"
+            : (st->glassSettings.mode == UiGlass::AppearanceMode::HighContrast ? "high_contrast" : "porcelain");
+        return json{
+            { "ok", true },
+            { "pid", static_cast<std::uint32_t>(GetCurrentProcessId()) },
+            { "background_stealth", st->backgroundStealth },
+            { "title", st->doc.Title() },
+            { "mode", st->doc.Mode() == DocumentMode::InfiniteCanvas ? "canvas" : "paginated" },
+            { "page_count", st->doc.Pages().size() },
+            { "canvas_object_count", st->doc.CanvasObjects().size() },
+            { "active_page_index", st->activePageIndex },
+            { "camera", { { "zoom", st->camera.zoom }, { "pan_x", st->camera.panX }, { "pan_y", st->camera.panY } } },
+            { "tool", ToolKindToUtf8(st->activeTool) },
+            { "theme", themeStr },
+            { "sidebar_visible", st->sidebarVisible },
+            { "inspector_visible", st->inspectorVisible },
+            { "inspector_tab", st->inspectorTab },
+            { "focus_mode", st->focusMode },
+            { "presenter_mode", st->presenterMode },
+            { "tab_count", st->tabs.size() },
+            { "active_tab_index", st->activeTabIdx },
+            { "current_dpi", st->currentDpi },
+            { "status_banner", st->statusBannerUtf8 },
+            { "projector_open", st->projectorWnd.IsOpen() },
+            { "tutor_open", st->tutorPanel.IsOpen() }
+        };
+    }
+
+    if (action == "set_camera") {
+        if (req.contains("zoom") && req["zoom"].is_number()) {
+            st->camera.zoom = std::clamp(req["zoom"].get<double>(), 0.1, 8.0);
+        }
+        if (req.contains("pan_x") && req["pan_x"].is_number()) st->camera.panX = req["pan_x"].get<double>();
+        if (req.contains("pan_y") && req["pan_y"].is_number()) st->camera.panY = req["pan_y"].get<double>();
+        if (req.value("fit_page", false)) {
+            CenterCameraOnPage(st, st->activePageIndex);
+        }
+        InvalidateViews(st);
+        return json{
+            { "ok", true },
+            { "camera", { { "zoom", st->camera.zoom }, { "pan_x", st->camera.panX }, { "pan_y", st->camera.panY } } }
+        };
+    }
+
+    if (action == "set_tool") {
+        std::string t = req.value("tool", "");
+        for (char& c : t) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (t == "hand") st->activeTool = ToolKind::Hand;
+        else if (t == "pen") st->activeTool = ToolKind::Pen;
+        else if (t == "highlighter" || t == "hl") st->activeTool = ToolKind::Highlighter;
+        else if (t == "eraser") st->activeTool = ToolKind::Eraser;
+        else if (t == "lasso") st->activeTool = ToolKind::Lasso;
+        else if (t == "laser") st->activeTool = ToolKind::Laser;
+        else if (t == "rect" || t == "shape_rect") st->activeTool = ToolKind::ShapeRect;
+        else if (t == "arrow" || t == "shape_arrow") st->activeTool = ToolKind::ShapeArrow;
+        else if (t == "text" || t == "textbox") st->activeTool = ToolKind::TextBox;
+        else if (t == "crop") st->activeTool = ToolKind::Crop;
+        if (req.contains("stroke_width") && req["stroke_width"].is_number()) {
+            st->penWidth = std::clamp(req["stroke_width"].get<double>(), 0.5, 48.0);
+        }
+        if (req.contains("color")) {
+            st->penColor = Mcp::ParseColorJson(req["color"], st->penColor);
+        }
+        InvalidateViews(st);
+        return json{ { "ok", true }, { "tool", ToolKindToUtf8(st->activeTool) } };
+    }
+
+    if (action == "set_theme") {
+        std::string t = req.value("theme", "porcelain");
+        for (char& c : t) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (t == "dark" || t == "graphite") {
+            st->glassSettings.mode = UiGlass::AppearanceMode::Dark;
+            st->glassSettings.increaseContrast = false;
+            st->glassSettings.reduceTransparency = false;
+        } else if (t == "high_contrast" || t == "high-contrast" || t == "hc") {
+            st->glassSettings.mode = UiGlass::AppearanceMode::HighContrast;
+            st->glassSettings.increaseContrast = true;
+            st->glassSettings.reduceTransparency = true;
+        } else {
+            st->glassSettings.mode = UiGlass::AppearanceMode::Light;
+            st->glassSettings.increaseContrast = false;
+            st->glassSettings.reduceTransparency = false;
+        }
+        UiGlass::ApplyWindowsNativeMicaBackdrop(st->hwndMain, st->glassSettings.IsDark(), st->glassSettings.reduceTransparency);
+        st->tutorPanel.SyncAppearance(st->glassSettings);
+        InvalidateViews(st);
+        return json{ { "ok", true }, { "theme", t } };
+    }
+
+    if (action == "set_panels") {
+        if (req.contains("show_sidebar") && req["show_sidebar"].is_boolean()) st->sidebarVisible = req["show_sidebar"].get<bool>();
+        if (req.contains("show_inspector") && req["show_inspector"].is_boolean()) st->inspectorVisible = req["show_inspector"].get<bool>();
+        if (req.contains("inspector_tab") && req["inspector_tab"].is_number_integer()) {
+            st->inspectorTab = std::clamp(req["inspector_tab"].get<int>(), 0, 5);
+        }
+        if (req.contains("focus_mode") && req["focus_mode"].is_boolean()) st->focusMode = req["focus_mode"].get<bool>();
+        if (req.contains("presenter_mode") && req["presenter_mode"].is_boolean()) st->presenterMode = req["presenter_mode"].get<bool>();
+        LayoutMainChildren(st);
+        InvalidateViews(st);
+        return json{
+            { "ok", true },
+            { "sidebar_visible", st->sidebarVisible },
+            { "inspector_visible", st->inspectorVisible },
+            { "inspector_tab", st->inspectorTab },
+            { "focus_mode", st->focusMode },
+            { "presenter_mode", st->presenterMode }
+        };
+    }
+
+    if (action == "manage_tabs") {
+        const std::string sub = req.value("tab_action", "list");
+        if (sub == "new") AddNewDocTab(st, false);
+        else if (sub == "quick_note") AddNewDocTab(st, true);
+        else if (sub == "switch") SwitchToDocTab(st, static_cast<std::size_t>((std::max)(0, req.value("tab_index", 0))));
+        else if (sub == "next" && !st->tabs.empty()) SwitchToDocTab(st, (st->activeTabIdx + 1u) % st->tabs.size());
+        json arr = json::array();
+        for (std::size_t i = 0; i < st->tabs.size(); ++i) {
+            arr.push_back({ { "index", i }, { "title", st->tabs[i].title }, { "active", i == st->activeTabIdx } });
+        }
+        return json{ { "ok", true }, { "active_tab_index", st->activeTabIdx }, { "tabs", arr } };
+    }
+
+    if (action == "execute_command") {
+        const int cmdId = req.value("command_id", 0);
+        if (cmdId <= 0) return json{ { "ok", false }, { "error", "command_id requerido." } };
+        const bool allowModal = req.value("allow_modal", false);
+        if (st->backgroundStealth && !allowModal) {
+            // Prevent modal Win32 pickers/dialogs from hanging stealth automation
+            static const std::uint16_t kBlockedModalCmds[] = {
+                CMD_OPEN, CMD_SAVE_CUDOC, CMD_EXPORT_PDF, CMD_MERGE_PDF, CMD_SPLIT_PDF,
+                CMD_SIGN_PDF, CMD_VERIFY_SIG, CMD_PRINT, CMD_INSERT_IMAGE,
+                CMD_EXPORT_DOCX, CMD_EXPORT_PPTX, CMD_IMPORT_DOCX, CMD_IMPORT_PPTX,
+                CMD_IMPORT_PDF_TO_CANVAS, CMD_SAVE_ENCRYPTED, CMD_OPEN_ENCRYPTED
+            };
+            for (auto blocked : kBlockedModalCmds) {
+                if (static_cast<std::uint16_t>(cmdId) == blocked) {
+                    return json{
+                        { "ok", false },
+                        { "error", "Comando modal bloqueado en modo background_stealth; usa las herramientas MCP de archivo/exportacion sin dialogo modal o pasa allow_modal=true." }
+                    };
+                }
+            }
+        }
+        ExecuteToolbarCommand(st, static_cast<WORD>(cmdId));
+        return json{ { "ok", true }, { "command_id", cmdId }, { "status_banner", st->statusBannerUtf8 } };
+    }
+
+    if (action == "inject_stroke") {
+        const ObjectTarget tgt = Mcp::TargetFromArgs(req, st->doc);
+        AnnotationObject obj{};
+        obj.kind = ObjectKind::InkStroke;
+        obj.layerId = st->doc.ActiveLayerId();
+        obj.strokeColor = req.contains("color") ? Mcp::ParseColorJson(req["color"], st->penColor) : st->penColor;
+        obj.strokeWidth = req.value("stroke_width", st->penWidth);
+        obj.penStyle = Mcp::ParseInkPenStyle(req.value("pen_style", "fountain"));
+        obj.isHighlighter = (obj.penStyle == InkPenStyle::Highlighter);
+        if (req.contains("points") && req["points"].is_array()) {
+            std::uint64_t tMs = 10;
+            for (const auto& pt : req["points"]) {
+                InkPoint ip{};
+                if (pt.is_array() && pt.size() >= 2) {
+                    ip.x = pt[0].get<double>();
+                    ip.y = pt[1].get<double>();
+                    ip.pressure = pt.size() >= 3 ? pt[2].get<float>() : 0.7f;
+                } else if (pt.is_object()) {
+                    ip.x = pt.value("x", 0.0);
+                    ip.y = pt.value("y", 0.0);
+                    ip.pressure = pt.value("pressure", 0.7f);
+                } else continue;
+                ip.timestampMs = tMs;
+                tMs += 12;
+                obj.inkPoints.push_back(ip);
+            }
+        }
+        if (obj.inkPoints.size() < 2u) {
+            return json{ { "ok", false }, { "error", "inject_stroke requiere al menos 2 puntos." } };
+        }
+        obj.RecomputeBounds();
+        const auto id = st->doc.AllocateObjectId();
+        obj.id = id;
+        obj.zOrder = st->doc.AllocateZOrder();
+        st->cmdStack.Execute(st->doc, std::make_unique<AddObjectCommand>(tgt, std::move(obj)));
+        st->doc.BumpRevision();
+        InvalidateViews(st);
+        return json{ { "ok", true }, { "object_id", id } };
+    }
+
+    if (action == "inject_pointer") {
+        const std::string ev = req.value("event", "click");
+        const int x = static_cast<int>(std::lround(req.value("x", 100.0)));
+        const int y = static_cast<int>(std::lround(req.value("y", 100.0)));
+        const LPARAM lp = MAKELPARAM(x, y);
+        HWND targetWnd = st->hwndViewport ? st->hwndViewport : st->hwndMain;
+        if (ev == "down") SendMessageW(targetWnd, WM_LBUTTONDOWN, MK_LBUTTON, lp);
+        else if (ev == "move") SendMessageW(targetWnd, WM_MOUSEMOVE, req.value("pressed", false) ? MK_LBUTTON : 0, lp);
+        else if (ev == "up") SendMessageW(targetWnd, WM_LBUTTONUP, 0, lp);
+        else if (ev == "rclick") {
+            SendMessageW(targetWnd, WM_RBUTTONDOWN, MK_RBUTTON, lp);
+            SendMessageW(targetWnd, WM_RBUTTONUP, 0, lp);
+        } else {
+            SendMessageW(targetWnd, WM_LBUTTONDOWN, MK_LBUTTON, lp);
+            SendMessageW(targetWnd, WM_LBUTTONUP, 0, lp);
+        }
+        InvalidateViews(st);
+        return json{ { "ok", true }, { "event", ev }, { "x", x }, { "y", y } };
+    }
+
+    if (action == "inject_key") {
+        const int vk = req.value("vk", 0);
+        const std::string txt = req.value("text", "");
+        const bool wantCtrl = req.value("ctrl", false);
+        const bool wantShift = req.value("shift", false);
+        const bool wantAlt = req.value("alt", false);
+        if (vk > 0) {
+            BYTE prevState[256]{};
+            BYTE modState[256]{};
+            const bool haveMods = wantCtrl || wantShift || wantAlt;
+            if (haveMods && GetKeyboardState(prevState)) {
+                std::memcpy(modState, prevState, sizeof(prevState));
+                if (wantCtrl) { modState[VK_CONTROL] = 0x80; modState[VK_LCONTROL] = 0x80; }
+                if (wantShift) { modState[VK_SHIFT] = 0x80; modState[VK_LSHIFT] = 0x80; }
+                if (wantAlt) { modState[VK_MENU] = 0x80; modState[VK_LMENU] = 0x80; }
+                SetKeyboardState(modState);
+            }
+            SendMessageW(st->hwndMain, WM_KEYDOWN, static_cast<WPARAM>(vk), 0);
+            SendMessageW(st->hwndMain, WM_KEYUP, static_cast<WPARAM>(vk), 0);
+            if (haveMods) {
+                SetKeyboardState(prevState);
+            }
+        }
+        if (!txt.empty()) {
+            const std::wstring w = Utf8ToWide(txt);
+            for (wchar_t ch : w) {
+                SendMessageW(st->hwndMain, WM_CHAR, static_cast<WPARAM>(ch), 0);
+            }
+        }
+        InvalidateViews(st);
+        return json{ { "ok", true }, { "vk", vk }, { "ctrl", wantCtrl }, { "shift", wantShift }, { "alt", wantAlt }, { "text_len", txt.size() } };
+    }
+
+    if (action == "sync_session_to_gui") {
+        const std::string b64 = req.value("cudoc_base64", "");
+        const auto bytes = Mcp::Base64Decode(b64);
+        if (bytes.empty()) return json{ { "ok", false }, { "error", "cudoc_base64 vacio o invalido." } };
+        DocumentModel loaded;
+        std::string err;
+        if (!CudocStorage::DeserializeFromBytes(bytes.data(), bytes.size(), loaded, &err)) {
+            return json{ { "ok", false }, { "error", err } };
+        }
+        st->doc = std::move(loaded);
+        DocumentExtensionBundle b = BuildExtensionBundle(st);
+        StudioProfileStore::UnpackExtensionsFromDocument(st->doc, b);
+        st->docYamlFrontmatterUtf8 = std::move(b.yamlFrontmatterUtf8);
+        st->docProperties = std::move(b.properties);
+        st->docAliasesUtf8 = std::move(b.aliasesUtf8);
+        st->docTagsUtf8 = std::move(b.tagsUtf8);
+        st->doc.RebuildLayout();
+        const std::size_t reqPage = req.value("active_page_index", std::size_t{ 0 });
+        if (!st->doc.Pages().empty()) {
+            st->activePageIndex = (std::min)(reqPage, st->doc.Pages().size() - 1u);
+        } else {
+            st->activePageIndex = 0;
+        }
+        st->selectedObjectId = 0;
+        st->lassoSelectedIds.clear();
+        st->cmdStack.Clear();
+        st->pageCache.InvalidateAll(++st->asyncGen);
+        LayoutMainChildren(st);
+        if (st->doc.Mode() == DocumentMode::PaginatedPdf) {
+            CenterCameraOnPage(st, st->activePageIndex);
+        }
+        UpdateWindowTitle(st);
+        InvalidateViews(st);
+        return json{
+            { "ok", true },
+            { "title", st->doc.Title() },
+            { "page_count", st->doc.Pages().size() },
+            { "canvas_object_count", st->doc.CanvasObjects().size() }
+        };
+    }
+
+    if (action == "sync_gui_to_session") {
+        DocumentExtensionBundle b = BuildExtensionBundle(st);
+        StudioProfileStore::PackExtensionsIntoDocument(st->doc, b);
+        std::vector<std::uint8_t> bytes;
+        std::string err;
+        if (!CudocStorage::SerializeToBytes(st->doc, bytes, &err)) {
+            return json{ { "ok", false }, { "error", err } };
+        }
+        return json{
+            { "ok", true },
+            { "title", st->doc.Title() },
+            { "page_count", st->doc.Pages().size() },
+            { "canvas_object_count", st->doc.CanvasObjects().size() },
+            { "cudoc_base64", Mcp::Base64Encode(bytes) }
+        };
+    }
+
+    if (action == "open_file_in_gui") {
+        const std::string p = req.value("path", "");
+        if (p.empty()) return json{ { "ok", false }, { "error", "path requerido." } };
+        std::string err;
+        const bool ok = OpenDocumentFile(st, Utf8ToWide(p), &err);
+        return json{ { "ok", ok }, { "error", err }, { "title", st->doc.Title() } };
+    }
+
+    if (action == "gui_window_png") {
+        const std::wstring outW = Utf8ToWide(req.value("out_path", ""));
+        if (outW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        LayoutMainChildren(st);
+        RedrawWindow(st->hwndMain, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+        if (st->hwndSidebar && IsWindowVisible(st->hwndSidebar)) RedrawWindow(st->hwndSidebar, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        if (st->hwndInspector && IsWindowVisible(st->hwndInspector)) RedrawWindow(st->hwndInspector, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        if (st->hwndViewport && IsWindowVisible(st->hwndViewport)) RedrawWindow(st->hwndViewport, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        const bool ok = CaptureStudioCombinedToPng(st, outW);
+        return json{ { "ok", ok }, { "path", req.value("out_path", "") } };
+    }
+
+    if (action == "gui_viewport_png") {
+        const std::wstring outW = Utf8ToWide(req.value("out_path", ""));
+        if (outW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        RECT vpRc{};
+        GetClientRect(st->hwndViewport, &vpRc);
+        const int vw = (std::max)(120, static_cast<int>(vpRc.right - vpRc.left));
+        const int vh = (std::max)(120, static_cast<int>(vpRc.bottom - vpRc.top));
+        RasterImageBgra32 vpImg;
+        ViewportOverlayState ov{};
+        PopulateViewportOverlay(st, ov);
+        std::vector<std::uint8_t> png;
+        if (!st->renderer.RenderHwndViewportToOffscreen(st->doc, st->camera, vw, vh, &st->pageCache, vpImg, &ov) ||
+            !WinRtPdfRenderer::EncodeBgra32ToPngBytes(vpImg, png) || png.empty()) {
+            return json{ { "ok", false }, { "error", "No se pudo renderizar viewport." } };
+        }
+        {
+            std::error_code ec;
+            const std::filesystem::path p(outW);
+            if (p.has_parent_path()) std::filesystem::create_directories(p.parent_path(), ec);
+        }
+        HANDLE hf = CreateFileW(outW.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        bool ok = false;
+        if (hf != INVALID_HANDLE_VALUE) {
+            DWORD wr = 0;
+            ok = WriteFile(hf, png.data(), static_cast<DWORD>(png.size()), &wr, nullptr) && wr == png.size();
+            CloseHandle(hf);
+        }
+        return json{ { "ok", ok }, { "path", req.value("out_path", "") }, { "width_px", vw }, { "height_px", vh } };
+    }
+
+    if (action == "tec_dialog_png" || action == "open_tec_dialog") {
+#if defined(DOC_STUDIO_HAS_ACADEMIC)
+        if (!st->tecStore) {
+            st->tecStore = std::make_unique<DocStudio::TecDigital::TecAcademicStore>();
+            st->tecStore->LoadSnapshotFromDisk(nullptr);
+            st->tecStore->LoadGlobalScheduleIndexFromDisk(2026, nullptr);
+            st->tecStore->TryRestoreVaultSession();
+        }
+        const int secIdx = std::clamp(req.value("section", 0), 0, 6);
+        const int subView = std::clamp(req.value("subview", 0), 0, 4);
+        const int innerTab = std::clamp(req.value("inner_tab", 0), 0, 9);
+        const std::wstring shotW = Utf8ToWide(req.value("out_path", ""));
+        const bool stealth = st->backgroundStealth || (action == "tec_dialog_png");
+        if (action == "open_tec_dialog" && stealth && shotW.empty()) {
+            return json{
+                { "ok", true },
+                { "note", "En modo background_stealth utiliza tec_dialog_png (con out_path) para capturar el dialogo sin bloquear el hilo UI." }
+            };
+        }
+        DocStudio::TecDigitalUi::RunTecDigitalCenterDialog(
+            st->hwndMain,
+            st->doc,
+            *st->tecStore,
+            static_cast<DocStudio::TecDigitalUi::HubSection>(secIdx),
+            st->statusBannerUtf8,
+            nullptr,
+            subView,
+            nullptr,
+            nullptr,
+            nullptr,
+            &st->glassSettings,
+            shotW.empty() ? nullptr : shotW.c_str(),
+            innerTab,
+            stealth);
+        return json{
+            { "ok", true },
+            { "section", secIdx },
+            { "subview", subView },
+            { "inner_tab", innerTab },
+            { "path", req.value("out_path", "") }
+        };
+#else
+        return json{ { "ok", false }, { "error", "Modulo TEC Digital no habilitado en esta compilacion." } };
+#endif
+    }
+
+    if (action == "gemini_dialog_png") {
+#if defined(DOC_STUDIO_HAS_GEMINI_NOTEBOOK)
+        if (!st->gnStoreLoaded) {
+            st->gnStore.LoadAll(nullptr);
+            st->gnStoreLoaded = true;
+        }
+        const std::wstring shotW = Utf8ToWide(req.value("out_path", ""));
+        if (shotW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        const std::string kind = req.value("dialog_kind", "hub");
+        if (kind == "mcp_config" || kind == "mcp") {
+            DocStudio::GeminiNotebookUi::ShowGeminiNotebookMcpConfigDialog(
+                st->hwndMain, st->gnStore.Config(), nullptr, shotW.c_str(), true, &st->glassSettings);
+        } else if (kind == "connect") {
+            DocStudio::GeminiNotebookUi::ShowGeminiNotebookConnectDialog(
+                st->hwndMain, st->gnStore, shotW.c_str(), true, &st->glassSettings);
+        } else {
+            DocStudio::GeminiNotebookUi::ShowGeminiNotebookHubDialog(
+                st->hwndMain, st->gnStore, &st->doc, st->statusBannerUtf8, nullptr, shotW.c_str(), true, &st->glassSettings);
+        }
+        return json{ { "ok", true }, { "dialog_kind", kind }, { "path", req.value("out_path", "") } };
+#else
+        return json{ { "ok", false }, { "error", "Modulo Gemini Notebook no habilitado." } };
+#endif
+    }
+
+    if (action == "open_projector" || action == "projector_open" || action == "projector_freeze" ||
+        action == "projector_sync" || action == "projector_close" || action == "projector_png") {
+        const json& p = (req.contains("params") && req["params"].is_object()) ? req["params"] : req;
+        if (action == "projector_close" || p.value("close", false)) {
+            st->projectorWnd.Close();
+            return json{ { "ok", true }, { "projector_open", false } };
+        }
+        if (action == "projector_freeze") {
+            if (!st->projectorWnd.IsOpen()) return json{ { "ok", false }, { "error", "Proyector no abierto." } };
+            const bool f = p.contains("frozen") ? p.value("frozen", true) : !st->projectorWnd.IsFrozen();
+            st->projectorWnd.SetFrozen(f);
+            return json{ { "ok", true }, { "projector_open", true }, { "frozen", st->projectorWnd.IsFrozen() } };
+        }
+        if (action == "projector_sync") {
+            ViewportOverlayState ov{};
+            PopulateViewportOverlay(st, ov);
+            st->projectorWnd.SyncFromMain(&st->doc, &st->camera, &st->pageCache, ov);
+            return json{ { "ok", true }, { "projector_open", st->projectorWnd.IsOpen() }, { "frozen", st->projectorWnd.IsFrozen() } };
+        }
+        ViewportOverlayState ov{};
+        PopulateViewportOverlay(st, ov);
+        ov.presenterMode = true;
+        if (!st->projectorWnd.IsOpen()) {
+            st->projectorWnd.Open(
+                GetModuleHandleW(nullptr), st->hwndMain,
+                &st->doc, &st->camera, &st->pageCache, &ov, st->backgroundStealth || (action == "projector_png"));
+        }
+        if (p.contains("frozen") && p["frozen"].is_boolean()) {
+            st->projectorWnd.SetFrozen(p["frozen"].get<bool>());
+        }
+        if (action == "open_projector" || action == "projector_open") {
+            return json{ { "ok", st->projectorWnd.IsOpen() }, { "projector_open", st->projectorWnd.IsOpen() }, { "frozen", st->projectorWnd.IsFrozen() } };
+        }
+        const std::wstring outW = Utf8ToWide(req.value("out_path", ""));
+        if (outW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        int pw = 1280, ph = 720;
+        if (HWND hProj = st->projectorWnd.Hwnd()) {
+            RECT rc{};
+            GetClientRect(hProj, &rc);
+            pw = (std::max)(320, static_cast<int>(rc.right - rc.left));
+            ph = (std::max)(240, static_cast<int>(rc.bottom - rc.top));
+        }
+        RasterImageBgra32 img;
+        std::vector<std::uint8_t> png;
+        if (!st->renderer.RenderHwndViewportToOffscreen(st->doc, st->camera, pw, ph, &st->pageCache, img, &ov) ||
+            !WinRtPdfRenderer::EncodeBgra32ToPngBytes(img, png) || png.empty()) {
+            return json{ { "ok", false }, { "error", "No se pudo capturar proyector." } };
+        }
+        {
+            std::error_code ec;
+            const std::filesystem::path outFilePath(outW);
+            if (outFilePath.has_parent_path()) std::filesystem::create_directories(outFilePath.parent_path(), ec);
+        }
+        HANDLE hf = CreateFileW(outW.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        bool ok = false;
+        if (hf != INVALID_HANDLE_VALUE) {
+            DWORD wr = 0;
+            ok = WriteFile(hf, png.data(), static_cast<DWORD>(png.size()), &wr, nullptr) && wr == png.size();
+            CloseHandle(hf);
+        }
+        return json{ { "ok", ok }, { "path", req.value("out_path", "") }, { "width_px", pw }, { "height_px", ph }, { "frozen", st->projectorWnd.IsFrozen() } };
+    }
+
+    if (action == "html_embed_png") {
+        const std::wstring outW = Utf8ToWide(req.value("out_path", ""));
+        if (outW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        const std::uint64_t wantId = req.value("object_id", std::uint64_t{ 0 });
+        const AnnotationObject* found = nullptr;
+        std::size_t foundPageIdx = 0;
+        auto scanVec = [&](const std::vector<AnnotationObject>& objs) {
+            for (const auto& o : objs) {
+                if (o.kind != ObjectKind::HtmlEmbed) continue;
+                if (wantId == 0 || o.id == wantId) { found = &o; return; }
+            }
+        };
+        if (st->doc.Mode() == DocumentMode::InfiniteCanvas) scanVec(st->doc.CanvasObjects());
+        else {
+            for (std::size_t pi = 0; pi < st->doc.Pages().size(); ++pi) {
+                scanVec(st->doc.Pages()[pi].objects);
+                if (found) { foundPageIdx = pi; break; }
+            }
+        }
+        if (!found) return json{ { "ok", false }, { "error", "No se encontro ningun objeto HtmlEmbed en el documento." } };
+        std::vector<std::uint8_t> png = found->htmlSnapshotPngBytes;
+        if (png.empty()) {
+            // Render the HtmlEmbed card region deterministically offscreen
+            RasterImageBgra32 img;
+            const int rw = std::clamp(static_cast<int>(std::lround(found->bounds.w * 2.0)), 240, 1920);
+            const int rh = std::clamp(static_cast<int>(std::lround(found->bounds.h * 2.0)), 180, 1200);
+            const bool rendered = (st->doc.Mode() == DocumentMode::InfiniteCanvas)
+                ? st->renderer.RenderInfiniteCanvasOffscreen(st->doc, found->bounds, rw, rh, img)
+                : st->renderer.RenderPageOffscreen(st->doc, foundPageIdx, std::clamp(rw, 640, 1920), &st->pageCache, img);
+            if (rendered) {
+                WinRtPdfRenderer::EncodeBgra32ToPngBytes(img, png);
+            }
+        }
+        if (png.empty()) return json{ { "ok", false }, { "error", "No se pudo obtener PNG del HtmlEmbed." } };
+        {
+            std::error_code ec;
+            const std::filesystem::path p(outW);
+            if (p.has_parent_path()) std::filesystem::create_directories(p.parent_path(), ec);
+        }
+        HANDLE hf = CreateFileW(outW.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        bool ok = false;
+        if (hf != INVALID_HANDLE_VALUE) {
+            DWORD wr = 0;
+            ok = WriteFile(hf, png.data(), static_cast<DWORD>(png.size()), &wr, nullptr) && wr == png.size();
+            CloseHandle(hf);
+        }
+        return json{ { "ok", ok }, { "object_id", found->id }, { "path", req.value("out_path", "") } };
+    }
+
+    if (action == "open_tutor_panel" || action == "tutor_panel_png" ||
+        action == "tutor_panel_open_background" || action == "tutor_panel_capture_png" || action == "tutor_panel_close") {
+        const json& p = (req.contains("params") && req["params"].is_object()) ? req["params"] : req;
+        if (action == "tutor_panel_close" || p.value("close", false)) {
+            st->tutorPanel.Close();
+            return json{ { "ok", true }, { "tutor_open", false } };
+        }
+        std::string tutorErr;
+        const AiProviderVault* vPtr = st->aiVault.IsEnabled() ? &st->aiVault : nullptr;
+        const bool stealth = st->backgroundStealth || (action != "open_tutor_panel");
+        const bool openOk = st->tutorPanel.OpenOrFocus(
+            st->hwndMain,
+            st->glassSettings,
+            vPtr,
+            [st](const std::string& beatsJsonArrayUtf8) -> Tutor::TutorBakeReport {
+                Tutor::TutorBakeReport rep;
+                Tutor::TutorSessionStateMachine sm;
+                sm.Reset("mcp_baked_from_panel");
+                try {
+                    const auto arr = nlohmann::json::parse(beatsJsonArrayUtf8);
+                    if (arr.is_array()) {
+                        for (const auto& item : arr) {
+                            Tutor::TutorBeat b;
+                            Tutor::TutorValidationResult vr;
+                            if (Tutor::ParseAndValidateTutorBeat(item.dump(), b, vr) && vr.ok) {
+                                sm.ApplyBeat(b);
+                            }
+                        }
+                    }
+                } catch (...) {}
+                double bx = 80.0, by = 80.0;
+                NextCardPlacement(st, bx, by);
+                rep = Tutor::BakeTutorSessionToDocument(st->doc, st->cmdStack, CurrentTarget(st), sm, bx, by);
+                st->pageCache.InvalidateAll(++st->asyncGen);
+                InvalidateViews(st);
+                return rep;
+            },
+            [st](const std::string& statusMsg) {
+                st->statusBannerUtf8 = statusMsg;
+            },
+            &tutorErr,
+            stealth);
+        if (!openOk) {
+            return json{ { "ok", false }, { "error", tutorErr.empty() ? "No se pudo abrir Tutor Panel." : tutorErr } };
+        }
+        if (action == "open_tutor_panel" || action == "tutor_panel_open_background") {
+            return json{ { "ok", true }, { "tutor_open", st->tutorPanel.IsOpen() }, { "web_ready", st->tutorPanel.IsWebReady() } };
+        }
+        std::wstring outW = Utf8ToWide(p.value("out_path", req.value("out_path", "")));
+        bool tempFile = false;
+        if (outW.empty() && action == "tutor_panel_capture_png") {
+            outW = (std::filesystem::temp_directory_path() / (L"cuadernu_tutor_cap_" + std::to_wstring(GetCurrentProcessId()) + L".png")).wstring();
+            tempFile = true;
+        }
+        if (outW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        const int waitMs = std::clamp(p.value("wait_ready_ms", req.value("wait_ready_ms", 45000)), 500, 90000);
+        const bool capOk = st->tutorPanel.CaptureWebViewPng(outW, waitMs);
+        json out = {
+            { "ok", capOk },
+            { "web_ready", st->tutorPanel.IsWebReady() },
+            { "path", WideToUtf8(outW) }
+        };
+        if (capOk && action == "tutor_panel_capture_png") {
+            std::ifstream ifs(std::filesystem::path(outW), std::ios::binary);
+            std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+            out["png_base64"] = Mcp::Base64Encode(bytes);
+            if (tempFile) {
+                std::error_code ec;
+                std::filesystem::remove(std::filesystem::path(outW), ec);
+            }
+        }
+        return out;
+    }
+
+    if (action == "dump_layout_bounds") {
+        RECT mainWin{}, mainCli{}, vp{}, sb{}, insp{}, se{};
+        GetWindowRect(st->hwndMain, &mainWin);
+        GetClientRect(st->hwndMain, &mainCli);
+        auto mapChild = [&](HWND h, RECT& out) {
+            out = {};
+            if (h && IsWindow(h) && IsWindowVisible(h)) {
+                GetWindowRect(h, &out);
+                MapWindowPoints(HWND_DESKTOP, st->hwndMain, reinterpret_cast<LPPOINT>(&out), 2);
+            }
+        };
+        mapChild(st->hwndViewport, vp);
+        mapChild(st->hwndSidebar, sb);
+        mapChild(st->hwndInspector, insp);
+        mapChild(st->hwndSearchEdit, se);
+
+        const bool sbVpOverlap = RectsOverlapStrict(sb, vp);
+        const bool inspVpOverlap = RectsOverlapStrict(insp, vp);
+        const bool sbInspOverlap = RectsOverlapStrict(sb, insp);
+        return json{
+            { "ok", true },
+            { "dpi", st->currentDpi },
+            { "main_window_screen", RectToJson(mainWin) },
+            { "main_client", RectToJson(mainCli) },
+            { "viewport", RectToJson(vp) },
+            { "sidebar", RectToJson(sb) },
+            { "inspector", RectToJson(insp) },
+            { "search_edit", RectToJson(se) },
+            { "visible_toolbar_buttons", static_cast<std::size_t>(std::count_if(st->buttons.begin(), st->buttons.end(), [](const ToolbarBtn& b) { return b.visible; })) },
+            { "sidebar_viewport_overlap", sbVpOverlap },
+            { "inspector_viewport_overlap", inspVpOverlap },
+            { "sidebar_inspector_overlap", sbInspOverlap },
+            { "zero_overlaps", !sbVpOverlap && !inspVpOverlap && !sbInspOverlap }
+        };
+    }
+
+    if (action == "dump_a11y_tree") {
+        json nodes = json::array();
+        RECT mc{};
+        GetClientRect(st->hwndMain, &mc);
+        nodes.push_back({
+            { "role", "window" },
+            { "name", "CuadernU — " + st->doc.Title() },
+            { "bounds", RectToJson(mc) },
+            { "visible", IsWindowVisible(st->hwndMain) != FALSE },
+            { "dpi", st->currentDpi }
+        });
+        struct EnumCtx { HWND parent; json* nodes; } ectx{ st->hwndMain, &nodes };
+        EnumChildWindows(st->hwndMain, [](HWND child, LPARAM lp) -> BOOL {
+            auto* c = reinterpret_cast<EnumCtx*>(lp);
+            wchar_t cls[128]{}, txt[256]{};
+            GetClassNameW(child, cls, 128);
+            GetWindowTextW(child, txt, 256);
+            RECT r{};
+            GetWindowRect(child, &r);
+            MapWindowPoints(HWND_DESKTOP, c->parent, reinterpret_cast<LPPOINT>(&r), 2);
+            c->nodes->push_back({
+                { "role", WideToUtf8(cls) },
+                { "name", WideToUtf8(txt) },
+                { "control_id", static_cast<int>(GetDlgCtrlID(child)) },
+                { "visible", IsWindowVisible(child) != FALSE },
+                { "enabled", IsWindowEnabled(child) != FALSE },
+                { "bounds", RectToJson(r) }
+            });
+            return TRUE;
+        }, reinterpret_cast<LPARAM>(&ectx));
+
+        json toolbarNodes = json::array();
+        for (std::size_t i = 0; i < st->buttons.size() && i < st->buttonRects.size(); ++i) {
+            if (!st->buttons[i].visible) continue;
+            toolbarNodes.push_back({
+                { "role", "button" },
+                { "command_id", st->buttons[i].id },
+                { "name", st->buttons[i].label ? WideToUtf8(st->buttons[i].label) : "" },
+                { "bounds", RectToJson(st->buttonRects[i]) }
+            });
+        }
+        return json{
+            { "ok", true },
+            { "dpi", st->currentDpi },
+            { "window_nodes", nodes },
+            { "toolbar_buttons", toolbarNodes },
+            { "sidebar_hit_count", st->sidebarHits.size() },
+            { "inspector_hit_count", st->inspectorHits.size() },
+            { "status_hit_count", st->statusHits.size() }
+        };
+    }
+
+    if (action == "run_dpi_cycle_live") {
+        RECT origRc{};
+        GetWindowRect(st->hwndMain, &origRc);
+        const int origW = (std::max)(800, static_cast<int>(origRc.right - origRc.left));
+        const int origH = (std::max)(600, static_cast<int>(origRc.bottom - origRc.top));
+        const int prevTrans = st->dpiCycleTransitions;
+        struct DpiStep { UINT dpi; int w; int h; };
+        const DpiStep steps[3] = {
+            { 144u, origW + 120, origH + 80 },
+            { 192u, origW + 240, origH + 140 },
+            { 96u,  origW,       origH }
+        };
+        bool allMatched = true;
+        for (const auto& step : steps) {
+            RECT sug{ origRc.left, origRc.top, origRc.left + step.w, origRc.top + step.h };
+            SendMessageW(st->hwndMain, WM_DPICHANGED, MAKEWPARAM(step.dpi, step.dpi), reinterpret_cast<LPARAM>(&sug));
+            if (st->currentDpi != step.dpi) allMatched = false;
+        }
+        const int delta = st->dpiCycleTransitions - prevTrans;
+        const bool fontsValid = (st->hUiFont != nullptr && st->hUiBoldFont != nullptr);
+        return json{
+            { "ok", allMatched && delta >= 3 && fontsValid },
+            { "transitions", delta },
+            { "final_dpi", st->currentDpi },
+            { "fonts_valid", fontsValid }
+        };
+    }
+
+    if (action == "close_window") {
+        PostMessageW(st->hwndMain, WM_CLOSE, 0, 0);
+        return json{ { "ok", true }, { "closing", true } };
+    }
+
+    return json{ { "ok", false }, { "error", "Accion IPC GUI desconocida: " + action } };
+}
+
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     StudioAppState* st = reinterpret_cast<StudioAppState*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     switch (msg) {
@@ -10422,6 +11221,23 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_APP_DRAFT_RECOVERY:
         if (st) OfferDraftsFromPreviousSession(st);
         return 0;
+    case WM_APP_MCP_DISPATCH: {
+        std::unique_ptr<std::shared_ptr<Mcp::GuiDispatchTask>> holder(
+            reinterpret_cast<std::shared_ptr<Mcp::GuiDispatchTask>*>(lp));
+        if (holder && *holder) {
+            auto& task = **holder;
+            try {
+                task.response = HandleMcpGuiDispatch(st, task.request);
+            } catch (const std::exception& ex) {
+                task.response = nlohmann::json{ { "ok", false }, { "error", ex.what() } };
+            } catch (...) {
+                task.response = nlohmann::json{ { "ok", false }, { "error", "Excepcion desconocida en WM_APP_MCP_DISPATCH." } };
+            }
+            task.done.store(true, std::memory_order_release);
+            if (task.doneEvent) SetEvent(task.doneEvent);
+        }
+        return 0;
+    }
     case WM_CLOSE:
         // Antes la ventana se cerraba sin preguntar y un documento nuevo se perdía entero.
         if (st && !ConfirmUnsavedChanges(st, L"cerrar CuadernU")) return 0;
@@ -10927,6 +11743,17 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         KillTimer(hwnd, kTimerIdAutoSync);
         KillTimer(hwnd, kTimerIdDraftAutosave);
         if (st) {
+            if (st->mcpShutdownEvent) {
+                SetEvent(st->mcpShutdownEvent);
+            }
+            if (st->mcpPipeServer) {
+                st->mcpPipeServer->Stop();
+                st->mcpPipeServer.reset();
+            }
+            if (st->mcpShutdownEvent) {
+                CloseHandle(st->mcpShutdownEvent);
+                st->mcpShutdownEvent = nullptr;
+            }
             StopCasioInboxWatcher(st);
             st->videoPlayer.Stop();
             st->tutorPanel.Close();
@@ -10972,7 +11799,18 @@ void ParseCliArgs(StudioAppState* st, std::wstring& outOpenPath, std::string& ou
         } else if (arg == L"--mode" && i + 1 < argc) {
             const std::wstring m = argv[++i];
             if (m == L"canvas") outMode = "canvas";
-            else if (m == L"pdf") outMode = "pdf";
+            else if (m == L"pdf" || m == L"paginated") outMode = "pdf";
+        } else if (arg == L"--background-gui") {
+            st->backgroundStealth = true;
+            st->noProfileWrite = true;
+        } else if (arg == L"--mcp-pipe" && i + 1 < argc) {
+            st->mcpPipeNameUtf8 = WideToUtf8(argv[++i]);
+        } else if (arg == L"--no-profile-write") {
+            st->noProfileWrite = true;
+        } else if (arg == L"--width" && i + 1 < argc) {
+            st->cliWinWidth = std::clamp(_wtoi(argv[++i]), 480, 3840);
+        } else if (arg == L"--height" && i + 1 < argc) {
+            st->cliWinHeight = std::clamp(_wtoi(argv[++i]), 360, 2160);
         } else if (arg == L"--calc-card" && i + 1 < argc) {
             st->cliCalcCardSpec = WideToUtf8(argv[++i]);
         } else if (arg == L"--showcase-stem") {
@@ -11244,43 +12082,6 @@ void PopulateMediaShowcaseScene(StudioAppState* st) {
 } // namespace
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
-#ifdef DOC_STUDIO_HAS_GEMINI_NOTEBOOK
-    {
-        int preArgc = 0;
-        LPWSTR* preArgv = CommandLineToArgvW(GetCommandLineW(), &preArgc);
-        bool runMcpStdio = false;
-        bool runGnStatus = false;
-        std::wstring overrideProf;
-        if (preArgv) {
-            for (int i = 1; i < preArgc; ++i) {
-                const std::wstring a = preArgv[i];
-                if (a == L"--mcp-stdio") runMcpStdio = true;
-                else if (a == L"--gn-status") runGnStatus = true;
-                else if (a == L"--profile-dir" && i + 1 < preArgc) overrideProf = preArgv[++i];
-            }
-            LocalFree(preArgv);
-        }
-        if (runMcpStdio || runGnStatus) {
-            if (!overrideProf.empty()) {
-                StudioProfileStore::SetProfileRootOverride(overrideProf);
-            }
-            CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-            GeminiNotebook::GeminiNotebookSyncStore cliStore;
-            cliStore.LoadAll(nullptr);
-            int rc = 0;
-            if (runMcpStdio) {
-                rc = GeminiNotebook::CuadernUMcpBridge::RunStdioServer(cliStore);
-            } else {
-                const std::string statusResp = GeminiNotebook::CuadernUMcpBridge::HandleJsonRpcRequestLine(
-                    R"({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"cuadernu_notebook_status","arguments":{}}})",
-                    cliStore, nullptr);
-                std::cout << statusResp << "\n" << std::flush;
-            }
-            CoUninitialize();
-            return rc;
-        }
-    }
-#endif
     if (HMODULE hUser32 = GetModuleHandleW(L"user32.dll")) {
         using SetDpiCtxFn = BOOL(WINAPI*)(DPI_AWARENESS_CONTEXT);
         auto pSetDpiCtx = reinterpret_cast<SetDpiCtxFn>(GetProcAddress(hUser32, "SetProcessDpiAwarenessContext"));
@@ -11296,6 +12097,66 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
     ULONG_PTR gdiplusToken = 0;
     Gdiplus::GdiplusStartupInput gdiplusIn{};
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusIn, nullptr);
+
+    // Unified CuadernU Native MCP Server CLI Modes (--mcp-stdio / --mcp-http / --gn-status)
+    {
+        int preArgc = 0;
+        LPWSTR* preArgv = CommandLineToArgvW(GetCommandLineW(), &preArgc);
+        bool runMcpStdio = false;
+        bool runMcpHttp = false;
+        bool runGnStatus = false;
+        Mcp::McpServerOptions mcpOpts{};
+        if (preArgv) {
+            for (int i = 1; i < preArgc; ++i) {
+                const std::wstring a = preArgv[i];
+                if (a == L"--mcp-stdio") runMcpStdio = true;
+                else if (a == L"--mcp-http") runMcpHttp = true;
+                else if (a == L"--gn-status") runGnStatus = true;
+                else if (a == L"--profile-dir" && i + 1 < preArgc) mcpOpts.profileDirW = preArgv[++i];
+                else if (a == L"--sandbox") mcpOpts.sandboxMode = true;
+                else if (a == L"--readonly-tec") mcpOpts.readonlyTec = true;
+                else if (a == L"--no-profile-write") mcpOpts.noProfileWrite = true;
+                else if (a == L"--port" && i + 1 < preArgc) {
+                    mcpOpts.httpPort = static_cast<std::uint16_t>(std::clamp(_wtoi(preArgv[++i]), 1024, 65535));
+                }
+            }
+            LocalFree(preArgv);
+        }
+        if (runMcpStdio || runMcpHttp || runGnStatus) {
+            if (!mcpOpts.profileDirW.empty()) {
+                StudioProfileStore::SetProfileRootOverride(mcpOpts.profileDirW);
+                UiGlass::glassSettingsIniOverride =
+                    (std::filesystem::path(StudioProfileStore::DefaultProfileRootDir()) / L"translucent_settings.ini").wstring();
+            }
+            int rc = 0;
+            {
+                Mcp::McpServer server(std::move(mcpOpts));
+                if (StudioProfileStore::HasProfileRootOverride()) {
+                    UiGlass::glassSettingsIniOverride =
+                        (std::filesystem::path(server.Context().EffectiveProfileRootW()) / L"translucent_settings.ini").wstring();
+                }
+                if (runMcpStdio) {
+                    rc = server.RunStdio();
+                } else if (runMcpHttp) {
+                    std::string bearer = Mcp::McpGuiPipeServer::ReadAuthTokenFromStdinPipe();
+                    if (bearer.empty()) {
+                        bearer = Mcp::GenerateTokenHex192();
+                        std::cerr << "CuadernU MCP HTTP bearer token (ephemeral): " << bearer << "\n" << std::flush;
+                    }
+                    const std::uint16_t port = server.Context().Options().httpPort ? server.Context().Options().httpPort : 38417;
+                    rc = server.RunHttp(port, bearer);
+                } else {
+                    const std::string statusResp = server.HandleJsonRpcLine(
+                        R"({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"cuadernu_notebook_status","arguments":{}}})");
+                    std::cout << statusResp << "\n" << std::flush;
+                }
+            }
+            if (gdiplusToken) Gdiplus::GdiplusShutdown(gdiplusToken);
+            RoUninitialize();
+            CoUninitialize();
+            return rc;
+        }
+    }
 
     INITCOMMONCONTROLSEX icc{ sizeof(icc), ICC_WIN95_CLASSES };
     InitCommonControlsEx(&icc);
@@ -11394,10 +12255,17 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
         const int maxH = (std::max)(600, static_cast<int>((workArea.bottom - workArea.top) * 92 / 100));
         const int defW = (std::min)(maxW, DpiSc(1380, sysDpi));
         const int defH = (std::min)(maxH, DpiSc(860, sysDpi));
-        const int winW = cliOpts.hasExplicitWindowSize ? cliOpts.windowW : defW;
-        const int winH = cliOpts.hasExplicitWindowSize ? cliOpts.windowH : defH;
-        HWND hwnd = CreateWindowExW(0, kMainClassName, L"CuadernU \u2014 Calculadora Unificada",
-            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, winW, winH,
+        const int winW = st->cliWinWidth > 0 ? st->cliWinWidth : (cliOpts.hasExplicitWindowSize ? cliOpts.windowW : defW);
+        const int winH = st->cliWinHeight > 0 ? st->cliWinHeight : (cliOpts.hasExplicitWindowSize ? cliOpts.windowH : defH);
+        if (st->backgroundStealth) {
+            WebView2HtmlHost::SetUsePidIsolatedCache(true);
+        }
+        const DWORD mainExStyle = st->backgroundStealth ? (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) : 0u;
+        HWND hwnd = CreateWindowExW(mainExStyle, kMainClassName, L"CuadernU \u2014 Calculadora Unificada",
+            WS_OVERLAPPEDWINDOW,
+            st->backgroundStealth ? 64 : CW_USEDEFAULT,
+            st->backgroundStealth ? 64 : CW_USEDEFAULT,
+            winW, winH,
             nullptr, nullptr, hInst, st.get());
         if (!hwnd) {
             st.reset();
@@ -11405,6 +12273,16 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
             RoUninitialize();
             CoUninitialize();
             return 1;
+        }
+        if (st->backgroundStealth) {
+            if (HMODULE hDwm = LoadLibraryW(L"dwmapi.dll")) {
+                using DwmSetAttrFn = HRESULT(WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+                if (auto fn = reinterpret_cast<DwmSetAttrFn>(GetProcAddress(hDwm, "DwmSetWindowAttribute"))) {
+                    BOOL cloak = TRUE;
+                    fn(hwnd, 13 /*DWMWA_CLOAK*/, &cloak, sizeof(cloak));
+                }
+                FreeLibrary(hDwm);
+            }
         }
 
         if (cliOpts.simulateGpuReset) {
@@ -11550,8 +12428,76 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
                 }
             }
         }
-        ShowWindow(hwnd, (st->smokeTestMode || st->cliTecPreviewSection >= 0) ? SW_SHOWNOACTIVATE : nCmdShow);
+        ShowWindow(hwnd, (st->backgroundStealth || st->smokeTestMode || st->cliTecPreviewSection >= 0) ? SW_SHOWNOACTIVATE : nCmdShow);
         UpdateWindow(hwnd);
+
+        // Start user-DACL Named Pipe IPC server for MCP GUI control (Plane 2A stealth + Plane 2B live desktop)
+        if (st->backgroundStealth || (!st->smokeTestMode && st->screenshotOutPath.empty() && st->cliTecPreviewSection < 0)) {
+            st->mcpPipeServer = std::make_unique<Mcp::McpGuiPipeServer>();
+            std::string authTok;
+            std::string pipeName;
+            std::wstring regRoot;
+            std::string modeLbl;
+            if (st->backgroundStealth) {
+                authTok = Mcp::McpGuiPipeServer::ReadAuthTokenFromStdinPipe();
+                if (authTok.empty()) authTok = Mcp::GenerateTokenHex192();
+                pipeName = st->mcpPipeNameUtf8.empty()
+                    ? ("CuadernU_Bg_" + std::to_string(GetCurrentProcessId()))
+                    : st->mcpPipeNameUtf8;
+                modeLbl = "stealth_background";
+            } else {
+                authTok = Mcp::GenerateTokenHex192();
+                pipeName = "CuadernU_Control_" + std::to_string(GetCurrentProcessId());
+                regRoot = StudioProfileStore::DefaultProfileRootDir();
+                modeLbl = "live_desktop";
+            }
+            HWND targetHwnd = hwnd;
+            st->mcpShutdownEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+            HANDLE shutdownEv = st->mcpShutdownEvent;
+            st->mcpPipeServer->Start(
+                pipeName,
+                authTok,
+                [targetHwnd, shutdownEv](const nlohmann::json& req) -> nlohmann::json {
+                    if (!IsWindow(targetHwnd) || (shutdownEv && WaitForSingleObject(shutdownEv, 0) == WAIT_OBJECT_0)) {
+                        return nlohmann::json{ { "ok", false }, { "error", "Ventana cerrada." } };
+                    }
+                    auto task = std::make_shared<Mcp::GuiDispatchTask>();
+                    task->request = req;
+                    HANDLE ev = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+                    if (!ev) {
+                        return nlohmann::json{ { "ok", false }, { "error", "CreateEventW fallo." } };
+                    }
+                    task->doneEvent = ev;
+                    auto* holder = new std::shared_ptr<Mcp::GuiDispatchTask>(task);
+                    if (!PostMessageW(targetHwnd, WM_APP_MCP_DISPATCH, 0, reinterpret_cast<LPARAM>(holder))) {
+                        delete holder;
+                        return nlohmann::json{ { "ok", false }, { "error", "PostMessageW fallo." } };
+                    }
+                    HANDLE waits[2] = { ev, shutdownEv };
+                    const DWORD nWaits = shutdownEv ? 2u : 1u;
+                    int reqWaitMs = 0;
+                    if (req.contains("wait_ready_ms") && req["wait_ready_ms"].is_number_integer()) {
+                        reqWaitMs = req["wait_ready_ms"].get<int>();
+                    } else if (req.contains("params") && req["params"].is_object() &&
+                               req["params"].contains("wait_ready_ms") && req["params"]["wait_ready_ms"].is_number_integer()) {
+                        reqWaitMs = req["params"]["wait_ready_ms"].get<int>();
+                    }
+                    const DWORD uiWaitMs = static_cast<DWORD>(std::clamp(reqWaitMs + 25000, 55000, 120000));
+                    const DWORD waitRc = WaitForMultipleObjects(nWaits, waits, FALSE, uiWaitMs);
+                    nlohmann::json outResp;
+                    if (waitRc == WAIT_OBJECT_0 && task->done.load(std::memory_order_acquire)) {
+                        outResp = task->response;
+                    } else if (waitRc == WAIT_OBJECT_0 + 1) {
+                        outResp = nlohmann::json{ { "ok", false }, { "error", "Instancia GUI cerrandose." } };
+                    } else {
+                        outResp = nlohmann::json{ { "ok", false }, { "error", "Timeout esperando al hilo UI de CuadernU." } };
+                    }
+                    return outResp;
+                },
+                regRoot,
+                modeLbl,
+                nullptr);
+        }
 
 #if defined(DOC_STUDIO_HAS_ACADEMIC)
         if (st->cliTecPreviewSection >= 0) {

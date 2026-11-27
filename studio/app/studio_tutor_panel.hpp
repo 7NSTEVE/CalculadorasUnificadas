@@ -44,10 +44,13 @@ public:
         const AiProviderVault* optionalVault,
         BakeCallbackFn onBakeToDocument,
         StatusCallbackFn onStatusUpdate,
-        std::string* outErr = nullptr);
+        std::string* outErr = nullptr,
+        bool backgroundStealth = false);
 
     void SyncAppearance(const UiGlass::GlassSettings& glassSettings);
     void SendActionToWeb(const std::string& actionTypeUtf8, const std::string& payloadJsonUtf8 = "{}");
+    bool CaptureWebViewPng(const std::wstring& outPathW, int timeoutMs = 8000);
+    bool IsWebReady() const noexcept;
     void Close();
     bool IsOpen() const noexcept;
     HWND Hwnd() const noexcept;
