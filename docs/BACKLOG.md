@@ -190,7 +190,7 @@
 
 ## Mantenimiento y riesgos
 
-- **M-1. Respaldo.** `fix/atencion-p0` (43 commits) y `feat/tutor-reposicion-ii-2026` solo existen en este PC, y el repo de GitHub es público. Hay que decidir dónde respaldarlos.
+- **M-1. Respaldo.** `fix/atencion-p0` y el tutor ya están en GitHub (repo público) desde el 27-nov. Siguen solo en este PC `chore/competencia-2026` y el commit que permite `Fisica_III/`; hay que decidir si se suben.
 - **M-2. Archivos sin commit.** 24 archivos (MCP, TEC Digital, tutor, WebView2) siguen sin guardar desde el 26-nov.
 - **M-3. Pruebas en rojo.** PrintoutTest y RealE2EClosureTest fallaban en la última corrida (26-nov, 23:24).
 - **M-4. Pruebas que no prueban.**
