@@ -152,6 +152,20 @@ def main() -> int:
                     "[BRANCH_DISALLOWED] Solo se permite la rama main (AGENTS.md, regla 7); "
                     f"sobran: {', '.join(extra)}"
                 )
+        # 2c. Single working tree: no git worktrees (owner decision 2026-11-27).
+        if (ROOT / ".git").is_file():
+            errors.append(
+                "[WORKTREE_DISALLOWED] Esta carpeta es un worktree; solo se trabaja en "
+                "D:\\Proyectos\\CalculadorasUnificadas (AGENTS.md, regla 7)"
+            )
+        rc, wt = run_git(["worktree", "list", "--porcelain"])
+        if rc == 0:
+            trees = [ln[len("worktree "):] for ln in wt.splitlines() if ln.startswith("worktree ")]
+            if len(trees) > 1:
+                errors.append(
+                    "[WORKTREE_DISALLOWED] Solo se permite un arbol de trabajo (AGENTS.md, regla 7); "
+                    f"sobran: {', '.join(trees[1:])}"
+                )
 
     # 3. Check Git staged or tracked files for forbidden artifacts
     git_cmd = ["diff", "--cached", "--name-only"] if args.staged else ["ls-files"]

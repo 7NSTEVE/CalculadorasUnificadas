@@ -1,0 +1,23 @@
+#!/bin/sh
+# Una sola rama: main (AGENTS.md, regla 7; decision del dueno del 27-nov-2026).
+# Git llama a este hook en cada cambio de referencias. En el estado "prepared" rechaza
+# crear o mover cualquier rama local que no sea main, asi ningun agente (Claude, Codex,
+# Antigravity u otro) puede abrir ramas ni worktrees con rama propia. Borrar ramas si se
+# permite, para poder limpiar.
+[ "$1" = "prepared" ] || exit 0
+status=0
+while read -r oldvalue newvalue refname; do
+  case "$refname" in
+    refs/heads/main) ;;
+    refs/heads/*)
+      case "$newvalue" in
+        *[!0]*)
+          echo "ERROR: solo se permite la rama main (AGENTS.md, regla 7). Se rechazo crear '${refname#refs/heads/}'." >&2
+          echo "       Trabaja directo en main, en D:\\Proyectos\\CalculadorasUnificadas, sin ramas ni worktrees." >&2
+          status=1
+          ;;
+      esac
+      ;;
+  esac
+done
+exit $status

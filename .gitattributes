@@ -1,0 +1,2 @@
+# Los hooks de Git son scripts de sh: siempre con saltos LF (con CRLF dejan de funcionar)
+.githooks/* text eol=lf
