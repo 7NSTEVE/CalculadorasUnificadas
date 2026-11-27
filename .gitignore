@@ -2,6 +2,10 @@
 # Note: assets/roms/ remains tracked in Git per explicit owner policy.
 private_local/
 
+# Course material for Fisica III (exam PDFs, personal documents): kept in the root on purpose,
+# never committed to the public repository.
+/Fisica_III/
+
 # Uncompressed warm-state duplicate (cg50_warm_state.bin.gz is tracked instead) and ad-hoc dumps
 assets/roms/cg50_warm_state.bin
 tests/**/warm_state.bin

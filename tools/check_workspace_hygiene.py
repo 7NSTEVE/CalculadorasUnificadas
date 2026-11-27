@@ -51,6 +51,9 @@ ALLOWED_ROOT_DIRS = {
     "tools",
     "private_local",
     "build",
+    # Course material (exam PDFs, personal documents) kept in the root on purpose by the
+    # owner. It must stay git-ignored: see the ignore check below.
+    "Fisica_III",
 }
 
 FORBIDDEN_PATTERNS = [
@@ -133,7 +136,7 @@ def main() -> int:
                 errors.append(f"[ROOT_FILE_DISALLOWED] Unexpected loose file in root: {entry.name}")
 
     # 2. git check-ignore verification on private_local/ and build/
-    for ign in ("private_local/test.bin", "build/test.obj"):
+    for ign in ("private_local/test.bin", "build/test.obj", "Fisica_III/test.pdf"):
         rc, _ = run_git(["check-ignore", "-q", ign])
         if rc != 0:
             errors.append(f"[IGNORE_MISSING] Git does NOT ignore '{ign}' (check .gitignore)")
