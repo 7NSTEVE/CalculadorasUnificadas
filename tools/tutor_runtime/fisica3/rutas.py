@@ -106,6 +106,43 @@ _ESTRATEGIA_II_2026: List[Tuple[str, List[Tuple[str, str]]]] = [
 ]
 
 
+_TAREAS_TERMO: List[Tuple[str, List[Tuple[str, str]]]] = [
+    ("Tarea 4 · I-2024 (calorimetría y esfera hueca)", [
+        ("T4-24I-1", "Vapor + hielo + cobre (3 fases)"),
+        ("T4-24I-2", "Esfera hueca radial (corrige errata oficial d)"),
+    ]),
+    ("Tarea 3 · II-2024 (dilatación exacta y té verde)", [
+        ("T3-24II-1", "Dilatación exponencial vs lineal (Maclaurin)"),
+        ("T3-24II-2", "Fracción derretida α(T) y umbral 79,5 °C"),
+    ]),
+    ("Tarea 3 · I-2025 (dilatación 3D/catenaria y calorimetría)", [
+        ("T3-25I-1", "β = 3α, bloque anisotrópico α(T) y catenaria"),
+        ("T3-25I-2", "Mezclas binarias y ternaria con etanol"),
+    ]),
+    ("Tarea 3 · II-2025 (4 problemas ≤ 20.5)", [
+        ("T3-25II-1", "Aluminio fundido en agua + masa mínima"),
+        ("T3-25II-2", "Ducto cerámico cilíndrico y perfil logarítmico"),
+        ("T3-25II-3", "Primera ley e independencia de trayectoria"),
+        ("T3-25II-4", "Ciclo refrigerador monoatómico (corrige K = 2,59)"),
+    ]),
+    ("Tarea 3 · I-2026 (8 problemas ≤ 20.5; #3 y #4 excluidos)", [
+        ("T3-26I-1", "Fusión parcial a −10 °C + masa para 25 °C"),
+        ("T3-26I-2", "Ciclo completo con cierre isobárico C→A"),
+        ("T3-26I-5", "Isobárica + isocórica en gas diatómico"),
+        ("T3-26I-6", "Pistón vertical con resorte (trabajo integral)"),
+        ("T3-26I-7", "Ciclo triangular antihorario (Q = W = −300 J)"),
+        ("T3-26I-8", "Tubería 2 capas acero + poliestireno"),
+        ("T3-26I-9", "Esfera, cilindro y cubo de hierro (corrige SI)"),
+        ("T3-26I-10", "Cono truncado doble variable A(x) y k(T) = k₀T"),
+    ]),
+]
+
+_RECOMENDADOS_P1_P2: List[Tuple[str, List[Tuple[str, str]]]] = [
+    ("Ejercicios Recomendados 1 · Parcial 1 (MAS y ondas)", [(f"E1-{i}", "") for i in range(1, 17)]),
+    ("Ejercicios Recomendados 2 · Parcial 2 (elasticidad y fluidos)", [(f"E2-{i}", "") for i in range(1, 15)]),
+]
+
+
 def _construye(bloques: List[Tuple[str, List[Tuple[str, str]]]]) -> List[Dict[str, Any]]:
     items = []
     for bloque, ls in bloques:
@@ -146,5 +183,17 @@ def publicas() -> List[Dict[str, Any]]:
             "titulo": "Prioridad crítica (conducción variable y ciclos P–V)",
             "descripcion": "Selección concentrada en integrales de Fourier, área/k variable y ciclos termodinámicos completos.",
             "items": _construye(_CRITICOS),
+        },
+        {
+            "id": "tareas_termo_2024_2026",
+            "titulo": "Tareas de Termodinámica ≤ 20.5 (2024–2026)",
+            "descripcion": "Los 18 problemas vigentes (≤ 20.5) de las 5 tareas oficiales de cátedra, con corrección documentada de erratas.",
+            "items": _construye(_TAREAS_TERMO),
+        },
+        {
+            "id": "recomendados_p1_p2_ii_2026",
+            "titulo": "Recomendados 1 y 2 II-2026 (Parciales 1 y 2 · Reposición)",
+            "descripcion": "Los 16 ejercicios de MAS/ondas y 14 de elasticidad/fluidos de Documentos II-2026, derivados desde sus hojas oficiales.",
+            "items": _construye(_RECOMENDADOS_P1_P2),
         },
     ]

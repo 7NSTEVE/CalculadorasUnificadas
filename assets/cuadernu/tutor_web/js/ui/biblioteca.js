@@ -185,14 +185,14 @@ export class Biblioteca {
         b.dataset.id = l.id;
         const c = document.createElement('span');
         c.className = 'cod';
-        c.textContent = /^([EQ]\d|PR\d|P26-)/.test(l.id) ? l.id : '·';
+        c.textContent = /^([EQ]\d|PR\d|P26-|T[34]-|P[12][OE]26-|SUF26-|RP-|O26-|C26-)/.test(l.id) ? l.id : '·';
         const m = document.createElement('span');
         const s = document.createElement('strong');
         const tt = new TintaTexto(l.titulo, { etiqueta: 'span', px: 16, clase: 'sin-mano' });
         tt.progreso(1);
         s.appendChild(tt.el);
         const d = document.createElement('small');
-        d.textContent = [l.tipo === 'seleccion' ? 'Selección' : l.tipo === 'teoria' ? 'Teoría' : 'Desarrollo', l.min ? `${l.min} min` : '', /^E\d/.test(l.id) ? '' : textoFuente(l.fuente)].filter(Boolean).join(' · ');
+        d.textContent = [l.tipo === 'seleccion' ? 'Selección' : l.tipo === 'teoria' ? 'Teoría' : 'Desarrollo', l.min ? `${l.min} min` : '', /^E\d+$/.test(l.id) ? '' : textoFuente(l.fuente)].filter(Boolean).join(' · ');
         m.append(s, d);
         const e = document.createElement('span');
         e.className = 'hecho';

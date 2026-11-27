@@ -35,6 +35,10 @@ MODULOS = [
     "banco_parciales_ii_2026_p2",
     "banco_parciales_ii_2026_p1",
     "banco_suficiencia_26i",
+    # Olas 1B + 2A + 2B: 5 Tareas Termo ≤ 20.5 (2024–2026) + Recomendados 1 y 2 II-2026
+    "banco_tareas_termo_2024_2026",
+    "banco_recomendados_p1",
+    "banco_recomendados_p2",
     "teoria",
     "teoria_integrales",
 ]

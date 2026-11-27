@@ -34,10 +34,11 @@ _GRUPO = {
     "6.7": "primera_ley", "6.8": "primera_ley", "6.9": "primera_ley", "6.10": "primera_ley",
     "6.11": "ciclos", "6.12": "entropia", "6.13": "entropia", "6.14": "maquinas", "6.15": "maquinas",
     "6.16": "entropia", "6.17": "entropia",
+    "ondas": "ondas", "fluidos": "fluidos",
 }
 _VISUAL_A_GRUPO = {"conduccion": "conduccion", "radiacion": "radiacion", "dilatacion": "dilatacion", "calor": "calorimetria",
                    "calentamiento": "calorimetria", "pv": "ciclos", "gas": "gases", "distribucion": "gases",
-                   "maquina": "maquinas", "otto": "maquinas", "entropia": "entropia"}
+                   "maquina": "maquinas", "otto": "maquinas", "entropia": "entropia", "fluidos": "fluidos"}
 
 # Subíndices con nombre propio
 _SUB_PALABRA = {
@@ -95,6 +96,10 @@ def grupo_de(lec: Dict[str, Any]) -> str:
     g = _GRUPO.get(str(lec.get("tema") or ""))
     if g:
         return g
+    if lec.get("parcial") == 1:
+        return "ondas"
+    if lec.get("parcial") == 2:
+        return "fluidos"
     tipo = (lec.get("visual") or {}).get("tipo")
     return _VISUAL_A_GRUPO.get(tipo, "otros")
 
@@ -329,19 +334,52 @@ def significado(base: str, sub: str, grupo: str, linea: str = "", contexto: str 
             return None
         return f"cambio de {que[0]}{q}: final menos inicial", que[1]
     # Griegas
-    if base == "σ":
+    termo = grupo not in ("ondas", "fluidos")
+    if base == "λ" and grupo == "ondas":
+        return f"longitud de onda{q}", "m"
+    if base == "σ" and termo:
         return "constante de Stefan-Boltzmann", "W/(m²·K⁴)"
-    if base == "α":
+    if base == "α" and termo:
         return "coeficiente de dilatación lineal: cuánto crece cada metro por cada grado", "1/K o 1/°C"
-    if base == "β":
+    if base == "β" and termo:
         return "coeficiente de dilatación de volumen", "1/K o 1/°C"
-    if base == "γ":
+    if base == "γ" and termo:
         return "gama: C_P entre C_V del gas", "sin unidades"
     if base == "ρ":
         return f"densidad{q}: masa entre volumen", "kg/m³"
     if base == "π":
         return "pi ≈ 3,1416", "sin unidades"
     # Letras que dependen del tema
+    if grupo == "ondas":
+        if base == "n" and not sub:
+            return "número de armónico (1, 2, 3, …)", "entero positivo"
+        if base == "T" and not sub and re.search(r"2\\pi|\\omega|1/f|\\frac\{1\}\{f\}", linea):
+            return "período: tiempo de una oscilación completa", "s"
+        if base == "m":
+            return f"masa{q}", "kg"
+        if base == "t" and not sub:
+            return "tiempo", "s"
+        if base == "L" and not sub:
+            return "longitud de la cuerda o tubo", "m"
+        return None
+    if grupo == "fluidos":
+        if base == "Q" and not sub:
+            return "caudal volumétrico: volumen por segundo", "m³/s"
+        if base == "p":
+            return f"presión{q}", "Pa"
+        if base == "V":
+            return f"volumen{q}", "m³"
+        if base == "m":
+            return f"masa{q}", "kg"
+        if base == "A":
+            return f"área{q}", "m²"
+        if base == "Y" and not sub:
+            return "módulo de Young: rigidez del material", "Pa"
+        if base == "h" and not sub:
+            return "profundidad o altura", "m"
+        if base == "t" and not sub:
+            return "tiempo", "s"
+        return None
     if base == "T":
         return f"temperatura{q}", "K (o °C en una resta)"
     if base == "Q":

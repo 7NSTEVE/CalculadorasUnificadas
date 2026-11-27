@@ -84,7 +84,16 @@ class TestBanco158YTeoria(unittest.TestCase):
         esperados_r26 = ({f"P{p}{t}26-{i}" for p in (1, 2) for t in ("O", "E") for i in range(1, 10)}
                          | {"T-INT0", "T-INT1", "T-PARED", "T-INT2"} | {f"SUF26-{i}" for i in range(1, 8)})
         self.assertTrue(esperados_r26.issubset(ids), f"Faltan lecciones de la Reposición II-2026: {sorted(esperados_r26 - ids)}")
-        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7)  # 278 lecciones totales
+        # Olas 1B + 2A + 2B: 18 Tareas Termo ≤ 20.5 (2024–2026) + 16 Recomendados P1 + 14 Recomendados P2
+        esperados_olas12 = (
+            {"T4-24I-1", "T4-24I-2", "T3-24II-1", "T3-24II-2", "T3-25I-1", "T3-25I-2",
+             "T3-25II-1", "T3-25II-2", "T3-25II-3", "T3-25II-4",
+             "T3-26I-1", "T3-26I-2", "T3-26I-5", "T3-26I-6", "T3-26I-7", "T3-26I-8", "T3-26I-9", "T3-26I-10"}
+            | {f"E1-{i}" for i in range(1, 17)}
+            | {f"E2-{i}" for i in range(1, 15)}
+        )
+        self.assertTrue(esperados_olas12.issubset(ids), f"Faltan Olas 1+2: {sorted(esperados_olas12 - ids)}")
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7 + 18 + 16 + 14)  # 326 lecciones totales
 
         faltas = {}
         for lid in sorted(ids):

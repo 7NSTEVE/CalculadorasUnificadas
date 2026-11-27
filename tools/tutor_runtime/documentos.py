@@ -32,6 +32,13 @@ MAX_PAGINAS = 400
 FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "superexamen": (("superexamen_tercer_parcial_fisica_general_iii.pdf",), "Superexamen", "superexamen"),
     "recomendados": (("ejercicios_recomendados_3_iis2026.pdf",), "Ejercicios Recomendados 3", "recomendados"),
+    "recomendados1": (("ejercicios_recomendados_1_iis2026.pdf", "documentos ii - 2026/ejercicios_recomendados_1_iis2026.pdf"), "Ejercicios Recomendados 1 (II-2026)", "recomendados"),
+    "recomendados2": (("ejercicios_recomendados_2_iis2026.pdf", "documentos ii - 2026/ejercicios_recomendados_2_iis2026.pdf"), "Ejercicios Recomendados 2 (II-2026)", "recomendados"),
+    "24-I-T4": (("evaluaciones i-2024/tareas/tarea_4-enunciado.pdf", "tarea_4-enunciado.pdf"), "Tarea 4 I-2024", "tarea"),
+    "24-II-T3": (("evaluaciones ii-2024/tareas/tarea 3/tarea_3_enunciado.pdf",), "Tarea 3 II-2024", "tarea"),
+    "25-I-T3": (("evaluaciones i-2025/tarea 3/tarea_3_enunciado.pdf",), "Tarea 3 I-2025", "tarea"),
+    "25-II-T3": (("evaluaciones ii-2025/tareas 2025-ii/tarea3_catedra_fg3_ii2025.pdf", "tarea3_catedra_fg3_ii2025.pdf"), "Tarea 3 II-2025", "tarea"),
+    "26-I-T3": (("documentos i-2026/tareas/tarea3_catedra_fg3_i2026.pdf", "tarea3_catedra_fg3_i2026.pdf"), "Tarea 3 I-2026", "tarea"),
     "formulario": (("documentos-ii-2026_ecuaciones_tercer_parcial_fg3.pdf",), "Formulario del III Parcial", "hoja"),
     "formulario_p1": (("documentos-ii-2026_ecuaciones_importantes_parcial_1.pdf",), "Formulario del I Parcial", "hoja"),
     "formulario_p2": (("documentos-ii-2026_ecuaciones_segundo_parcial_fg3(1).pdf", "documentos-ii-2026_ecuaciones_segundo_parcial_fg3.pdf"), "Formulario del II Parcial", "hoja"),
@@ -69,6 +76,17 @@ PRACTICAS = {"26-II-P1": "PR1", "26-II-P2": "PR2"}
 
 # Parciales del II-2026 y suficiencia I-2026 (Reposición II-2026): la pregunta N es la lección <prefijo>-N.
 PARCIALES_REPO26 = {"26-II-1O": "P1O26", "26-II-1E": "P1E26", "26-II-2O": "P2O26", "26-II-2E": "P2E26", "26-I-SUF": "SUF26"}
+
+# Recomendados P1/P2 II-2026 y Tareas Termo ≤ 20.5 (2024–2026): el problema N enlaza a <prefijo>-N.
+TAREAS_Y_REC = {
+    "recomendados1": "E1",
+    "recomendados2": "E2",
+    "24-I-T4": "T4-24I",
+    "24-II-T3": "T3-24II",
+    "25-I-T3": "T3-25I",
+    "25-II-T3": "T3-25II",
+    "26-I-T3": "T3-26I",
+}
 
 # Reposición Parcial 1 y Parcial 2: enlace directo (examen, número) -> ID de lección RP-*.
 REPOSICION_MAPA: Dict[Tuple[str, str], str] = {
@@ -480,7 +498,13 @@ def _solo_enunciado(doc: fitz.Document, p: Problema, cache: Dict[int, Tuple[List
     return tiras or p.tiras[:1]
 
 
-def segmenta_general(doc: fitz.Document) -> List[Problema]:
+_RE_ENCABEZADO_TAREA = re.compile(
+    r"^(?:fi2103\b|fisica\s+general\s+iii|tarea\s+\d+\s*[-–]|solucion\s+tarea\s+\d+|(?:primer|segundo|i+)\s+semestre\s+(?:de\s+)?20\d\d|\d{1,2}$)",
+    re.I,
+)
+
+
+def segmenta_general(doc: fitz.Document, tipo: str = "general") -> List[Problema]:
     """PDF cualquiera que suba la persona: Ejercicio N, Problema N, Q001, o listas numeradas."""
     cache: Dict[int, Tuple[List[Linea], List[fitz.Rect]]] = {}
     pats = [
@@ -493,6 +517,8 @@ def segmenta_general(doc: fitz.Document) -> List[Problema]:
     fines: List[Tuple[int, float]] = []
     for i in range(min(len(doc), MAX_PAGINAS)):
         ls = _lineas(doc[i])
+        if tipo == "tarea":
+            ls = [k for k in ls if not (k.y0 < 105 and _RE_ENCABEZADO_TAREA.match(fold_accents(k.texto).strip()))]
         cache[i] = (ls, _graficos(doc[i]))
         margen = sorted(k.x0 for k in ls)[max(0, len(ls) // 12)] if ls else 0
         for k in ls:
@@ -519,7 +545,7 @@ def segmenta_general(doc: fitz.Document) -> List[Problema]:
                 vistos[c] = vistos.get(c, 0) + 1
                 if vistos[c] > 1:
                     a["clave"] = f"{c}~{vistos[c]}"
-            return _arma(doc, "general", grupo, sorted(fines), cache)
+            return _arma(doc, tipo, grupo, sorted(fines), cache)
     return []
 
 
@@ -560,7 +586,9 @@ def segmenta_practica(doc: fitz.Document) -> List[Problema]:
 SEGMENTADORES = {
     "superexamen": segmenta_superexamen, "recomendados": segmenta_recomendados, "examen": segmenta_examen,
     "examen26": segmenta_examen_latex,
-    "folleto": segmenta_folleto, "general": segmenta_general, "hoja": lambda d: [], "practica": segmenta_practica,
+    "folleto": segmenta_folleto, "general": segmenta_general,
+    "tarea": lambda d: segmenta_general(d, tipo="tarea"),
+    "hoja": lambda d: [], "practica": segmenta_practica,
 }
 
 
@@ -654,7 +682,13 @@ def carpetas_por_defecto(raiz: pathlib.Path) -> List[pathlib.Path]:
     extra = os.environ.get("TUTOR_DOCUMENTOS", "")
     cs += [pathlib.Path(x) for x in extra.split(os.pathsep) if x.strip()]
     casa = pathlib.Path.home()
-    cs += [casa / "Downloads", casa / "Descargas", pathlib.Path("D:/Descargas")]
+    cs += [
+        casa / "Downloads",
+        casa / "Descargas",
+        pathlib.Path("D:/Descargas"),
+        pathlib.Path(r"D:\OneDrive\Desktop\Calculadoras (blanca y gris)\Fisica_III"),
+        pathlib.Path(r"D:\OneDrive\Desktop\Calculadoras (blanca y gris)\Fisica_III\Documentos II - 2026"),
+    ]
     vistos: List[pathlib.Path] = []
     for c in cs:
         try:
@@ -687,6 +721,7 @@ class Documentos:
         with self._c:
             if self._rutas is None:
                 indice: Dict[str, pathlib.Path] = {}
+                subindice: Dict[str, pathlib.Path] = {}
                 for c in self.carpetas:
                     try:
                         for f in c.iterdir():
@@ -694,11 +729,24 @@ class Documentos:
                                 indice.setdefault(_norma_archivo(f.name), f)
                     except OSError:
                         continue
+                    # Índice por subruta normalizada solo dentro del repositorio del curso (rápido, sin recorrer Descargas)
+                    if _norma_archivo(c.name) in ("fisica_iii", "tutor_documentos"):
+                        try:
+                            for f in c.rglob("*.pdf"):
+                                if f.is_file():
+                                    rel = _norma_archivo(f.relative_to(c).as_posix())
+                                    subindice.setdefault(rel, f)
+                        except OSError:
+                            continue
                 self._rutas = {}
                 for id, (pats, _, _) in FUENTES.items():
                     for p in pats:
-                        if _norma_archivo(p) in indice:
-                            self._rutas[id] = indice[_norma_archivo(p)]
+                        np = _norma_archivo(p)
+                        if "/" in np and np in subindice:
+                            self._rutas[id] = subindice[np]
+                            break
+                        if np in indice:
+                            self._rutas[id] = indice[np]
                             break
             return self._rutas
 
@@ -758,7 +806,7 @@ class Documentos:
         if t == "superexamen":
             return f"Superexamen · {clave}"
         if t == "recomendados":
-            return f"Ejercicios Recomendados 3 · ejercicio {clave}"
+            return f"{self.titulo(id)} · ejercicio {clave}"
         if t == "folleto":
             return f"Folleto · sección {clave.split('-')[0]}, ejercicio {clave.split('-')[-1]}"
         return f"{self.titulo(id)} · {'problema' if t == 'examen' else 'ejercicio'} {clave.split('~')[0]}"
@@ -1051,6 +1099,9 @@ class Documentos:
             return lid if registro.existe(lid) else None
         if id in PARCIALES_REPO26:
             lid = f"{PARCIALES_REPO26[id]}-{clave}"
+            return lid if registro.existe(lid) else None
+        if id in TAREAS_Y_REC:
+            lid = f"{TAREAS_Y_REC[id]}-{clave}"
             return lid if registro.existe(lid) else None
         rp = REPOSICION_MAPA.get((id, str(clave)))
         if rp and registro.existe(rp):
