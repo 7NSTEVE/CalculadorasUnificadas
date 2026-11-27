@@ -116,6 +116,13 @@ void CommandStack::MarkClean(DocumentModel& doc) noexcept {
     doc.SetDirty(false);
 }
 
+void CommandStack::MarkCleanUnreachable(DocumentModel& doc) noexcept {
+    // Mismo estado que cuando el punto «guardado» se pierde del historial: UpdateDirtyFlag deja el
+    // documento modificado pase lo que pase con deshacer y rehacer, hasta que MarkClean lo limpie.
+    cleanInvalidated_ = true;
+    doc.SetDirty(true);
+}
+
 void CommandStack::Clear() noexcept {
     history_.clear();
     cursor_ = 0;

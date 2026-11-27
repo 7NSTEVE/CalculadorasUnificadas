@@ -2124,9 +2124,14 @@ std::wstring MakeDraftFileName(const wchar_t* prefix, const std::wstring& title)
 }
 
 // Copia del documento activo: no toca el archivo de la persona ni lo marca como guardado.
+// CudocStorage::SaveToFile termina con doc.SetDirty(false); sin restaurar la marca, después del
+// primer autoguardado CuadernU dejaba de preguntar al cerrar y el trabajo se perdía.
 bool WriteDocumentCopy(StudioAppState* st, const std::wstring& target) {
+    const bool wasDirty = st->doc.IsDirty();
     std::string err;
-    return CudocStorage::SaveToFile(target, st->doc, &err);
+    const bool ok = CudocStorage::SaveToFile(target, st->doc, &err);
+    st->doc.SetDirty(wasDirty);
+    return ok;
 }
 
 void DiscardSessionDraft(StudioAppState* st) {
@@ -2249,7 +2254,8 @@ bool OpenDraftAsUnsaved(StudioAppState* st, const std::wstring& draftPath) {
         return false;
     }
     st->currentDocPath.clear();
-    st->doc.SetDirty(true);
+    // Sin archivo propio todavía: ni deshacer hasta el principio lo vuelve «guardado».
+    st->cmdStack.MarkCleanUnreachable(st->doc);
     st->statusBannerUtf8 = "Borrador recuperado: use Guardar para elegir d\xC3\xB3nde dejarlo";
     UpdateWindowTitle(st);
     SyncDynamicTimers(st);

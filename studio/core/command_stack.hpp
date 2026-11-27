@@ -51,6 +51,9 @@ public:
     std::string RedoDescription() const;
 
     void MarkClean(DocumentModel& doc) noexcept;
+    // El documento no coincide con ningún archivo guardado (por ejemplo, un borrador recuperado):
+    // queda «modificado» hasta el próximo MarkClean (guardar); ni deshacer ni rehacer lo vuelven «guardado».
+    void MarkCleanUnreachable(DocumentModel& doc) noexcept;
     void Clear() noexcept;
 
     // Persistent cross-session Undo/Redo snapshot history (F-004)

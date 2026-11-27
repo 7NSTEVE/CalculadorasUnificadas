@@ -1586,6 +1586,50 @@ void TestF11FourDocsComplianceSuite(const fs::path& tmpDir) {
     }
 }
 
+// Auditoría pasos cortos, P0: las copias de borrador (autoguardado cada 60 s, «No guardar») no deben dejar el
+// documento como «guardado», y un borrador recuperado sigue «modificado» hasta que se guarde de verdad.
+void TestF12DraftCopiesKeepUnsavedFlag(const fs::path& tmpDir) {
+    std::cout << "-- Test F12: Borradores sin perder la marca de cambios sin guardar --\n";
+    DocumentModel doc;
+    CommandStack stack;
+    AnnotationObject ink;
+    ink.kind = ObjectKind::InkStroke;
+    ink.inkPoints = { {10.0, 10.0, 0.5f}, {40.0, 30.0, 0.5f} };
+    CHECK(stack.Execute(doc, std::make_unique<AddObjectCommand>(ObjectTarget{ false, 0 }, ink)));
+    CHECK(doc.IsDirty());
+
+    // SaveToFile deja el documento como guardado: una copia tiene que devolverle su marca (WriteDocumentCopy)
+    const fs::path copyPath = tmpDir / L"Autoguardado prueba.cudoc";
+    std::string err;
+    const bool wasDirty = doc.IsDirty();
+    CHECK(CudocStorage::SaveToFile(copyPath.wstring(), doc, &err));
+    CHECK(!doc.IsDirty());
+    doc.SetDirty(wasDirty);
+    CHECK(doc.IsDirty());
+
+    // Borrador recuperado: sigue modificado aunque se deshaga o rehaga todo
+    CommandStack recStack;
+    DocumentModel recovered;
+    CHECK(CudocStorage::LoadFromFile(copyPath.wstring(), recovered, &err));
+    CHECK(!recovered.IsDirty());
+    recStack.MarkCleanUnreachable(recovered);
+    CHECK(recovered.IsDirty());
+    CHECK(recStack.Execute(recovered, std::make_unique<AddObjectCommand>(ObjectTarget{ false, 0 }, ink)));
+    CHECK(recovered.IsDirty());
+    CHECK(recStack.Undo(recovered));
+    CHECK(recovered.IsDirty()); // con solo SetDirty(true), deshacer hasta el principio lo daba por guardado
+    CHECK(recStack.Redo(recovered));
+    CHECK(recovered.IsDirty());
+
+    // Guardarlo de verdad lo limpia, y deshacer y rehacer vuelven a marcarlo como siempre
+    recStack.MarkClean(recovered);
+    CHECK(!recovered.IsDirty());
+    CHECK(recStack.Undo(recovered));
+    CHECK(recovered.IsDirty());
+    CHECK(recStack.Redo(recovered));
+    CHECK(!recovered.IsDirty());
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -1606,12 +1650,13 @@ int main(int argc, char** argv) {
     TestF9P1P2GoodnotesOneNoteParity(tmp.dir);
     TestF10P3StemEngineeringSuperiority(tmp.dir);
     TestF11FourDocsComplianceSuite(tmp.dir);
+    TestF12DraftCopiesKeepUnsavedFlag(tmp.dir);
 
     WinRtPdfRenderer::ClearOpenDocumentCache();
 
     std::cout << "\nTOTAL CHECKS: passed=" << gPasses << ", failed=" << gFailures << "\n";
     if (gFailures == 0) {
-        std::cout << "ALL DocumentCoreTest CHECKS PASSED (F1-F11)\n";
+        std::cout << "ALL DocumentCoreTest CHECKS PASSED (F1-F12)\n";
         return 0;
     }
     std::cerr << "\nDocumentCoreTest FAILED with " << gFailures << " failure(s)\n";
