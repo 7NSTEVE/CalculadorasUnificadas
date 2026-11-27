@@ -2173,6 +2173,8 @@ bool ConfirmUnsavedChanges(StudioAppState* st, const wchar_t* beforeWhat) {
     if (!st) return true;
     CommitInlineTextEdit(st, true);
     if (IsAutomationRun(st) || !st->doc.IsDirty()) return true;
+    // Cerrar desde la barra de tareas con la ventana minimizada: sin esto la pregunta queda escondida.
+    if (st->hwndMain && IsIconic(st->hwndMain)) ShowWindow(st->hwndMain, SW_RESTORE);
 
     const std::wstring question = L"¿Guardar los cambios de «" + DocumentDisplayName(st) +
                                   L"» antes de " + beforeWhat + L"?";
