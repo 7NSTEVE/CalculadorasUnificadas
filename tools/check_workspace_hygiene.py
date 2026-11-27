@@ -141,6 +141,18 @@ def main() -> int:
         if rc != 0:
             errors.append(f"[IGNORE_MISSING] Git does NOT ignore '{ign}' (check .gitignore)")
 
+    # 2b. Single branch policy (owner decision 2026-11-27): only `main` may exist locally.
+    # Skipped in CI, where the checkout itself may create other refs.
+    if not os.environ.get("GITHUB_ACTIONS") and not os.environ.get("CI"):
+        rc, heads = run_git(["for-each-ref", "--format=%(refname:short)", "refs/heads"])
+        if rc == 0:
+            extra = [h for h in heads.splitlines() if h and h != "main"]
+            if extra:
+                errors.append(
+                    "[BRANCH_DISALLOWED] Solo se permite la rama main (AGENTS.md, regla 7); "
+                    f"sobran: {', '.join(extra)}"
+                )
+
     # 3. Check Git staged or tracked files for forbidden artifacts
     git_cmd = ["diff", "--cached", "--name-only"] if args.staged else ["ls-files"]
     rc, listed = run_git(git_cmd)

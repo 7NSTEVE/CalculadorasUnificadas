@@ -4,13 +4,13 @@
 > **Alcance:** Windows con lápiz + iPad con lápiz del iPad, uso personal.
 > **Estados de una tarea:**
 > - **Pendiente:** no empezó.
-> - **En curso:** con rama abierta.
+> - **En curso:** alguien la está haciendo, siempre en `main` (no hay ramas).
 > - **Hecha:** compilada, probada y vista funcionando. Si no se verificó, no está hecha.
 >
 > **IDs de la hoja:** la columna `tarea_backlog` de [`competencia_2026/evidencias/revision_codigo_2026-11-27.csv`](competencia_2026/evidencias/revision_codigo_2026-11-27.csv) dice qué requisitos cubre cada tarea.
 > **Diseño para la concentración:** las tareas T2 a T5 ya tienen su plan en [`AUDITORIA_ATENCION_APP_COMPLETA.md`](AUDITORIA_ATENCION_APP_COMPLETA.md); aquí solo se enlazan.
 
-## Nivel 0. Que no dañe ni mienta (bloque 1, rama `fix/no-danar-ni-mentir`)
+## Nivel 0. Que no dañe ni mienta (bloque 1)
 
 ### N0-1. Que no cambie tu letra sola · Pendiente · 16 IDs
 
@@ -190,8 +190,8 @@
 
 ## Mantenimiento y riesgos
 
-- **M-1. Respaldo.** `fix/atencion-p0` y el tutor ya están en GitHub (repo público) desde el 27-nov. Siguen solo en este PC `chore/competencia-2026` y el commit que permite `Fisica_III/`; hay que decidir si se suben.
-- **M-2. Archivos sin commit.** 24 archivos (MCP, TEC Digital, tutor, WebView2) siguen sin guardar desde el 26-nov.
+- **M-1. Respaldo.** La fase 1 de concentración y el tutor ya están en GitHub (repo público) desde el 27-nov. Los commits nuevos de `main` siguen solo en este PC: hay que decidir si se suben y si se borra de GitHub la rama `feat/tutor-reposicion-ii-2026`.
+- **M-2. Trabajo sin revisar.** Los 24 archivos del 26-nov (MCP, TEC Digital, tutor, WebView2) quedaron guardados tal cual en `main`; hay que revisarlos y probarlos.
 - **M-3. Pruebas en rojo.** PrintoutTest y RealE2EClosureTest fallaban en la última corrida (26-nov, 23:24).
 - **M-4. Pruebas que no prueban.**
   - `Full987MatrixComplianceTest` solo valida el CSV; hay que renombrarla o decirlo en su salida.
