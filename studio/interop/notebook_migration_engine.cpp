@@ -788,13 +788,15 @@ bool ImportOneNote(
     }
 
     res.report.pageCount = doc.Pages().size();
+    // Informe honesto (revisión del 27-nov-2026): este lector no interpreta el formato de OneNote
+    // (MS-ONESTORE); rescata imágenes, texto suelto y trazos que encuentra por patrones. El lector
+    // real está en docs/BACKLOG.md (N1-6).
     res.report.visualTier = CompatLevelStatus::Partial;
-    res.report.structuralTier = CompatLevelStatus::Full;
-    res.report.editableTier = (res.report.textBoxCount > 0 || res.report.editableStrokeCount > 0)
-        ? CompatLevelStatus::Full : CompatLevelStatus::Partial;
-    res.report.visualSummaryUtf8 = "Secciones, texto, im\xC3\xA1genes y trazos InkML reconstruidos en p\xC3\xA1ginas nativas.";
-    res.report.structuralSummaryUtf8 = "Jerarqu\xC3\xAD""a de secciones .one/.onepkg mapeada a marcadores y p\xC3\xA1ginas.";
-    res.report.editableSummaryUtf8 = "Texto UTF-16LE, trazos vectoriales e im\xC3\xA1genes totalmente editables.";
+    res.report.structuralTier = CompatLevelStatus::Partial;
+    res.report.editableTier = CompatLevelStatus::Partial;
+    res.report.visualSummaryUtf8 = "Rescate parcial: im\xC3\xA1genes, texto suelto y trazos encontrados por patrones; el dise\xC3\xB1o de las p\xC3\xA1ginas no se conserva.";
+    res.report.structuralSummaryUtf8 = "No interpreta el formato de OneNote (MS-ONESTORE): pueden faltar secciones o p\xC3\xA1ginas, o salir en otro orden.";
+    res.report.editableSummaryUtf8 = "Lo rescatado se puede editar, pero puede faltar contenido: rev\xC3\xADsalo contra OneNote.";
     res.report.warnings.push_back({
         WarningSeverity::Info, "ONENOTE_LAYOUT_NOTE",
         "Diferencias menores de maquetaci\xC3\xB3n en OneNote binario",

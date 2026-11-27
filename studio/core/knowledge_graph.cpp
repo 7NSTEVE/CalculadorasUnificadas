@@ -966,6 +966,10 @@ void CommandPaletteRegistry::RegisterDefaultCommands() {
         { CMD_MEDIA_CAPTURE_FRAME,      "/capturar-fotograma",  "Capturar fotograma actual de video al lienzo",          "Multimedia",        "",             "capture video frame snapshot annotate" },
         { CMD_TOGGLE_GPU_ACCEL,         "/modo-gpu",            "Alternar modo Ultra Eficiente (0% GPU) / Acelerado",    "Rendimiento",       "",             "gpu cpu performance software battery" },
         { CMD_MEDIA_TRIM_MEMORY,        "/liberar-ram",         "Liberar cach\xC3\xA9s y compactar RAM ahora",           "Rendimiento",       "",             "ram memory trim cache optimize" },
+        // Que no dañe ni mienta (27-nov-2026): los tres empiezan apagados
+        { CMD_TOGGLE_SNAP,              "/formas",              "Formas al mantener el l\xC3\xA1piz quieto (activar o desactivar)", "Tinta", "",       "formas figuras snap mantener hold" },
+        { CMD_TOGGLE_SCRIBBLE_ERASE,    "/tachar",              "Tachar para borrar, solo tinta (activar o desactivar)", "Tinta",           "",             "tachar borrar garabato scribble erase" },
+        { CMD_TOGGLE_EXPERIMENTAL,      "/experimental",        "Mostrar u ocultar funciones experimentales",            "Ajustes",          "",             "experimental simulado beta prueba" },
         // Complete STEM, Ink, Paper, PDF, Audio, Layers & Academic Discoverability
         { CMD_ADV_MATH,                 "/lab-matematico",      "Laboratorio Matem\xC3\xA1tico (Eigen / EDO / C\xC3\xA1lculo)...", "STEM", "", "eigen ode integral derivative math" },
         { CMD_ADD_CIRCUIT,              "/circuito",            "Resolver circuito MNA (DC / AC / Diodos)...",           "STEM",              "",             "circuit spice mna resistor capacitor" },

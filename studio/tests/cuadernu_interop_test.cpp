@@ -656,11 +656,18 @@ void TestTrackAToDCoreEngines() {
     EXPECT(udoc.CanvasObjects().empty());
 
     // 6. Non-blocking Continuous Mic Recording + Playback + HTML5 export
+    // Sin micrófono ya no se graba un tono falso (27-nov-2026): la grabación se niega, o queda
+    // vacía y lo dice. Con micrófono tiene que haber audio.
     AudioTimelineSession audio;
-    EXPECT(audio.StartContinuousMicRecording(16000));
-    std::this_thread::sleep_for(std::chrono::milliseconds(160));
-    const auto recRep = audio.StopContinuousMicRecording();
-    EXPECT(recRep.capturedMs > 0);
+    std::string recStatus;
+    if (audio.StartContinuousMicRecording(16000, &recStatus)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(160));
+        const auto recRep = audio.StopContinuousMicRecording();
+        EXPECT(!recRep.fallbackUsed);
+        EXPECT(recRep.capturedMs > 0 || recRep.statusNoteUtf8.find("no entreg") != std::string::npos);
+    } else {
+        EXPECT(recStatus.find("micr") != std::string::npos);
+    }
     audio.AddBookmark("Inicio demostracion", 100);
     EXPECT(audio.Bookmarks().size() == 1);
     const std::string htmlPath = (tmpDir / "synced_tut.html").string();

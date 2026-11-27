@@ -426,12 +426,18 @@ std::vector<std::uint64_t> FindObjectsForScribbleErase(
     const DocumentModel& doc,
     ObjectTarget target,
     const std::vector<InkPoint>& scribble,
-    bool skipLockedOrHiddenLayers)
+    bool skipLockedOrHiddenLayers,
+    bool inkStrokesOnly)
 {
     std::vector<std::uint64_t> ids;
     const auto* objs = GetTargetObjects(doc, target);
     if (!objs) return ids;
     for (const auto& obj : *objs) {
+        if (inkStrokesOnly) {
+            const bool inkLike = (obj.kind == ObjectKind::InkStroke) ||
+                                 (obj.kind == ObjectKind::Shape && !obj.isRedaction);
+            if (!inkLike) continue;
+        }
         if (skipLockedOrHiddenLayers) {
             if (obj.lockedInPlace || !doc.IsLayerVisible(obj.layerId) || doc.IsLayerLocked(obj.layerId)) continue;
         }

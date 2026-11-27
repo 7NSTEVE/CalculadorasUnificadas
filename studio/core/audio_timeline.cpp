@@ -356,6 +356,21 @@ bool AudioTimelineSession::StartContinuousMicRecording(std::uint32_t sampleRateH
     }
     if (recThread_.joinable()) recThread_.join();
 
+    // Sin micrófono no se graba nada (revisión del 27-nov-2026): antes se grababa un tono
+    // sintético de 261,6 Hz como si fuera audio de la clase.
+    bool hasCaptureDevice = !simulateNoCaptureDevice_;
+#ifdef _WIN32
+    if (hasCaptureDevice && waveInGetNumDevs() == 0) hasCaptureDevice = false;
+#else
+    hasCaptureDevice = false; // la grabación continua solo existe en Windows (WinMM)
+#endif
+    if (!hasCaptureDevice) {
+        if (outStatusUtf8) {
+            *outStatusUtf8 = "No encontr\xC3\xA9 un micr\xC3\xB3" "fono. Conecta uno o revisa Configuraci\xC3\xB3n > Privacidad > Micr\xC3\xB3" "fono.";
+        }
+        return false;
+    }
+
     {
         std::lock_guard<std::mutex> lk(audioMutex_);
         sampleRateHz_ = (sampleRateHz == 0) ? 16000u : sampleRateHz;
@@ -462,50 +477,12 @@ bool AudioTimelineSession::StartContinuousMicRecording(std::uint32_t sampleRateH
             if (hEvent) CloseHandle(hEvent);
         }
 #endif
-        // If WinMM opened a device that delivered zero PCM bytes (e.g. privacy mute or short capture
-        // before driver flush), preserve elapsed timeline duration with low-amplitude fallback PCM.
-        if (attemptedHw && !gotAnyHwSample) {
-            const auto elapsedMs = static_cast<std::uint64_t>((std::max<long long>)(
-                60ll,
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::steady_clock::now() - recStartTp).count()));
-            const std::size_t fallbackSamples = (std::max<std::size_t>)(
-                160u, static_cast<std::size_t>((elapsedMs * sr) / 1000ull));
-            std::vector<std::int16_t> buf(fallbackSamples, 0);
-            for (std::size_t i = 0; i < fallbackSamples; ++i) {
-                const double t = static_cast<double>(i) / static_cast<double>(sr);
-                buf[i] = static_cast<std::int16_t>(std::sin(kTwoPi * 261.63 * t) * 280.0);
-            }
-            std::lock_guard<std::mutex> lk(audioMutex_);
-            if (samples_.empty()) {
-                samples_.insert(samples_.end(), buf.begin(), buf.end());
-                cursorMs_ = (static_cast<std::uint64_t>(samples_.size()) * 1000ull) / sampleRateHz_;
-            }
-        }
-        // Headless fallback: stream quiet low-amplitude PCM every 50ms until stopped when no HW opened
-        if (!attemptedHw && !recHardwareUsed_.load(std::memory_order_acquire)) {
-            {
-                std::lock_guard<std::mutex> lk(audioMutex_);
-                if (recDeviceNameUtf8_.empty()) recDeviceNameUtf8_ = "virtual_mic_stream";
-            }
-            const std::size_t chunk = (std::max<std::size_t>)(160u, static_cast<std::size_t>(sr / 20u));
-            std::size_t sampleIndex = 0;
-            while (!stopRecRequested_.load(std::memory_order_acquire)) {
-                std::vector<std::int16_t> buf(chunk, 0);
-                for (std::size_t i = 0; i < chunk; ++i) {
-                    const double t = static_cast<double>(sampleIndex++) / static_cast<double>(sr);
-                    buf[i] = static_cast<std::int16_t>(std::sin(kTwoPi * 261.63 * t) * 320.0);
-                }
-                {
-                    std::lock_guard<std::mutex> lk(audioMutex_);
-                    if (!paused_) {
-                        samples_.insert(samples_.end(), buf.begin(), buf.end());
-                        cursorMs_ = (static_cast<std::uint64_t>(samples_.size()) * 1000ull) / sampleRateHz_;
-                    }
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            }
-        }
+        // Sin relleno sintético (revisión del 27-nov-2026): si el micrófono no entregó audio, la
+        // grabación queda vacía y StopContinuousMicRecording lo dice. Antes se rellenaba el tiempo
+        // con un tono de 261,6 Hz.
+        (void)recStartTp;
+        (void)attemptedHw;
+        (void)gotAnyHwSample;
         asyncRecording_.store(false, std::memory_order_release);
     });
 
@@ -525,12 +502,12 @@ MicCaptureReport AudioTimelineSession::StopContinuousMicRecording() {
         recording_ = false;
         cursorMs_ = 0;
         rep.hardwareUsed = recHardwareUsed_.load(std::memory_order_acquire);
-        rep.fallbackUsed = !rep.hardwareUsed;
+        rep.fallbackUsed = false; // ya no existe relleno sintético
         rep.capturedMs = (sampleRateHz_ > 0) ? ((static_cast<std::uint64_t>(samples_.size()) * 1000ull) / sampleRateHz_) : 0ull;
         rep.deviceNameUtf8 = recDeviceNameUtf8_;
         rep.statusNoteUtf8 = rep.hardwareUsed
-            ? "Grabaci\xC3\xB3n continua WinMM finalizada."
-            : "Grabaci\xC3\xB3n continua (respaldo sin micr\xC3\xB3" "fono f\xC3\xADsico) finalizada.";
+            ? "Grabaci\xC3\xB3n terminada."
+            : "El micr\xC3\xB3" "fono no entreg\xC3\xB3 audio: revisa que no est\xC3\xA9 silenciado ni bloqueado en Privacidad. No se guard\xC3\xB3 nada.";
     }
     return rep;
 }

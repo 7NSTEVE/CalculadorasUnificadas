@@ -260,7 +260,8 @@ inline void HandleStrokeCompletedAction(
     double stabilization,
     std::vector<std::uint64_t>& outLassoSelection,
     std::uint64_t& outPrimarySelectedId,
-    std::string& outStatus)
+    std::string& outStatus,
+    bool scribbleEraseEnabled = InkEngine::kScribbleEraseDefault)
 {
     draftObj.layerId = doc.ActiveLayerId();
 
@@ -274,8 +275,10 @@ inline void HandleStrokeCompletedAction(
     }
 
     if (draftObj.kind == ObjectKind::InkStroke) {
-        if (InkEngine::IsScribbleEraseGesture(draftObj.inkPoints)) {
-            const auto eraseIds = InkEngine::FindObjectsForScribbleErase(doc, target, draftObj.inkPoints, true);
+        // Tachar para borrar solo si se encendió: un zigzag (resistencia), una «m» o una «w»
+        // también parecen tachones. Y aun encendido, solo borra tinta (nunca imágenes ni páginas).
+        if (scribbleEraseEnabled && InkEngine::IsScribbleEraseGesture(draftObj.inkPoints)) {
+            const auto eraseIds = InkEngine::FindObjectsForScribbleErase(doc, target, draftObj.inkPoints, true, true);
             if (!eraseIds.empty()) {
                 cmdStack.Execute(doc, std::make_unique<BatchEraseObjectsCommand>(target, eraseIds));
                 outLassoSelection.clear();

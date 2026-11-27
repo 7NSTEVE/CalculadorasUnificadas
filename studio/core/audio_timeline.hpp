@@ -93,6 +93,8 @@ public:
     bool StartContinuousMicRecording(std::uint32_t sampleRateHz = 16000, std::string* outStatusUtf8 = nullptr);
     MicCaptureReport StopContinuousMicRecording();
     bool IsContinuousRecording() const noexcept { return asyncRecording_.load(std::memory_order_acquire); }
+    // Pruebas: hace como si el equipo no tuviera micrófono (StartContinuousMicRecording devuelve false).
+    void SetSimulateNoCaptureDevice(bool simulate) noexcept { simulateNoCaptureDevice_ = simulate; }
 
     // Real speaker hardware PCM playback synchronized with Ink Replay (F-155, WinMM waveOut)
     bool StartAudioPlayback(std::uint64_t startCursorMs = 0, std::string* outErr = nullptr);
@@ -185,6 +187,7 @@ private:
     std::atomic<bool> stopRecRequested_{ false };
     std::atomic<bool> recHardwareUsed_{ false };
     std::string recDeviceNameUtf8_;
+    bool simulateNoCaptureDevice_ = false;
     std::thread recThread_;
 
     std::atomic<bool> asyncPlaying_{ false };

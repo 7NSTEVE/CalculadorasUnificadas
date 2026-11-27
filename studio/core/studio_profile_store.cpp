@@ -262,6 +262,9 @@ bool StudioProfileStore::SaveUiPreferences(const std::wstring& path, const Studi
         {"customCssSnippet", prefs.customCssSnippetUtf8},
         {"totalStudySeconds", prefs.totalStudySeconds},
         {"hardwareGpuAcceleration", prefs.hardwareGpuAcceleration},
+        {"snapShapesEnabled", prefs.snapShapesEnabled},
+        {"scribbleEraseEnabled", prefs.scribbleEraseEnabled},
+        {"showExperimentalFeatures", prefs.showExperimentalFeatures},
         {"autoSync", {
             {"enabled", prefs.autoSyncEnabled},
             {"folder", prefs.autoSyncFolderUtf8},
@@ -305,6 +308,9 @@ bool StudioProfileStore::LoadUiPreferences(const std::wstring& path, StudioUiPre
         prefs.customCssSnippetUtf8 = j.value("customCssSnippet", "");
         prefs.totalStudySeconds = j.value("totalStudySeconds", std::uint64_t{ 0 });
         prefs.hardwareGpuAcceleration = j.value("hardwareGpuAcceleration", false);
+        prefs.snapShapesEnabled = j.value("snapShapesEnabled", false);
+        prefs.scribbleEraseEnabled = j.value("scribbleEraseEnabled", false);
+        prefs.showExperimentalFeatures = j.value("showExperimentalFeatures", false);
         if (j.contains("autoSync") && j["autoSync"].is_object()) {
             const auto& aj = j["autoSync"];
             prefs.autoSyncEnabled = aj.value("enabled", false);

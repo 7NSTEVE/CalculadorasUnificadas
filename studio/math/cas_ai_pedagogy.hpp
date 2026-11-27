@@ -248,7 +248,7 @@ GroundedSearchSynthesis SynthesizeGroundedSearchAnswer(
 
 struct SummaryArtifact {
     bool ok = false;
-    std::string targetLayerNameUtf8 = "Resumen Asistido (No Destructivo)";
+    std::string targetLayerNameUtf8 = "Extracto sin IA";
     AnnotationObject summaryBlock{};
     std::vector<std::uint64_t> sourceObjectIds;
     CasAuditMetadata audit{};

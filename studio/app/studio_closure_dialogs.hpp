@@ -2183,15 +2183,12 @@ inline bool ShowPdfAnnotationsAndBookmarksDialog(
                     return 0;
                 }
                 if (cid == 885) {
-                    std::wstring signerW = L"Usuario CuadernU";
-                    if (QuickInputDialog(hwnd, L"Firmar Formulario PDF con Tinta", L"Nombre del firmante:", signerW) && !signerW.empty()) {
-                        const std::vector<InkPoint> sigPts = {
-                            { 120.0, 620.0, 0.7f, 0, 0, 1 }, { 160.0, 600.0, 0.8f, 0, 0, 2 },
-                            { 200.0, 628.0, 0.7f, 0, 0, 3 }, { 255.0, 608.0, 0.6f, 0, 0, 4 }
-                        };
-                        FlexcilStudyOverlay::SignPdfFormWithInk(*s->doc, *s->stack, s->curPage, "Firma", WideToUtf8(signerW), sigPts);
-                        s->mutated = true; s->status = "Firma con tinta insertada en pagina actual"; refresh(s);
-                    }
+                    // Sin firma falsa (revisión del 27-nov-2026): antes insertaba un trazo fijo de 4
+                    // puntos como si fuera la firma de la persona.
+                    MessageBoxW(hwnd,
+                        L"Esta opción ponía un trazo fijo en lugar de tu firma, así que se quitó.\n\n"
+                        L"Para firmar, escribe tu firma con el lápiz directamente sobre la página.",
+                        L"Firmar con tinta", MB_ICONINFORMATION);
                     return 0;
                 }
                 if (cid == 886) {

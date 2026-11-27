@@ -35,6 +35,7 @@
 #include "../interop/notion_markdown.hpp"
 #include "studio_command_ids.hpp"
 #include "studio_feature_dialogs.hpp"
+#include "studio_funciones_experimentales.hpp"
 #include "studio_closure_dialogs.hpp"
 #include "studio_tutor_panel.hpp"
 #include "../pdf/table_interop.hpp"
@@ -394,7 +395,10 @@ struct StudioAppState {
     int sidebarScrollPos = 0;
 
     // P1-P3 Ink Physics, Layers, Study & STEM interactive state
-    bool snapShapes = true;
+    // Que no dañe ni mienta (27-nov-2026): nada cambia ni borra la letra sin pedirlo
+    bool snapShapes = InkEngine::kSnapShapesDefault;
+    bool scribbleEraseEnabled = InkEngine::kScribbleEraseDefault;
+    bool showExperimental = false;
     double penStabilization = 0.65;
     bool presenterMode = false;
     bool replayActive = false;
@@ -1005,6 +1009,23 @@ void PersistStudioProfileNow(StudioAppState* st) {
     st->aiVault.SaveToDirectory(rootDir);
 }
 
+// Que no dañe ni mienta (27-nov-2026): con «Mostrar funciones experimentales» apagado, Explorar
+// no lista los comandos simulados y la base de datos no abre en una vista que dibuja mal.
+void RefreshExperimentalVisibility(StudioAppState* st) {
+    if (!st) return;
+    st->commandPalette.RegisterDefaultCommands();
+    if (!st->showExperimental) {
+        Experimental::RemoveFromPalette(st->commandPalette);
+        if (Experimental::IsExperimentalDbView(st->activeDbViewCycle)) st->activeDbViewCycle = 0;
+    }
+}
+
+// Todos los menús de CuadernU pasan por aquí: sin lo experimental mientras está escondido.
+UINT TrackStudioPopupMenu(StudioAppState* st, HMENU menu, POINT pt, bool alignRight) {
+    if (!st->showExperimental) Experimental::PruneMenu(menu);
+    return UiGlass::TrackTranslucentPopupMenu(menu, pt, st->hwndMain, st->glassSettings, alignRight);
+}
+
 void LoadStudioProfileAtStartup(StudioAppState* st) {
     if (!st) return;
     if (st->commandPalette.All().empty()) st->commandPalette.RegisterDefaultCommands();
@@ -1024,6 +1045,11 @@ void LoadStudioProfileAtStartup(StudioAppState* st) {
     }
     st->audioSession.SetWhisperCliConfig(st->uiPrefs.whisperExePathUtf8, st->uiPrefs.whisperModelPathUtf8);
     st->renderer.SetHardwareAcceleration(st->uiPrefs.hardwareGpuAcceleration);
+    // Que no dañe ni mienta: formas, tachar y funciones experimentales arrancan apagadas
+    st->snapShapes = st->uiPrefs.snapShapesEnabled;
+    st->scribbleEraseEnabled = st->uiPrefs.scribbleEraseEnabled;
+    st->showExperimental = st->uiPrefs.showExperimentalFeatures;
+    RefreshExperimentalVisibility(st);
 }
 
 void RebuildReadingViewText(StudioAppState* st) {
@@ -2418,6 +2444,7 @@ bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string*
             st->docTagsUtf8 = extB.tagsUtf8;
             if (!extB.customCssUtf8.empty()) st->uiPrefs.customCssSnippetUtf8 = extB.customCssUtf8;
             st->activeDbViewCycle = std::clamp(extB.activeDbViewKind, 0, 8);
+            if (!st->showExperimental && Experimental::IsExperimentalDbView(st->activeDbViewCycle)) st->activeDbViewCycle = 0;
         }
         st->contentViews.UpsertFromDocument(st->doc, pathUtf8);
         CenterCameraOnPage(st, 0);
@@ -2559,6 +2586,15 @@ bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string*
 
 void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
     if (!st) return;
+    // Que no dañe ni mienta: lo experimental no se ejecuta mientras está escondido (también por atajo)
+    if (!st->showExperimental) {
+        if (const auto* exp = Experimental::Find(id)) {
+            st->statusBannerUtf8 = std::string("Funci\xC3\xB3n experimental escondida: ") + exp->reasonUtf8 +
+                ". Para usarla igual, activa \xC2\xAB""Mostrar funciones experimentales\xC2\xBB en el men\xC3\xBA de tinta.";
+            InvalidateViews(st);
+            return;
+        }
+    }
     switch (id) {
     case CMD_OPEN: {
         static constexpr COMDLG_FILTERSPEC kFilters[] = {
@@ -2734,8 +2770,8 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
     }
     case CMD_INTEROP_MENU: {
         HMENU menu = CreatePopupMenu();
-        AppendMenuW(menu, MF_STRING, CMD_EXPORT_DOCX, L"Exportar a Word (.docx)...");
-        AppendMenuW(menu, MF_STRING, CMD_EXPORT_PPTX, L"Exportar a PowerPoint (.pptx)...");
+        AppendMenuW(menu, MF_STRING, CMD_EXPORT_DOCX, L"Exportar a Word (.docx, imágenes de las primeras 12 páginas)...");
+        AppendMenuW(menu, MF_STRING, CMD_EXPORT_PPTX, L"Exportar a PowerPoint (.pptx, imágenes de las primeras 12 páginas)...");
         AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(menu, MF_STRING, CMD_IMPORT_DOCX, L"Importar Word (.docx)...");
         AppendMenuW(menu, MF_STRING, CMD_IMPORT_PPTX, L"Importar PowerPoint (.pptx)...");
@@ -2747,7 +2783,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
             }
         }
         ClientToScreen(st->hwndMain, &pt);
-        const UINT cmd = UiGlass::TrackTranslucentPopupMenu(menu, pt, st->hwndMain, st->glassSettings, false);
+        const UINT cmd = TrackStudioPopupMenu(st, menu, pt, false);
         DestroyMenu(menu);
         if (cmd != 0) ExecuteToolbarCommand(st, static_cast<WORD>(cmd));
         break;
@@ -2865,9 +2901,29 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
     case CMD_TOOL_CROP:   st->activeTool = ToolKind::Crop; break;
     case CMD_TOGGLE_SNAP:
         st->snapShapes = !st->snapShapes;
+        st->uiPrefs.snapShapesEnabled = st->snapShapes;
+        PersistStudioProfileNow(st);
         st->statusBannerUtf8 = st->snapShapes
-            ? "Hold-to-Snap activado (trazos rectos/flechas/figuras se ajustan)"
-            : "Hold-to-Snap desactivado (trazo libre)";
+            ? "Formas activadas: mant\xC3\xA9n el l\xC3\xA1piz quieto medio segundo al final del trazo para convertirlo en figura"
+            : "Formas desactivadas: lo que escribes se queda como lo escribiste";
+        break;
+    case CMD_TOGGLE_SCRIBBLE_ERASE:
+        st->scribbleEraseEnabled = !st->scribbleEraseEnabled;
+        st->uiPrefs.scribbleEraseEnabled = st->scribbleEraseEnabled;
+        PersistStudioProfileNow(st);
+        st->statusBannerUtf8 = st->scribbleEraseEnabled
+            ? "Tachar para borrar activado: un garabato encima borra la tinta (nunca im\xC3\xA1genes ni p\xC3\xA1ginas)"
+            : "Tachar para borrar desactivado";
+        break;
+    case CMD_TOGGLE_EXPERIMENTAL:
+        st->showExperimental = !st->showExperimental;
+        st->uiPrefs.showExperimentalFeatures = st->showExperimental;
+        PersistStudioProfileNow(st);
+        RefreshExperimentalVisibility(st);
+        st->statusBannerUtf8 = st->showExperimental
+            ? "Funciones experimentales visibles: algunas son simuladas o pueden cambiar lo escrito"
+            : "Funciones experimentales escondidas";
+        InvalidateViews(st);
         break;
     case CMD_STEM_MENU: {
         HMENU menu = CreatePopupMenu();
@@ -2908,7 +2964,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
             }
         }
         ClientToScreen(st->hwndMain, &pt);
-        const UINT cmd = UiGlass::TrackTranslucentPopupMenu(menu, pt, st->hwndMain, st->glassSettings, false);
+        const UINT cmd = TrackStudioPopupMenu(st, menu, pt, false);
         DestroyMenu(menu);
         if (cmd != 0) ExecuteToolbarCommand(st, static_cast<WORD>(cmd));
         break;
@@ -2920,7 +2976,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(menu, examGate,  CMD_CHECK_MY_WORK,       L"Revisar mi Procedimiento (Check My Work)...");
         AppendMenuW(menu, examGate,  CMD_TEACH_ME,            L"Gu\u00ED""a Socr\u00E1tica Paso a Paso (Teach Me)...");
-        AppendMenuW(menu, examGate,  CMD_SUMMARIZE_NOTES,     L"Generar Resumen No Destructivo (Capa Separada)");
+        AppendMenuW(menu, examGate,  CMD_SUMMARIZE_NOTES,     L"Extracto de notas sin IA (en una capa aparte)");
         AppendMenuW(menu, examGate,  CMD_LOCAL_QA,            L"Consulta Local con Citas sobre Apuntes...");
         AppendMenuW(menu, examGate,  CMD_GROUNDED_AI_CITATIONS, L"Consulta con Citas Fundamentadas (IA / BM25)...");
         AppendMenuW(menu, examGate,  CMD_STUDY_TUTOR_STEP,      L"Tutor Paso a Paso (Gu\u00ED""a Socr\u00E1tica)...");
@@ -3001,7 +3057,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
             }
         }
         ClientToScreen(st->hwndMain, &pt);
-        const UINT cmd = UiGlass::TrackTranslucentPopupMenu(menu, pt, st->hwndMain, st->glassSettings, false);
+        const UINT cmd = TrackStudioPopupMenu(st, menu, pt, false);
         DestroyMenu(menu);
         if (cmd != 0) ExecuteToolbarCommand(st, static_cast<WORD>(cmd));
         break;
@@ -3798,8 +3854,8 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hPdfSub, MF_STRING, CMD_RUN_OCR,              L"Reconocer texto (OCR offline)");
         AppendMenuW(hm, MF_POPUP, reinterpret_cast<UINT_PTR>(hPdfSub), L"Herramientas PDF");
         HMENU hOffSub = CreatePopupMenu();
-        AppendMenuW(hOffSub, MF_STRING, CMD_EXPORT_DOCX,          L"Exportar Word (.docx)...");
-        AppendMenuW(hOffSub, MF_STRING, CMD_EXPORT_PPTX,          L"Exportar PowerPoint (.pptx)...");
+        AppendMenuW(hOffSub, MF_STRING, CMD_EXPORT_DOCX,          L"Exportar Word (.docx, imágenes de las primeras 12 páginas)...");
+        AppendMenuW(hOffSub, MF_STRING, CMD_EXPORT_PPTX,          L"Exportar PowerPoint (.pptx, imágenes de las primeras 12 páginas)...");
         AppendMenuW(hOffSub, MF_STRING, CMD_IMPORT_DOCX,          L"Importar Word (.docx)...");
         AppendMenuW(hOffSub, MF_STRING, CMD_IMPORT_PPTX,          L"Importar PowerPoint (.pptx)...");
         AppendMenuW(hOffSub, MF_STRING, CMD_IMPORT_XLSX,          L"Importar Excel (.xlsx)...");
@@ -3821,7 +3877,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hOffSub, MF_STRING, CMD_IMPORT_UNIVERSAL_PKG, L"Importar paquete (.cuadernu-pkg / .goodnotes / .note / .nebo)...");
         AppendMenuW(hm, MF_POPUP, reinterpret_cast<UINT_PTR>(hOffSub), L"Exportar e Interoperabilidad");
         HMENU hSecSub = CreatePopupMenu();
-        AppendMenuW(hSecSub, MF_STRING, CMD_LOCK_NOTE_PASSPHRASE, st->permissions.IsNoteLocked() ? L"Desbloquear Nota (PBKDF2)..." : L"Bloquear Nota con Contrase\u00F1a (PBKDF2)...");
+        AppendMenuW(hSecSub, MF_STRING, CMD_LOCK_NOTE_PASSPHRASE, st->permissions.IsNoteLocked() ? L"Quitar el bloqueo de edici\u00F3n..." : L"Bloquear la edici\u00F3n con contrase\u00F1a (no cifra el archivo)...");
         AppendMenuW(hSecSub, MF_STRING, CMD_SHARE_LINKS_MGR,      L"Permisos y Enlaces Compartidos...");
         AppendMenuW(hSecSub, MF_STRING, CMD_SAVE_ENCRYPTED,   L"Guardar Cuaderno Cifrado (AES-256-GCM)...");
         AppendMenuW(hSecSub, MF_STRING, CMD_OPEN_ENCRYPTED,   L"Abrir Cuaderno Cifrado...");
@@ -3853,7 +3909,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hm, MF_STRING, CMD_PRINT,        L"Imprimir (Ctrl+P)");
         POINT pt{ DpiSc(54, st->currentDpi), DpiSc(kTopChromeH, st->currentDpi) };
         ClientToScreen(st->hwndMain, &pt);
-        const UINT chosen = UiGlass::TrackTranslucentPopupMenu(hm, pt, st->hwndMain, st->glassSettings, false);
+        const UINT chosen = TrackStudioPopupMenu(st, hm, pt, false);
         DestroyMenu(hm);
         if (chosen != 0) { ExecuteToolbarCommand(st, static_cast<WORD>(chosen)); return; }
         break;
@@ -3911,10 +3967,15 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hInkSub, MF_STRING, CMD_TOGGLE_SNAP_GRID,      st->snapToGrid ? L"Desactivar ajuste a cuadr\u00EDcula" : L"Activar ajuste a cuadr\u00EDcula");
         AppendMenuW(hInkSub, MF_STRING, CMD_CYCLE_GEOMETRY_TOOL,   L"Herramienta de geometr\u00ED""a (Regla / Transportador / Comp\u00E1s)");
         AppendMenuW(hInkSub, MF_SEPARATOR, 0, nullptr);
+        // Que no da\u00F1e ni mienta: los tres empiezan apagados
+        AppendMenuW(hInkSub, MF_STRING | (st->snapShapes ? MF_CHECKED : 0),           CMD_TOGGLE_SNAP,           L"Formas al mantener el l\u00E1piz quieto");
+        AppendMenuW(hInkSub, MF_STRING | (st->scribbleEraseEnabled ? MF_CHECKED : 0), CMD_TOGGLE_SCRIBBLE_ERASE, L"Tachar para borrar (solo tinta)");
+        AppendMenuW(hInkSub, MF_STRING | (st->showExperimental ? MF_CHECKED : 0),     CMD_TOGGLE_EXPERIMENTAL,   L"Mostrar funciones experimentales");
+        AppendMenuW(hInkSub, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(hInkSub, MF_STRING, CMD_COPY_STROKE_STYLE,     L"Copiar estilo del trazo seleccionado");
         AppendMenuW(hInkSub, MF_STRING, CMD_RESTYLE_INK,           L"Enderezar y estilizar tinta seleccionada");
         AppendMenuW(hInkSub, MF_STRING, CMD_HTR_TO_TEXT,           L"Convertir escritura a texto editable (InkAnalyzer / HTR)");
-        AppendMenuW(hInkSub, MF_STRING, CMD_HTR_TO_MATH,           L"Convertir escritura a ecuaci\u00F3n 2D (HTR)");
+        AppendMenuW(hInkSub, MF_STRING, CMD_HTR_TO_MATH,           L"Convertir escritura a expresi\u00F3n en una l\u00EDnea (sin fracciones ni exponentes)");
         AppendMenuW(hInkSub, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(hInkSub, MF_STRING, CMD_ZOOM_WRITING_BOX,      st->zoomWritingBox.active ? L"Cerrar Caja de Zoom para Escritura" : L"Caja de Zoom para Escritura (Auto-avance)");
         AppendMenuW(hInkSub, MF_STRING, CMD_HANDWRITING_REFLOW,    L"Reflujo continuo de escritura manuscrita");
@@ -3932,7 +3993,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hObjSub, MF_STRING, CMD_UNGROUP_OBJECTS,        L"Desagrupar selecci\u00F3n (Ctrl+Shift+G)");
         AppendMenuW(hObjSub, MF_STRING, CMD_DUPLICATE_OBJECTS,      L"Duplicar selecci\u00F3n (Ctrl+D)");
         AppendMenuW(hObjSub, MF_STRING, CMD_ADD_CONNECTOR,          L"Insertar conector magn\u00E9tico");
-        AppendMenuW(hObjSub, MF_STRING, CMD_ADD_REDACTION,          L"Insertar censura PDF permanente");
+        AppendMenuW(hObjSub, MF_STRING, CMD_ADD_REDACTION,          L"Tapar con rectángulo negro (el texto sigue en el archivo)");
         AppendMenuW(hObjSub, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(hObjSub, MF_STRING, CMD_TEXT_BOLD,              L"Texto: Negrita (Ctrl+B)");
         AppendMenuW(hObjSub, MF_STRING, CMD_TEXT_ITALIC,            L"Texto: Cursiva (Ctrl+I)");
@@ -4028,7 +4089,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         GetClientRect(st->hwndMain, &rc);
         POINT pt{ rc.right - DpiSc(16, st->currentDpi), DpiSc(kTopChromeH, st->currentDpi) };
         ClientToScreen(st->hwndMain, &pt);
-        const UINT chosen = UiGlass::TrackTranslucentPopupMenu(hm, pt, st->hwndMain, st->glassSettings, true);
+        const UINT chosen = TrackStudioPopupMenu(st, hm, pt, true);
         DestroyMenu(hm);
         if (chosen != 0) { ExecuteToolbarCommand(st, static_cast<WORD>(chosen)); return; }
         break;
@@ -4796,7 +4857,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         red.fillColor = DocColor::RGBA(0, 0, 0, 255);
         red.strokeColor = DocColor::RGBA(0, 0, 0, 255);
         st->cmdStack.Execute(st->doc, std::make_unique<AddObjectCommand>(CurrentTarget(st), std::move(red)));
-        st->statusBannerUtf8 = "Censura PDF permanente insertada (quema caja negra al exportar)";
+        st->statusBannerUtf8 = "Rect\xC3\xA1ngulo negro insertado. Solo tapa: el texto de debajo sigue dentro del PDF exportado";
         break;
     }
     case CMD_ADD_CONNECTOR: {
@@ -5103,20 +5164,18 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         break;
     }
     case CMD_TOGGLE_GRAPH_VIEW: {
-        if (st->knowledgeVault.TotalNoteCount() == 0) {
-            // Seed active document links & sections into the knowledge graph view
-            const std::string rootId = st->knowledgeVault.CreateNote(st->doc.Title(), "Cuaderno",
-                "Nota principal vinculada a [[Resumen]] y [[Formulario]].");
-            st->knowledgeVault.CreateNote("Resumen", "Cuaderno", "Conectado con [[" + st->doc.Title() + "]].");
-            st->knowledgeVault.CreateNote("Formulario", "Cuaderno", "Ver [[" + st->doc.Title() + "]] y [[Resumen]].");
-            (void)rootId;
-        }
+        // Sin datos inventados (27-nov-2026): antes, con el mapa vacío, se creaban las notas
+        // «Resumen» y «Formulario» que nadie escribió.
         st->activeGraphView = st->knowledgeVault.BuildGlobalGraph();
         KnowledgeVault::ComputeGraphLayout2D(st->activeGraphView, 60, 800.0, 560.0);
         st->graphOverlayVisible = !st->graphOverlayVisible;
-        st->statusBannerUtf8 = st->graphOverlayVisible
-            ? ("Vista de Grafo activa (" + std::to_string(st->activeGraphView.nodes.size()) + " nodos)")
-            : "Vista de Grafo oculta";
+        if (st->graphOverlayVisible && st->activeGraphView.nodes.empty()) {
+            st->statusBannerUtf8 = "El mapa de notas est\xC3\xA1 vac\xC3\xADo: crea una nota o enlaza con [[ ]] para verla aqu\xC3\xAD";
+        } else {
+            st->statusBannerUtf8 = st->graphOverlayVisible
+                ? ("Vista de Grafo activa (" + std::to_string(st->activeGraphView.nodes.size()) + " nodos)")
+                : "Vista de Grafo oculta";
+        }
         break;
     }
     case CMD_VIEW_BACKLINKS: {
@@ -5293,22 +5352,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
             st->activeDatabase.AddColumn({ "estado", "Estado", DbColumnType::Status, { "Pendiente", "En curso", "Completado" } });
             st->activeDatabase.AddColumn({ "prioridad", "Prioridad", DbColumnType::Number });
             st->activeDatabase.AddColumn({ "fecha", "Fecha", DbColumnType::Date });
-            st->activeDatabase.AddColumn({ "lat", "Latitud", DbColumnType::Number });
-            st->activeDatabase.AddColumn({ "lon", "Longitud", DbColumnType::Number });
-            DbRecord r1; r1.titleUtf8 = "Laboratorio 1";
-            const std::string id1 = st->activeDatabase.AddRecord(r1);
-            st->activeDatabase.SetCellText(id1, "estado", "En curso");
-            st->activeDatabase.SetCellNumber(id1, "prioridad", 1.0);
-            st->activeDatabase.SetCellText(id1, "fecha", "2026-11-20");
-            st->activeDatabase.SetCellNumber(id1, "lat", 9.856);
-            st->activeDatabase.SetCellNumber(id1, "lon", -83.912);
-            DbRecord r2; r2.titleUtf8 = "Entrega Proyecto";
-            const std::string id2 = st->activeDatabase.AddRecord(r2);
-            st->activeDatabase.SetCellText(id2, "estado", "Pendiente");
-            st->activeDatabase.SetCellNumber(id2, "prioridad", 2.0);
-            st->activeDatabase.SetCellText(id2, "fecha", "2026-11-24");
-            st->activeDatabase.SetCellNumber(id2, "lat", 9.935);
-            st->activeDatabase.SetCellNumber(id2, "lon", -84.091);
+            // Sin datos inventados (27-nov-2026): la base nueva empieza sin registros de ejemplo
         }
         double x = 80.0, y = 80.0;
         NextCardPlacement(st, x, y);
@@ -5325,13 +5369,9 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
             st->activeDatabase.AddColumn({ "estado", "Estado", DbColumnType::Status, { "Pendiente", "En curso", "Completado" } });
             st->activeDatabase.AddColumn({ "prioridad", "Prioridad", DbColumnType::Number });
             st->activeDatabase.AddColumn({ "fecha", "Fecha", DbColumnType::Date });
-            DbRecord r1; r1.titleUtf8 = "Registro inicial";
-            const std::string id1 = st->activeDatabase.AddRecord(r1);
-            st->activeDatabase.SetCellText(id1, "estado", "En curso");
-            st->activeDatabase.SetCellNumber(id1, "prioridad", 1.0);
-            st->activeDatabase.SetCellText(id1, "fecha", "2026-11-20");
         }
-        st->activeDbViewCycle = (st->activeDbViewCycle + 1) % 9;
+        // Salta Kanban, Calendario y Cronograma mientras lo experimental está escondido
+        st->activeDbViewCycle = Experimental::NextDbView(st->activeDbViewCycle, st->showExperimental);
         st->dbPanelVisible = true;
         st->statusBannerUtf8 = std::string("Vista de Base de Datos activa: ") + kViewNames[st->activeDbViewCycle];
         break;
@@ -5342,11 +5382,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
             st->activeDatabase.AddColumn({ "estado", "Estado", DbColumnType::Status, { "Pendiente", "En curso", "Completado" } });
             st->activeDatabase.AddColumn({ "prioridad", "Prioridad", DbColumnType::Number });
             st->activeDatabase.AddColumn({ "fecha", "Fecha", DbColumnType::Date });
-            DbRecord r1; r1.titleUtf8 = "Tarea 1";
-            const std::string id1 = st->activeDatabase.AddRecord(r1);
-            st->activeDatabase.SetCellText(id1, "estado", "Pendiente");
-            st->activeDatabase.SetCellNumber(id1, "prioridad", 1.0);
-            st->activeDatabase.SetCellText(id1, "fecha", "2026-11-20");
+            // Sin datos inventados: antes aparecía una «Tarea 1» que nadie creó
         }
         st->statusBannerUtf8 = st->dbPanelVisible ? "Panel de Base de Datos visible (clic en pesta\xC3\xB1""as para cambiar vista)" : "Panel de Base de Datos oculto";
         break;
@@ -5456,7 +5492,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
                 ofs.write(reinterpret_cast<const char*>(pdfBytes.data()), static_cast<std::streamsize>(pdfBytes.size()));
                 st->statusBannerUtf8 = opts.flattened
                     ? "PDF selectivo exportado (aplanado)"
-                    : "PDF selectivo exportado con carga editable reversible";
+                    : "PDF selectivo exportado con una copia del cuaderno adjunta (solo CuadernU la lee)";
             } else {
                 MessageBoxW(st->hwndMain, Utf8ToWide(err).c_str(), L"Error al exportar PDF", MB_ICONERROR);
             }
@@ -5756,11 +5792,11 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
     case CMD_LOCK_NOTE_PASSPHRASE: {
         std::wstring passW;
         if (!st->permissions.IsNoteLocked()) {
-            if (ShowTextPrompt(st->hwndMain, L"Bloquear Nota con Contrase\u00F1a (PBKDF2-SHA256)",
-                    L"Establezca una contrase\u00F1a (almacenada con hash seguro CNG):", passW, nullptr, nullptr, false, true) && !passW.empty()) {
+            if (ShowTextPrompt(st->hwndMain, L"Bloquear la edici\u00F3n con contrase\u00F1a",
+                    L"Contrase\u00F1a para volver a editar. El archivo NO se cifra: para eso usa \u00ABGuardar cuaderno cifrado\u00BB.", passW, nullptr, nullptr, false, true) && !passW.empty()) {
                 if (st->permissions.LockNoteWithPassphrase(WideToUtf8(passW))) {
                     st->doc.BumpRevision();
-                    st->statusBannerUtf8 = "Nota bloqueada con PBKDF2-HMAC-SHA256 (modo solo lectura)";
+                    st->statusBannerUtf8 = "Edici\xC3\xB3n bloqueada en CuadernU. El contenido no est\xC3\xA1 cifrado: para protegerlo usa \xC2\xAB""Guardar cuaderno cifrado\xC2\xBB";
                 }
             }
         } else {
@@ -6045,10 +6081,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
                 st->graphFilter.folderPrefixUtf8 = fw;
                 st->graphLocalMode = true;
             }
-            if (st->knowledgeVault.TotalNoteCount() == 0) {
-                st->knowledgeVault.CreateNote(st->doc.Title(), "Cuaderno", "Conectado con [[Resumen]].");
-                st->knowledgeVault.CreateNote("Resumen", "Cuaderno", "Ver [[" + st->doc.Title() + "]].");
-            }
+            // Sin datos inventados: con el mapa vacío el grafo queda vacío
             st->activeGraphView = st->graphLocalMode
                 ? st->knowledgeVault.BuildLocalGraph(st->doc.Title(), 2, st->graphFilter)
                 : st->knowledgeVault.BuildGlobalGraph(st->graphFilter);
@@ -7551,12 +7584,10 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 InvalidateViews(st);
             }
         } else if (obj->kind == ObjectKind::InkStroke) {
-            const std::size_t converted = SmartScriptReflowEngine::ConvertHandwritingAndDiagramsOnDoubleTap(st->doc, st->cmdStack, tgt);
-            if (converted > 0) {
-                st->statusBannerUtf8 = "Doble toque: " + std::to_string(converted) + " trazo(s)/diagrama(s) convertidos";
-                UpdateWindowTitle(st);
-                InvalidateViews(st);
-            }
+            // El doble clic sobre la tinta ya no convierte la página entera (revisión del 27-nov-2026)
+            st->statusBannerUtf8 = "Para pasar tu letra a texto, selecci\xC3\xB3nala con el lazo y usa \xC2\xAB"
+                                   "Convertir escritura a texto\xC2\xBB";
+            InvalidateViews(st);
         } else if (obj->kind == ObjectKind::TableBlock) {
             ExecuteToolbarCommand(st, CMD_ADD_TABLE);
         } else if (obj->kind == ObjectKind::CircuitBlock) {
@@ -7791,7 +7822,7 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                     AppendMenuW(cm, MF_STRING, CMD_COPY_STROKE_STYLE, L"Copiar estilo al l\u00E1piz");
                     AppendMenuW(cm, MF_STRING, CMD_RESTYLE_INK,       L"Enderezar / Estilizar tinta");
                     AppendMenuW(cm, MF_STRING, CMD_HTR_TO_TEXT,       L"Escritura -> Texto editable");
-                    AppendMenuW(cm, MF_STRING, CMD_HTR_TO_MATH,       L"Escritura -> Ecuaci\u00F3n 2D");
+                    AppendMenuW(cm, MF_STRING, CMD_HTR_TO_MATH,       L"Escritura -> expresi\u00F3n en una l\u00EDnea");
                     AppendMenuW(cm, MF_SEPARATOR, 0, nullptr);
                     AppendMenuW(cm, MF_STRING, CMD_IMG_ENHANCE_WHITEBOARD, L"Imagen: Mejorar pizarra");
                     AppendMenuW(cm, MF_STRING, CMD_IMG_ROTATE_90,          L"Imagen: Rotar +90\u00B0");
@@ -7803,7 +7834,7 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 }
                 POINT spt{ GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
                 ClientToScreen(hwnd, &spt);
-                const UINT cmd = UiGlass::TrackTranslucentPopupMenu(cm, spt, st->hwndMain, st->glassSettings, false);
+                const UINT cmd = TrackStudioPopupMenu(st, cm, spt, false);
                 DestroyMenu(cm);
                 if (cmd == 61999 && IsSafeExternalLinkUrl(st->lastContextInlineUrlUtf8)) {
                     ShellExecuteW(st->hwndMain, L"open", Utf8ToWide(st->lastContextInlineUrlUtf8).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -7927,40 +7958,9 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             }
         }
 
-        // Native Stylus / Touch Double-Tap over InkStroke -> Convert Handwriting & Diagrams (MS-INK-020)
-        if (msg == WM_POINTERDOWN && !st->graphOverlayVisible && !st->dbPanelVisible && !st->readingViewMode && !IsDocumentLockedForEdit(st)) {
-            const ULONGLONG nowTap = GetTickCount64();
-            const ULONGLONG dblMs = (std::max<ULONGLONG>)(250ull, static_cast<ULONGLONG>(GetDoubleClickTime()));
-            const bool isDoubleTap = (st->lastPointerTapTickMs > 0) &&
-                ((nowTap - st->lastPointerTapTickMs) <= dblMs) &&
-                (std::hypot(sp.x - st->lastPointerTapScreenPt.x, sp.y - st->lastPointerTapScreenPt.y) <= 16.0);
-            st->lastPointerTapTickMs = nowTap;
-            st->lastPointerTapScreenPt = sp;
-            if (isDoubleTap) {
-                const DocPoint tapWorld = st->camera.ScreenToWorld(sp.x, sp.y);
-                const bool isCanvas = (st->doc.Mode() == DocumentMode::InfiniteCanvas);
-                std::size_t pgIdx = st->activePageIndex;
-                double tlx = tapWorld.x, tly = tapWorld.y;
-                if (isCanvas || st->doc.Layout().HitTestWorldPoint(tapWorld.x, tapWorld.y, pgIdx, tlx, tly)) {
-                    const double tol = std::clamp(10.0 / (std::max)(0.25, st->camera.zoom), 4.0, 20.0);
-                    const auto tapHits = CollectHits(st, isCanvas, pgIdx, tlx, tly, tol);
-                    if (!tapHits.empty()) {
-                        const ObjectTarget tgt{ isCanvas, pgIdx };
-                        const AnnotationObject* hitObj = CanvasManip::FindObjectConst(st->doc, tgt, tapHits.back());
-                        if (hitObj && hitObj->kind == ObjectKind::InkStroke) {
-                            const std::size_t converted = SmartScriptReflowEngine::ConvertHandwritingAndDiagramsOnDoubleTap(st->doc, st->cmdStack, tgt);
-                            if (converted > 0) {
-                                st->lastPointerTapTickMs = 0;
-                                st->statusBannerUtf8 = "Doble toque de l\xC3\xA1piz: " + std::to_string(converted) + " trazo(s)/diagrama(s) convertidos";
-                                UpdateWindowTitle(st);
-                                InvalidateViews(st);
-                                return 0;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Doble toque sobre la letra: ya no convierte la página entera (revisión del 27-nov-2026).
+        // Bastaba escribir «:» (dos toques en menos de medio segundo) para perder la tinta de toda
+        // la página. Para convertir se selecciona con el lazo y se usa «Convertir escritura a texto».
 
         // Interactive Direct2D Overlay Hit-Testing (Graph, Database 9-Views, Flexcil Citations, Audio Scrubber, Comment Pins, Zoom Box)
         RECT vpRc{};
@@ -8049,6 +8049,11 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 if (sp.y >= tabY0 && sp.y <= tabY1 && sp.x >= dr.x + 18.0 && sp.x <= dr.Right() - 18.0) {
                     const double tabW = (dr.w - 36.0) / 9.0;
                     const int ti = std::clamp(static_cast<int>((sp.x - (dr.x + 18.0)) / (std::max)(1.0, tabW)), 0, 8);
+                    if (!st->showExperimental && Experimental::IsExperimentalDbView(ti)) {
+                        st->statusBannerUtf8 = "Vista experimental escondida: todav\xC3\xAD""a dibuja las fechas o las tarjetas mal";
+                        InvalidateViews(st);
+                        return 0;
+                    }
                     st->activeDbViewCycle = ti;
                     st->statusBannerUtf8 = "Vista de Base de Datos cambiada (#" + std::to_string(ti + 1) + ")";
                     InvalidateViews(st);
@@ -9115,6 +9120,13 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 st->hasPredictedTip = false;
             }
             const bool isLasso = (st->activeTool == ToolKind::Lasso);
+            // «Mantener para ajustar» de verdad: tiempo que el lápiz quedó quieto antes de levantarse.
+            // Solo se guarda un punto nuevo cuando el lápiz se mueve, así que el último punto marca
+            // el último movimiento.
+            const std::uint64_t nowRelMs = CurrentStrokeRelMs(st);
+            const std::uint64_t lastMoveMs = st->draftObj.inkPoints.empty() ? nowRelMs : st->draftObj.inkPoints.back().timestampMs;
+            const std::uint64_t heldStillMs = (nowRelMs > lastMoveMs) ? (nowRelMs - lastMoveMs) : 0ull;
+            const bool snapThisStroke = InkEngine::ShouldSnapHeldShape(st->snapShapes, heldStillMs);
             // Flexcil Live Gesture Mode interception (L-capture / Box-capture / Underline / Bracket)
             if (!wasZoomBoxStroke && !isLasso && !st->draftIsCanvas &&
                 st->flexcilOverlay.IsGestureModeActive() && st->draftObj.inkPoints.size() >= 4) {
@@ -9161,11 +9173,12 @@ LRESULT CALLBACK ViewportWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 ObjectTarget{ st->draftIsCanvas, st->draftPageIdx },
                 st->draftObj,
                 isLasso,
-                st->snapShapes,
+                snapThisStroke,
                 st->penStabilization,
                 st->lassoSelectedIds,
                 st->selectedObjectId,
-                st->statusBannerUtf8);
+                st->statusBannerUtf8,
+                st->scribbleEraseEnabled);
             st->selectedIsCanvas = st->draftIsCanvas;
             st->selectedPageIndex = st->draftPageIdx;
             if (wasZoomBoxStroke && st->zoomWritingBox.active && !st->draftObj.inkPoints.empty()) {
@@ -9848,6 +9861,7 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             };
 
             auto drawBtn = [&](const wchar_t* lbl, WORD cmd, bool primary = false) {
+                if (!st->showExperimental && Experimental::IsExperimentalCommand(cmd)) return;
                 const int bh = S(28);
                 RECT br{ padX, y, w - padX, y + bh };
                 const int hitIdx = static_cast<int>(st->inspectorHits.size());
@@ -9874,6 +9888,14 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             };
 
             auto drawBtnPair = [&](const wchar_t* l1, WORD c1, const wchar_t* l2, WORD c2) {
+                // Lo experimental no se muestra: si queda uno solo, ocupa la fila entera
+                const bool hide1 = !st->showExperimental && Experimental::IsExperimentalCommand(c1);
+                const bool hide2 = !st->showExperimental && Experimental::IsExperimentalCommand(c2);
+                if (hide1 && hide2) return;
+                if (hide1 || hide2) {
+                    drawBtn(hide1 ? l2 : l1, hide1 ? c2 : c1);
+                    return;
+                }
                 const int bh = S(26);
                 const int gap = S(6);
                 const int bw = (bodyW - gap) / 2;
@@ -9939,7 +9961,7 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 drawBtn(L"Cambiar Estilo de L\u00E1piz", CMD_CYCLE_PEN_STYLE, true);
                 drawBtnPair(L"Fino 1.5", CMD_PEN_WIDTH_FINE, L"Medio 2.6", CMD_PEN_WIDTH_MED);
                 drawBtnPair(L"Grueso 4.8", CMD_PEN_WIDTH_BOLD, L"Marcador 8", CMD_PEN_WIDTH_MARKER);
-                drawBtnPair(L"HTR -> Texto", CMD_HTR_TO_TEXT, L"HTR -> Math 2D", CMD_HTR_TO_MATH);
+                drawBtnPair(L"Letra -> Texto", CMD_HTR_TO_TEXT, L"Letra -> 1 línea", CMD_HTR_TO_MATH);
                 drawBtnPair(L"Enderezar", CMD_RESTYLE_INK, L"Caja de Zoom", CMD_ZOOM_WRITING_BOX);
                 drawBtnPair(L"Regla / Comp\u00E1s", CMD_CYCLE_GEOMETRY_TOOL, L"Estabilizador", CMD_TOGGLE_STAB);
                 drawDivider();
@@ -9998,7 +10020,7 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 drawBtn(L"Configurar Claves API de IA...", CMD_AI_PROVIDERS_VAULT);
                 drawBtn(L"Consulta IA con Citas", CMD_GROUNDED_AI_CITATIONS);
                 drawBtnPair(L"Tutor Socr\u00E1tico", CMD_STUDY_TUTOR_STEP, L"Revisar Pasos", CMD_CHECK_MY_WORK);
-                drawBtnPair(L"Resumir Notas", CMD_SUMMARIZE_NOTES, L"Traducir ES/EN", CMD_TRANSLATE_SELECTION);
+                drawBtnPair(L"Extracto sin IA", CMD_SUMMARIZE_NOTES, L"Traducir ES/EN", CMD_TRANSLATE_SELECTION);
                 drawDivider();
 
                 drawSecHdr(L"Estudio y Automatizaciones", UiGlass::IconId::Flashcards, pal.accentBlue);
@@ -10032,7 +10054,7 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 drawDivider();
 
                 drawSecHdr(L"Seguridad y Sincronizaci\u00F3n", UiGlass::IconId::SyncCloud, pal.accentBlue);
-                drawBtnPair(L"Bloquear Nota", CMD_LOCK_NOTE_PASSPHRASE, L"Cifrar AES-256", CMD_SAVE_ENCRYPTED);
+                drawBtnPair(L"Bloquear edición", CMD_LOCK_NOTE_PASSPHRASE, L"Guardar cifrado", CMD_SAVE_ENCRYPTED);
                 drawBtnPair(L"Sync 3 Modos", CMD_FOLDER_SYNC_3MODES, L"Colab LAN", CMD_TOGGLE_LAN_COLLAB_SERVER);
                 drawBtn(L"Explorar Comandos (Ctrl+K)", CMD_COMMAND_PALETTE);
             } else {

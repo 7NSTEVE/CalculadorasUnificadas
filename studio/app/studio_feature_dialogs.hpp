@@ -422,7 +422,7 @@ inline bool ShowSelectivePdfExportDialog(
                 SendMessageW(s->hChkAnnot, WM_SETFONT, reinterpret_cast<WPARAM>(s->fNorm), TRUE);
                 SendMessageW(s->hChkAnnot, BM_SETCHECK, BST_CHECKED, 0);
 
-                s->hChkEdit = CreateWindowExW(0, L"BUTTON", L"Modo editable reversible (desmarcar para PDF aplanado)",
+                s->hChkEdit = CreateWindowExW(0, L"BUTTON", L"Adjuntar copia del cuaderno (solo CuadernU la lee; el PDF pesa más)",
                     WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTOCHECKBOX,
                     Sc(18, s->dpi), Sc(88, s->dpi), Sc(410, s->dpi), Sc(24, s->dpi), hwnd, nullptr, nullptr, nullptr);
                 SendMessageW(s->hChkEdit, WM_SETFONT, reinterpret_cast<WPARAM>(s->fNorm), TRUE);

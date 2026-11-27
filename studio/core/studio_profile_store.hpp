@@ -29,6 +29,10 @@ struct StudioUiPreferences {
     bool autoSyncEnabled = false;
     bool autoSyncEncrypted = false;
     bool hardwareGpuAcceleration = false; // Default false => strict 0.0% GPU via D2D Software + Win11 DWM Mica
+    // Que no dañe ni mienta (revisión del 27-nov-2026): todo apagado por defecto
+    bool snapShapesEnabled = false;        // formas al mantener el lápiz quieto
+    bool scribbleEraseEnabled = false;     // tachar para borrar (solo tinta)
+    bool showExperimentalFeatures = false; // mostrar funciones simuladas o en prueba
     AccessibilityPreferences accessibility{};
 };
 

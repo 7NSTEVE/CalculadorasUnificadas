@@ -12,7 +12,9 @@
 
 ## Nivel 0. Que no dañe ni mienta (bloque 1)
 
-### N0-1. Que no cambie tu letra sola · Pendiente · 16 IDs
+### N0-1. Que no cambie tu letra sola · Hecha en código; falta tu prueba con el lápiz · 16 IDs
+
+> 27-nov: formas y tachar apagados por defecto (se encienden en el menú de tinta y se guardan en el perfil). La pausa de 0,5 s se mide al levantar el lápiz, sin vista previa mientras se mantiene. El doble toque y el doble clic ya no convierten la página. Lo cubre `studio/tests/ink_safety_honesty_test.cpp`.
 
 - **Qué:**
   - Formas automáticas apagadas por defecto. Si se encienden, solo actúan con una pausa real de al menos 500 ms al final del trazo.
@@ -27,7 +29,9 @@
   - `studio/core/smart_script_reflow.cpp` (560-608);
   - `studio/pdf/flexcil_study_overlay.cpp` (118-185).
 
-### N0-2. Resaltador translúcido de verdad · Pendiente · 9 IDs
+### N0-2. Resaltador translúcido de verdad · Hecha · 9 IDs
+
+> 27-nov: en pantalla se pinta dentro de una capa con su transparencia (medido: B=161 en el centro, esperado 160,8). En el PDF es una sola ruta (antes eran 200 trazos sueltos).
 
 - **Qué:** cada trazo translúcido se dibuja una sola vez:
   - en pantalla, con geometría de trazo único o una capa D2D con la opacidad;
@@ -35,7 +39,9 @@
 - **Hecha cuando:** sobre fondo blanco, un trazo de resaltador da el color de una sola capa (±2 por canal), en un render fuera de pantalla y en el PDF exportado. Y el texto de un PDF resaltado se sigue leyendo.
 - **Archivos:** `studio/render/d2d_renderer.cpp` (1052-1082) y `studio/pdf/pdf_writer.cpp` (1206-1230).
 
-### N0-3. Puerta «Experimental» y etiquetas honestas · Pendiente · 29 IDs
+### N0-3. Puerta «Experimental» y etiquetas honestas · Hecha · 29 IDs
+
+> 27-nov: 14 comandos escondidos en menús, Explorar, panel derecho y atajos, más 3 vistas de la base. Etiquetas corregidas; la firma con trazo fijo se quitó. Pendiente aparte: el informe del importador de .goodnotes todavía dice «Completa» (se rehace en N1-6).
 
 - **Qué:**
   - Archivo nuevo `studio/app/studio_funciones_experimentales.hpp` con la lista de comandos simulados.
@@ -51,7 +57,9 @@
     - el resumen sin IA ya no se marca como verificado.
 - **Hecha cuando:** una prueba recorre los menús y Explorar sin encontrar ningún comando de la lista con la casilla apagada, y las capturas lo muestran.
 
-### N0-4. Sin datos inventados · Pendiente · 15 IDs
+### N0-4. Sin datos inventados · Hecha en código; falta verlo en pantalla · 15 IDs
+
+> 27-nov: sin micrófono ya no se graba un tono (probado). El grafo y la base vacíos ya no inventan notas ni registros; eso no lo vi en una captura.
 
 - **Qué:** quitar las notas «Resumen» y «Formulario» del grafo vacío, los registros «Tarea 1» de las bases vacías y el tono sintético cuando no hay micrófono.
 - **Hecha cuando:** el grafo y las bases vacíos quedan vacíos, con un mensaje claro, y grabar sin micrófono dice «No encontré un micrófono» sin guardar audio.
@@ -199,6 +207,8 @@
   - Las pruebas de rendimiento buscan texto en el código (`studio/tests/perf_and_rich_media_test.cpp:208-218`).
 - **M-5. CI.** El CI no compila CuadernU para Windows (`CMakeLists.txt:13`).
 - **M-6. Tutor portable.** El tutor busca Python en `D:\DevTools` (`studio/tutor/tutor_sidecar_bridge.cpp:47-73`).
+- **M-7. Copia paralela del proyecto.** `E:\Proyectos\CuadernU` es otra copia entera, con su propio Git, que se usó la noche del 26-nov; de ahí corre un servidor MCP (`tec_matricula_mcp_server.py`). Rompe la regla 1 de AGENTS.md: hay que decidir qué rescatar y archivarla.
+- **M-8. Carpetas sueltas en `build/`.** Además de `studio-x64` hay 9 carpetas de otras sesiones: calculadora, auditorías y tutor (`tutor-auditoria-ii-2026` pesa 471 MB). Hay que decidir cuáles se quedan.
 
 [MS-ONESTORE]: https://msopenspecs.microsoft.com/files/MS-ONESTORE/%5bMS-ONESTORE%5d-180619.pdf
 [MS-ONE]: https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-one/

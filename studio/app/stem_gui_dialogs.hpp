@@ -1028,7 +1028,7 @@ inline bool RunOfflineInkHtr(
         created.formulaExprUtf8 = htr.mathLatexUtf8.empty() ? htr.textUtf8 : htr.mathLatexUtf8;
         const auto ev = Cas::EvaluateExpression(created.formulaExprUtf8);
         if (ev.ok) created.evaluatedResultUtf8 = ev.formattedResultUtf8;
-        outStatus = "Escritura convertida a ecuaci\xC3\xB3n: " + created.formulaExprUtf8;
+        outStatus = "Escritura convertida a expresi\xC3\xB3n de una l\xC3\xADnea (sin fracciones ni exponentes): " + created.formulaExprUtf8;
     } else {
         created.kind = ObjectKind::TextBox;
         created.bounds = { unionBb.x, unionBb.Bottom() + 12.0, (std::max)(260.0, unionBb.w), 64.0 };

@@ -19,6 +19,19 @@ struct SnappedShapeResult {
     std::string label;
 };
 
+// Valores por defecto seguros (revisión de código del 27-nov-2026): nada cambia ni borra
+// la letra sin que se pida. Una «l», un «0», una «m» o una resistencia en zigzag se quedan
+// como se escribieron.
+inline constexpr bool kSnapShapesDefault = false;    // formas automáticas apagadas
+inline constexpr bool kScribbleEraseDefault = false; // tachar para borrar apagado
+inline constexpr std::uint64_t kHoldToSnapMs = 500;  // pausa mínima con el lápiz quieto
+
+// «Mantener para ajustar» de verdad: solo convierte el trazo en figura si la opción está
+// encendida y el lápiz quedó quieto al menos kHoldToSnapMs al final del trazo.
+constexpr bool ShouldSnapHeldShape(bool snapEnabled, std::uint64_t heldStillMs) noexcept {
+    return snapEnabled && heldStillMs >= kHoldToSnapMs;
+}
+
 // Velocity/stabilization-aware smoothing (<0.30 preserves snappy response, >=0.30 applies Catmull-Rom + bilateral damping)
 std::vector<InkPoint> SmoothInkStroke(const std::vector<InkPoint>& raw, double stabilization);
 
@@ -43,12 +56,15 @@ bool PointInPolygon(double x, double y, const std::vector<InkPoint>& poly);
 // Hit test any annotation object against a scribble polyline or lasso closed polygon
 bool ObjectIntersectsTrace(const AnnotationObject& obj, const std::vector<InkPoint>& trace, bool closedPolygon);
 
-// Returns object IDs intersected by scribble gesture (excluding locked/invisible layers when requested)
+// Returns object IDs intersected by scribble gesture (excluding locked/invisible layers when requested).
+// With inkStrokesOnly (default) it only returns ink strokes and hand-drawn shapes: never images,
+// text, PDF pages, cards or redaction boxes.
 std::vector<std::uint64_t> FindObjectsForScribbleErase(
     const DocumentModel& doc,
     ObjectTarget target,
     const std::vector<InkPoint>& scribble,
-    bool skipLockedOrHiddenLayers = true);
+    bool skipLockedOrHiddenLayers = true,
+    bool inkStrokesOnly = true);
 
 // Returns object IDs enclosed by or touching lasso loop (excluding locked/invisible layers when requested)
 std::vector<std::uint64_t> SelectObjectsInsideLasso(

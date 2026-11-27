@@ -1057,6 +1057,19 @@ struct D2DRenderer::Impl {
                 const float r = (std::max)(1.0f, static_cast<float>(obj.strokeWidth * 0.5 * cam.zoom));
                 rt->FillEllipse(D2D1::Ellipse(toScreen(filteredPts[0].x, filteredPts[0].y), r, r), brush);
             } else {
+                // Tinta translúcida (resaltador u opacidad < 100 %): el trazo entero se pinta opaco
+                // dentro de una capa que lleva su transparencia, así se aplica una sola vez
+                // (revisión del 27-nov-2026). Antes cada segmento llevaba su propia transparencia,
+                // se enciman con las puntas redondas y el resaltador salía casi opaco.
+                ComPtr<ID2D1Layer> inkLayer;
+                if (baseCol.a < 255 && SUCCEEDED(rt->CreateLayer(nullptr, &inkLayer))) {
+                    D2D1_RECT_F lb = rectToScreen(obj.bounds);
+                    const float pad = static_cast<float>(obj.strokeWidth * cam.zoom * 2.0 + 4.0);
+                    lb.left -= pad; lb.top -= pad; lb.right += pad; lb.bottom += pad;
+                    rt->PushLayer(D2D1::LayerParameters(lb, nullptr, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+                                      D2D1::IdentityMatrix(), static_cast<FLOAT>(baseCol.a) / 255.0f),
+                                  inkLayer.Get());
+                }
                 for (std::size_t i = 1; i < filteredPts.size(); ++i) {
                     const auto& p0 = filteredPts[i - 1];
                     const auto& p1 = filteredPts[i];
@@ -1073,13 +1086,18 @@ struct D2DRenderer::Impl {
                         p1.timestampMs
                     };
                     const double widthWorld = InkEngine::ComputeEffectiveWidth(mid, obj, speed);
-                    const double tiltAlpha = InkEngine::ComputeTiltAlphaMultiplier(mid, obj.penStyle);
                     DocColor segCol = baseCol;
-                    segCol.a = static_cast<std::uint8_t>(std::clamp(std::lround(baseCol.a * tiltAlpha), 1L, 255L));
+                    if (inkLayer) {
+                        segCol.a = 255; // la capa ya aplica la transparencia una sola vez
+                    } else {
+                        const double tiltAlpha = InkEngine::ComputeTiltAlphaMultiplier(mid, obj.penStyle);
+                        segCol.a = static_cast<std::uint8_t>(std::clamp(std::lround(baseCol.a * tiltAlpha), 1L, 255L));
+                    }
                     brush->SetColor(ToD2DColor(segCol));
                     const float wPx = (std::max)(0.8f, static_cast<float>(widthWorld * cam.zoom));
                     rt->DrawLine(toScreen(p0.x, p0.y), toScreen(p1.x, p1.y), brush, wPx, roundStroke.Get());
                 }
+                if (inkLayer) rt->PopLayer();
             }
         } else if (obj.kind == ObjectKind::Shape) {
             const float wPx = (std::max)(1.0f, static_cast<float>(obj.strokeWidth * cam.zoom));

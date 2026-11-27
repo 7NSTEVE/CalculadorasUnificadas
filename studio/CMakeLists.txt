@@ -394,6 +394,16 @@ add_test(
 )
 set_tests_properties(CuadernuMcpServerTest PROPERTIES ENVIRONMENT "MUTATION_MASK=0")
 
+# Que no dañe ni mienta (27-nov-2026): la letra no cambia sola, el resaltador es translúcido de
+# verdad y lo simulado queda escondido.
+add_executable(InkSafetyHonestyTest tests/ink_safety_honesty_test.cpp)
+target_compile_definitions(InkSafetyHonestyTest PRIVATE _UNICODE UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+if(MSVC)
+    target_compile_options(InkSafetyHonestyTest PRIVATE /W4 /utf-8 /EHsc)
+endif()
+target_link_libraries(InkSafetyHonestyTest PRIVATE DocumentCore tinta_nucleo)
+add_test(NAME InkSafetyHonestyTest COMMAND InkSafetyHonestyTest)
+
 
 
 

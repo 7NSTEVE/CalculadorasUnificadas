@@ -1213,6 +1213,25 @@ void EmitAnnotationObjectOps(
             const double r = (std::max)(1.0, obj.strokeWidth * 0.5);
             ss << FmtNum(tx(obj.inkPoints[0].x) - r) << ' ' << FmtNum(ty(obj.inkPoints[0].y) - r)
                << ' ' << FmtNum(r * 2.0) << ' ' << FmtNum(r * 2.0) << " re f\n";
+        } else if (obj.inkPoints.size() >= 2 && (obj.isHighlighter || obj.strokeColor.a < 220)) {
+            // Tinta translúcida: una sola ruta con un solo ancho, así /GSAlpha se aplica una vez
+            // (revisión del 27-nov-2026). Antes cada segmento se pintaba aparte con transparencia
+            // y el resaltador salía casi opaco en el PDF.
+            EmitRgbStrokeColor(ss, obj.strokeColor);
+            ss << "1 J 1 j\n";
+            double sumW = 0.0;
+            for (std::size_t i = 1; i < obj.inkPoints.size(); ++i) {
+                const double avgP = 0.5 * (obj.inkPoints[i - 1].pressure + obj.inkPoints[i].pressure);
+                sumW += obj.isHighlighter
+                    ? (std::max)(4.0, obj.strokeWidth)
+                    : (std::max)(0.6, obj.strokeWidth * (0.45 + 1.1 * avgP));
+            }
+            const double w = sumW / static_cast<double>(obj.inkPoints.size() - 1);
+            ss << FmtNum(w) << " w " << FmtNum(tx(obj.inkPoints[0].x)) << ' ' << FmtNum(ty(obj.inkPoints[0].y)) << " m";
+            for (std::size_t i = 1; i < obj.inkPoints.size(); ++i) {
+                ss << ((i % 8 == 0) ? "\n" : " ") << FmtNum(tx(obj.inkPoints[i].x)) << ' ' << FmtNum(ty(obj.inkPoints[i].y)) << " l";
+            }
+            ss << " S\n";
         } else if (obj.inkPoints.size() >= 2) {
             EmitRgbStrokeColor(ss, obj.strokeColor);
             ss << "1 J 1 j\n";

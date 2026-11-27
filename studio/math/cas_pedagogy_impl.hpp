@@ -944,7 +944,8 @@ SummaryArtifact SummarizeDocumentNonDestructive(
     SummaryArtifact art;
     art.audit.methodUtf8 = "NON_DESTRUCTIVE_EXTRACTIVE_SUMMARIZER";
     std::ostringstream body;
-    body << "Resumen No Destructivo — " << doc.Title() << "\n";
+    // Sin IA esto no es un resumen: copia las primeras notas, fórmulas y tarjetas tal cual.
+    body << "Extracto sin IA (primeras notas, f\xC3\xB3rmulas y tarjetas) \xE2\x80\x94 " << doc.Title() << "\n";
     std::size_t count = 0;
     auto collectObj = [&](const AnnotationObject& o, const std::string& loc) {
         if (count >= maxBullets) return;
@@ -979,7 +980,8 @@ SummaryArtifact SummarizeDocumentNonDestructive(
     art.summaryBlock.textUtf8 = body.str();
     art.summaryBlock.tags.push_back("resumen_asistido");
     art.ok = (count > 0);
-    art.audit.verificationStatus = art.ok ? VerificationStatus::DimensionallyVerified : VerificationStatus::Unverified;
+    // Un extracto no se verifica dimensionalmente: antes se marcaba «DimensionallyVerified» sin revisar nada
+    art.audit.verificationStatus = VerificationStatus::Unverified;
     return art;
 }
 

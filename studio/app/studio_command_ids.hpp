@@ -361,7 +361,11 @@ enum CmdId : std::uint16_t {
     CMD_TUTOR_IPAD_QR = 2647,
 
     // Borradores (auditoría de concentración): abrir una copia de seguridad de lo que no se guardó
-    CMD_OPEN_DRAFTS = 2648
+    CMD_OPEN_DRAFTS = 2648,
+
+    // Que no dañe ni mienta (revisión del 27-nov-2026)
+    CMD_TOGGLE_SCRIBBLE_ERASE = 2649,  // Tachar para borrar (apagado por defecto)
+    CMD_TOGGLE_EXPERIMENTAL = 2650     // Mostrar funciones experimentales (apagado por defecto)
 };
 
 } // namespace DocStudio::CmdIds
