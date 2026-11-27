@@ -471,6 +471,27 @@ static void SaveUnifiedSettingsToIni();
 static void CopyCalculatorResultSmart(int calcIdx, int modeOverride = -1, bool updateStatus = true);
 static bool SaveCalculatorSnapshotState(int calcIdx);
 static bool RestoreCalculatorSnapshotState(int calcIdx);
+
+// Confirmación antes de lo que no se puede deshacer (auditoría de concentración, P0). El botón por defecto
+// es «Cancelar»: un Enter apurado nunca borra nada. Si no se puede preguntar, no se hace.
+static bool ConfirmIrreversible(const wchar_t* question, const wchar_t* detail, const wchar_t* confirmLabel)
+{
+    enum : int { kBtnConfirm = 1001 };
+    const TASKDIALOG_BUTTON buttons[] = { { kBtnConfirm, confirmLabel }, { IDCANCEL, L"Cancelar" } };
+    TASKDIALOGCONFIG cfg{};
+    cfg.cbSize = sizeof(cfg);
+    cfg.hwndParent = g_hMainWnd;
+    cfg.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+    cfg.pszWindowTitle = L"Calculadora Unificada";
+    cfg.pszMainInstruction = question;
+    cfg.pszContent = detail;
+    cfg.cButtons = ARRAYSIZE(buttons);
+    cfg.pButtons = buttons;
+    cfg.nDefaultButton = IDCANCEL;
+    int choice = IDCANCEL;
+    if (FAILED(TaskDialogIndirect(&cfg, &choice, nullptr, nullptr))) return false;
+    return choice == kBtnConfirm;
+}
 static void LoadCustomSequenceIntoExporter(int calcIdx, const std::vector<int>& keys, const std::wstring& title, const std::wstring& notes);
 static void OpenSettingsWindow();
 static void OpenSequenceExporterWindow(bool syncHistoryFirst = true);
@@ -873,7 +894,7 @@ static HMENU CreateEmulatorMenuBar()
     AppendMenuW(hTools, MF_STRING, ID_CMD_SETTINGS,          L"&Configuraci\u00F3n de Portapapeles y Presentaci\u00F3n...\tCtrl+,");
     AppendMenuW(hTools, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(hTools, MF_STRING, ID_CMD_SAVE_RAM_STATE,    L"Guardar Estado &RAM\tCtrl+S");
-    AppendMenuW(hTools, MF_STRING, ID_CMD_RESTORE_RAM_STATE, L"Restaurar Estado Anterior (&Deshacer)\tCtrl+Z");
+    AppendMenuW(hTools, MF_STRING, ID_CMD_RESTORE_RAM_STATE, L"Restaurar estado guardado\tCtrl+Z");
     AppendMenuW(hTools, MF_STRING, ID_CMD_TEACHER_MODE,      L"&Modo Presentaci\u00F3n (Resaltar \u00DAltima Tecla)");
     AppendMenuW(hTools, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(hTools, MF_STRING, ID_BTN_KEY_EXPLORER,       L"&Explorador Interactivo de Teclas\tCtrl+Shift+K");
@@ -2156,6 +2177,14 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         else if (id == ID_CMD_CW2_RESTART || id == ID_CMD_CW2_RESET_RAM) {
             const bool resetRam = (id == ID_CMD_CW2_RESET_RAM);
+            const bool confirmed = resetRam
+                ? ConfirmIrreversible(L"¿Borrar la memoria de la fx-991CW?",
+                      L"Queda como salió de fábrica, en inglés: se pierden las variables, los ajustes y el idioma.",
+                      L"Borrar la memoria")
+                : ConfirmIrreversible(L"¿Reiniciar la fx-991CW?",
+                      L"Se borra lo que está en la pantalla de la calculadora. La memoria y los ajustes se mantienen.",
+                      L"Reiniciar");
+            if (!confirmed) return 0;
             Fx991CwHost::Restart(g_hCanvasWnd, g_cw2ViewportRect, IsCw2Visible(), resetRam);
             g_inAppMenuState[3] = true;
             g_awaitingSubmenuNav[3] = false;

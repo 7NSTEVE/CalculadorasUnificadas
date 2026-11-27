@@ -110,6 +110,7 @@ constexpr UINT WM_APP_ASYNC_PAGE_READY = WM_APP + 101;
 constexpr UINT WM_APP_TAKE_SCREENSHOT = WM_APP + 102;
 constexpr UINT WM_APP_CASIO_INBOX_READY = WM_APP + 103;
 constexpr UINT WM_APP_HTML_SNAPSHOT_READY = WM_APP + 104;
+constexpr UINT WM_APP_DRAFT_RECOVERY = WM_APP + 105;
 
 struct HtmlSnapshotPayload {
     std::uint64_t objectId = 0;
@@ -124,6 +125,11 @@ constexpr UINT_PTR kTimerIdGif      = 703;
 constexpr UINT_PTR kTimerIdPomodoro = 704;
 constexpr UINT_PTR kTimerIdVideo    = 705;
 constexpr UINT_PTR kTimerIdAutoSync = 706;
+constexpr UINT_PTR kTimerIdDraftAutosave = 707; // solo mientras haya cambios sin guardar
+
+// Borradores: copia de seguridad de lo que todavía no se guardó.
+constexpr UINT kDraftAutosaveMs = 60u * 1000u;
+constexpr int kDraftKeepDays = 30;
 
 inline int DpiSc(int px96, UINT dpi) noexcept {
     return MulDiv(px96, static_cast<int>((dpi >= 72u && dpi <= 480u) ? dpi : 96u), 96);
@@ -409,6 +415,10 @@ struct StudioAppState {
     std::vector<ToolbarBtn> buttons;
     int hoveredButton = -1;
 
+    // Borradores (copia de seguridad del documento con cambios sin guardar)
+    std::wstring sessionDraftPath;
+    bool timerDraftActive = false;
+
     // CLI automation state
     bool smokeTestMode = false;
     bool testDpiCycleCli = false;
@@ -429,7 +439,8 @@ std::wstring GetFileExtLower(const std::wstring& path) {
     return ext;
 }
 
-bool ShowOpenDialog(HWND owner, const wchar_t* title, const COMDLG_FILTERSPEC* specs, UINT specCount, std::vector<std::wstring>& outPaths, bool multiSelect) {
+bool ShowOpenDialog(HWND owner, const wchar_t* title, const COMDLG_FILTERSPEC* specs, UINT specCount, std::vector<std::wstring>& outPaths, bool multiSelect,
+                    const wchar_t* initialFolder = nullptr) {
     outPaths.clear();
     Microsoft::WRL::ComPtr<IFileOpenDialog> dlg;
     if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg))) || !dlg) return false;
@@ -438,6 +449,12 @@ bool ShowOpenDialog(HWND owner, const wchar_t* title, const COMDLG_FILTERSPEC* s
     dlg->SetOptions(opts);
     if (title) dlg->SetTitle(title);
     if (specs && specCount > 0) dlg->SetFileTypes(specCount, specs);
+    if (initialFolder && *initialFolder) {
+        Microsoft::WRL::ComPtr<IShellItem> folder;
+        if (SUCCEEDED(SHCreateItemFromParsingName(initialFolder, nullptr, IID_PPV_ARGS(&folder))) && folder) {
+            dlg->SetFolder(folder.Get());
+        }
+    }
     if (FAILED(dlg->Show(owner))) return false;
 
     Microsoft::WRL::ComPtr<IShellItemArray> arr;
@@ -1589,6 +1606,13 @@ void SyncActiveHtmlBounds(StudioAppState* st) {
     st->htmlHost.SyncBlockBounds(st->activeHtmlObjectId, bnd, visible);
 }
 
+// Corridas automáticas (pruebas, capturas, vistas previas por línea de comandos): nunca
+// preguntan ni escriben borradores, para que nada se quede esperando a una persona.
+bool IsAutomationRun(const StudioAppState* st) noexcept {
+    return st && (st->smokeTestMode || st->testDpiCycleCli || !st->screenshotOutPath.empty() ||
+                  st->cliTecPreviewSection >= 0);
+}
+
 void SyncDynamicTimers(StudioAppState* st) {
     if (!st || !st->hwndMain) return;
     // 1. GIF timer: active ONLY when a visible non-paused animated GIF exists & not minimized
@@ -1636,6 +1660,17 @@ void SyncDynamicTimers(StudioAppState* st) {
     } else if (!needSync && st->timerSyncActive) {
         KillTimer(st->hwndMain, kTimerIdAutoSync);
         st->timerSyncActive = false;
+    }
+
+    // 5. Borrador: cada 60 s SOLO mientras haya cambios sin guardar (también minimizado:
+    //    es justo cuando más fácil se olvida). En pruebas automáticas no corre.
+    const bool needDraft = !IsAutomationRun(st) && st->doc.IsDirty();
+    if (needDraft && !st->timerDraftActive) {
+        SetTimer(st->hwndMain, kTimerIdDraftAutosave, kDraftAutosaveMs, nullptr);
+        st->timerDraftActive = true;
+    } else if (!needDraft && st->timerDraftActive) {
+        KillTimer(st->hwndMain, kTimerIdDraftAutosave);
+        st->timerDraftActive = false;
     }
 }
 
@@ -2055,8 +2090,243 @@ bool SnipWorldRegionAsImage(
     return true;
 }
 
-bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string* outErr = nullptr) {
+// ---------------------------------------------------------------------------
+// Borradores y pregunta al cerrar (auditoría de concentración, P0): olvidarse de guardar no debe costar
+// el trabajo. Mientras haya cambios sin guardar se escribe cada 60 s una copia en
+// <perfil>\borradores; al cerrar o al abrir otro documento se pregunta Guardar / No guardar /
+// Cancelar, y «No guardar» deja igual una copia por kDraftKeepDays días.
+// ---------------------------------------------------------------------------
+std::filesystem::path DraftsDirectory() {
+    std::filesystem::path dir = std::filesystem::path(StudioProfileStore::DefaultProfileRootDir()) / L"borradores";
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    return dir;
+}
+
+std::wstring DocumentDisplayName(const StudioAppState* st) {
+    if (!st->currentDocPath.empty()) return std::filesystem::path(st->currentDocPath).filename().wstring();
+    const std::wstring title = Utf8ToWide(st->doc.Title());
+    return title.empty() ? std::wstring(L"Documento nuevo") : title;
+}
+
+// "<prefijo> 2026-11-26 17-45-03 - <nombre> [<pid>].cudoc" (el pid distingue ventanas abiertas a la vez)
+std::wstring MakeDraftFileName(const wchar_t* prefix, const std::wstring& title) {
+    SYSTEMTIME t{};
+    GetLocalTime(&t);
+    wchar_t stamp[40]{};
+    swprintf_s(stamp, L"%04u-%02u-%02u %02u-%02u-%02u", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+    std::wstring clean;
+    for (wchar_t c : title) clean.push_back((c < 32 || wcschr(L"\\/:*?\"<>|[]", c)) ? L'-' : c);
+    if (clean.size() > 60) clean.resize(60);
+    while (!clean.empty() && (clean.back() == L' ' || clean.back() == L'.')) clean.pop_back();
+    if (clean.empty()) clean = L"Documento";
+    return std::wstring(prefix) + L" " + stamp + L" - " + clean + L" [" + std::to_wstring(GetCurrentProcessId()) + L"].cudoc";
+}
+
+// Copia del documento activo: no toca el archivo de la persona ni lo marca como guardado.
+bool WriteDocumentCopy(StudioAppState* st, const std::wstring& target) {
+    std::string err;
+    return CudocStorage::SaveToFile(target, st->doc, &err);
+}
+
+void DiscardSessionDraft(StudioAppState* st) {
+    if (!st || st->sessionDraftPath.empty()) return;
+    std::error_code ec;
+    std::filesystem::remove(st->sessionDraftPath, ec);
+    std::filesystem::remove(st->sessionDraftPath + L".bak", ec);
+    st->sessionDraftPath.clear();
+}
+
+void AutosaveSessionDraft(StudioAppState* st) {
+    if (!st || IsAutomationRun(st) || !st->doc.IsDirty()) return;
+    if (st->sessionDraftPath.empty()) {
+        st->sessionDraftPath = (DraftsDirectory() / MakeDraftFileName(L"Autoguardado", DocumentDisplayName(st))).wstring();
+    }
+    WriteDocumentCopy(st, st->sessionDraftPath);
+}
+
+// «No guardar»: queda una copia con nombre propio y se borra la copia automática de esta sesión.
+void KeepDiscardedCopy(StudioAppState* st) {
+    if (!st) return;
+    WriteDocumentCopy(st, (DraftsDirectory() / MakeDraftFileName(L"Sin guardar", DocumentDisplayName(st))).wstring());
+    DiscardSessionDraft(st);
+}
+
+// Las otras pestañas viven en memoria; al cerrar se dejan como borrador para no perderlas.
+void KeepInactiveTabsAsDrafts(StudioAppState* st) {
+    if (!st || IsAutomationRun(st) || st->tabs.size() < 2) return;
+    for (std::size_t i = 0; i < st->tabs.size(); ++i) {
+        if (i == st->activeTabIdx) continue;
+        const auto& tab = st->tabs[i];
+        if (tab.serializedCudoc.empty()) continue;
+        const std::wstring name = tab.path.empty() ? Utf8ToWide(tab.title)
+                                                   : std::filesystem::path(tab.path).filename().wstring();
+        std::ofstream out(DraftsDirectory() / MakeDraftFileName(L"Pestaña", name), std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(tab.serializedCudoc.data()),
+                  static_cast<std::streamsize>(tab.serializedCudoc.size()));
+    }
+}
+
+// Pregunta qué hacer con los cambios sin guardar antes de cerrar o de reemplazar el documento.
+// true = se puede seguir (no había cambios, se guardó, o se eligió «No guardar» con copia).
+bool ConfirmUnsavedChanges(StudioAppState* st, const wchar_t* beforeWhat) {
+    if (!st) return true;
+    CommitInlineTextEdit(st, true);
+    if (IsAutomationRun(st) || !st->doc.IsDirty()) return true;
+
+    const std::wstring question = L"¿Guardar los cambios de «" + DocumentDisplayName(st) +
+                                  L"» antes de " + beforeWhat + L"?";
+    const std::wstring detail = L"Si elige «No guardar», queda igual una copia de seguridad durante " +
+                                std::to_wstring(kDraftKeepDays) + L" días en Archivo → Recuperar borradores.";
+    enum : int { kBtnSave = 1001, kBtnDontSave = 1002 };
+    const TASKDIALOG_BUTTON buttons[] = {
+        { kBtnSave, L"Guardar" },
+        { kBtnDontSave, L"No guardar" },
+        { IDCANCEL, L"Cancelar" },
+    };
+    TASKDIALOGCONFIG cfg{};
+    cfg.cbSize = sizeof(cfg);
+    cfg.hwndParent = st->hwndMain;
+    cfg.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+    cfg.pszWindowTitle = L"CuadernU";
+    cfg.pszMainInstruction = question.c_str();
+    cfg.pszContent = detail.c_str();
+    cfg.cButtons = ARRAYSIZE(buttons);
+    cfg.pButtons = buttons;
+    cfg.nDefaultButton = kBtnSave;
+    int choice = IDCANCEL;
+    if (FAILED(TaskDialogIndirect(&cfg, &choice, nullptr, nullptr))) {
+        KeepDiscardedCopy(st); // sin diálogo no se puede preguntar: al menos no se pierde nada
+        return true;
+    }
+    if (choice == kBtnSave) {
+        ExecuteToolbarCommand(st, CMD_SAVE_CUDOC);
+        return !st->doc.IsDirty(); // si canceló «Guardar como» o falló, no se sigue
+    }
+    if (choice == kBtnDontSave) {
+        KeepDiscardedCopy(st);
+        return true;
+    }
+    return false;
+}
+
+void PruneOldDrafts() {
+    std::error_code ec;
+    const auto limit = std::filesystem::file_time_type::clock::now() - std::chrono::hours(24 * kDraftKeepDays);
+    for (const auto& entry : std::filesystem::directory_iterator(DraftsDirectory(), ec)) {
+        std::error_code e2;
+        if (!entry.is_regular_file(e2)) continue;
+        const auto when = entry.last_write_time(e2);
+        if (!e2 && when < limit) std::filesystem::remove(entry.path(), e2);
+    }
+}
+
+bool IsCuadernUProcessAlive(DWORD pid) {
+    if (pid == 0 || pid == GetCurrentProcessId()) return pid != 0;
+    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!h) return false;
+    wchar_t image[MAX_PATH]{};
+    DWORD len = MAX_PATH;
+    DWORD code = 0;
+    const bool alive = GetExitCodeProcess(h, &code) && code == STILL_ACTIVE &&
+                       QueryFullProcessImageNameW(h, 0, image, &len);
+    CloseHandle(h);
+    if (!alive) return false;
+    std::wstring name = std::filesystem::path(image).filename().wstring();
+    for (wchar_t& c : name) c = static_cast<wchar_t>(towlower(c));
+    return name == L"cuadernu.exe" || name == L"documentstudio.exe";
+}
+
+// Abre un borrador como documento sin guardar: «Guardar» pedirá dónde dejarlo (nunca dentro de
+// la carpeta de borradores) y cerrar volverá a preguntar.
+bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string* outErr = nullptr);
+bool OpenDraftAsUnsaved(StudioAppState* st, const std::wstring& draftPath) {
+    std::string err;
+    if (!OpenDocumentFile(st, draftPath, &err)) {
+        if (!err.empty()) MessageBoxW(st->hwndMain, Utf8ToWide(err).c_str(), L"No se pudo abrir el borrador", MB_ICONERROR);
+        return false;
+    }
+    st->currentDocPath.clear();
+    st->doc.SetDirty(true);
+    st->statusBannerUtf8 = "Borrador recuperado: use Guardar para elegir d\xC3\xB3nde dejarlo";
+    UpdateWindowTitle(st);
+    SyncDynamicTimers(st);
+    InvalidateViews(st);
+    return true;
+}
+
+// Al arrancar: copias «Autoguardado» de una sesión que ya no corre = cierre inesperado.
+void OfferDraftsFromPreviousSession(StudioAppState* st) {
+    if (!st || IsAutomationRun(st)) return;
+    struct Leftover { std::filesystem::path path; std::filesystem::file_time_type when; };
+    std::vector<Leftover> leftovers;
+    std::error_code ec;
+    for (const auto& entry : std::filesystem::directory_iterator(DraftsDirectory(), ec)) {
+        std::error_code e2;
+        if (!entry.is_regular_file(e2) || entry.path().extension() != L".cudoc") continue;
+        const std::wstring name = entry.path().filename().wstring();
+        if (name.rfind(L"Autoguardado ", 0) != 0) continue;
+        DWORD pid = 0;
+        const auto open = name.rfind(L'[');
+        const auto close = name.rfind(L']');
+        if (open != std::wstring::npos && close != std::wstring::npos && close > open + 1) {
+            pid = static_cast<DWORD>(wcstoul(name.substr(open + 1, close - open - 1).c_str(), nullptr, 10));
+        }
+        if (IsCuadernUProcessAlive(pid)) continue; // es de otra ventana de CuadernU abierta ahora
+        leftovers.push_back({ entry.path(), entry.last_write_time(e2) });
+    }
+    if (leftovers.empty()) return;
+    std::sort(leftovers.begin(), leftovers.end(), [](const Leftover& a, const Leftover& b) { return a.when > b.when; });
+
+    // Se renombran a «Recuperado …» para no volver a preguntar; siguen en Recuperar borradores.
+    std::vector<std::filesystem::path> renamed;
+    for (const auto& lo : leftovers) {
+        std::wstring name = lo.path.filename().wstring();
+        name.replace(0, wcslen(L"Autoguardado"), L"Recuperado");
+        std::filesystem::path target = lo.path.parent_path() / name;
+        std::error_code e3;
+        std::filesystem::rename(lo.path, target, e3);
+        renamed.push_back(e3 ? lo.path : target);
+    }
+
+    std::wstring shown = renamed.front().stem().wstring();
+    if (const auto dash = shown.find(L" - "); dash != std::wstring::npos) shown = shown.substr(dash + 3);
+    if (const auto bracket = shown.rfind(L" ["); bracket != std::wstring::npos) shown.resize(bracket);
+    std::wstring detail = L"«" + shown + L"» quedó sin guardar cuando CuadernU se cerró de golpe.";
+    if (renamed.size() > 1) {
+        detail += L" Hay " + std::to_wstring(renamed.size() - 1) + L" copia(s) más en Archivo → Recuperar borradores.";
+    }
+    detail += L" Si elige «Ahora no», queda ahí durante " + std::to_wstring(kDraftKeepDays) + L" días.";
+    enum : int { kBtnOpen = 1001 };
+    const TASKDIALOG_BUTTON buttons[] = { { kBtnOpen, L"Abrirlo ahora" }, { IDCANCEL, L"Ahora no" } };
+    TASKDIALOGCONFIG cfg{};
+    cfg.cbSize = sizeof(cfg);
+    cfg.hwndParent = st->hwndMain;
+    cfg.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+    cfg.pszWindowTitle = L"CuadernU";
+    cfg.pszMainInstruction = L"Hay un trabajo que no se guardó la última vez";
+    cfg.pszContent = detail.c_str();
+    cfg.cButtons = ARRAYSIZE(buttons);
+    cfg.pButtons = buttons;
+    cfg.nDefaultButton = kBtnOpen;
+    int choice = IDCANCEL;
+    if (SUCCEEDED(TaskDialogIndirect(&cfg, &choice, nullptr, nullptr)) && choice == kBtnOpen) {
+        OpenDraftAsUnsaved(st, renamed.front().wstring());
+    }
+}
+
+bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string* outErr) {
     const std::wstring ext = GetFileExtLower(path);
+    // Estos formatos reemplazan el documento abierto (imágenes y videos se insertan en él).
+    const bool replacesDocument = ext == L".cudoc" || ext == L".pdf" || ext == L".docx" || ext == L".pptx" ||
+                                  ext == L".goodnotes" || ext == L".note" || ext == L".one" || ext == L".onepkg" ||
+                                  ext == L".tinta";
+    if (replacesDocument && !ConfirmUnsavedChanges(st, L"abrir otro documento")) {
+        if (outErr) outErr->clear();
+        st->statusBannerUtf8 = "Se mantuvo el documento actual";
+        InvalidateViews(st);
+        return false;
+    }
     const std::string pathUtf8 = WideToUtf8(path);
 
     if (ext == L".goodnotes" || ext == L".note" || ext == L".one" || ext == L".onepkg" || ext == L".tinta") {
@@ -2252,6 +2522,13 @@ bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string*
         return false;
     }
 
+    if (replacesDocument) {
+        // Recién abierto = nada que guardar todavía (un PDF recién abierto salía como modificado).
+        // El .cudoc ya llega limpio, salvo si el registro WAL recuperó cambios: esos se respetan.
+        if (ext != L".cudoc") st->cmdStack.MarkClean(st->doc);
+        DiscardSessionDraft(st);
+    }
+
     LayoutMainChildren(st);
     UpdateWindowTitle(st);
     InvalidateViews(st);
@@ -2273,9 +2550,18 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         std::vector<std::wstring> paths;
         if (ShowOpenDialog(st->hwndMain, L"Abrir en CuadernU", kFilters, 4, paths, false)) {
             std::string err;
-            if (!OpenDocumentFile(st, paths[0], &err)) {
+            if (!OpenDocumentFile(st, paths[0], &err) && !err.empty()) { // vacío = la persona eligió «Cancelar»
                 MessageBoxW(st->hwndMain, Utf8ToWide(err).c_str(), L"Error al abrir", MB_ICONERROR);
             }
+        }
+        break;
+    }
+    case CMD_OPEN_DRAFTS: {
+        static constexpr COMDLG_FILTERSPEC kFilters[] = { { L"Borradores de CuadernU (*.cudoc)", L"*.cudoc" } };
+        std::vector<std::wstring> paths;
+        const std::wstring draftsDir = DraftsDirectory().wstring();
+        if (ShowOpenDialog(st->hwndMain, L"Recuperar un borrador", kFilters, 1, paths, false, draftsDir.c_str())) {
+            OpenDraftAsUnsaved(st, paths[0]);
         }
         break;
     }
@@ -2290,6 +2576,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         if (CudocStorage::SaveToFile(savePath, st->doc, &err)) {
             st->currentDocPath = savePath;
             st->cmdStack.MarkClean(st->doc);
+            DiscardSessionDraft(st); // ya está a salvo en su archivo
             SavePersistentUndoAndTruncateWal(st);
             st->contentViews.UpsertFromDocument(st->doc, WideToUtf8(savePath));
             PersistStudioProfileNow(st);
@@ -3464,6 +3751,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hm, MF_STRING, CMD_MIGRATE_NOTEBOOK,     L"Importar / Migrar Cuaderno (Goodnotes / Notability / OneNote / Office / .tinta)...");
         AppendMenuW(hm, MF_STRING, CMD_OPEN_VAULT_LIBRARY,   L"Biblioteca de Cuadernos y B\u00FAsqueda Global...");
         AppendMenuW(hm, MF_STRING, CMD_SAVE_CUDOC,           L"Guardar cuaderno .cudoc (Ctrl+S)");
+        AppendMenuW(hm, MF_STRING, CMD_OPEN_DRAFTS,          L"Recuperar borradores...");
         AppendMenuW(hm, MF_STRING, CMD_EXPORT_PDF,           L"Exportar PDF...");
         AppendMenuW(hm, MF_SEPARATOR, 0, nullptr);
         HMENU hTabSub = CreatePopupMenu();
@@ -10117,8 +10405,33 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         LayoutMainChildren(st);
         CenterCameraOnPage(st, 0);
         UpdateWindowTitle(st);
+        if (!IsAutomationRun(st)) {
+            PruneOldDrafts();
+            PostMessageW(hwnd, WM_APP_DRAFT_RECOVERY, 0, 0); // ya con la ventana a la vista
+        }
         return 0;
     }
+    case WM_APP_DRAFT_RECOVERY:
+        if (st) OfferDraftsFromPreviousSession(st);
+        return 0;
+    case WM_CLOSE:
+        // Antes la ventana se cerraba sin preguntar y un documento nuevo se perdía entero.
+        if (st && !ConfirmUnsavedChanges(st, L"cerrar CuadernU")) return 0;
+        if (st) {
+            KeepInactiveTabsAsDrafts(st);
+            DiscardSessionDraft(st);
+        }
+        DestroyWindow(hwnd);
+        return 0;
+    case WM_QUERYENDSESSION:
+        // Windows se apaga o reinicia: no se puede preguntar. Queda una copia que CuadernU
+        // ofrece abrir la próxima vez.
+        if (st && !IsAutomationRun(st)) {
+            CommitInlineTextEdit(st, true);
+            AutosaveSessionDraft(st);
+            KeepInactiveTabsAsDrafts(st);
+        }
+        return TRUE;
     case WM_SIZE:
         if (st) {
             if (wp == SIZE_MINIMIZED) {
@@ -10405,6 +10718,10 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     }
     case WM_TIMER: {
         if (!st) break;
+        if (wp == kTimerIdDraftAutosave) {
+            AutosaveSessionDraft(st);
+            return 0;
+        }
         if (wp == kTimerIdGif) {
             st->animationTick++;
             InvalidateViewportOnly(st);
@@ -10600,6 +10917,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         KillTimer(hwnd, kTimerIdPomodoro);
         KillTimer(hwnd, kTimerIdVideo);
         KillTimer(hwnd, kTimerIdAutoSync);
+        KillTimer(hwnd, kTimerIdDraftAutosave);
         if (st) {
             StopCasioInboxWatcher(st);
             st->videoPlayer.Stop();

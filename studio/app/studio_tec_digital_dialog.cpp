@@ -1526,6 +1526,18 @@ std::vector<const td::CalendarEventEntry*> GetPrioritizedCalendarEvents(const st
     return upcoming;
 }
 
+// Solo lo que todavía no pasó (auditoría de concentración, P0). Donde el título dice «Próximas» no deben
+// aparecer fechas viejas: si no queda nada, se muestra el estado vacío en vez de rellenar con
+// entregas que ya vencieron.
+std::vector<const td::CalendarEventEntry*> GetUpcomingCalendarEvents(const std::vector<td::CalendarEventEntry>& all) {
+    const std::string today = TodayIsoLocalDialog();
+    std::vector<const td::CalendarEventEntry*> out;
+    for (const auto* ev : GetPrioritizedCalendarEvents(all)) {
+        if (ev->date_iso.substr(0, 10) >= today) out.push_back(ev);
+    }
+    return out;
+}
+
 void ComputeEffectiveExpedienteData(
     const DocStudio::TecDigital::TecAcademicSnapshot& snap,
     td::AcademicStatsSummary& outStats,
@@ -1956,7 +1968,7 @@ void PaintSummaryCanvas(HWND hwnd, TecHubState* st) {
 
             int evShown = 0;
             const float evRowH = 38.0f * dpiScale;
-            const auto sortedEvents = GetPrioritizedCalendarEvents(st->snap.unifiedCalendarEvents);
+            const auto sortedEvents = GetUpcomingCalendarEvents(st->snap.unifiedCalendarEvents);
             for (const auto* evPtr : sortedEvents) {
                 const auto& ev = *evPtr;
                 if (ry + evRowH > midSplitY - 8.0f * dpiScale || evShown >= 4) break;
@@ -7746,7 +7758,7 @@ void PaintUnifiedCalendarGrid(HWND hwnd, TecHubState* st) {
                 }
 
                 // Dedicated non-clipped bottom strip for upcoming deadlines & matrícula
-                const auto sortedFooterEvents = GetPrioritizedCalendarEvents(st->snap.unifiedCalendarEvents);
+                const auto sortedFooterEvents = GetUpcomingCalendarEvents(st->snap.unifiedCalendarEvents);
                 if (!sortedFooterEvents.empty()) {
                     const float stripY = static_cast<float>(gridBottom);
                     g.DrawLine(&hdrSep, 2.0f, stripY, static_cast<float>(w) - 3.0f, stripY);

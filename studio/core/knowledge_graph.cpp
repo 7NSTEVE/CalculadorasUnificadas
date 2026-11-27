@@ -846,6 +846,7 @@ void CommandPaletteRegistry::RegisterDefaultCommands() {
     entries_ = {
         { CMD_OPEN,                    "/abrir",               "Abrir documento o PDF...",                              "Archivo",           "Ctrl+O",       "open pdf cuaderno cudoc" },
         { CMD_SAVE_CUDOC,              "/guardar",             "Guardar cuaderno (.cudoc)",                             "Archivo",           "Ctrl+S",       "save persist" },
+        { CMD_OPEN_DRAFTS,             "/borradores",          "Recuperar borradores (lo que no se guard\xC3\xB3)...",  "Archivo",           "",             "recuperar borrador autoguardado sin guardar copia seguridad recovery draft" },
         { CMD_EXPORT_PDF,              "/exportar-pdf",        "Exportar a PDF...",                                     "Archivo",           "Ctrl+Shift+E", "pdf print" },
         { CMD_PRINT,                   "/imprimir",            "Imprimir documento...",                                 "Archivo",           "Ctrl+P",       "print" },
         { CMD_TOOL_TEXT,               "/texto",               "Herramienta: Caja de texto",                            "Herramientas",      "T",            "textbox nota" },

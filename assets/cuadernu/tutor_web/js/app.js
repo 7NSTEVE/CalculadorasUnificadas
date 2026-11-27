@@ -294,6 +294,8 @@ bus.on('leccion:estado', ({ estado, i, total, lec }) => {
   const hablando = estado === 'hablando' || estado === 'cargando';
   $('ico-pausa').setAttribute('d', hablando ? ICO_PAUSA : ICO_SEGUIR);
   $('txt-pausa').textContent = hablando ? 'Pausa' : estado === 'espera' || estado === 'fin' ? 'Escuchar otra vez' : 'Continuar';
+  // Con el paso terminado, «Escuchar otra vez» ya repite: dos botones para lo mismo confunden
+  $('btn-repetir').hidden = estado === 'espera' || estado === 'fin';
   $('btn-pausa').disabled = estado === 'cargando';
   $('btn-anterior').disabled = i <= 0;
   const ultimo = i >= total - 1;

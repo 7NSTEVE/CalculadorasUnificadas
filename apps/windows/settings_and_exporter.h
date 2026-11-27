@@ -1027,6 +1027,14 @@ static bool RestoreCalculatorSnapshotState(int calcIdx) {
     auto& c = g_nativeCalcs[calcIdx];
     const auto& snap = g_savedCalcSnapshots[calcIdx];
     if (!c.emu || snap.emuState.empty()) return false;
+    // Ctrl+Z en todos los programas es «deshacer»; aquí borra lo hecho después de Guardar estado.
+    if (!ConfirmIrreversible(L"¿Volver al estado guardado?",
+            L"La calculadora vuelve a como estaba cuando usó «Guardar estado» (Ctrl+S). "
+            L"Se pierde lo que hizo después, incluidas las capturas.",
+            L"Volver al estado guardado")) {
+        ShowToolbarToast(L"No se cambió nada.");
+        return false;
+    }
     if (calcemu_load_state(c.emu, snap.emuState.data(), snap.emuState.size()) != 1) {
         return false;
     }
