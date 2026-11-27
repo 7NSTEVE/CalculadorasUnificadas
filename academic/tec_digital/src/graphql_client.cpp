@@ -550,29 +550,32 @@ Result<std::vector<GraphQlActualCourse>> TecGraphQlClient::FetchActualPeriodCour
     return Result<std::vector<GraphQlActualCourse>>::Success(std::move(out));
 }
 
-Result<AcademicStatsSummary> TecGraphQlClient::FetchAcademicHistoryFallback(std::string_view carne) {
+Result<GraphQlAcademicHistoryResult> TecGraphQlClient::FetchAcademicHistoryFull(std::string_view carne) {
     nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
     static constexpr const char* kQuery =
         "query getStudentAcademicHistory($carnet: Int!) { "
         "getStudentAcademicHistory(carnet: $carnet) { "
+        "grades { anno estado nota modalidad periodo materia id_materia creditos color id_estado } "
         "statistics { pPonderado tHoras numCursosA numCreditosA numPromedioA numCursosR numCreditosR numPromedioR "
         "mCursadas mMatriculadas mRetiradas mReconocidas mSuficiencia mPendientes mCongelados mConsultadas "
         "tCreditos tCreditosSinNota porcentajeAprobado porcentajeReprobado } "
         "} }";
     auto r = ExecuteQueryJson("getStudentAcademicHistory", kQuery, vars.dump());
-    if (!r.ok) return Result<AcademicStatsSummary>::Failure(r.error_code, r.error_message);
+    if (!r.ok) return Result<GraphQlAcademicHistoryResult>::Failure(r.error_code, r.error_message);
 
     auto j = nlohmann::json::parse(r.value, nullptr, false);
     const nlohmann::json* hist_ptr = FindDataField(j, {"getStudentAcademicHistory"});
     if (j.is_discarded() || !hist_ptr || !hist_ptr->is_object()) {
-        return Result<AcademicStatsSummary>::Failure(
+        return Result<GraphQlAcademicHistoryResult>::Failure(
             "invalid_schema", "missing getStudentAcademicHistory");
     }
 
     const auto& hist = *hist_ptr;
-    AcademicStatsSummary st;
+    const Sanitizer san = SnapshotSanitizer();
+    GraphQlAcademicHistoryResult out;
     if (hist.contains("statistics") && hist["statistics"].is_object()) {
         const auto& s = hist["statistics"];
+        auto& st = out.stats;
         st.weighted_avg_general = JsonDbl(s, {"pPonderado", "weighted_avg"});
         st.weighted_avg_passed = JsonDbl(s, {"numPromedioA"});
         st.weighted_avg_failed = JsonDbl(s, {"numPromedioR"});
@@ -594,15 +597,42 @@ Result<AcademicStatsSummary> TecGraphQlClient::FetchAcademicHistoryFallback(std:
         st.count_pendientes = JsonInt(s, {"mPendientes"});
         st.count_congeladas = JsonInt(s, {"mCongelados"});
     }
-    return Result<AcademicStatsSummary>::Success(st);
+    if (hist.contains("grades") && hist["grades"].is_array()) {
+        for (const auto& g : hist["grades"]) {
+            if (!g.is_object()) continue;
+            GradeRecordRow row;
+            row.year = JsonInt(g, {"anno", "year"});
+            row.state = san.SanitizeText(JsonStr(g, {"estado", "state"}));
+            row.grade = JsonDbl(g, {"nota", "grade"});
+            row.grade_text = san.SanitizeText(JsonStr(g, {"nota", "grade"}));
+            row.modality = san.SanitizeText(JsonStr(g, {"modalidad", "modality"}));
+            row.period = san.SanitizeText(JsonStr(g, {"periodo", "period"}));
+            row.course_code = san.SanitizeText(JsonStr(g, {"id_materia", "code"}));
+            row.course_name = san.SanitizeText(JsonStr(g, {"materia", "name"}));
+            row.credits = JsonInt(g, {"creditos", "credits"});
+            if (row.year > 0 || !row.course_code.empty() || !row.course_name.empty()) {
+                out.grades.push_back(std::move(row));
+            }
+        }
+    }
+    return Result<GraphQlAcademicHistoryResult>::Success(std::move(out));
+}
+
+Result<AcademicStatsSummary> TecGraphQlClient::FetchAcademicHistoryFallback(std::string_view carne) {
+    auto full = FetchAcademicHistoryFull(carne);
+    if (!full.ok) return Result<AcademicStatsSummary>::Failure(full.error_code, full.error_message);
+    return Result<AcademicStatsSummary>::Success(std::move(full.value.stats));
 }
 
 Result<StudentGeneralInfo> TecGraphQlClient::FetchStudentGeneralInfo(std::string_view carne) {
+    if (TrimAscii(carne).empty()) {
+        return Result<StudentGeneralInfo>::Failure("invalid_argument", "empty carnet");
+    }
     nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
     static constexpr const char* kQuery =
         "query getStudentGeneralInfo($carnet: Int!) { "
         "getStudentGeneralInfo(carnet: $carnet) { "
-        "carreer weightedAverage outstandingCourses availableRegistrationCredits "
+        "carreer weightedAverage outstandingCourses availableRegistrationCredits user_id "
         "rn { ide_materia rn course_name } "
         "} }";
     auto r = ExecuteQueryJson("getStudentGeneralInfo", kQuery, vars.dump());
@@ -621,6 +651,11 @@ Result<StudentGeneralInfo> TecGraphQlClient::FetchStudentGeneralInfo(std::string
     info.weighted_average = JsonDbl(obj, {"weightedAverage", "weighted_average"});
     info.outstanding_courses = JsonInt(obj, {"outstandingCourses", "outstanding_courses"});
     info.available_registration_credits = JsonInt(obj, {"availableRegistrationCredits", "available_registration_credits"});
+    info.user_id = TrimAscii(JsonStr(obj, {"user_id", "userId"}));
+    if (!info.user_id.empty()) {
+        std::lock_guard<std::mutex> lk(token_mutex_);
+        if (cached_user_id_.empty()) cached_user_id_ = info.user_id;
+    }
     if (obj.contains("rn") && obj["rn"].is_array()) {
         for (const auto& rni : obj["rn"]) {
             if (!rni.is_object()) continue;
@@ -637,6 +672,9 @@ Result<StudentGeneralInfo> TecGraphQlClient::FetchStudentGeneralInfo(std::string
 }
 
 Result<GraphQlCurriculumBundle> TecGraphQlClient::FetchStudentCurriculum(std::string_view carne) {
+    if (TrimAscii(carne).empty()) {
+        return Result<GraphQlCurriculumBundle>::Failure("invalid_argument", "empty carnet");
+    }
     nlohmann::json vars = {{"carnet", ToIntOrStr(carne)}};
     static constexpr const char* kQuery =
         "query getStudentCurriculum($carnet: Int!) { "
@@ -722,6 +760,91 @@ Result<GraphQlCurriculumBundle> TecGraphQlClient::FetchStudentCurriculum(std::st
         }
     }
     return Result<GraphQlCurriculumBundle>::Success(std::move(bundle));
+}
+
+Result<StudentMutationResult> TecGraphQlClient::SubmitInclusionRequest(
+    std::string_view campaign_id,
+    std::string_view carne,
+    std::string_view course_code,
+    std::string_view group,
+    std::string_view comment) {
+    if (campaign_id.empty() || course_code.empty()) {
+        return Result<StudentMutationResult>::Failure("invalid_arg", "campaign_id and course_code are required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageInclusions);
+    static constexpr const char* kMut =
+        "mutation SetInclusionRequest($campaignId: ID!, $carne: String!, $course: String!, $group: String!, $comment: String) { "
+        "SetInclusionRequest(campaignId: $campaignId, carne: $carne, course: $course, group: $group, comment: $comment) { id status message } }";
+    nlohmann::json vars = {
+        {"campaignId", std::string(campaign_id)},
+        {"carne", std::string(carne)},
+        {"course", std::string(course_code)},
+        {"group", std::string(group)},
+        {"comment", std::string(comment)}
+    };
+    auto r = ExecuteQueryJson("SetInclusionRequest", kMut, vars.dump());
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Solicitud de inclusión enviada";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TecGraphQlClient::DeleteInclusionRequest(std::string_view request_id) {
+    if (request_id.empty()) {
+        return Result<StudentMutationResult>::Failure("invalid_arg", "request_id is required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageInclusions);
+    static constexpr const char* kMut =
+        "mutation DeleteInclusionRequest($id: ID!) { DeleteInclusionRequest(id: $id) }";
+    nlohmann::json vars = {{"id", std::string(request_id)}};
+    auto r = ExecuteQueryJson("DeleteInclusionRequest", kMut, vars.dump());
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Solicitud de inclusión eliminada";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TecGraphQlClient::ToggleInclusionRequest(std::string_view request_id, bool active) {
+    if (request_id.empty()) {
+        return Result<StudentMutationResult>::Failure("invalid_arg", "request_id is required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageInclusions);
+    static constexpr const char* kMut =
+        "mutation ToogleInclusion($id: ID!, $active: Boolean!) { ToogleInclusion(id: $id, active: $active) }";
+    nlohmann::json vars = {{"id", std::string(request_id)}, {"active", active}};
+    auto r = ExecuteQueryJson("ToogleInclusion", kMut, vars.dump());
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = active ? "Inclusión activada" : "Inclusión pausada";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TecGraphQlClient::SetScholarshipSelection(
+    std::string_view campaign_id, std::string_view scholarship_type) {
+    if (campaign_id.empty()) {
+        return Result<StudentMutationResult>::Failure("invalid_arg", "campaign_id is required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageInclusions);
+    static constexpr const char* kMut =
+        "mutation SetScholarship($campaignId: ID!, $type: String!) { SetScholarship(campaignId: $campaignId, type: $type) }";
+    nlohmann::json vars = {{"campaignId", std::string(campaign_id)}, {"type", std::string(scholarship_type)}};
+    auto r = ExecuteQueryJson("SetScholarship", kMut, vars.dump());
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Selección de beca actualizada";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
 }
 
 }  // namespace academic::tec_digital

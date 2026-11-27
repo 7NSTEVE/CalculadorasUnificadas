@@ -1,0 +1,4219 @@
+{
+  "generated_at": "2026-11-26",
+  "total_js_bundles_analyzed": 198,
+  "hook_files_documented": 140,
+  "technologies_evidenced_by_module": {
+    "ayuda_y_guias": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "calendario": [
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "consentimiento_informado": [
+      "TDS-Lib (TEC Digital UI)",
+      "jQuery"
+    ],
+    "control_plagio": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "documentos_file_storage": [
+      "AngularJS 1.x",
+      "TDS-Lib (TEC Digital UI)",
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "evaluaciones": [
+      "TDS-Lib (TEC Digital UI)",
+      "Visualization/Export Lib",
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "expediente_estudiantil": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "feria_negocios": [
+      "TDS-Lib (TEC Digital UI)",
+      "jQuery"
+    ],
+    "gestor_inclusiones": [
+      "GraphQL Client",
+      "React (Vite SPA)",
+      "Visualization/Export Lib",
+      "dotLRN / OpenACS"
+    ],
+    "gestor_inscripcion": [
+      "TDS-Lib (TEC Digital UI)",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "libreria_tds_lib": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "malla_curricular": [
+      "AngularJS 1.x",
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "jQuery"
+    ],
+    "mensajeria_sms": [
+      "TDS-Lib (TEC Digital UI)",
+      "jQuery"
+    ],
+    "modelo_usuario": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "motor_juegos_gaap": [
+      "Visualization/Export Lib",
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "notificaciones": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "jQuery"
+    ],
+    "otros_plataforma": [
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "portal_dotlrn": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "dotLRN / OpenACS",
+      "jQuery"
+    ],
+    "prematricula": [
+      "TDS-Lib (TEC Digital UI)",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "rubricas": [
+      "TDS-Lib (TEC Digital UI)",
+      "Vanilla JS",
+      "Visualization/Export Lib",
+      "jQuery"
+    ],
+    "sincronizacion_dar": [
+      "dotLRN / OpenACS",
+      "jQuery"
+    ]
+  },
+  "key_architectural_mechanisms": {
+    "session_expiration": "theme-td/js/session-timeout.js?version=5 renders hidden #timeout-overlay modal and calls logout() on inactivity; server redirects expired cookies with HTTP 302 to /register/.",
+    "clock_sync": "theme-td/js/reloj.js queries GET /theme-td/ajax/get_date_server and ticks with setInterval.",
+    "notifications_polling": "tda-notifications/notificationspanel/resources/js/notifications.js fetches has_unread_notifications and get_user_notifications; click actions trigger GET update_notification_state / delete_user_notification.",
+    "file_storage_spa": "AngularJS 1.x app td-documents (fs.js, folder.js, file.js, url.js, breadcrumbs.js, elementDetail.js, rightClick.js, popUps.js) bootstrapped via inline $rootScope.GL_FOLDER_ID = <id>.",
+    "curriculum_spa": "AngularJS 1.x PlanGraficoServicio.js calling /tds-curriculum-exp/ajax/json_draw_angular and json_student_profile_angular.",
+    "inclusion_manager_spa": "Modern React + Vite + Apollo GraphQL SPA (/tda-inclusion-manager/assets/index-IE6zhopY.js, 2.28 MB) targeting https://api.tec.ac.cr:3005/graphql with 48 operations.",
+    "motor_juegos_spa": "Modern Angular SPA (/tda-motor-juegos/compiled_files/main-6DE5OU7V.js) calling /tda-motor-juegos/api/* and external GAAP service.",
+    "rubric_engine": "tda-index.1.0.4.min.js posts accion=ver to /tda-rubrica/tda_evaluacion_rubrica then invokes evaluation_student_min.js calculate_score() over td.criterion_selected and tr[comment].",
+    "tam_tracking_blocked": "resources/tda-tam/js/tam-tracking.js?v=3 sends client telemetry; intentionally blocked by CuadernU ReadOnlyRequestPolicy.",
+    "realtime_ws_sse": "No WebSocket or Server-Sent Events endpoints observed in active student modules; platform relies on HTTP/AJAX + periodic JS timers."
+  },
+  "files": [
+    {
+      "file": "popUps.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-2-2025.SC.MA1103.50/file-storage/resources/js/directives/popUps.js",
+      "module": "documentos_file_storage",
+      "bytes": 2957,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "FsPopUp"
+        ],
+        "directive": [
+          "fsPopUp"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular-ui-router.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/angular-ui-router/release/angular-ui-router.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 32961,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "$resolve",
+          "$templateFactory"
+        ],
+        "provider": [
+          "$urlMatcherFactory",
+          "$urlRouter",
+          "$state",
+          "$view",
+          "$uiViewScroll"
+        ],
+        "factory": [
+          "$stateParams"
+        ],
+        "directive": [
+          "uiView",
+          "uiSref",
+          "uiSrefActive",
+          "uiSrefActiveEq",
+          "uiState"
+        ],
+        "filter": [
+          "isState",
+          "includedByState"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "notifications.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-notifications/notificationspanel/resources/js/notifications.js",
+      "module": "notificaciones",
+      "bytes": 31376,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fsElement.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/CA/CA3125/S-2-2025.SC.CA3125.51/file-storage/resources/js/directives/fsElement.js",
+      "module": "documentos_file_storage",
+      "bytes": 4940,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsElement",
+          "onFinishRender"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "scripts-NOOAMYNN.js",
+      "url": "https://tecdigital.tec.ac.cr/tda-motor-juegos/compiled_files/scripts-NOOAMYNN.js",
+      "module": "motor_juegos_gaap",
+      "bytes": 84758,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 7
+      },
+      "http_interceptor_or_auth_markers": [
+        "X-Requested-With"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "popUps.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/file-storage/resources/js/directives/popUps.js",
+      "module": "documentos_file_storage",
+      "bytes": 2957,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "FsPopUp"
+        ],
+        "directive": [
+          "fsPopUp"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "select2.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/bower_components/angular-ui-select2/src/select2.js",
+      "module": "malla_curricular",
+      "bytes": 7185,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "ui.select2"
+      ],
+      "angular_components": {
+        "directive": [
+          "uiSelect2"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "polyfills-W4IKDNBN.js",
+      "url": "https://tecdigital.tec.ac.cr/tda-motor-juegos/compiled_files/polyfills-W4IKDNBN.js",
+      "module": "motor_juegos_gaap",
+      "bytes": 66742,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": [
+        "WebSocket"
+      ]
+    },
+    {
+      "file": "view.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/calendar/resources/js/view.js",
+      "module": "calendario",
+      "bytes": 366,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#button-today:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "arbolDocumentos.1.0.0.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-control-plagio/js/arbolDocumentos.1.0.0.js",
+      "module": "control_plagio",
+      "bytes": 16012,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#divDocumentosTree:on(changed.divDocumentosTree)",
+        "#divDocumentosTree:on(after_open.jstree)",
+        "#divDocumentosTree:on(activate_node.jstree)"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "core.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/acs-subsite/core.js",
+      "module": "otros_plataforma",
+      "bytes": 49782,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "PlanGraficoDirectivas.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/js/directives/PlanGraficoDirectivas.js",
+      "module": "malla_curricular",
+      "bytes": 1380,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "dibujarMalla",
+          "dibujarCodigoColor",
+          "updateCourse"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/file-storage/resources/components/angular/angular.js",
+      "module": "documentos_file_storage",
+      "bytes": 1221184,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchorScrollExample",
+        "anchorScrollOffsetExample",
+        "bindExample",
+        "bindHtmlExample",
+        "cacheExampleApp",
+        "cancel-update-example",
+        "changeExample",
+        "checkboxExample",
+        "compileExample",
+        "controllerAsExample",
+        "controllerExample",
+        "cspExample",
+        "currencyExample",
+        "customControl",
+        "customInterpolationApp",
+        "dateExample",
+        "dateInputExample",
+        "defaultValueSelect",
+        "demo",
+        "do-check-module",
+        "documentExample",
+        "emailExample",
+        "equalsExample",
+        "filterExample",
+        "formExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController",
+          "ngAppDemoController",
+          "BadController",
+          "GoodController1",
+          "GoodController2",
+          "WelcomeController",
+          "Ctrl",
+          "ScrollController",
+          "headerCtrl",
+          "GreeterController",
+          "FetchController",
+          "DemoController",
+          "LogController",
+          "AppController",
+          "MainCtrl",
+          "FormController",
+          "DateController",
+          "SettingsController1",
+          "SettingsController2",
+          "MainController",
+          "CancelUpdateController",
+          "repeatController"
+        ],
+        "provider": [
+          "$compile",
+          "eventTracker"
+        ],
+        "factory": [
+          "ping",
+          "greeter",
+          "superCache",
+          "myHttpInterceptor",
+          "$xhrFactory"
+        ],
+        "service": [
+          "ping"
+        ],
+        "component": [
+          "myComponent",
+          "app",
+          "test",
+          "myComp"
+        ],
+        "directive": [
+          "directiveName",
+          "compile",
+          "myCurrentTime",
+          "pane",
+          "myButton",
+          "convertToNumber"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "$httpProvider.interceptors",
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "main.92f03b765bc7287203a4.js",
+      "url": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_profesores/main.92f03b765bc7287203a4.js",
+      "module": "ayuda_y_guias",
+      "bytes": 719339,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [
+        "localStorage.removeItem('algoliasearch-client-js')",
+        "localStorage.setItem('algoliasearch-client-js')"
+      ],
+      "timers_count": {
+        "setTimeout": 18
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "hammer.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/file-storage/resources/components/Materialize/js/hammer.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 18137,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/file-storage/resources/components/angular/angular.js",
+      "module": "documentos_file_storage",
+      "bytes": 1221184,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchorScrollExample",
+        "anchorScrollOffsetExample",
+        "bindExample",
+        "bindHtmlExample",
+        "cacheExampleApp",
+        "cancel-update-example",
+        "changeExample",
+        "checkboxExample",
+        "compileExample",
+        "controllerAsExample",
+        "controllerExample",
+        "cspExample",
+        "currencyExample",
+        "customControl",
+        "customInterpolationApp",
+        "dateExample",
+        "dateInputExample",
+        "defaultValueSelect",
+        "demo",
+        "do-check-module",
+        "documentExample",
+        "emailExample",
+        "equalsExample",
+        "filterExample",
+        "formExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController",
+          "ngAppDemoController",
+          "BadController",
+          "GoodController1",
+          "GoodController2",
+          "WelcomeController",
+          "Ctrl",
+          "ScrollController",
+          "headerCtrl",
+          "GreeterController",
+          "FetchController",
+          "DemoController",
+          "LogController",
+          "AppController",
+          "MainCtrl",
+          "FormController",
+          "DateController",
+          "SettingsController1",
+          "SettingsController2",
+          "MainController",
+          "CancelUpdateController",
+          "repeatController"
+        ],
+        "provider": [
+          "$compile",
+          "eventTracker"
+        ],
+        "factory": [
+          "ping",
+          "greeter",
+          "superCache",
+          "myHttpInterceptor",
+          "$xhrFactory"
+        ],
+        "service": [
+          "ping"
+        ],
+        "component": [
+          "myComponent",
+          "app",
+          "test",
+          "myComp"
+        ],
+        "directive": [
+          "directiveName",
+          "compile",
+          "myCurrentTime",
+          "pane",
+          "myButton",
+          "convertToNumber"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "$httpProvider.interceptors",
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "toasts.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/Materialize/js/toasts.js",
+      "module": "documentos_file_storage",
+      "bytes": 4461,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/angular/angular.js",
+      "module": "documentos_file_storage",
+      "bytes": 1221184,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchorScrollExample",
+        "anchorScrollOffsetExample",
+        "bindExample",
+        "bindHtmlExample",
+        "cacheExampleApp",
+        "cancel-update-example",
+        "changeExample",
+        "checkboxExample",
+        "compileExample",
+        "controllerAsExample",
+        "controllerExample",
+        "cspExample",
+        "currencyExample",
+        "customControl",
+        "customInterpolationApp",
+        "dateExample",
+        "dateInputExample",
+        "defaultValueSelect",
+        "demo",
+        "do-check-module",
+        "documentExample",
+        "emailExample",
+        "equalsExample",
+        "filterExample",
+        "formExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController",
+          "ngAppDemoController",
+          "BadController",
+          "GoodController1",
+          "GoodController2",
+          "WelcomeController",
+          "Ctrl",
+          "ScrollController",
+          "headerCtrl",
+          "GreeterController",
+          "FetchController",
+          "DemoController",
+          "LogController",
+          "AppController",
+          "MainCtrl",
+          "FormController",
+          "DateController",
+          "SettingsController1",
+          "SettingsController2",
+          "MainController",
+          "CancelUpdateController",
+          "repeatController"
+        ],
+        "provider": [
+          "$compile",
+          "eventTracker"
+        ],
+        "factory": [
+          "ping",
+          "greeter",
+          "superCache",
+          "myHttpInterceptor",
+          "$xhrFactory"
+        ],
+        "service": [
+          "ping"
+        ],
+        "component": [
+          "myComponent",
+          "app",
+          "test",
+          "myComp"
+        ],
+        "directive": [
+          "directiveName",
+          "compile",
+          "myCurrentTime",
+          "pane",
+          "myButton",
+          "convertToNumber"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "$httpProvider.interceptors",
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "popUps.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/directives/popUps.js",
+      "module": "documentos_file_storage",
+      "bytes": 2957,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "FsPopUp"
+        ],
+        "directive": [
+          "fsPopUp"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "hammer.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/Materialize/js/hammer.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 18137,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "highcharts.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tds-lib/lib/highcharts/Highcharts-4.0.3/js/highcharts.js",
+      "module": "libreria_tds_lib",
+      "bytes": 153297,
+      "technologies_evidenced": [
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 8
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "tda-consentimiento-informado.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-consentimiento-informado/js/tda-consentimiento-informado.js",
+      "module": "consentimiento_informado",
+      "bytes": 2363,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#accept_term:click",
+        "#decline_term:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "elementDetail.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/directives/elementDetail.js",
+      "module": "documentos_file_storage",
+      "bytes": 29126,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "bindUnsafeHtml",
+          "fsElementDetail"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "webcomponents-lite.min.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tds-lib/lib/webcomponentsjs/webcomponents-lite.min.js",
+      "module": "libreria_tds_lib",
+      "bytes": 39223,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 7
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular-sanitize.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/bower_components/angular-sanitize/angular-sanitize.js",
+      "module": "malla_curricular",
+      "bytes": 26833,
+      "technologies_evidenced": [
+        "AngularJS 1.x"
+      ],
+      "angular_modules": [
+        "linkyExample",
+        "ngSanitize",
+        "sanitizeExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController"
+        ],
+        "provider": [
+          "$sanitize"
+        ],
+        "filter": [
+          "linky"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "utilidades.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-expediente-estudiantil/js/utilidades.js",
+      "module": "expediente_estudiantil",
+      "bytes": 5807,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".integer_value:keydown",
+        ".email:keydown",
+        "#cerrar_form:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "index.1.0.0.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-expediente-estudiantil/js/index.1.0.0.js",
+      "module": "expediente_estudiantil",
+      "bytes": 10490,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "encabezado_expandible:click",
+        "input[name=periodos]:click",
+        "#gestor_inscripcion:click",
+        "input[name=historiales]:change",
+        "input[id=his1]:change",
+        "input[name=infoMatricula]:click",
+        "input[id=hm1]:click",
+        ".orderable:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "jstree.min.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tds-lib/lib/jstree/jstree.min.js",
+      "module": "libreria_tds_lib",
+      "bytes": 101975,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          ".jstree-hovered",
+          ".jstree-last",
+          ".jstree-children"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 11,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/file-storage/resources/js/fs.js?v=2",
+      "module": "documentos_file_storage",
+      "bytes": 52354,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          "cutText"
+        ],
+        "controller": [
+          "fsRenderCtrl"
+        ],
+        "directive": [
+          "focusMe"
+        ]
+      },
+      "client_routes_or_states": [
+        "folder"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "velocity.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/file-storage/resources/components/Materialize/js/velocity.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 35111,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "popUps.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1102/S-1-2025.SC.MA1102.53/file-storage/resources/js/directives/popUps.js",
+      "module": "documentos_file_storage",
+      "bytes": 2957,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "FsPopUp"
+        ],
+        "directive": [
+          "fsPopUp"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "funcionesUtiles.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/acs-templating/js/funcionesUtiles.js",
+      "module": "otros_plataforma",
+      "bytes": 15281,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "session-timeout.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/theme-td/js/session-timeout.js?version=5",
+      "module": "portal_dotlrn",
+      "bytes": 4483,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 2,
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "exporting.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tds-lib/lib/highcharts/Highcharts-4.0.3/js/modules/exporting.js",
+      "module": "libreria_tds_lib",
+      "bytes": 7449,
+      "technologies_evidenced": [
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular-animate.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/bower_components/angular-animate/angular-animate.js",
+      "module": "malla_curricular",
+      "bytes": 150567,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchoringExample",
+        "ngAnimate",
+        "ngAnimateChildren",
+        "ngAnimateSwapExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "mainController",
+          "AppCtrl",
+          "HomeController",
+          "ProfileController",
+          "HomePageController"
+        ],
+        "directive": [
+          "greetingBox",
+          "ngAnimateSwap",
+          "ngAnimateChildren"
+        ],
+        "factory": [
+          "$$rAFScheduler"
+        ],
+        "provider": [
+          "$$animateQueue",
+          "$$animation",
+          "$animateCss",
+          "$$animateCssDriver",
+          "$$animateJs",
+          "$$animateJsDriver"
+        ]
+      },
+      "client_routes_or_states": [
+        "/",
+        "/profile/:id"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fsElement.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/directives/fsElement.js",
+      "module": "documentos_file_storage",
+      "bytes": 4940,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsElement",
+          "onFinishRender"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "creaPrematricula.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-prematricula/js/creaPrematricula.js",
+      "module": "prematricula",
+      "bytes": 16360,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#rbSiPrioridad:click",
+        "#rbNoPrioridad:click",
+        "#agregaRN:click",
+        "#rbSiPrioridadPop:click",
+        "#rbNoPrioridadPop:click",
+        "#agregaRNPop:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/CA/CA3125/S-2-2025.SC.CA3125.51/file-storage/resources/js/fs.js?v=2",
+      "module": "documentos_file_storage",
+      "bytes": 52354,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          "cutText"
+        ],
+        "controller": [
+          "fsRenderCtrl"
+        ],
+        "directive": [
+          "focusMe"
+        ]
+      },
+      "client_routes_or_states": [
+        "folder"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "view.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/calendar/resources/js/view.js",
+      "module": "calendario",
+      "bytes": 366,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#button-today:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "html2canvas.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/lib/pdf/html2canvas.js",
+      "module": "rubricas",
+      "bytes": 88620,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "tabla_cursos.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-expediente-estudiantil/js/tabla_cursos.js",
+      "module": "expediente_estudiantil",
+      "bytes": 6112,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".maximizar:click",
+        ".c9:click",
+        ".blanco td:first-child():click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fullcalendar.min.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-gestor-inscripcion/js/fullcalendar.min.js",
+      "module": "gestor_inscripcion",
+      "bytes": 94634,
+      "technologies_evidenced": [
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 4,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "vpanel.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/theme-td/js/vpanel.js",
+      "module": "portal_dotlrn",
+      "bytes": 3443,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/fs.js?v=2",
+      "module": "documentos_file_storage",
+      "bytes": 52354,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          "cutText"
+        ],
+        "controller": [
+          "fsRenderCtrl"
+        ],
+        "directive": [
+          "focusMe"
+        ]
+      },
+      "client_routes_or_states": [
+        "folder"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "responsive.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-control-plagio/js/responsive.js",
+      "module": "control_plagio",
+      "bytes": 350,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#tree-responsive-menu:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "evaluacion-funciones.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/evaluacion-funciones.js",
+      "module": "rubricas",
+      "bytes": 33930,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#evaluateContainer:submit",
+        "#table_body_eval:on(keyup)",
+        "#btn_return:click",
+        "#btn_back:click",
+        "#btn_add_relation:click",
+        "#btn_close:on(click)",
+        ".delete_task:click",
+        ".preview_rubric:click",
+        ".evaluacion_members:click",
+        ".evaluations_list:click",
+        ".member_rubric_evaluation:click",
+        ".btn_comment:click",
+        ".btn_cancel_comment:on(click)",
+        "#text_area_comment:focus",
+        "#curse_id:change",
+        "#grade_id:change",
+        "#btn_save_evaluation:click",
+        ".click_td:click",
+        "#back_matrix_eval:click",
+        "#ayudaeval:click",
+        "#back:click",
+        "#evaluation_reg:click",
+        "#back_matrix_eval_list:click",
+        "#ayudaevallista:click",
+        ".ver_evaluacion:click",
+        ".eliminar_evaluacion:click",
+        "#accept_confirm:on(click)",
+        "#back_matrix_eval_see:click",
+        "#ayudaevalsee:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "velocity.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/Materialize/js/velocity.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 35111,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "actualizaciones_de_busquedas.1.0.0.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-expediente-estudiantil/js/actualizaciones_de_busquedas.1.0.0.js",
+      "module": "expediente_estudiantil",
+      "bytes": 29363,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#imgBuscar:click",
+        "#periodo_h:change",
+        "encabezado_expandible:click",
+        "#alternar_vistas:click",
+        "#retroceso:click",
+        "input[id=rbtnAll]:change",
+        "#rbtnAll:click",
+        "#rbtnAprob:click",
+        "#rbtnReprob:click",
+        ".c9:click",
+        ".maximizar:click",
+        "#tHorario tbody tr td i:click",
+        ".orderable:click",
+        "#actualizar_cursos2:click",
+        "#Actualizacion_lib:click",
+        "input[id=his1]:change"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "breadcrumbs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/directives/breadcrumbs.js",
+      "module": "documentos_file_storage",
+      "bytes": 4534,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsBreadcrumb"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "waves.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/file-storage/resources/components/Materialize/js/waves.js",
+      "module": "documentos_file_storage",
+      "bytes": 11535,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "breadcrumbs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/file-storage/resources/js/directives/breadcrumbs.js",
+      "module": "documentos_file_storage",
+      "bytes": 4534,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsBreadcrumb"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "registro_proyectos.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-feria-negocios/js/registro_proyectos.js",
+      "module": "feria_negocios",
+      "bytes": 19790,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#btn_add:on(click)",
+        "#btn_add_external:on(click)",
+        "#btn_register:on(click)",
+        "#inputBases:change"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "actions.1.0.3.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-prematricula/js/actions.1.0.3.js",
+      "module": "prematricula",
+      "bytes": 40005,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#reglamento:click",
+        "#order_list:click",
+        "#seeall_students:click",
+        "#order_listSol:click",
+        ".solcursos:click",
+        "#btnRequestClose:click",
+        ".solestudiantes:click",
+        "#download_listSol:click",
+        "#download_list:click",
+        "#imgPreenrollmentActive:click",
+        "#imgHistorialPrematricula:click",
+        "#imgConsultasPrematricula:click",
+        "#imgCodeVerification:click",
+        "#imgConfiguration:click",
+        "#ide_DeptCS:change",
+        "#ide_DeptC:change",
+        "#ide_course:change",
+        "#ide_deptH:change",
+        "#ide_planH:change",
+        "#btn_consulta_historico:click",
+        "#btn_consulta:click",
+        "#btn_consultaCS:click",
+        "#btn_descarga_cs:click",
+        "#btnVerifyCode:click",
+        "#btnGenerate:click",
+        "#tab_course_services:click",
+        "#btnGuardarPremCS:click",
+        "#btnDefinitionAddicionals:click",
+        "#rbHojaCalculoCS:click",
+        "#rbPDFCS:click",
+        "#btnPopCancelarDownloadCS:click",
+        "#btnPopDownloadCS:click",
+        "#rbHojaCalculoLE:click",
+        "#rbPDFLE:click",
+        "#btnPopCancelarDescargaListaEst:click",
+        "#btnPopListaEstudiantesPrem:click",
+        ".title_acor:click",
+        "#btn_descarga_historico:click",
+        "#btn_descarga_cursos:click",
+        "#btnDefineAS:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "announcement-icon.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/theme-td/js/announcement-icon.js",
+      "module": "portal_dotlrn",
+      "bytes": 6003,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#announcement-panel-checkbox:change",
+        "#close-announcement-panel-icon:click",
+        "#announcement-panel-button:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "toasts.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneraliii/file-storage/resources/components/Materialize/js/toasts.js",
+      "module": "documentos_file_storage",
+      "bytes": 4461,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "view.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/calendar/resources/js/view.js",
+      "module": "calendario",
+      "bytes": 366,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#button-today:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "breadcrumbs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/file-storage/resources/js/directives/breadcrumbs.js",
+      "module": "documentos_file_storage",
+      "bytes": 4534,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsBreadcrumb"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "portal-configure.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/new-portal/js/portal-configure.js",
+      "module": "portal_dotlrn",
+      "bytes": 15735,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#portal-configure-container:on(click)",
+        "#portal-configure-container:on(mouseenter)",
+        "#portal-configure-container:on(mouseleave)",
+        "#portal-configure-container:on(blur)",
+        "#portal-configure-container:on(keypress)",
+        "#modal:on(click)",
+        "body #add-form:first:on(submit)",
+        "#modal #section-add-form:first:on(submit)"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/file-storage/resources/js/fs.js?v=2",
+      "module": "documentos_file_storage",
+      "bytes": 52354,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          "cutText"
+        ],
+        "controller": [
+          "fsRenderCtrl"
+        ],
+        "directive": [
+          "focusMe"
+        ]
+      },
+      "client_routes_or_states": [
+        "folder"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "admin-permisos.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/admin-permisos.js",
+      "module": "rubricas",
+      "bytes": 12174,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#add_permission:click",
+        "#btn_cancel_add_permission:on(click)",
+        "#add_new_permission:on(click)",
+        ".eliminar_permiso:click",
+        "#accept_confirm:click",
+        ".cambiar_permiso:click",
+        "#btn_cancel_permission:on(click)",
+        "#confirm_change_permission:on(click)",
+        "#btn_close:on(click)",
+        ".cambiar_estado:click",
+        "#confirm_change_status:on(click)",
+        "#back_matrix:click",
+        "#ayudapermisos:click",
+        "#back:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "waves.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/file-storage/resources/components/Materialize/js/waves.js",
+      "module": "documentos_file_storage",
+      "bytes": 11535,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "hammer.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/file-storage/resources/components/Materialize/js/hammer.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 18137,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "polyfills.51cb9269d116204af4a1.js",
+      "url": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_profesores/polyfills.51cb9269d116204af4a1.js",
+      "module": "ayuda_y_guias",
+      "bytes": 63174,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": [
+        "EventSource",
+        "WebSocket"
+      ]
+    },
+    {
+      "file": "elementDetail.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/file-storage/resources/js/directives/elementDetail.js",
+      "module": "documentos_file_storage",
+      "bytes": 29126,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "bindUnsafeHtml",
+          "fsElementDetail"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "jspdf.debug.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/lib/pdf/jspdf.debug.js",
+      "module": "rubricas",
+      "bytes": 321567,
+      "technologies_evidenced": [
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "view.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/calendar/resources/js/view.js",
+      "module": "calendario",
+      "bytes": 366,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#button-today:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "index-IE6zhopY.js",
+      "url": "https://tecdigital.tec.ac.cr/tda-inclusion-manager/assets/index-IE6zhopY.js",
+      "module": "gestor_inclusiones",
+      "bytes": 2279410,
+      "technologies_evidenced": [
+        "GraphQL Client",
+        "React (Vite SPA)",
+        "Visualization/Export Lib",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [
+        "localStorage.getItem('${i}')",
+        "localStorage.getItem('${o}-dark')",
+        "localStorage.getItem('${o}-light')",
+        "localStorage.getItem('applications-tab')",
+        "localStorage.getItem('campaign')",
+        "localStorage.getItem('course')",
+        "localStorage.getItem('dataStudent')",
+        "localStorage.getItem('group')",
+        "localStorage.getItem('removeDefaultRequirement_')",
+        "localStorage.getItem('selectedEntity')",
+        "localStorage.getItem('selectedTab')",
+        "localStorage.getItem('student')",
+        "localStorage.getItem('user_id')",
+        "localStorage.removeItem('selectedEntity')",
+        "localStorage.removeItem('tableFilters')",
+        "localStorage.setItem('applications-tab')",
+        "localStorage.setItem('campaign')",
+        "localStorage.setItem('carnet_estudiante')",
+        "localStorage.setItem('course')",
+        "localStorage.setItem('dataStudent')",
+        "localStorage.setItem('group')",
+        "localStorage.setItem('removeDefaultRequirement_')",
+        "localStorage.setItem('selectedEntity')",
+        "localStorage.setItem('selectedTab')",
+        "localStorage.setItem('student')"
+      ],
+      "timers_count": {
+        "setTimeout": 57,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular-ui-router.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-2-2025.SC.MA1103.50/file-storage/resources/components/angular-ui-router/release/angular-ui-router.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 32961,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "$resolve",
+          "$templateFactory"
+        ],
+        "provider": [
+          "$urlMatcherFactory",
+          "$urlRouter",
+          "$state",
+          "$view",
+          "$uiViewScroll"
+        ],
+        "factory": [
+          "$stateParams"
+        ],
+        "directive": [
+          "uiView",
+          "uiSref",
+          "uiSrefActive",
+          "uiSrefActiveEq",
+          "uiState"
+        ],
+        "filter": [
+          "isState",
+          "includedByState"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "elementDetail.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/file-storage/resources/js/directives/elementDetail.js",
+      "module": "documentos_file_storage",
+      "bytes": 29126,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "bindUnsafeHtml",
+          "fsElementDetail"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "velocity.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/file-storage/resources/components/Materialize/js/velocity.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 35111,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "tds-lib.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tds-lib/js/tds-lib.js",
+      "module": "libreria_tds_lib",
+      "bytes": 33442,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "forms-funciones.1.0.1.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/forms-funciones.1.0.1.js",
+      "module": "rubricas",
+      "bytes": 18448,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#LimpiarRegistroRubr:click",
+        "#eval_evidence_chk:click",
+        "#RegistroRubr:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "toasts.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/file-storage/resources/components/Materialize/js/toasts.js",
+      "module": "documentos_file_storage",
+      "bytes": 4461,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "index.1.0.1.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-control-plagio/js/index.1.0.1.js",
+      "module": "control_plagio",
+      "bytes": 47031,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#goturn:click",
+        "#closeModal:click",
+        "#turni-checkbox2:change",
+        "#btn_cancel_accept_terms:click",
+        "#btn_close:click",
+        "#m_menu:click",
+        "#m_check:click",
+        "#btn_accept_accept_terms:click",
+        "#m_statistics:click",
+        "#m_info:click",
+        ".docTr:click",
+        ".nombre:click",
+        ".revisarDoc:click",
+        ".vistaResumen:click",
+        ".vistaDetallada:click",
+        ".muestraCitas:click",
+        ".ocultaCitas:click",
+        ".fuente label:click"
+      ],
+      "browser_storage_keys": [
+        "localStorage.getItem('dont_show_turnitin')",
+        "localStorage.setItem('dont_show_turnitin')"
+      ],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "jspdf.min.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-expediente-estudiantil/js/libs/jspdf.min.js",
+      "module": "expediente_estudiantil",
+      "bytes": 237572,
+      "technologies_evidenced": [
+        "Visualization/Export Lib"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "filters.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/dotlrn/js/filters.js",
+      "module": "portal_dotlrn",
+      "bytes": 12387,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          ":checked"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#checkAll:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/file-storage/resources/components/angular/angular.js",
+      "module": "documentos_file_storage",
+      "bytes": 1221184,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchorScrollExample",
+        "anchorScrollOffsetExample",
+        "bindExample",
+        "bindHtmlExample",
+        "cacheExampleApp",
+        "cancel-update-example",
+        "changeExample",
+        "checkboxExample",
+        "compileExample",
+        "controllerAsExample",
+        "controllerExample",
+        "cspExample",
+        "currencyExample",
+        "customControl",
+        "customInterpolationApp",
+        "dateExample",
+        "dateInputExample",
+        "defaultValueSelect",
+        "demo",
+        "do-check-module",
+        "documentExample",
+        "emailExample",
+        "equalsExample",
+        "filterExample",
+        "formExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController",
+          "ngAppDemoController",
+          "BadController",
+          "GoodController1",
+          "GoodController2",
+          "WelcomeController",
+          "Ctrl",
+          "ScrollController",
+          "headerCtrl",
+          "GreeterController",
+          "FetchController",
+          "DemoController",
+          "LogController",
+          "AppController",
+          "MainCtrl",
+          "FormController",
+          "DateController",
+          "SettingsController1",
+          "SettingsController2",
+          "MainController",
+          "CancelUpdateController",
+          "repeatController"
+        ],
+        "provider": [
+          "$compile",
+          "eventTracker"
+        ],
+        "factory": [
+          "ping",
+          "greeter",
+          "superCache",
+          "myHttpInterceptor",
+          "$xhrFactory"
+        ],
+        "service": [
+          "ping"
+        ],
+        "component": [
+          "myComponent",
+          "app",
+          "test",
+          "myComp"
+        ],
+        "directive": [
+          "directiveName",
+          "compile",
+          "myCurrentTime",
+          "pane",
+          "myButton",
+          "convertToNumber"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "$httpProvider.interceptors",
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "student_index.1.0.2.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-prematricula/js/student_index.1.0.2.js",
+      "module": "prematricula",
+      "bytes": 15986,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".linkRquest:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "reloj.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/theme-td/js/reloj.js",
+      "module": "portal_dotlrn",
+      "bytes": 1925,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "hammer.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/file-storage/resources/components/Materialize/js/hammer.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 18137,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "breadcrumbs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneraliii/file-storage/resources/js/directives/breadcrumbs.js",
+      "module": "documentos_file_storage",
+      "bytes": 4534,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsBreadcrumb"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/file-storage/resources/js/fs.js?v=2",
+      "module": "documentos_file_storage",
+      "bytes": 52354,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          "cutText"
+        ],
+        "controller": [
+          "fsRenderCtrl"
+        ],
+        "directive": [
+          "focusMe"
+        ]
+      },
+      "client_routes_or_states": [
+        "folder"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "popUps.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/file-storage/resources/js/directives/popUps.js",
+      "module": "documentos_file_storage",
+      "bytes": 2957,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "FsPopUp"
+        ],
+        "directive": [
+          "fsPopUp"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "xlsx.full.min.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-prematricula/js/lib/xlsx.full.min.js",
+      "module": "prematricula",
+      "bytes": 930908,
+      "technologies_evidenced": [
+        "Visualization/Export Lib"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-2-2025.SC.MA1103.50/file-storage/resources/components/angular/angular.js",
+      "module": "documentos_file_storage",
+      "bytes": 1221184,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchorScrollExample",
+        "anchorScrollOffsetExample",
+        "bindExample",
+        "bindHtmlExample",
+        "cacheExampleApp",
+        "cancel-update-example",
+        "changeExample",
+        "checkboxExample",
+        "compileExample",
+        "controllerAsExample",
+        "controllerExample",
+        "cspExample",
+        "currencyExample",
+        "customControl",
+        "customInterpolationApp",
+        "dateExample",
+        "dateInputExample",
+        "defaultValueSelect",
+        "demo",
+        "do-check-module",
+        "documentExample",
+        "emailExample",
+        "equalsExample",
+        "filterExample",
+        "formExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController",
+          "ngAppDemoController",
+          "BadController",
+          "GoodController1",
+          "GoodController2",
+          "WelcomeController",
+          "Ctrl",
+          "ScrollController",
+          "headerCtrl",
+          "GreeterController",
+          "FetchController",
+          "DemoController",
+          "LogController",
+          "AppController",
+          "MainCtrl",
+          "FormController",
+          "DateController",
+          "SettingsController1",
+          "SettingsController2",
+          "MainController",
+          "CancelUpdateController",
+          "repeatController"
+        ],
+        "provider": [
+          "$compile",
+          "eventTracker"
+        ],
+        "factory": [
+          "ping",
+          "greeter",
+          "superCache",
+          "myHttpInterceptor",
+          "$xhrFactory"
+        ],
+        "service": [
+          "ping"
+        ],
+        "component": [
+          "myComponent",
+          "app",
+          "test",
+          "myComp"
+        ],
+        "directive": [
+          "directiveName",
+          "compile",
+          "myCurrentTime",
+          "pane",
+          "myButton",
+          "convertToNumber"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "$httpProvider.interceptors",
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "elementDetail.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/dop/file-storage/resources/js/directives/elementDetail.js",
+      "module": "documentos_file_storage",
+      "bytes": 29126,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "bindUnsafeHtml",
+          "fsElementDetail"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "tda-index.1.0.4.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/evaluation/tda-ce-estudiante/resources/js/tda-index.1.0.4.min.js",
+      "module": "evaluaciones",
+      "bytes": 24664,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".iconOpenRGA:click",
+        ".iconCloseRGA:click",
+        ".icon_tabs_t:click",
+        ".btn_comment:click",
+        ".btn_cancel_comment:on(click)",
+        "#btn_accept_requestN:click",
+        "#btn_back_requestN:click",
+        "#slider_e:click",
+        "#slider_a:click",
+        "#btn_closeHistory:click",
+        ".tds-lib-icon-delete:click",
+        ".taskAnswer:click",
+        ".tds-lib-icon-history_changes:click",
+        ".img-box-helper:click",
+        ".delivery_time:click",
+        "#request_notifications:click",
+        ".answer_file:click",
+        ".btn_send_answer:click",
+        ".upload_file:click",
+        ".upload_file:change",
+        ".changeSubmission:click",
+        ".seeRubric:click",
+        "#ocultarVerRubrica:click",
+        "#btn_acceptMessage:click",
+        ".taskMLC:click",
+        ".taskGAAP:click",
+        ".taskDesc:click",
+        ".taskSol:click",
+        ".taskFeedB:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "PlanGraficoServicio.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/js/services/PlanGraficoServicio.js",
+      "module": "malla_curricular",
+      "bytes": 3271,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "PlanGraficoServicio"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "pg.controller.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/js/controllers/pg.controller.js",
+      "module": "malla_curricular",
+      "bytes": 9632,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "controller": [
+          "PlanGraficoController"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#select_carrera:change",
+        "#imgBuscar_tdsLib:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "evaluation_student_min.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/evaluation_student_min.js",
+      "module": "rubricas",
+      "bytes": 2437,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".btn_comment:click",
+        ".btn_cancel_comment:on(click)",
+        "#text_area_comment:focus",
+        "#btn_back:click",
+        "#fix_head:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "modernizr.promise.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-notifications/notificationspanel/resources/js/modernizr.promise.js",
+      "module": "notificaciones",
+      "bytes": 1762,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "breadcrumbs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/dop/file-storage/resources/js/directives/breadcrumbs.js",
+      "module": "documentos_file_storage",
+      "bytes": 4534,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsBreadcrumb"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fsElement.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1101/S-2-2025.SC.FI1101.50/file-storage/resources/js/directives/fsElement.js",
+      "module": "documentos_file_storage",
+      "bytes": 4940,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsElement",
+          "onFinishRender"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular-ui-router.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/CA/CA3125/S-2-2025.SC.CA3125.51/file-storage/resources/components/angular-ui-router/release/angular-ui-router.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 32961,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "$resolve",
+          "$templateFactory"
+        ],
+        "provider": [
+          "$urlMatcherFactory",
+          "$urlRouter",
+          "$state",
+          "$view",
+          "$uiViewScroll"
+        ],
+        "factory": [
+          "$stateParams"
+        ],
+        "directive": [
+          "uiView",
+          "uiSref",
+          "uiSrefActive",
+          "uiSrefActiveEq",
+          "uiState"
+        ],
+        "filter": [
+          "isState",
+          "includedByState"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "select2.js",
+      "url": "https://tecdigital.tec.ac.cr/tds-curriculum-exp/pg_angular/bower_components/select2/select2.js",
+      "module": "malla_curricular",
+      "bytes": 144129,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          ".select2-highlighted",
+          ".select2-result:not(.select2-selected)"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "index.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-um/js/index.js",
+      "module": "modelo_usuario",
+      "bytes": 152314,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".role_radio:change",
+        ".menu_option:click",
+        "#menu_icon:click",
+        "#menu_text:click",
+        "input[type=radio][name=statisticTypeRadio]:change",
+        ".course:click",
+        "#statistic_selector:change",
+        "#student_selector:change",
+        ".consult_student_statistics:click",
+        ".consult_course_statistics:click",
+        ".get_student_list:click",
+        ".show_test:click",
+        "#btn_save_personalinfo:click",
+        "#btn_save_privacy:click",
+        "#select_download:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "breadcrumbs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/file-storage/resources/js/directives/breadcrumbs.js",
+      "module": "documentos_file_storage",
+      "bytes": 4534,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsBreadcrumb"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rightClick.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/file-storage/resources/js/directives/rightClick.js",
+      "module": "documentos_file_storage",
+      "bytes": 6960,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "fsContextMenu",
+          "ngRightClick"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "view.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/calendar/resources/js/view.js",
+      "module": "calendario",
+      "bytes": 366,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#button-today:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "elementDetail.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/file-storage/resources/js/directives/elementDetail.js",
+      "module": "documentos_file_storage",
+      "bytes": 29126,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "bindUnsafeHtml",
+          "fsElementDetail"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "inscripcion-estudiante.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-gestor-inscripcion/js/inscripcion-estudiante.js",
+      "module": "gestor_inscripcion",
+      "bytes": 2064,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#select_inscripcion:change",
+        "#btnClose:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "hammer.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/file-storage/resources/components/Materialize/js/hammer.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 18137,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "waves.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/file-storage/resources/components/Materialize/js/waves.js",
+      "module": "documentos_file_storage",
+      "bytes": 11535,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "functions.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-sms-configuration/js/functions.js",
+      "module": "mensajeria_sms",
+      "bytes": 11042,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#message:keyup",
+        "#todos:click",
+        "#enviar:click",
+        "#enviar2:click",
+        "#num_celular:keydown",
+        "#btn_delete:click",
+        "#btn_edit:click",
+        "#btn_accept:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "curriculum_actions_student.1.0.5.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-prematricula/js/curriculum_actions_student.1.0.5.js",
+      "module": "prematricula",
+      "bytes": 46284,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#id_plan:change",
+        "#btnAceptar:click",
+        ".radio_unselected:click",
+        "#closePopUp:click",
+        ".linkRquest:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "calendario.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-gestor-inscripcion/js/calendario.js",
+      "module": "gestor_inscripcion",
+      "bytes": 13143,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#btnDescarga:click",
+        "#btn_close:click",
+        "#btnEnrol:click",
+        "#btnAccept:click",
+        "#btnClose:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "utility-functions.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-gestor-inscripcion/js/utility-functions.js",
+      "module": "gestor_inscripcion",
+      "bytes": 3955,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".td-id-th:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "main-6DE5OU7V.js",
+      "url": "https://tecdigital.tec.ac.cr/tda-motor-juegos/compiled_files/main-6DE5OU7V.js",
+      "module": "motor_juegos_gaap",
+      "bytes": 3926563,
+      "technologies_evidenced": [
+        "Visualization/Export Lib",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 178,
+        "setInterval": 8
+      },
+      "http_interceptor_or_auth_markers": [
+        "X-Requested-With"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "rubrica-funciones.1.0.1.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/rubrica-funciones.1.0.1.js",
+      "module": "rubricas",
+      "bytes": 98935,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".delete-level-button:click",
+        ".up,.down:click",
+        ".update_level:on(change)",
+        ".level_attr:change",
+        ".c_weight:on(change)",
+        ".btn_expand_contract:click",
+        "#back_infografico:click",
+        "#link_infografico:click",
+        ".menu_row:click",
+        "#infoRubrica:click",
+        "#div_add_button:click",
+        "#div_add_column:click",
+        "body:on(focus)",
+        "#table_body:on(click)",
+        "#btn_save_rubric:click",
+        "#btn_cancel_rubric:click",
+        "#btn_cancel_popup:on(click)",
+        "#confirm:on(click)",
+        "#btn_public_rubric:click",
+        "#accept_confirm:click",
+        "#btn_activate_rubric:click",
+        "#btn_inactivate_rubric:click",
+        "#admin_levels:click",
+        "#new-level:click",
+        ".delete-level-button:on(click)",
+        ".text-area-criterion-custom:blur",
+        "#btn_guardar:click",
+        ".update_level:keydown",
+        ".update_value:on(change)",
+        ".update_th:on(change)",
+        ".update_value_first:on(change)",
+        "#btn_add_row:click",
+        ".info_category:click",
+        "#ayudaEditRubrica:click",
+        "#back:click",
+        "#export_rubric:click",
+        "#table_body:on(keyup)",
+        "#locale_rubric:change",
+        "#ayudaCreaRubrica:click",
+        "#permissions_detail:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "tooltip-funciones.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-rubrica/js/tooltip-funciones.js",
+      "module": "rubricas",
+      "bytes": 7349,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#btn_cat_help:click",
+        "#btn_rubric_license:click",
+        "#btn_scale_help:click",
+        ".btn_weigth_help:click",
+        "body:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "td-tabs.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-prematricula/js/td-tabs.js",
+      "module": "prematricula",
+      "bytes": 4447,
+      "technologies_evidenced": [
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        ".td-tabs-arrow:click",
+        ".td-tabs-header:on(click)"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "toasts.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/file-storage/resources/components/Materialize/js/toasts.js",
+      "module": "documentos_file_storage",
+      "bytes": 4461,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "toasts.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/file-storage/resources/components/Materialize/js/toasts.js",
+      "module": "documentos_file_storage",
+      "bytes": 4461,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/file-storage/resources/components/angular/angular.js",
+      "module": "documentos_file_storage",
+      "bytes": 1221184,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [
+        "anchorScrollExample",
+        "anchorScrollOffsetExample",
+        "bindExample",
+        "bindHtmlExample",
+        "cacheExampleApp",
+        "cancel-update-example",
+        "changeExample",
+        "checkboxExample",
+        "compileExample",
+        "controllerAsExample",
+        "controllerExample",
+        "cspExample",
+        "currencyExample",
+        "customControl",
+        "customInterpolationApp",
+        "dateExample",
+        "dateInputExample",
+        "defaultValueSelect",
+        "demo",
+        "do-check-module",
+        "documentExample",
+        "emailExample",
+        "equalsExample",
+        "filterExample",
+        "formExample"
+      ],
+      "angular_components": {
+        "controller": [
+          "ExampleController",
+          "ngAppDemoController",
+          "BadController",
+          "GoodController1",
+          "GoodController2",
+          "WelcomeController",
+          "Ctrl",
+          "ScrollController",
+          "headerCtrl",
+          "GreeterController",
+          "FetchController",
+          "DemoController",
+          "LogController",
+          "AppController",
+          "MainCtrl",
+          "FormController",
+          "DateController",
+          "SettingsController1",
+          "SettingsController2",
+          "MainController",
+          "CancelUpdateController",
+          "repeatController"
+        ],
+        "provider": [
+          "$compile",
+          "eventTracker"
+        ],
+        "factory": [
+          "ping",
+          "greeter",
+          "superCache",
+          "myHttpInterceptor",
+          "$xhrFactory"
+        ],
+        "service": [
+          "ping"
+        ],
+        "component": [
+          "myComponent",
+          "app",
+          "test",
+          "myComp"
+        ],
+        "directive": [
+          "directiveName",
+          "compile",
+          "myCurrentTime",
+          "pane",
+          "myButton",
+          "convertToNumber"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 6,
+        "setInterval": 1
+      },
+      "http_interceptor_or_auth_markers": [
+        "$httpProvider.interceptors",
+        "Authorization"
+      ],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "angular-ui-router.min.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/file-storage/resources/components/angular-ui-router/release/angular-ui-router.min.js",
+      "module": "documentos_file_storage",
+      "bytes": 32961,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "service": [
+          "$resolve",
+          "$templateFactory"
+        ],
+        "provider": [
+          "$urlMatcherFactory",
+          "$urlRouter",
+          "$state",
+          "$view",
+          "$uiViewScroll"
+        ],
+        "factory": [
+          "$stateParams"
+        ],
+        "directive": [
+          "uiView",
+          "uiSref",
+          "uiSrefActive",
+          "uiSrefActiveEq",
+          "uiState"
+        ],
+        "filter": [
+          "isState",
+          "includedByState"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "ngDraggable.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/file-storage/resources/js/ngDraggable.js",
+      "module": "documentos_file_storage",
+      "bytes": 40844,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "dotLRN / OpenACS"
+      ],
+      "angular_modules": [
+        "ngDraggable"
+      ],
+      "angular_components": {
+        "factory": [
+          "ngDragHitTest"
+        ],
+        "service": [
+          "ngDraggable"
+        ],
+        "directive": [
+          "ngDrag",
+          "ngDrop",
+          "ngDragClone",
+          "ngPreventDrag",
+          "ngCancelDrag",
+          "ngDragScroll"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "jszip.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-um/js/lib/jszip.js",
+      "module": "modelo_usuario",
+      "bytes": 365001,
+      "technologies_evidenced": [
+        "Vanilla JS"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 2
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "global.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/file-storage/resources/components/Materialize/js/global.js",
+      "module": "documentos_file_storage",
+      "bytes": 2702,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 1
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "waves.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/resources/components/Materialize/js/waves.js",
+      "module": "documentos_file_storage",
+      "bytes": 11535,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 3
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "fs.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneraliii/file-storage/resources/js/fs.js?v=2",
+      "module": "documentos_file_storage",
+      "bytes": 52354,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "filter": [
+          "cutText"
+        ],
+        "controller": [
+          "fsRenderCtrl"
+        ],
+        "directive": [
+          "focusMe"
+        ]
+      },
+      "client_routes_or_states": [
+        "folder"
+      ],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {
+        "setTimeout": 5
+      },
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "elementDetail.js",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/file-storage/resources/js/directives/elementDetail.js",
+      "module": "documentos_file_storage",
+      "bytes": 29126,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {
+        "directive": [
+          "bindUnsafeHtml",
+          "fsElementDetail"
+        ]
+      },
+      "client_routes_or_states": [],
+      "dom_event_listeners": [],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    },
+    {
+      "file": "detallesDocumento.1.0.1.js",
+      "url": "https://tecdigital.tec.ac.cr/resources/tda-control-plagio/js/detallesDocumento.1.0.1.js",
+      "module": "control_plagio",
+      "bytes": 8161,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "angular_modules": [],
+      "angular_components": {},
+      "client_routes_or_states": [],
+      "dom_event_listeners": [
+        "#downloadReport:click",
+        "#downloadDocument:click"
+      ],
+      "browser_storage_keys": [],
+      "timers_count": {},
+      "http_interceptor_or_auth_markers": [],
+      "realtime_ws_sse_markers": []
+    }
+  ]
+}

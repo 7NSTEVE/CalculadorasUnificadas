@@ -1,0 +1,111 @@
+{
+  "generated_at": "2026-11-26",
+  "zero_pii_verified": true,
+  "fixtures": {
+    "evaluation_item_live_2026": {
+      "assign_id": "254242434",
+      "name": "II Fase Proyecto",
+      "vt_grade_student": "5.20 / 8.00",
+      "nota_obtenida": "65.0 / 100.00",
+      "weight_pct": 8.0,
+      "earned_pct": 5.2,
+      "raw_grade_100": 65.0,
+      "has_rubric": true,
+      "rubric_id": "23678",
+      "due_date_text": "01/11/2026 23:59",
+      "allow_late_submission": false,
+      "group_size": 4
+    },
+    "rubric_analytic_matrix_live_2026": {
+      "rubric_id": "23678",
+      "title": "2S-2026- Fase II Proyecto de Física III",
+      "evaluated_target": "Grupo 5",
+      "max_level_points": 3.0,
+      "total_score": 65.0,
+      "max_score": 100.0,
+      "is_graded": true,
+      "scale_levels": [
+        {
+          "label": "Excelente",
+          "points": 3
+        },
+        {
+          "label": "Satisfactorio",
+          "points": 2
+        },
+        {
+          "label": "En desarrollo",
+          "points": 1
+        },
+        {
+          "label": "Insuficiente",
+          "points": 0
+        }
+      ],
+      "criteria": [
+        {
+          "category_name": "Fundamento físico y predicción",
+          "weight_pct": 15,
+          "achieved_level": 1,
+          "earned_weight_pct": 10.0,
+          "comment": "La explicación es correcta; conviene precisar condiciones de aplicación del modelo físico."
+        },
+        {
+          "category_name": "Montaje y procedimiento",
+          "weight_pct": 15,
+          "achieved_level": 1,
+          "earned_weight_pct": 10.0,
+          "comment": "Montaje funcional con limitaciones menores de reproducibilidad."
+        },
+        {
+          "category_name": "Calidad de los datos",
+          "weight_pct": 20,
+          "achieved_level": 1,
+          "earned_weight_pct": 13.33,
+          "comment": "Datos adecuados; documentar resolución instrumental."
+        },
+        {
+          "category_name": "Gráfico y análisis cuantitativo",
+          "weight_pct": 15,
+          "achieved_level": 1,
+          "earned_weight_pct": 10.0,
+          "comment": "Gráfico claro y correctamente rotulado."
+        },
+        {
+          "category_name": "Comparación teoría-experimento",
+          "weight_pct": 20,
+          "achieved_level": 1,
+          "earned_weight_pct": 13.33,
+          "comment": "Compara adecuadamente y señala causas principales."
+        },
+        {
+          "category_name": "Incertidumbre, limitaciones y conclusiones",
+          "weight_pct": 10,
+          "achieved_level": 1,
+          "earned_weight_pct": 6.67,
+          "comment": "Conclusiones bien sustentadas en los datos."
+        },
+        {
+          "category_name": "Presentación del informe y bitácora de evidencias",
+          "weight_pct": 5,
+          "achieved_level": 2,
+          "earned_weight_pct": 1.67,
+          "comment": "Completar bitácora cronológica de las etapas I y II."
+        }
+      ]
+    },
+    "tabla_horario_4_section_payload": "<table></table>-----16 10 17 55 3-----Circuitos CC*...-----IDE_MATERIA*EL2113*DSC_MATERIA*Circuitos Eléctricos CC*CAN_CREDITOS*4*IDE_GRUPO*50*NOM_PROFESOR*Docente Ejemplo*NOM_DIA*Miércoles*IDE_EDIFICIO*E*IDE_AULA*03*NUM_HORA_INICIO*16:10*NUM_HORA_FIN*17:55",
+    "citas_matricula_trless_html": "<table><tbody><td>2026-07-15</td><td>2</td><td>Semestral Ordinaria</td><td>08:00:00</td></tr><td>2026-07-16</td><td>2</td><td>Semestral Extraordinaria</td><td>10:00:00</td></tr></tbody></table>",
+    "detalle_notas_9col_row": [
+      "2026",
+      "Aprobada",
+      "88",
+      "",
+      "EL2113 - Circuitos Eléctricos CC",
+      "",
+      "Semestre",
+      "1",
+      "4"
+    ]
+  }
+}

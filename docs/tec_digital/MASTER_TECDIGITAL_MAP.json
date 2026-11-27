@@ -1,0 +1,1106 @@
+{
+  "generated_at": "2026-11-26",
+  "scope_statement": "Exhaustive empirical cartography of the observable authenticated student surface + public Guia de Horarios surface of TEC Digital 2026. Server-only internals and professor/admin-gated screens are explicitly separated and never claimed as 100% global platform coverage.",
+  "metrics": {
+    "spaces_discovered": 34,
+    "pages_visited_live": 500,
+    "unique_route_patterns": 235,
+    "modules_cataloged": 32,
+    "first_party_js_bundles_analyzed": 198,
+    "http_ajax_apis_documented": 212,
+    "graphql_operations_documented": 48,
+    "total_api_contracts": 260,
+    "frontend_hook_files": 140,
+    "blocked_urls_intercepted": 373,
+    "external_services_cataloged": 116,
+    "dom_skeletons_captured": 27,
+    "live_json_schemas_captured": 14,
+    "mutation_mask_enforced": 0
+  },
+  "spaces": [
+    {
+      "community_id": "escuela.E",
+      "department": "E",
+      "is_current_period": false,
+      "name": "Escuela De Ingenieria En Electronica",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "escuela.E",
+      "type": "ESCUELA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E"
+    },
+    {
+      "community_id": "estudiantes.E",
+      "department": "E",
+      "is_current_period": false,
+      "name": "Estudiantes E",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E",
+      "period": "Permanente",
+      "slug": "estudiantes.E",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E"
+    },
+    {
+      "community_id": "estesc",
+      "department": "E",
+      "is_current_period": false,
+      "name": "Estudiantes de Electrónica -  San Carlos",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E",
+      "period": "Permanente",
+      "slug": "estesc",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc"
+    },
+    {
+      "community_id": "campussc",
+      "department": "E",
+      "is_current_period": false,
+      "name": "Electrónica San Carlos",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E",
+      "period": "Permanente",
+      "slug": "campussc",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc"
+    },
+    {
+      "community_id": "aseteca",
+      "department": "E",
+      "is_current_period": false,
+      "name": "ASETECA",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E",
+      "period": "Permanente",
+      "slug": "aseteca",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca"
+    },
+    {
+      "community_id": "escuela.FI",
+      "department": "FI",
+      "is_current_period": false,
+      "name": "Escuela de Fisica",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "escuela.FI",
+      "type": "ESCUELA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI"
+    },
+    {
+      "community_id": "tutorias.fi.gen",
+      "department": "FI",
+      "is_current_period": false,
+      "name": "Tutorías y Talleres de Física General",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI",
+      "period": "Permanente",
+      "slug": "tutorias.fi.gen",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen"
+    },
+    {
+      "community_id": "cursonivelacinautodirigido2",
+      "department": "FI",
+      "is_current_period": false,
+      "name": "Curso nivelación autodirigido",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI",
+      "period": "Permanente",
+      "slug": "cursonivelacinautodirigido2",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2"
+    },
+    {
+      "community_id": "dop",
+      "department": "DOP",
+      "is_current_period": false,
+      "name": "Orientación y Psicología",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "dop",
+      "type": "COMUNIDAD",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/dop"
+    },
+    {
+      "community_id": "psed",
+      "department": "DOP",
+      "is_current_period": false,
+      "name": "PSED-NE (Apoyos educativos)",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/dop",
+      "period": "Permanente",
+      "slug": "psed",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed"
+    },
+    {
+      "community_id": "calculoyalgebralineal",
+      "department": "Catedra",
+      "is_current_period": false,
+      "name": "Cátedra de Cálculo y Álgebra Lineal",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "calculoyalgebralineal",
+      "type": "CATEDRA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/calculoyalgebralineal"
+    },
+    {
+      "community_id": "catedradefsicageneralii",
+      "department": "Catedra",
+      "is_current_period": false,
+      "name": "Cátedra de Física General II",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "catedradefsicageneralii",
+      "type": "CATEDRA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii"
+    },
+    {
+      "community_id": "catedradefsicageneraliii",
+      "department": "Catedra",
+      "is_current_period": false,
+      "name": "Cátedra de Física General III",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "catedradefsicageneraliii",
+      "type": "CATEDRA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneraliii"
+    },
+    {
+      "community_id": "estudiantes.tec",
+      "department": "Estudiantes",
+      "is_current_period": false,
+      "name": "Estudiantes",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "estudiantes.tec",
+      "type": "COMUNIDAD",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec"
+    },
+    {
+      "community_id": "estudiantes.SC",
+      "department": "Estudiantes",
+      "is_current_period": false,
+      "name": "Campus Tecnológico Local San Carlos",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec",
+      "period": "Permanente",
+      "slug": "estudiantes.SC",
+      "type": "SUBGRUPO",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC"
+    },
+    {
+      "community_id": "programas.tec",
+      "department": "Programas",
+      "is_current_period": false,
+      "name": "Programas",
+      "parent_url": "",
+      "period": "Permanente",
+      "slug": "programas.tec",
+      "type": "PROGRAMA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec"
+    },
+    {
+      "community_id": "pa.y.se.MATEC",
+      "department": "Programas",
+      "is_current_period": false,
+      "name": "Pa y Se_MATEC",
+      "parent_url": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec",
+      "period": "Permanente",
+      "slug": "pa.y.se.MATEC",
+      "type": "PROGRAMA",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC"
+    },
+    {
+      "community_id": "S-2-2026.SC.EL2113.50",
+      "department": "E",
+      "is_current_period": true,
+      "name": "Circuitos eléctricos en corriente continua GR 50",
+      "parent_url": "",
+      "period": "S-2-2026",
+      "slug": "S-2-2026.SC.EL2113.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50"
+    },
+    {
+      "community_id": "S-2-2026.SC.FI1102.50",
+      "department": "ECE",
+      "is_current_period": true,
+      "name": "Física general II GR 50",
+      "parent_url": "",
+      "period": "S-2-2026",
+      "slug": "S-2-2026.SC.FI1102.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50"
+    },
+    {
+      "community_id": "S-2-2026.SC.FI2103.51",
+      "department": "ECE",
+      "is_current_period": true,
+      "name": "Física general III GR 51",
+      "parent_url": "",
+      "period": "S-2-2026",
+      "slug": "S-2-2026.SC.FI2103.51",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51"
+    },
+    {
+      "community_id": "S-1-2026.SC.EL2110.50",
+      "department": "E",
+      "is_current_period": false,
+      "name": "Laboratorio de mediciones eléctricas GR 50",
+      "parent_url": "",
+      "period": "S-1-2026",
+      "slug": "S-1-2026.SC.EL2110.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50"
+    },
+    {
+      "community_id": "S-1-2026.SC.EL2113.50",
+      "department": "E",
+      "is_current_period": false,
+      "name": "Circuitos eléctricos en corriente continua GR 50",
+      "parent_url": "",
+      "period": "S-1-2026",
+      "slug": "S-1-2026.SC.EL2113.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50"
+    },
+    {
+      "community_id": "S-1-2026.SC.FI1102.51",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Física general II GR 51",
+      "parent_url": "",
+      "period": "S-1-2026",
+      "slug": "S-1-2026.SC.FI1102.51",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51"
+    },
+    {
+      "community_id": "S-1-2026.SC.FI1201.53",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Laboratorio física general I GR 53",
+      "parent_url": "",
+      "period": "S-1-2026",
+      "slug": "S-1-2026.SC.FI1201.53",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53"
+    },
+    {
+      "community_id": "S-1-2026.SC.MA1103.52",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Cálculo y álgebra lineal GR 52",
+      "parent_url": "",
+      "period": "S-1-2026",
+      "slug": "S-1-2026.SC.MA1103.52",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52"
+    },
+    {
+      "community_id": "S-1-2026.SC.FI2103.50",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Física general III GR 50",
+      "parent_url": "",
+      "period": "S-1-2026",
+      "slug": "S-1-2026.SC.FI2103.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/S-1-2026.SC.FI2103.50"
+    },
+    {
+      "community_id": "V-1-2025.SC.FI2103.50",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Física general III GR 50",
+      "parent_url": "",
+      "period": "V-1-2025",
+      "slug": "V-1-2025.SC.FI2103.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50"
+    },
+    {
+      "community_id": "S-2-2025.SC.CA3125.51",
+      "department": "CA",
+      "is_current_period": false,
+      "name": "Análisis y diseño de algoritmos GR 51",
+      "parent_url": "",
+      "period": "S-2-2025",
+      "slug": "S-2-2025.SC.CA3125.51",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/CA/CA3125/S-2-2025.SC.CA3125.51"
+    },
+    {
+      "community_id": "S-2-2025.SC.FI1101.50",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Física general I GR 50",
+      "parent_url": "",
+      "period": "S-2-2025",
+      "slug": "S-2-2025.SC.FI1101.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1101/S-2-2025.SC.FI1101.50"
+    },
+    {
+      "community_id": "S-2-2025.SC.MA1103.50",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Cálculo y álgebra lineal GR 50",
+      "parent_url": "",
+      "period": "S-2-2025",
+      "slug": "S-2-2025.SC.MA1103.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-2-2025.SC.MA1103.50"
+    },
+    {
+      "community_id": "S-1-2025.SC.AE4208.50",
+      "department": "AE",
+      "is_current_period": false,
+      "name": "Desarrollo de emprendedores GR 50",
+      "parent_url": "",
+      "period": "S-1-2025",
+      "slug": "S-1-2025.SC.AE4208.50",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/AE/AE4208/S-1-2025.SC.AE4208.50"
+    },
+    {
+      "community_id": "S-1-2025.SC.CI1231.52",
+      "department": "EIC",
+      "is_current_period": false,
+      "name": "Inglés II GR 52",
+      "parent_url": "",
+      "period": "S-1-2025",
+      "slug": "S-1-2025.SC.CI1231.52",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52"
+    },
+    {
+      "community_id": "S-1-2025.SC.FI1101.51",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Física general I GR 51",
+      "parent_url": "",
+      "period": "S-1-2025",
+      "slug": "S-1-2025.SC.FI1101.51",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51"
+    },
+    {
+      "community_id": "S-1-2025.SC.MA1102.53",
+      "department": "ECE",
+      "is_current_period": false,
+      "name": "Cálculo diferencial e integral GR 53",
+      "parent_url": "",
+      "period": "S-1-2025",
+      "slug": "S-1-2025.SC.MA1102.53",
+      "type": "CLASE",
+      "url": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1102/S-1-2025.SC.MA1102.53"
+    }
+  ],
+  "external_services": [
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/index",
+      "host": "t.me",
+      "origin": "https://t.me",
+      "path": "/TecKapiBot"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/index",
+      "host": "tecdigital.zendesk.com",
+      "origin": "https://tecdigital.zendesk.com",
+      "path": "/hc/es/requests/new"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/index",
+      "host": "tecdigital.zendesk.com",
+      "origin": "https://tecdigital.zendesk.com",
+      "path": "/hc/es"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/tda-control-plagio/",
+      "host": "tec.turnitin.com",
+      "origin": "https://tec.turnitin.com",
+      "path": "/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/tda-prematricula/",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/reglamento-regimen-ensenanza-aprendizaje-instituto-tecnologico-costa-rica"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/fisica_itcr_ac_cr/EagdvvJjr0BPrr2MytUhPU8B9u3NmJ7NT1ERSDeI4RnE3g"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:f:/g/personal/fisica_itcr_ac_cr/Er8EPiygeu5Ah4cAst6mlTcBReUpJgQ9WhgVB-U0Emfilg"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/one-community?page_num=0",
+      "host": "t.me",
+      "origin": "https://t.me",
+      "path": "/+5uH_kEZIh24zYT"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/calculoyalgebralineal/one-community?page_num=0",
+      "host": "view.genially.com",
+      "origin": "https://view.genially.com",
+      "path": "/678e8a3c6e15383a5fce7f09"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneraliii/one-community?page_num=0",
+      "host": "tec.ac.cr",
+      "origin": "https://tec.ac.cr",
+      "path": "/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/calendario-institucional"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num=0",
+      "host": "tec-appsext.itcr.ac.cr",
+      "origin": "https://tec-appsext.itcr.ac.cr",
+      "path": "/Matricula/frmAutenticacion.aspx"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num=0",
+      "host": "aplics.tec.ac.cr",
+      "origin": "http://aplics.tec.ac.cr",
+      "path": "/TesoreriaOnline/Autenticacion.aspx"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num=0",
+      "host": "biblioteca.tec.ac.cr",
+      "origin": "http://biblioteca.tec.ac.cr",
+      "path": "/F/-/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/unidades/federacion-estudiantes-tecnologico-costa-rica-feitec"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/departamentos/departamento-admision-registro-dar"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/becas-residencias-estudiantiles"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/beca-total-mauricio-campos"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/beca-prestamo"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/beca-exoneracion-porcentual-derechos-estudio"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num=0",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/unidades/biblioteca-campus-tecnologico-local-san-carlos"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num=0",
+      "host": "www.facebook.com",
+      "origin": "https://www.facebook.com",
+      "path": "/odontologia.tecsc.3"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/one-community?page_num=0",
+      "host": "itcr.zoom.us",
+      "origin": "https://itcr.zoom.us",
+      "path": "/j/89594969525"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/one-community?page_num=0",
+      "host": "www.youtube.com",
+      "origin": "https://www.youtube.com",
+      "path": "/playlist"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/evaluation/tda-ce-estudiante/tda-index",
+      "host": "www.tec.ac.cr",
+      "origin": "https://www.tec.ac.cr",
+      "path": "/reglamentos/reglamento-regimen-ensenanza-aprendizaje-tecnologico-costa-rica-sus-reformas"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQCloBIEA4c3SYCPQiiUZ2SDASkYWhDP6UQzSF8cXwFViAE"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQDLHZ7lLcamQ4OuV2ZGbg7DAblgwrvrxY_fdmWjWUc3hE8"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQBK-5kPnUkUR7bHPbKXnP7iAUe0fljCbil-eo3VCuNxNrM"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/m_gamboa_itcr_ac_cr/IQA2NheBkVHUS5JMyhsm3Fc5AXVVDEXaxP_iX2D7pMlg6Xk"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQDjYJgdblthQKv9EpdUcYn2AWn5NXwsAMz1vJXohBmRIkg"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQAparpZToj5SLejN8NWbQaIAeWyVWB9NySKwm3qR_OhagM"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/m_gamboa_itcr_ac_cr/IQB6VdTvVaZDR4y1oZXZa5fnAQvTsTcXBnRFtDyNpAC0Xz4"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQBmZ9JnDBTCSbZxxlcCABXiAaXABGJRDOEKoIW8iC_uzXA"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/m_gamboa_itcr_ac_cr/IQAh0td0-GlWRI7CVkLiP3-RAeaq0dE4dGzQmLMfj_BFGPo"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:u:/g/personal/ceguillen_itcr_ac_cr/IQBv9CpMy_WUR4k8YUWSmHevASLGeoMUvEEdY3SA6UuNSDQ"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:u:/g/personal/ceguillen_itcr_ac_cr/IQBAG7tTEo-yR5U5CjSh7txwAcHKAOKrW6r_3KavL3A8xd0"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:f:/g/personal/ceguillen_itcr_ac_cr/IgDMOioIhnOiTYh_rEmbg84yAfF3hG27BNYPEnhf7zUR1AY"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQD16A7zSNQXRqFBCQNHpCSvAYBSdI1yr0QwsYpG4WC4bVg"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQDkbY6SHZM2Q6bZ1GFGRapYAcu-lby8NRmwlgZ76Fj464c"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/my"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQBdy_5xONcGS7q57vMqYFg7ATMgHKDBVZcvpot1DR9J-2g"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/LI1TFgtoG0Y"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:i:/g/personal/ceguillen_itcr_ac_cr/IQCLLEHq6r_VTL_oXt9y_IccAau9sfctQV1xZc1SJy6rPeU"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "www.youtube.com",
+      "origin": "https://www.youtube.com",
+      "path": "/watch"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQDrnKQXL5Q1T6Wd3JBjm5VJAUiuVry8lbtm3_OL8Jb-pZE"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/LpLCKM5FZt0"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQBfGWuztFG-T7oHNhCg8szKAYvl8n8r44h6w8BlC1blfxQ"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQBuwZCbNNuhRKZXO9iydhS4AaJGQnPxOWNWjIz2AeymHSQ"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/kzV8XPb8gF8"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/TJl6TA4gpzU"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQC7mfm2IyQsQ6bL7YiBEhTZAX27FP2RG9Zo0STlLImocI0"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQAxYOWNacNpR44vB3mkIjGTAfbFTMCDJvICmjYxcPnitxk"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQAK-JMi3ntzQp2rjYIBYbLcAVgnA0xyDPdCW6wo9U-I2X4"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/HYHAPE5cTVk"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQCtNZbH_mRkRbZx6qN7uCPpAY6s-l5FjUMEbvk6EN3ceeo"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/LbgnKta4ppI"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "youtu.be",
+      "origin": "https://youtu.be",
+      "path": "/1cEn_gJ9TKg"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQDgA64LS75rQpryiWOtJlvXARPm8fH9VArf6UTu4Cp6jGA"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQAriFbeaLjRTrc3kyqLoHySAZvlMr2HZgBFiHqSEponF8w"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQDL-b9MbTJWT6U_4HNav1IOAfnErnzlm5uH-6yWk0d23X4"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQBdG3It7f1xTo0hIkYqBCBYASDbAnBb0vdEOuemJzbwOPA"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/evaluation/tda-ce-estudiante/tda-index",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:b:/g/personal/ceguillen_itcr_ac_cr/IQC3nxE_kPogTp0wdAA3PSK6AS8wuYFdTxDo20u46tqeSmg"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQDqwKjV3nf0SbXThVXMm1mMAe44EUhaT1yCqCLDj0P1Q-c"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQDjeUwDjWsNR47AT1u_2D3iAYPjRlhlkJ9Ej3kr2-8h7iY"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQDAe05t5yDbT6DHKvskT1GNAS8nVr64UmaNlPYVKlAs6yw"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQDst2Ob4018SL9ovP8OT0VmAe1MxQAQj0Kn1ovccYwyfBc"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:v:/g/personal/m_gamboa_itcr_ac_cr/IQA-GGguRTvjSZddiLKh0Lp7Afg-VXdDGIpKRPAhSlu9qBE"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/CA/CA3125/S-2-2025.SC.CA3125.51/one-community?page_num=0",
+      "host": "chat.whatsapp.com",
+      "origin": "https://chat.whatsapp.com",
+      "path": "/JuCV31V4hD6FlofR9EukFC"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/MA1103/S-2-2025.SC.MA1103.50/one-community?page_num=0",
+      "host": "teams.microsoft.com",
+      "origin": "https://teams.microsoft.com",
+      "path": "/l/team/19%3AIL8Rb6iI4Gy9RlfbRWhW_GHw0o43mJGezNItrOc16J41%40thread.tacv2/conversations"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/AE/AE4208/S-1-2025.SC.AE4208.50/one-community?page_num=0",
+      "host": "urldefense.com",
+      "origin": "https://urldefense.com",
+      "path": "/v3/__https://youtu.be/BlH_njGoIyg"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/AE/AE4208/S-1-2025.SC.AE4208.50/one-community?page_num=0",
+      "host": "urldefense.com",
+      "origin": "https://urldefense.com",
+      "path": "/v3/__https://youtu.be/50_70WR6aIQ__;!!O7R4XxaP!cktdapcYy-DIhlpAwNFnZOgtnpy5huuSwO3NRJaW3IzOOcvxObsiRUChlrj7K9FittM2dEqtCtAdU9UsOdRKiOjj8w$"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/AE/AE4208/S-1-2025.SC.AE4208.50/one-community?page_num=0",
+      "host": "itcr.zoom.us",
+      "origin": "https://itcr.zoom.us",
+      "path": "/j/89908047084"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "tecnube1-my.sharepoint.com",
+      "origin": "https://tecnube1-my.sharepoint.com",
+      "path": "/:i:/g/personal/cvindas_itcr_ac_cr/Eb-B1U4A0XlGokWJ1qgRz10BqWiC4ip5x3dDHvmiyOsM8w"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "learnenglish.britishcouncil.org",
+      "origin": "https://learnenglish.britishcouncil.org",
+      "path": "/grammar/b1-b2-grammar/modals-permission-obligation"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "view.genially.com",
+      "origin": "https://view.genially.com",
+      "path": "/637eb20b04f257001a3d9783"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.perfect-english-grammar.com",
+      "origin": "https://www.perfect-english-grammar.com",
+      "path": "/first-conditional-exercise-1.html"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "wordwall.net",
+      "origin": "https://wordwall.net",
+      "path": "/resource/77438797"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "learningapps.org",
+      "origin": "https://learningapps.org",
+      "path": "/watch"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.liveworksheets.com",
+      "origin": "https://www.liveworksheets.com",
+      "path": "/w/en/english-specific-purposes-esp/7961431"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.lingobest.com",
+      "origin": "https://www.lingobest.com",
+      "path": "/free-online-english-course/lessons/conjunctions-reason-result/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "dictionary.cambridge.org",
+      "origin": "https://dictionary.cambridge.org",
+      "path": "/it/grammatica/grammatica-britannico/long"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "test-english.com",
+      "origin": "https://test-english.com",
+      "path": "/grammar-points/a2/purpose-to-for/3/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "test-english.com",
+      "origin": "https://test-english.com",
+      "path": "/grammar-points/b1/modal-verbs-of-deduction/3/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "test-english.com",
+      "origin": "https://test-english.com",
+      "path": "/grammar-points/b1-b2/past-modal-verbs/3/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "britanico.edu.pe",
+      "origin": "https://britanico.edu.pe",
+      "path": "/be-britanico/que-son-las-collocations-en-ingles/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.englishpronunciationmadrid.com",
+      "origin": "https://www.englishpronunciationmadrid.com",
+      "path": "/have-weak-and-strong-form/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "test-english.com",
+      "origin": "https://test-english.com",
+      "path": "/grammar-points/a1/adverbs-manner//"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "byjus.com",
+      "origin": "https://byjus.com",
+      "path": "/english/adverb-exercises/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.perfect-english-grammar.com",
+      "origin": "https://www.perfect-english-grammar.com",
+      "path": "/adverbs-or-adjectives-exercise-1.html"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "freeonlinedice.com",
+      "origin": "https://freeonlinedice.com",
+      "path": "/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.j2e.com",
+      "origin": "https://www.j2e.com",
+      "path": "/grove-school/Mr+D+Parton/Friday+SPAG"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "wordwall.net",
+      "origin": "https://wordwall.net",
+      "path": "/play/14847/028/329"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "view.genially.com",
+      "origin": "https://view.genially.com",
+      "path": "/6373d0f56dcd1800139ae7f6/interactive-content-verb-infinitive"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.autoenglish.org",
+      "origin": "https://www.autoenglish.org",
+      "path": "/writing/formalandinformalexercise.htm"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.flo-joe.co.uk",
+      "origin": "https://www.flo-joe.co.uk",
+      "path": "/cae/students/writing/register/rgts2.htm"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "test-english.com",
+      "origin": "https://test-english.com",
+      "path": "/grammar-points/b1/present-perfect-simple-present-perfect-continuous/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.english-grammar.at",
+      "origin": "https://www.english-grammar.at",
+      "path": "/online_exercises/passive-voice/pa020-active-passive.htm"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "wordwall.net",
+      "origin": "https://wordwall.net",
+      "path": "/resource/15931050/book-4-10b-articles"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "learnenglish.britishcouncil.org",
+      "origin": "https://learnenglish.britishcouncil.org",
+      "path": "/grammar/a1-a2-grammar/articles-a-an-the"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "test-english.com",
+      "origin": "https://test-english.com",
+      "path": "/grammar-points/a1/much-many-lot-little-few/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.englisch-hilfen.de",
+      "origin": "https://www.englisch-hilfen.de",
+      "path": "/en/exercises/if_clauses/type_2_mix4.htm"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.english-4u.de",
+      "origin": "https://www.english-4u.de",
+      "path": "/en/grammar-exercises/reported-speech.htm"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.englisch-hilfen.de",
+      "origin": "https://www.englisch-hilfen.de",
+      "path": "/en/exercises/reported_speech/questions.htm"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "wordwall.net",
+      "origin": "https://wordwall.net",
+      "path": "/resource/13082930/reported-speech"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "forms.gle",
+      "origin": "https://forms.gle",
+      "path": "/Sr3R5t2pRBJpg8Kv8"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "www.ego4u.com",
+      "origin": "https://www.ego4u.com",
+      "path": "/en/cram-up/grammar/conditional-sentences/type-3/exercises"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "view.genially.com",
+      "origin": "https://view.genially.com",
+      "path": "/6574bff10ce4f6001512d029/interactive-content-reported-speech"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/one-community?page_num=0",
+      "host": "padlet.com",
+      "origin": "https://padlet.com",
+      "path": "/cvindas/ci1231-project-video-47me2sp5umb9crbs"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "view.genial.ly",
+      "origin": "https://view.genial.ly",
+      "path": "/60182188734d330d83820072/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "view.genial.ly",
+      "origin": "https://view.genial.ly",
+      "path": "/60181cfc7dffcd0d8c5a3d90/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "view.genial.ly",
+      "origin": "https://view.genial.ly",
+      "path": "/601afc81b040e00cffb3c6e4"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "view.genial.ly",
+      "origin": "https://view.genial.ly",
+      "path": "/6019be065cc6580da7b0c167"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "view.genial.ly",
+      "origin": "https://view.genial.ly",
+      "path": "/601ad0dd5357de0cf8cddc91"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "www.facebook.com",
+      "origin": "https://www.facebook.com",
+      "path": "/tecdigitalcr"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "twitter.com",
+      "origin": "https://twitter.com",
+      "path": "/"
+    },
+    {
+      "discovered_on": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "host": "www.youtube.com",
+      "origin": "https://www.youtube.com",
+      "path": "/user/tecdigitalcostarica"
+    }
+  ],
+  "registries": {
+    "routes": "TECDIGITAL_ROUTE_REGISTRY.json",
+    "apis": "TECDIGITAL_API_REGISTRY.json",
+    "modules": "TECDIGITAL_MODULE_REGISTRY.json",
+    "hooks": "TECDIGITAL_HOOKS_REGISTRY.json",
+    "ui_components": "TECDIGITAL_UI_COMPONENTS.json",
+    "data_models": "TECDIGITAL_DATA_MODELS.json",
+    "permissions": "TECDIGITAL_PERMISSIONS_MATRIX.json",
+    "discovery_queue": "TECDIGITAL_DISCOVERY_QUEUE.json",
+    "coverage_matrix": "TECDIGITAL_COVERAGE_MATRIX.csv",
+    "reference_reconstruction": "reference_reconstruction/index.html"
+  }
+}

@@ -70,7 +70,7 @@ bool RunTecDigitalCenterDialog(
     SearchActiveDocFn onSearchActiveDoc = nullptr,
     const UiGlass::GlassSettings* glassSettings = nullptr,
     const wchar_t* autoScreenshotPathW = nullptr,
-    bool seedVisualAuditDemoData = false);
+    int initialInnerTab = 0);
 
 }  // namespace DocStudio::TecDigitalUi
 

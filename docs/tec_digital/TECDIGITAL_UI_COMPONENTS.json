@@ -1,0 +1,1184 @@
+{
+  "generated_at": "2026-11-26",
+  "pages_inspected": 500,
+  "aggregate_counts_across_500_pages": {
+    "buttons": 1853,
+    "modals": 2884,
+    "accordions": 528,
+    "forms": 48,
+    "links": 14348
+  },
+  "desktop_vs_mobile_responsive_markers": {
+    "menu-left": 231
+  },
+  "frontend_directive_attributes": {
+    "data-toggle": 40,
+    "ng-app": 36,
+    "data-rubricid": 31,
+    "ng-model": 4,
+    "ng-repeat": 3,
+    "ng-click": 1,
+    "ng-controller": 1
+  },
+  "portlets_by_module": {
+    "catedras": [
+      "\n      <div class=\"portlet-controls\">\n        <table>\n          <tr valign=\"top\">\n            <td>\n              <div class= 'Información'>",
+      "\n      <div class=\"portlet-controls\">\n        <table>\n          <tr valign=\"top\">\n            <td>\n              <div class= 'Noticias'>",
+      "\n      <div class=\"portlet-controls\">\n        <table>\n          <tr valign=\"top\">\n            <td>\n              <div class= 'Subgrupos'>"
+    ],
+    "escuelas_comunidades": [
+      "\n      <div class=\"portlet-controls\">\n        <table>\n          <tr valign=\"top\">\n            <td>\n              <div class= 'static_portlet'>"
+    ],
+    "mi_cuenta_preferencias": [
+      "Administrador de Mensajería SMS",
+      "Grupos",
+      "Mi Cuenta",
+      "Mi foto",
+      "Opciones",
+      "Preferencias",
+      "Privacidad",
+      "Soporte"
+    ]
+  },
+  "banners_by_module": {
+    "catedras": [
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/calendario_cronograma.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/consigna_orientacion.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/cronograma_semanal.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/ejercicios_resueltos.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/habilitar_contenido.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/navegacion_semana.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/programa_curso.png"
+    ],
+    "control_plagio": [
+      "/resources/tda-control-plagio/img/banner_turnitin.png"
+    ],
+    "cursos_clases": [
+      "https://tecdigital.tec.ac.cr/dotlrn/file-storage/view/dotlrn_fs_443389_root_folder%2Fdotlrn_fs_443389_shared_folder%2Fconfiguraci-ndecursos%2Ficonos%2FImagen.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/file-storage/view/dotlrn_fs_443389_root_folder%2Fdotlrn_fs_443389_shared_folder%2Fconfiguraci-ndecursos%2Ficonos%2FPDF-232444168.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/file-storage/view/dotlrn_fs_443389_root_folder%2Fdotlrn_fs_443389_shared_folder%2Fconfiguraci-ndecursos%2Ficonos%2FTouTube3.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/file-storage/view/dotlrn_fs_443389_root_folder%2Fdotlrn_fs_443389_shared_folder%2Fconfiguraci-ndecursos%2Ficonos%2Fonedrive.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_AE/img/icono_ae_gestores_curso.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_AE/img/programa_ae_gestores_curso.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/TD/img/portal_modelo2022/bienvenida.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/TD/img/portal_modelo2022/recomendaciones.png"
+    ],
+    "dop_bienestar": [
+      "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/file-storage/view/conocetec%2F2026%2FInvitacion_PSED-NE_01-09.Trabajo.equipo.png"
+    ],
+    "escuelas_comunidades": [
+      "https://tecdigital.tec.ac.cr/dotlrn/classes/FI/FI1101/S-2-2022.CA.FI1101.6/file-storage/view/algebra_v1.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/classes/FI/FI1101/S-2-2022.CA.FI1101.6/file-storage/view/book.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/classes/FI/FI1101/S-2-2022.CA.FI1101.6/file-storage/view/geometry-tools.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/consigna_orientacion.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/fisica1.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/fisica2.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/fisica3.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/go_back.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/material_apoyo.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/objetivos_aprendizaje.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/practicas.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/repaso.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/solicitud_horario_especial.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/tutorias1_consulta1.png",
+      "https://tecdigital.tec.ac.cr/repositorio/tecdigital/ESC_FISICA/img/video_preguntas.png"
+    ],
+    "espacios_estudiantiles": [
+      "/dotlrn/estudiantes.tec/estudiantes.SC/file-storage/view/public%2Ficonos%2FBienvenidaSnCarlos.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FBienvenida.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FImagenBienvenida.jpg",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FSedeAlajuela.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FSede_Cartago.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FSede_San_Carlos.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2FSnCarlosFondo.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FsedeLimon.png",
+      "/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2FsedeSan_Jose.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Fcontactos.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F33.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F34.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F35.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F36.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F37.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F38.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F39.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F40.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F41.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/view/public%2Ficonos%2Ficonos-servicios-zip%2F42.png"
+    ],
+    "programas_institucionales": [
+      "https://tecdigital.tec.ac.cr/dotlrn/file-storage/view/dotlrn_fs_407764_root_folder%2Fdop-academico-2024%2FFrase_3.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/file-storage/view/bienvenidos.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/file-storage/view/capsulas%2FCapsula-3.png",
+      "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/file-storage/view/capsulas%2FInvitacion.sesion6.21.05.2026.png"
+    ]
+  },
+  "dynamic_page_num_tabs_sample_by_module": {
+    "calendario": [
+      "/dotlrn/escuela/escuela.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/?page_num=3",
+      "/dotlrn/escuela/escuela.E/?page_num=4",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=3",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=3",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3",
+      "/dotlrn/escuela/escuela.FI/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/?page_num=1",
+      "/dotlrn/escuela/escuela.FI/?page_num=2",
+      "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1"
+    ],
+    "catedras": [
+      "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=0",
+      "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=3",
+      "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=5",
+      "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=7",
+      "/dotlrn/catedras.tec/catedradefsicageneralii/?page_num=0",
+      "/dotlrn/catedras.tec/catedradefsicageneralii/?page_num=1",
+      "/dotlrn/catedras.tec/catedradefsicageneralii/?page_num=3",
+      "/dotlrn/catedras.tec/catedradefsicageneralii/?page_num=5",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=10&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=11&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=12&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=13&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=14&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=15&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=16&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=17&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=18&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=19&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=20&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=21&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=22&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=23&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=24&amp;loc=",
+      "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/catedradefsicageneralii/one-community?page_num=25&amp;loc=",
+      "one-community?page_num=10&amp;loc="
+    ],
+    "cursos_clases": [
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=0",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=1",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=2",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=3",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=0",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=1",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=2",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=5",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=0",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=1",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=2",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=3",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=4",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=6",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=7",
+      "/shared/send-email?sendto=1380689&amp;community_id=245724277&amp;return_url=/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/one-community?page_num=0",
+      "/shared/send-email?sendto=189805635&amp;community_id=245724277&amp;return_url=/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/one-community?page_num=0",
+      "/shared/send-email?sendto=202099556&amp;community_id=245724277&amp;return_url=/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/one-community?page_num=0",
+      "/shared/send-email?sendto=420439&amp;community_id=230422368&amp;return_url=/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/one-community?page_num=0",
+      "/shared/send-email?sendto=422389&amp;community_id=245726693&amp;return_url=/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/one-community?page_num=0"
+    ],
+    "documentos_file_storage": [
+      "/dotlrn/escuela/escuela.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/?page_num=3",
+      "/dotlrn/escuela/escuela.E/?page_num=4",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=3",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=3",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3",
+      "/dotlrn/escuela/escuela.FI/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/?page_num=1",
+      "/dotlrn/escuela/escuela.FI/?page_num=2",
+      "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1"
+    ],
+    "dop_bienestar": [
+      "/dotlrn/dop/?page_num=0",
+      "/dotlrn/dop/?page_num=1",
+      "/dotlrn/dop/?page_num=2",
+      "/dotlrn/dop/?page_num=3",
+      "/dotlrn/dop/psed/?page_num=0",
+      "/dotlrn/dop/psed/?page_num=1",
+      "/dotlrn/dop/psed/?page_num=2",
+      "/dotlrn/dop/psed/?page_num=3",
+      "/dotlrn/dop/psed/?page_num=4",
+      "/dotlrn/dop/psed/?page_num=5",
+      "/dotlrn/dop/psed/?page_num=7"
+    ],
+    "escuelas_comunidades": [
+      "/dotlrn/escuela/escuela.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/?page_num=3",
+      "/dotlrn/escuela/escuela.E/?page_num=4",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=3",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=3",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3",
+      "/dotlrn/escuela/escuela.FI/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/?page_num=1",
+      "/dotlrn/escuela/escuela.FI/?page_num=2",
+      "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=4"
+    ],
+    "espacios_estudiantiles": [
+      "/dotlrn/estudiantes.tec/?page_num=0",
+      "/dotlrn/estudiantes.tec/?page_num=2",
+      "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=0",
+      "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=1",
+      "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=2",
+      "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=3",
+      "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=4",
+      "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=5"
+    ],
+    "evaluaciones": [
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=0",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=1",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=2",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=3",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=0",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=1",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=2",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=3",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=0",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=1",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=2",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=4",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=0",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=1",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=2",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=5",
+      "/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53/?page_num=0",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=0",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=1"
+    ],
+    "foros": [
+      "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/?page_num=0",
+      "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/?page_num=1",
+      "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/?page_num=11",
+      "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/?page_num=2",
+      "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/?page_num=4",
+      "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/?page_num=5"
+    ],
+    "integrantes": [
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=0",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=1",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=2",
+      "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/?page_num=3",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=0",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=1",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=2",
+      "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/?page_num=3",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+      "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=0",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=1",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=2",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/?page_num=4",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=0",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=1",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=2",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=3",
+      "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/?page_num=5",
+      "/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53/?page_num=0",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=0",
+      "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/?page_num=1"
+    ],
+    "noticias": [
+      "/dotlrn/escuela/escuela.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/?page_num=3",
+      "/dotlrn/escuela/escuela.E/?page_num=4",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+      "/dotlrn/escuela/escuela.E/aseteca/?page_num=3",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/campussc/?page_num=3",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+      "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3",
+      "/dotlrn/escuela/escuela.FI/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/?page_num=1",
+      "/dotlrn/escuela/escuela.FI/?page_num=2",
+      "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+      "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1"
+    ],
+    "programas_institucionales": [
+      "/dotlrn/programas.tec/?page_num=0",
+      "/dotlrn/programas.tec/?page_num=1",
+      "/dotlrn/programas.tec/?page_num=2",
+      "/dotlrn/programas.tec/?page_num=3",
+      "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=0",
+      "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=1",
+      "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=2",
+      "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=4",
+      "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=6"
+    ]
+  },
+  "forms_inventory_sample": [
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "mi_cuenta_preferencias",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/control-panel",
+      "method": "post",
+      "action": "/user/basic-info-update",
+      "form_id": "user_info",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "user_id",
+        "return_url",
+        "message",
+        "authority_id",
+        "username",
+        "first_names",
+        "last_name",
+        "site_wide_locale",
+        "formbutton:edit"
+      ]
+    },
+    {
+      "module": "portal_dotlrn",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/configure",
+      "method": "post",
+      "action": "",
+      "form_id": "add-form",
+      "field_names": [
+        "name",
+        "display",
+        "display",
+        "visibility",
+        "visibility",
+        "portal_id",
+        "community_id",
+        "action",
+        "return_url"
+      ]
+    },
+    {
+      "module": "portal_dotlrn",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/configure",
+      "method": "post",
+      "action": "",
+      "form_id": "section-add-form",
+      "field_names": [
+        "portal_id",
+        "region",
+        "page_id",
+        "return_url",
+        "community_id",
+        "action"
+      ]
+    },
+    {
+      "module": "mi_cuenta_preferencias",
+      "page_pattern": "https://tecdigital.tec.ac.cr/pvt/home",
+      "method": "post",
+      "action": "/user/basic-info-update",
+      "form_id": "user_info",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "user_id",
+        "return_url",
+        "message",
+        "authority_id",
+        "username",
+        "first_names",
+        "last_name",
+        "site_wide_locale",
+        "formbutton:edit"
+      ]
+    },
+    {
+      "module": "expediente_estudiantil",
+      "page_pattern": "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil/",
+      "method": "GET",
+      "action": "",
+      "form_id": "",
+      "field_names": [
+        "carne_tdsLib",
+        "select_sede",
+        "select_carrera",
+        "select_plan"
+      ]
+    },
+    {
+      "module": "modelo_usuario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/tda-um/",
+      "method": "GET",
+      "action": "",
+      "form_id": "download_form",
+      "field_names": [
+        "download_option",
+        "download_option"
+      ]
+    },
+    {
+      "module": "feria_negocios",
+      "page_pattern": "https://tecdigital.tec.ac.cr/tda-feria-negocios/registro_proyectos",
+      "method": "GET",
+      "action": "",
+      "form_id": "formArchivo",
+      "field_names": [
+        "upload_file",
+        "package_id",
+        "folder_id",
+        "user_id",
+        "community_id",
+        "unpack_p",
+        "submitInput"
+      ]
+    },
+    {
+      "module": "guia_horarios_publica",
+      "page_pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/escuela.aspx",
+      "method": "post",
+      "action": "./escuela.aspx",
+      "form_id": "form1",
+      "field_names": [
+        "__VIEWSTATE",
+        "__VIEWSTATEGENERATOR",
+        "D3",
+        "D4",
+        "btnIrEscuela",
+        "D2",
+        "D2"
+      ]
+    },
+    {
+      "module": "guia_horarios_publica",
+      "page_pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/verano.aspx",
+      "method": "post",
+      "action": "./verano.aspx",
+      "form_id": "form1",
+      "field_names": [
+        "__VIEWSTATE",
+        "__VIEWSTATEGENERATOR"
+      ]
+    },
+    {
+      "module": "guia_horarios_publica",
+      "page_pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/estudiante.aspx",
+      "method": "post",
+      "action": "./estudiante.aspx",
+      "form_id": "form1",
+      "field_names": [
+        "__VIEWSTATE",
+        "__VIEWSTATEGENERATOR",
+        "txtCarnet",
+        "btnIr",
+        "D1",
+        "D2"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.E/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.E/estudiantes.E/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.E/campussc/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.E/aseteca/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.FI/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/dop/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/dop/psed/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/catedras.tec/calculoyalgebralineal/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/catedras.tec/catedradefsicageneralii/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/catedras.tec/catedradefsicageneraliii/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/estudiantes.tec/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/estudiantes.tec/estudiantes.SC/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/programas.tec/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/programas.tec/pa.y.se.MATEC/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI1102/S-2-2026.SC.FI1102.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/E/EL2110/S-1-2026.SC.EL2110.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/E/EL2113/S-1-2026.SC.EL2113.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI1102/S-1-2026.SC.FI1102.51/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI1201/S-1-2026.SC.FI1201.53/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/MA1103/S-1-2026.SC.MA1103.52/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI2103/S-1-2026.SC.FI2103.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI2103/V-1-2025.SC.FI2103.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/CA/CA3125/S-2-2025.SC.CA3125.51/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI1101/S-2-2025.SC.FI1101.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/MA1103/S-2-2025.SC.MA1103.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/AE/AE4208/S-1-2025.SC.AE4208.50/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/EIC/CI1231/S-1-2025.SC.CI1231.52/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/FI1101/S-1-2025.SC.FI1101.51/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "foros",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/forums/",
+      "method": "post",
+      "action": "search",
+      "form_id": "search",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "forum_id",
+        "search_text",
+        "formbutton:ok"
+      ]
+    },
+    {
+      "module": "calendario",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "method": "post",
+      "action": "/dotlrn/classes/ECE/MA1102/S-1-2025.SC.MA1102.53/calendar/view",
+      "form_id": "frmdays",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "period_days",
+        "__confirmed_p",
+        "__refreshing_p",
+        "__submit_button_name",
+        "__submit_button_value",
+        "view"
+      ]
+    },
+    {
+      "module": "portal_dotlrn",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/manage-memberships",
+      "method": "post",
+      "action": "/dotlrn/manage-memberships",
+      "form_id": "member_form",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "member_department_key",
+        "member_term_id",
+        "non_member_department_key",
+        "non_member_term_id"
+      ]
+    },
+    {
+      "module": "portal_dotlrn",
+      "page_pattern": "https://tecdigital.tec.ac.cr/dotlrn/manage-memberships",
+      "method": "post",
+      "action": "/dotlrn/manage-memberships",
+      "form_id": "non_member_form",
+      "field_names": [
+        "form:mode",
+        "form:id",
+        "non_member_department_key",
+        "non_member_term_id",
+        "member_department_key",
+        "member_term_id"
+      ]
+    }
+  ],
+  "desktop_vs_mobile_differences_observed": [
+    "Desktop header (#header-td) shows horizontal Apps Launcher + User Panel; mobile drawer (.menu-left / visible-xs) includes direct 'Ir a Mis documentos' link (/dotlrn/file-storage/#/{personal_id}) that must NOT be confused with course GL_FOLDER_ID.",
+    "Bootstrap 3 responsive visibility utilities (hidden-xs, visible-xs, hidden-sm, hidden-md, visible-md) toggle compact dropdown navigation vs full multi-column portlet grids.",
+    "File-storage AngularJS toolbar collapses action icons into context menus (rightClick.js + popUps.js) on narrow viewports."
+  ]
+}

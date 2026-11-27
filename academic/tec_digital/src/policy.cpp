@@ -148,7 +148,7 @@ bool ContainsBlockedUrlPattern(const ParsedUrl& parsed) {
     const std::string full_low_target =
         AsciiLower(parsed.path + (parsed.query.empty() ? "" : "?" + parsed.query));
     static const std::regex kUrlBlockRe(
-        R"((/register/logout|/logout\b|/log-out\b|unsubscribe|deregister|configure-element|op=shade|op=unshade|op=delete|op=remove|op=drop|op=subscribe|op=hide|op=show|op=move|op=config|/admin/|administer|membership-toggle|toggle-membership|/spam/|/ajax/spam\b|comment-delete|file-delete|folder-delete|news-delete|member-confirm(?:-\d+)?|/member-delete|/member-remove|/cal-item-new\b|request-change-frequency|password-update|cerrar[-_ ]?sesi|/shared/make-invisible|/user/portrait/upload|/user/basic-info-update|/pvt/unsubscribe|/notifications/request-new|/notifications/request-delete|save_browser_notification|/tda-sms-configuration/envio/ajax/register|/portal/ajax/portal-configure|/file-storage/api/(?:move|copy|notification)/|/file-storage/files/upload|/file-storage/create_folder2?|/file-storage/delete-elements|set_live_version=|delivery_method_id=|permissions\?object_id=|/tda-control-plagio/ajax/fileUpload|addDocumentEphorus|actualizaVisibilidad|actualizar_cursos2?|actualizar__datos|/tda-um/ajax/um_get_test_info|insert_personal_info|save_privacy_settings|set_term_condition_answer|/tda-consentimiento-informado/ajax/admin/(?:publish_term_condition|delete_term_condition)|update_notification_state|delete_user_notification|delete_all_user_notifications|upload_evaluation|delete_version_answer|request_notifications|/tda-motor-juegos/resources/ajax/(?:synchronization|calificar_asignacion|eliminar_calificacion)|/servicios/gaap_oacs/PL/(?:funcionAsistenteCreacion|funcionAlmacenarCalificaciones|divAgregar[^/]*|divShareActivity)\.php|/tda-rubrica/ajax/(?:accion_rubrica|accion_evaluacion|register_std_grade|guardar[^/]*|ejecutarEliminar[^/]*|accion_permisos)|/tda-prematricula/ajax/(?:guardar_prematricula|actualiza_prematricula|recordRequestR|send_notification|set_additional_students|generateProcess)|/tda-gestor-inscripcion/estudiante/ajax/popup_matricula|/tda-feria-negocios/ajax/(?:ferias/(?:insert_feria|update_feria|delete_feria|add_folder)|registrar_proyectos/(?:add_folder|insert_project|register_project_sede|insertMembers|insertUsers|insertAllContent|record_project|record_project_file|register_notification))|/tds-info-general/files/upload))",
+        R"((/register/logout|/logout\b|/log-out\b|unsubscribe|deregister|configure-element|op=shade|op=unshade|op=delete|op=remove|op=drop|op=subscribe|op=hide|op=show|op=move|op=config|action=op_swap|action=op_move|action=op_hide|action=op_show|/admin/|administer|membership-toggle|toggle-membership|/spam/|/ajax/spam\b|comment-delete|file-delete|folder-delete|news-delete|member-confirm(?:-\d+)?|/member-delete|/member-remove|/cal-item-new\b|request-change-frequency|password-update|cerrar[-_ ]?sesi|/shared/make-invisible|/user/portrait/upload|/user/basic-info-update|/pvt/unsubscribe|/notifications/request-new|/notifications/request-delete|save_browser_notification|/tda-sms-configuration/envio/ajax/register|/portal/ajax/portal-configure|/file-storage/api/(?:move|copy|notification)/|/file-storage/files/upload|/file-storage/create_folder2?|/file-storage/delete-elements|set_live_version=|delivery_method_id=|permissions\?object_id=|/tda-control-plagio/ajax/fileUpload|addDocumentEphorus|actualizaVisibilidad|/dotlrn/ajax/actualizar_cursos\b|actualizar_cursos2\b|actualizar__datos|/tda-um/ajax/um_get_test_info|insert_personal_info|save_privacy_settings|set_term_condition_answer|/tda-consentimiento-informado/ajax/admin/(?:publish_term_condition|delete_term_condition)|update_notification_state|delete_user_notification|delete_all_user_notifications|upload_evaluation|delete_version_answer|request_notifications|/tda-motor-juegos/resources/ajax/(?:synchronization|calificar_asignacion|eliminar_calificacion)|/servicios/gaap_oacs/PL/(?:funcionAsistenteCreacion|funcionAlmacenarCalificaciones|divAgregar[^/]*|divShareActivity)\.php|/tda-rubrica/ajax/(?:accion_rubrica|accion_evaluacion|register_std_grade|guardar[^/]*|ejecutarEliminar[^/]*|accion_permisos)|/tda-prematricula/ajax/(?:guardar_prematricula|actualiza_prematricula|recordRequestR|send_notification|set_additional_students|generateProcess)|/tda-gestor-inscripcion/estudiante/ajax/popup_matricula|/tda-feria-negocios/ajax/(?:ferias/(?:insert_feria|update_feria|delete_feria|add_folder)|registrar_proyectos/(?:add_folder|insert_project|register_project_sede|insertMembers|insertUsers|insertAllContent|record_project|record_project_file|register_notification))|/tds-info-general/files/upload))",
         std::regex::ECMAScript | std::regex::icase);
     return std::regex_search(full_low_target, kUrlBlockRe);
 }
@@ -290,7 +290,7 @@ bool IsMutatingPathOrQuery(const ParsedUrl& parsed) {
     static const std::regex kActionKeyRe(R"(^(?:action|operation|cmd|mode|op)$)",
                                          std::regex::ECMAScript | std::regex::icase);
     static const std::regex kMutatingOpRe(
-        R"(^(?:delete|remove|update|save|submit|publish|upload|move|rename|enroll|deregister|unregister|withdraw|unsubscribe|create|add|approve|reject|grade|send|reply|mark_read|shade|unshade|hide|show|drop|subscribe|config|borrar|eliminar)$)",
+        R"(^(?:delete|remove|update|save|submit|publish|upload|move|rename|enroll|deregister|unregister|withdraw|unsubscribe|create|add|approve|reject|grade|send|reply|mark_read|shade|unshade|hide|show|drop|subscribe|config|op_swap|op_move|op_hide|op_show|borrar|eliminar)$)",
         std::regex::ECMAScript | std::regex::icase);
 
     auto qpairs = ParseQueryPairs(parsed.query);
@@ -369,6 +369,14 @@ bool ReadOnlyRequestPolicy::IsPublicGuiaHorariosEndpoint(const ParsedUrl& parsed
     return false;
 }
 
+bool ReadOnlyRequestPolicy::IsGaapApiOrigin(const ParsedUrl& parsed) const {
+    if (!parsed.valid) return false;
+    if (parsed.scheme == "https" && parsed.host == "api.tec.ac.cr" && parsed.port == 3003) {
+        return true;
+    }
+    return false;
+}
+
 bool ReadOnlyRequestPolicy::IsAllowedOrigin(std::string_view url) const {
     ParsedUrl parsed = ParseHttpUrl(url);
     if (!parsed.valid) return false;
@@ -378,7 +386,23 @@ bool ReadOnlyRequestPolicy::IsAllowedOrigin(std::string_view url) const {
     }
     parsed.path = std::move(norm_path);
     return IsTecDigitalOrigin(parsed) || IsGraphQlEndpoint(parsed) ||
-           IsPublicGuiaHorariosEndpoint(parsed);
+           IsGaapApiOrigin(parsed) || IsPublicGuiaHorariosEndpoint(parsed);
+}
+
+bool ReadOnlyRequestPolicy::IsAllowedStudentGraphQlMutation(std::string_view query,
+                                                            uint32_t allowed_mutations_mask) {
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManageInclusions)) == 0u) {
+        return false;
+    }
+    detail::WarmupRegexLocale();
+    std::string q(query);
+    static const std::regex kStudentInclMutRe(
+        R"(\b(?:SetInclusionRequest|DeleteInclusionRequest|ToogleInclusion|ToggleInclusion|SetScholarship)\b)",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kAdminMutRe(
+        R"(\b(?:SetPeriodCourses|setCourseParameter|DeleteCourseParameter|SendApprovePreconfiguration|ApprovePreconfiguration|ChangeApplicationsStatusOrComment|ChangeApplicationsToReviewed|SavePriorityConfig|VerifyAlllApplications|VerifyAllApplications|SetAdmInclusionRequest|RemoveInclusionRequest|ToggleStudentException)\b)",
+        std::regex::ECMAScript | std::regex::icase);
+    return std::regex_search(q, kStudentInclMutRe) && !std::regex_search(q, kAdminMutRe);
 }
 
 bool ReadOnlyRequestPolicy::IsReadOnlyGraphQL(std::string_view query) {
@@ -493,6 +517,8 @@ bool ReadOnlyRequestPolicy::IsReadOnlyPostPath(std::string_view pathname) {
         "/tda-expediente-estudiantil/ajax/i18n",
         "/tda-expediente-estudiantil/ajax/i18n_validation",
         "/tda-expediente-estudiantil/ajax/info_personal",
+        "/tda-expediente-estudiantil/ajax/detalle_notas",
+        "/tda-expediente-estudiantil/ajax/detalle_promedio_ponderado",
         "/tda-expediente-estudiantil/ajax/detalle_historial",
         "/tda-expediente-estudiantil/ajax/generar_tabla_promedio_ponderado",
         "/tda-expediente-estudiantil/ajax/tabla_horario",
@@ -500,6 +526,7 @@ bool ReadOnlyRequestPolicy::IsReadOnlyPostPath(std::string_view pathname) {
         "/tda-expediente-estudiantil/ajax/guia_horario",
         "/tda-expediente-estudiantil/ajax/tabla_guia_horario",
         "/tda-expediente-estudiantil/ajax/get_data_attributes",
+        "/tda-expediente-estudiantil/ajax/actualizar_cursos",
         "/tda-expediente-estudiantil/ajax/Consultar_datos_estudiante",
         "/tda-expediente-estudiantil/ajax/get_user_id",
         "/tda-expediente-estudiantil/ajax/combos/carga_sedes",
@@ -509,11 +536,22 @@ bool ReadOnlyRequestPolicy::IsReadOnlyPostPath(std::string_view pathname) {
         "/tda-expediente-estudiantil/ajax/combos/carga_carreras_tds_lib",
         "/tda-expediente-estudiantil/ajax/combos/carga_periodos_tds_lib",
         "/tda-feria-negocios/ajax/internationalization",
+        "/tda-feria-negocios/ajax/ferias/get_ferias",
+        "/tda-feria-negocios/ajax/categorias/load_categorias",
         "/tda-um/ajax/get_gaap_server",
         "/tda-um/ajax/internacionalization",
         "/tda-um/ajax/get_info",
         "/tda-um/ajax/get_statistic_form",
         "/tda-um/ajax/general_statistics",
+        "/tda-um/ajax/get_gaap_server",
+        "/tda-motor-juegos/api/user/",
+        "/tda-motor-juegos/api/activities/",
+        "/tda-motor-juegos/api/community_details/",
+        "/tda-motor-juegos/api/get_evaluation_item_id/",
+        "/tda-motor-juegos/api/get_is_grade_published/",
+        "/tda-motor-juegos/api/get_list_is_grade_published/",
+        "/tda-motor-juegos/api/user/photo/",
+        "/tda-motor-juegos/api/user/photo/list",
         "/servicios/gaap_oacs/PL/funcionVisualizadorActividades.php",
         "/servicios/gaap_oacs/PL/funcionVisualizadorHistoricos.php"
     };
@@ -543,6 +581,108 @@ bool ReadOnlyRequestPolicy::IsPublicGuiaHorariosReadOnlyPostPath(std::string_vie
         "/guiahorarios/estudiante.aspx/getdatosano"
     };
     return kPublicGuiaPostPaths.count(AsciiLower(pathname)) > 0;
+}
+
+bool ReadOnlyRequestPolicy::IsAllowedUserMutationRequest(std::string_view method,
+                                                         std::string_view norm_path,
+                                                         uint32_t allowed_mutations_mask) {
+    if (allowed_mutations_mask == 0u) return false;
+    detail::WarmupRegexLocale();
+    std::string verb(method);
+    for (char& c : verb) {
+        c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+    }
+    std::string low_path = AsciiLower(norm_path);
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::UploadEvaluation)) != 0u &&
+        verb == "POST") {
+        static const std::regex kUploadEvalRe(
+            R"(^/dotlrn/(?:[^/]+/)*evaluation/tda-ce-estudiante/ajax/upload_evaluation$)",
+            std::regex::ECMAScript);
+        if (std::regex_match(low_path, kUploadEvalRe)) return true;
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::DeleteEvaluationRevision)) != 0u &&
+        verb == "POST") {
+        static const std::regex kDeleteRevRe(
+            R"(^/dotlrn/(?:[^/]+/)*evaluation/tda-ce-estudiante/ajax/delete_version_answer$)",
+            std::regex::ECMAScript);
+        if (std::regex_match(low_path, kDeleteRevRe)) return true;
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManageNotifications)) != 0u) {
+        if (verb == "GET" && (low_path == "/tda-notifications/ajax/update_notification_state" ||
+                              low_path == "/tda-notifications/ajax/delete_user_notification" ||
+                              low_path == "/tda-notifications/ajax/delete_all_user_notifications" ||
+                              low_path == "/dotlrn/ajax/save_browser_notification")) {
+            return true;
+        }
+        if (verb == "POST") {
+            if (low_path == "/dotlrn/file-storage/api/notification/") return true;
+            static const std::regex kReqEvalNotifRe(
+                R"(^/dotlrn/(?:[^/]+/)*evaluation/tda-ce-estudiante/ajax/request_notifications$)",
+                std::regex::ECMAScript);
+            if (std::regex_match(low_path, kReqEvalNotifRe)) return true;
+        }
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::RefreshEnrolledCourses)) != 0u &&
+        verb == "POST") {
+        if (low_path == "/dotlrn/ajax/actualizar_cursos" ||
+            low_path == "/tda-expediente-estudiantil/ajax/actualizar_cursos2" ||
+            low_path == "/tda-expediente-estudiantil/ajax/actualizar__datos") {
+            return true;
+        }
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManagePlagiarism)) != 0u) {
+        if (verb == "POST" && low_path == "/tda-control-plagio/ajax/fileupload") return true;
+        if (verb == "GET" && (low_path == "/tda-control-plagio/ajax/adddocumentephorus" ||
+                              low_path == "/tda-control-plagio/ajax/actualizavisibilidad")) {
+            return true;
+        }
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManagePrematricula)) != 0u) {
+        if ((verb == "GET" || verb == "POST") &&
+            (low_path == "/tda-prematricula/ajax/guardar_prematricula" ||
+             low_path == "/tda-prematricula/ajax/recordrequestr" ||
+             low_path == "/tda-prematricula/ajax/service_courses_student" ||
+             low_path == "/tda-prematricula/ajax/prematricula_est")) {
+            return true;
+        }
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManageFairs)) != 0u) {
+        if ((verb == "POST" || verb == "GET") &&
+            (low_path.rfind("/tda-feria-negocios/ajax/registrar_proyectos/", 0) == 0 ||
+             low_path == "/tds-info-general/files/upload")) {
+            return true;
+        }
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManageProfileAndConsent)) != 0u) {
+        if (verb == "GET" && (low_path == "/tda-um/ajax/insert_personal_info" ||
+                              low_path == "/tda-um/ajax/save_privacy_settings")) {
+            return true;
+        }
+        if (verb == "POST" && low_path == "/tda-consentimiento-informado/ajax/client/set_term_condition_answer") {
+            return true;
+        }
+    }
+
+    if ((allowed_mutations_mask & MutationMask(AllowedStudentMutation::ManagePersonalFiles)) != 0u) {
+        if ((verb == "POST" || verb == "PUT" || verb == "DELETE") &&
+            (low_path.rfind("/dotlrn/file-storage/api/folder/", 0) == 0 ||
+             low_path.rfind("/dotlrn/file-storage/api/file/", 0) == 0 ||
+             low_path.rfind("/dotlrn/file-storage/api/move/", 0) == 0 ||
+             low_path.rfind("/dotlrn/file-storage/api/copy/", 0) == 0 ||
+             low_path == "/dotlrn/file-storage/delete-elements")) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 PolicyDecision ReadOnlyRequestPolicy::Evaluate(const PolicyRequestContext& ctx) const {
@@ -609,9 +749,18 @@ PolicyDecision ReadOnlyRequestPolicy::Evaluate(const PolicyRequestContext& ctx) 
         } else {
             return PolicyDecision::Block("graphql-not-proven-query");
         }
-        return IsReadOnlyGraphQL(gql_query)
+        return (IsReadOnlyGraphQL(gql_query) ||
+                IsAllowedStudentGraphQlMutation(gql_query, ctx.allowed_mutations_mask))
                    ? PolicyDecision::Allow()
                    : PolicyDecision::Block("graphql-not-proven-query");
+    }
+
+    // Branch A1b: Official GAAP API (https://api.tec.ac.cr:3003) read-only student queries
+    if (IsGaapApiOrigin(parsed)) {
+        if (verb == "GET" || verb == "HEAD" || verb == "OPTIONS") {
+            return PolicyDecision::Allow();
+        }
+        return PolicyDecision::Block("post-not-proven-read-only");
     }
 
     // Branch A2: Public Guia de Horarios TEC (https://tec-appsext.itcr.ac.cr/guiahorarios/)
@@ -650,6 +799,9 @@ PolicyDecision ReadOnlyRequestPolicy::Evaluate(const PolicyRequestContext& ctx) 
         if (!IsTecDigitalOrigin(parsed)) {
             return PolicyDecision::Block("external-origin");
         }
+        if (IsAllowedUserMutationRequest(verb, parsed.path, ctx.allowed_mutations_mask)) {
+            return PolicyDecision::Allow();
+        }
         if (!IsPassiveResourceType(ctx.resource_type)) {
             if (IsMutatingPathOrQuery(parsed) || IsMutatingUiLabel(ctx.link_label)) {
                 return PolicyDecision::Block("mutating-navigation-or-operation");
@@ -663,7 +815,13 @@ PolicyDecision ReadOnlyRequestPolicy::Evaluate(const PolicyRequestContext& ctx) 
     }
 
     // Branch C: Non-GET/HEAD/OPTIONS
-    if (verb != "POST" || !IsTecDigitalOrigin(parsed)) {
+    if (!IsTecDigitalOrigin(parsed)) {
+        return PolicyDecision::Block("unreviewed-state-changing-method");
+    }
+    if (IsAllowedUserMutationRequest(verb, parsed.path, ctx.allowed_mutations_mask)) {
+        return PolicyDecision::Allow();
+    }
+    if (verb != "POST") {
         return PolicyDecision::Block("unreviewed-state-changing-method");
     }
 
@@ -698,19 +856,137 @@ PolicyDecision ReadOnlyRequestPolicy::Evaluate(const PolicyRequestContext& ctx) 
 }
 
 PolicyDecision ReadOnlyRequestPolicy::EvaluateHttpRequest(const HttpRequest& req,
-                                                          bool allow_login) const {
+                                                          bool allow_login,
+                                                          uint32_t allowed_mutations_mask) const {
     PolicyRequestContext ctx;
     ctx.url = req.url;
     ctx.method = req.method;
     ctx.resource_type = "document";
     ctx.post_data = req.body;
     ctx.allow_login = allow_login;
+    ctx.allowed_mutations_mask = allowed_mutations_mask;
     return Evaluate(ctx);
 }
 
 PolicyEnforcingTransport::PolicyEnforcingTransport(IHttpTransport& inner,
                                                    ReadOnlyRequestPolicy policy)
     : inner_(inner), policy_(std::move(policy)) {}
+
+void PolicyEnforcingTransport::AcquireMutation(AllowedStudentMutation m) {
+    switch (m) {
+        case AllowedStudentMutation::UploadEvaluation:
+            mut_upload_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::DeleteEvaluationRevision:
+            mut_delete_rev_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManageNotifications:
+            mut_notif_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::RefreshEnrolledCourses:
+            mut_refresh_courses_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManagePlagiarism:
+            mut_plagiarism_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManagePrematricula:
+            mut_prematricula_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManageInclusions:
+            mut_inclusions_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManageFairs:
+            mut_fairs_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManageProfileAndConsent:
+            mut_profile_consent_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::ManagePersonalFiles:
+            mut_personal_files_depth_.fetch_add(1, std::memory_order_acq_rel);
+            break;
+        case AllowedStudentMutation::None:
+            break;
+    }
+}
+
+void PolicyEnforcingTransport::ReleaseMutation(AllowedStudentMutation m) {
+    auto dec_nonneg = [](std::atomic<int>& counter) {
+        int prev = counter.load(std::memory_order_acquire);
+        while (prev > 0 &&
+               !counter.compare_exchange_weak(
+                   prev, prev - 1, std::memory_order_acq_rel, std::memory_order_acquire)) {
+        }
+    };
+    switch (m) {
+        case AllowedStudentMutation::UploadEvaluation:
+            dec_nonneg(mut_upload_depth_);
+            break;
+        case AllowedStudentMutation::DeleteEvaluationRevision:
+            dec_nonneg(mut_delete_rev_depth_);
+            break;
+        case AllowedStudentMutation::ManageNotifications:
+            dec_nonneg(mut_notif_depth_);
+            break;
+        case AllowedStudentMutation::RefreshEnrolledCourses:
+            dec_nonneg(mut_refresh_courses_depth_);
+            break;
+        case AllowedStudentMutation::ManagePlagiarism:
+            dec_nonneg(mut_plagiarism_depth_);
+            break;
+        case AllowedStudentMutation::ManagePrematricula:
+            dec_nonneg(mut_prematricula_depth_);
+            break;
+        case AllowedStudentMutation::ManageInclusions:
+            dec_nonneg(mut_inclusions_depth_);
+            break;
+        case AllowedStudentMutation::ManageFairs:
+            dec_nonneg(mut_fairs_depth_);
+            break;
+        case AllowedStudentMutation::ManageProfileAndConsent:
+            dec_nonneg(mut_profile_consent_depth_);
+            break;
+        case AllowedStudentMutation::ManagePersonalFiles:
+            dec_nonneg(mut_personal_files_depth_);
+            break;
+        case AllowedStudentMutation::None:
+            break;
+    }
+}
+
+uint32_t PolicyEnforcingTransport::ActiveMutationsMask() const noexcept {
+    uint32_t mask = 0u;
+    if (mut_upload_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::UploadEvaluation);
+    }
+    if (mut_delete_rev_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::DeleteEvaluationRevision);
+    }
+    if (mut_notif_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManageNotifications);
+    }
+    if (mut_refresh_courses_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::RefreshEnrolledCourses);
+    }
+    if (mut_plagiarism_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManagePlagiarism);
+    }
+    if (mut_prematricula_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManagePrematricula);
+    }
+    if (mut_inclusions_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManageInclusions);
+    }
+    if (mut_fairs_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManageFairs);
+    }
+    if (mut_profile_consent_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManageProfileAndConsent);
+    }
+    if (mut_personal_files_depth_.load(std::memory_order_acquire) > 0) {
+        mask |= MutationMask(AllowedStudentMutation::ManagePersonalFiles);
+    }
+    return mask;
+}
 
 HttpResponse PolicyEnforcingTransport::Execute(const HttpRequest& req) {
     HttpRequest current = req;
@@ -719,7 +995,8 @@ HttpResponse PolicyEnforcingTransport::Execute(const HttpRequest& req) {
     current.follow_redirects = false;
 
     for (int hop = 0; hop <= (follow ? max_hops : 0); ++hop) {
-        PolicyDecision decision = policy_.EvaluateHttpRequest(current, AllowLogin());
+        PolicyDecision decision =
+            policy_.EvaluateHttpRequest(current, AllowLogin(), ActiveMutationsMask());
         if (!decision.allowed) {
             HttpResponse blocked;
             blocked.transport_ok = false;

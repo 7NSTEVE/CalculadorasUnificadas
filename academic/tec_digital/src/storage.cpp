@@ -365,29 +365,30 @@ std::string DeriveCommunitySlug(std::string_view url_or_path) {
 
 std::string StripGlobalPortalHeader(std::string_view html) {
     std::string out(html);
+    std::string low = AsciiLower(out);
     auto remove_tag_with_marker = [&](std::string_view tag_name, std::string_view attr_marker) {
+        if (low.find(attr_marker) == std::string::npos) return;
         const std::string open_prefix = "<" + std::string(tag_name);
         const std::string close_tag = "</" + std::string(tag_name) + ">";
         size_t pos = 0;
-        while (pos < out.size()) {
-            std::string low = AsciiLower(out);
+        while (pos < low.size()) {
             size_t found = low.find(open_prefix, pos);
             if (found == std::string::npos) break;
-            size_t gt = out.find('>', found + open_prefix.size());
+            size_t gt = low.find('>', found + open_prefix.size());
             if (gt == std::string::npos) break;
-            std::string open_tag_low = low.substr(found, gt - found + 1);
-            if (open_tag_low.find(attr_marker) == std::string::npos) {
+            std::string_view open_tag_low(low.data() + found, gt - found + 1);
+            if (open_tag_low.find(attr_marker) == std::string_view::npos) {
                 pos = gt + 1;
                 continue;
             }
             int depth = 1;
             size_t scan = gt + 1;
-            size_t block_end = out.size();
+            size_t block_end = low.size();
             while (scan < low.size()) {
                 size_t next_open = low.find(open_prefix, scan);
                 size_t next_close = low.find(close_tag, scan);
                 if (next_close == std::string::npos) {
-                    block_end = out.size();
+                    block_end = low.size();
                     break;
                 }
                 if (next_open != std::string::npos && next_open < next_close) {
@@ -403,11 +404,13 @@ std::string StripGlobalPortalHeader(std::string_view html) {
                 }
             }
             out.erase(found, block_end - found);
+            low.erase(found, block_end - found);
             pos = found;
         }
     };
     remove_tag_with_marker("header", "header-td");
     remove_tag_with_marker("div", "platform_user_panel");
+    remove_tag_with_marker("nav", "menu-left");
     return out;
 }
 
@@ -426,15 +429,59 @@ FileStorageWalker::FileStorageWalker(PolicyEnforcingTransport& transport,
     }
 }
 
+std::string FileStorageWalker::ExtractPersonalRootFolderId(std::string_view html_text) {
+    std::string html(html_text);
+    static const std::regex kPersonalRe1(
+        R"(<a\b[^>]*href\s*=\s*["'][^"']*file-storage/#/?(\d{4,})["'][^>]*>[\s\S]{0,120}?Mis\s+documentos)",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kPersonalRe2(
+        R"(<a\b[^>]*href\s*=\s*["'][^"']*file-storage/#/?(\d{4,})["'][^>]*accesskey\s*=\s*["']F["'])",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kPersonalRe3(
+        R"(<a\b[^>]*accesskey\s*=\s*["']F["'][^>]*href\s*=\s*["'][^"']*file-storage/#/?(\d{4,})["'])",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kGlRe(
+        R"(GL_FOLDER_ID\s*[:=]\s*["']?(\d{4,}))",
+        std::regex::ECMAScript | std::regex::icase);
+    std::smatch m;
+    if (std::regex_search(html, m, kPersonalRe1)) return m.str(1);
+    if (std::regex_search(html, m, kPersonalRe2)) return m.str(1);
+    if (std::regex_search(html, m, kPersonalRe3)) return m.str(1);
+    if (std::regex_search(html, m, kGlRe)) return m.str(1);
+    return {};
+}
+
 std::vector<std::string> FileStorageWalker::ExtractRootFolderIds(std::string_view html_text) {
-    static const std::regex kPatterns[] = {
-        std::regex(R"(file-storage/#/(\d{5,}))", std::regex::ECMAScript | std::regex::icase),
-        std::regex(R"((?:^|[\s?&;,("'{}])folder_id\s*[=:]\s*["']?(\d{5,}))",
+    // Identify personal "Mis documentos" folder ID from global nav so we never confuse it
+    // with a course/catedra/escuela folder ID (unless GL_FOLDER_ID itself matches it).
+    std::string personal_id;
+    {
+        std::string raw(html_text);
+        static const std::regex kNavMisDocsRe(
+            R"(<a\b[^>]*href\s*=\s*["'][^"']*file-storage/#/?(\d{4,})["'][^>]*>[\s\S]{0,120}?Mis\s+documentos)",
+            std::regex::ECMAScript | std::regex::icase);
+        static const std::regex kNavAccFRe(
+            R"(<a\b[^>]*href\s*=\s*["'][^"']*file-storage/#/?(\d{4,})["'][^>]*accesskey\s*=\s*["']F["'])",
+            std::regex::ECMAScript | std::regex::icase);
+        std::smatch pm;
+        if (std::regex_search(raw, pm, kNavMisDocsRe) || std::regex_search(raw, pm, kNavAccFRe)) {
+            personal_id = pm.str(1);
+        }
+    }
+
+    // 1. Authoritative 2026 AngularJS root folder ID ($rootScope.GL_FOLDER_ID = 245716892;)
+    static const std::regex kGlFolderRe(
+        R"(GL_FOLDER_ID\s*[:=]\s*["']?(\d{4,}))",
+        std::regex::ECMAScript | std::regex::icase);
+
+    static const std::regex kFallbackPatterns[] = {
+        std::regex(R"(file-storage/#/?(\d{5,}))", std::regex::ECMAScript | std::regex::icase),
+        std::regex(R"((?:^|[\s?&;,("'{}])folder_id\s*[=:]\s*["']?(\d{4,}))",
                    std::regex::ECMAScript | std::regex::icase),
-        std::regex(R"(data-folder-id=["'](\d+)["'])", std::regex::ECMAScript | std::regex::icase),
-        std::regex(R"(root_folder_id\s*[:=]\s*["']?(\d{5,}))", std::regex::ECMAScript | std::regex::icase),
-        std::regex(R"(folder-chunk[^"']*folder_id=(\d{5,}))", std::regex::ECMAScript | std::regex::icase),
-        std::regex(R"(file-storage/(?:view|download|folder)[^"']*(?:folder_id|object_id|file_id)=(\d{5,}))",
+        std::regex(R"(data-folder-id=["'](\d{4,})["'])", std::regex::ECMAScript | std::regex::icase),
+        std::regex(R"(root_folder_id\s*[:=]\s*["']?(\d{4,}))", std::regex::ECMAScript | std::regex::icase),
+        std::regex(R"(folder-chunk[^"']*folder_id=(\d{4,}))", std::regex::ECMAScript | std::regex::icase),
+        std::regex(R"(file-storage/(?:view|download|folder)[^"']*(?:folder_id|object_id|file_id)=(\d{4,}))",
                    std::regex::ECMAScript | std::regex::icase)
     };
 
@@ -442,12 +489,21 @@ std::vector<std::string> FileStorageWalker::ExtractRootFolderIds(std::string_vie
     std::unordered_set<std::string> seen;
     std::string html = StripGlobalPortalHeader(html_text);
 
-    for (const auto& re : kPatterns) {
+    for (std::sregex_iterator it(html.begin(), html.end(), kGlFolderRe), end; it != end; ++it) {
+        std::string id = (*it)[1].str();
+        if (!id.empty() && seen.insert(id).second) {
+            out.push_back(std::move(id));
+        }
+    }
+
+    for (const auto& re : kFallbackPatterns) {
         std::sregex_iterator it(html.begin(), html.end(), re);
         std::sregex_iterator end;
         for (; it != end; ++it) {
             std::string id = (*it)[1].str();
-            if (!id.empty() && seen.insert(id).second) {
+            if (id.empty()) continue;
+            if (!personal_id.empty() && id == personal_id) continue;
+            if (seen.insert(id).second) {
                 out.push_back(std::move(id));
             }
         }
@@ -457,18 +513,27 @@ std::vector<std::string> FileStorageWalker::ExtractRootFolderIds(std::string_vie
 
 Result<std::vector<std::string>> FileStorageWalker::DiscoverRootFolderIds(
     std::string_view community_base_url,
-    size_t max_candidates) {
+    size_t max_candidates,
+    const std::vector<int>& extra_page_nums) {
     std::string comm(community_base_url);
     while (!comm.empty() && comm.back() == '/') comm.pop_back();
     if (comm.rfind("http://", 0) != 0 && comm.rfind("https://", 0) != 0) {
         comm = JoinUrl(base_url_, comm);
     }
 
-    const std::string probe_urls[] = {
-        comm + "/file-storage/",
-        comm + "/one-community?page_num=3&loc=",
-        comm + "/one-community?page_num=0&loc="
-    };
+    std::vector<std::string> probe_urls;
+    probe_urls.push_back(comm + "/file-storage/");
+    std::set<int> added_pages;
+    for (int p : extra_page_nums) {
+        if (p >= 0 && added_pages.insert(p).second) {
+            probe_urls.push_back(comm + "/one-community?page_num=" + std::to_string(p) + "&loc=");
+        }
+    }
+    for (int def_p : {2, 3, 0}) {
+        if (added_pages.insert(def_p).second) {
+            probe_urls.push_back(comm + "/one-community?page_num=" + std::to_string(def_p) + "&loc=");
+        }
+    }
 
     std::vector<std::string> result;
     std::unordered_set<std::string> seen;
@@ -488,7 +553,9 @@ Result<std::vector<std::string>> FileStorageWalker::DiscoverRootFolderIds(
         if (!resp.transport_ok || resp.status_code != 200) {
             continue;
         }
-        for (const auto& fid : ExtractRootFolderIds(resp.BodyAsString())) {
+        std::string body = resp.BodyAsString();
+        const bool has_gl = (body.find("GL_FOLDER_ID") != std::string::npos);
+        for (const auto& fid : ExtractRootFolderIds(body)) {
             if (seen.insert(fid).second) {
                 result.push_back(fid);
                 if (max_candidates > 0 && result.size() >= max_candidates) {
@@ -496,8 +563,37 @@ Result<std::vector<std::string>> FileStorageWalker::DiscoverRootFolderIds(
                 }
             }
         }
+        // If /file-storage/ yielded the authoritative GL_FOLDER_ID, no need to probe extra pages
+        if (has_gl && !result.empty()) {
+            break;
+        }
     }
     return Result<std::vector<std::string>>::Success(std::move(result));
+}
+
+Result<std::string> FileStorageWalker::DiscoverPersonalRootFolderId() {
+    const std::string probe_urls[] = {
+        JoinUrl(base_url_, "/dotlrn/file-storage/"),
+        JoinUrl(base_url_, "/dotlrn/index")
+    };
+    for (const std::string& url : probe_urls) {
+        HttpRequest req;
+        req.method = "GET";
+        req.url = url;
+        req.follow_redirects = true;
+        req.headers["Accept"] = "text/html,application/xhtml+xml,*/*";
+        HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+        auto validity = auth_.ValidateResponse(resp, url, true);
+        if (validity == ResponseValidity::SessionExpired) {
+            return Result<std::string>::Failure("session_expired", "session expired probing personal storage");
+        }
+        if (!resp.transport_ok || resp.status_code != 200) continue;
+        std::string fid = ExtractPersonalRootFolderId(resp.BodyAsString());
+        if (!fid.empty()) {
+            return Result<std::string>::Success(std::move(fid));
+        }
+    }
+    return Result<std::string>::Failure("not_found", "personal Mis Documentos folder_id not found");
 }
 
 Result<FileDetailedMetadata> FileStorageWalker::ParseFileDetailsJson(std::string_view json_text) {
@@ -593,6 +689,143 @@ Result<std::vector<FileVersionRecord>> FileStorageWalker::FetchFileVersions(
     return Result<std::vector<FileVersionRecord>>::Success(std::move(versions));
 }
 
+Result<bool> FileStorageWalker::ToggleFolderNotificationSubscription(
+    std::string_view folder_or_file_id, bool subscribe) {
+    if (folder_or_file_id.empty()) {
+        return Result<bool>::Failure("invalid_arg", "folder_or_file_id is empty");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageNotifications);
+    HttpRequest req;
+    req.method = "POST";
+    req.url = JoinUrl(base_url_, "/dotlrn/file-storage/api/notification/");
+    req.follow_redirects = true;
+    req.headers["Accept"] = "application/json, */*";
+    req.headers["Content-Type"] = "application/json; charset=utf-8";
+    req.headers["X-Requested-With"] = "XMLHttpRequest";
+    req.headers["Referer"] = JoinUrl(base_url_, "/dotlrn/");
+    nlohmann::json body = {
+        {"object_id", std::string(folder_or_file_id)},
+        {"folder_id", std::string(folder_or_file_id)},
+        {"subscribed", subscribe},
+        {"action", subscribe ? "subscribe" : "unsubscribe"}
+    };
+    req.body = body.dump();
+
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+    if (auth_.ValidateResponse(resp, req.url, true) == ResponseValidity::SessionExpired) {
+        return Result<bool>::Failure("session_expired", "session expired");
+    }
+    if (!resp.transport_ok || resp.status_code < 200 || resp.status_code >= 300) {
+        return Result<bool>::Failure("http_error", "HTTP " + std::to_string(resp.status_code) + " toggling folder notification");
+    }
+    return Result<bool>::Success(true);
+}
+
+Result<std::string> FileStorageWalker::CreatePersonalFolder(
+    std::string_view parent_folder_id, std::string_view folder_name) {
+    if (parent_folder_id.empty() || TrimAscii(folder_name).empty()) {
+        return Result<std::string>::Failure("invalid_arg", "parent_folder_id and folder_name are required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePersonalFiles);
+    HttpRequest req;
+    req.method = "POST";
+    req.url = JoinUrl(base_url_, "/dotlrn/file-storage/api/folder/");
+    req.follow_redirects = true;
+    req.headers["Accept"] = "application/json, */*";
+    req.headers["Content-Type"] = "application/json; charset=utf-8";
+    req.headers["X-Requested-With"] = "XMLHttpRequest";
+    req.headers["Referer"] = JoinUrl(base_url_, "/dotlrn/");
+    nlohmann::json body = {
+        {"parent_id", std::string(parent_folder_id)},
+        {"folder_id", std::string(parent_folder_id)},
+        {"name", TrimAscii(folder_name)},
+        {"title", TrimAscii(folder_name)}
+    };
+    req.body = body.dump();
+
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+    if (auth_.ValidateResponse(resp, req.url, true) == ResponseValidity::SessionExpired) {
+        return Result<std::string>::Failure("session_expired", "session expired");
+    }
+    if (!resp.transport_ok || resp.status_code < 200 || resp.status_code >= 300) {
+        return Result<std::string>::Failure("http_error", "HTTP " + std::to_string(resp.status_code) + " creating folder");
+    }
+    std::string newId;
+    try {
+        auto j = nlohmann::json::parse(resp.BodyAsString());
+        newId = FirstNonEmptyJsonStr(j, {"folder_id", "object_id", "id"});
+    } catch (...) {}
+    return Result<std::string>::Success(newId);
+}
+
+Result<bool> FileStorageWalker::DeletePersonalItem(std::string_view object_id, bool is_folder) {
+    if (object_id.empty()) {
+        return Result<bool>::Failure("invalid_arg", "object_id is empty");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePersonalFiles);
+    HttpRequest req;
+    req.method = "DELETE";
+    req.url = JoinUrl(base_url_, std::string(is_folder ? "/dotlrn/file-storage/api/folder/" : "/dotlrn/file-storage/api/file/") + std::string(object_id));
+    req.follow_redirects = true;
+    req.headers["Accept"] = "application/json, */*";
+    req.headers["X-Requested-With"] = "XMLHttpRequest";
+    req.headers["Referer"] = JoinUrl(base_url_, "/dotlrn/");
+
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+    if (auth_.ValidateResponse(resp, req.url, true) == ResponseValidity::SessionExpired) {
+        return Result<bool>::Failure("session_expired", "session expired");
+    }
+    if (!resp.transport_ok || resp.status_code < 200 || resp.status_code >= 300) {
+        return Result<bool>::Failure("http_error", "HTTP " + std::to_string(resp.status_code) + " deleting personal item");
+    }
+    return Result<bool>::Success(true);
+}
+
+Result<bool> FileStorageWalker::UploadPersonalFile(
+    std::string_view parent_folder_id,
+    std::string_view file_name,
+    std::string_view mime_type,
+    std::string_view bytes) {
+    if (parent_folder_id.empty() || file_name.empty() || bytes.empty()) {
+        return Result<bool>::Failure("invalid_arg", "parent_folder_id, file_name and bytes are required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePersonalFiles);
+    const std::string boundary = "----CuadernUTecFileStorageBoundary7MA4YWxkTrZu0gW";
+    std::string body;
+    auto addField = [&](const std::string& name, const std::string& val) {
+        body += "--" + boundary + "\r\n";
+        body += "Content-Disposition: form-data; name=\"" + name + "\"\r\n\r\n";
+        body += val + "\r\n";
+    };
+    addField("parent_id", std::string(parent_folder_id));
+    addField("folder_id", std::string(parent_folder_id));
+    addField("title", std::string(file_name));
+    body += "--" + boundary + "\r\n";
+    body += "Content-Disposition: form-data; name=\"upload_file\"; filename=\"" + std::string(file_name) + "\"\r\n";
+    body += "Content-Type: " + (mime_type.empty() ? std::string("application/octet-stream") : std::string(mime_type)) + "\r\n\r\n";
+    body.append(bytes.data(), bytes.size());
+    body += "\r\n--" + boundary + "--\r\n";
+
+    HttpRequest req;
+    req.method = "POST";
+    req.url = JoinUrl(base_url_, "/dotlrn/file-storage/api/file/");
+    req.follow_redirects = true;
+    req.headers["Accept"] = "application/json, */*";
+    req.headers["Content-Type"] = "multipart/form-data; boundary=" + boundary;
+    req.headers["X-Requested-With"] = "XMLHttpRequest";
+    req.headers["Referer"] = JoinUrl(base_url_, "/dotlrn/");
+    req.body = std::move(body);
+
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+    if (auth_.ValidateResponse(resp, req.url, true) == ResponseValidity::SessionExpired) {
+        return Result<bool>::Failure("session_expired", "session expired");
+    }
+    if (!resp.transport_ok || resp.status_code < 200 || resp.status_code >= 300) {
+        return Result<bool>::Failure("http_error", "HTTP " + std::to_string(resp.status_code) + " uploading personal file");
+    }
+    return Result<bool>::Success(true);
+}
+
 Result<FolderWalkResult> FileStorageWalker::ParseFolderJson(std::string_view json_text,
                                                             std::string_view expected_folder_id) {
     try {
@@ -623,6 +856,15 @@ Result<FolderWalkResult> FileStorageWalker::ParseFolderJson(std::string_view jso
         cur_folder.folder_id = cur_fid;
         cur_folder.name = FirstNonEmptyJsonStr(j, {"name", "title"});
         cur_folder.folder_path = JsonStringOrEmpty(j, "folder_path");
+        cur_folder.creation_date_ansi = FirstNonEmptyJsonStr(j, {"creation_date_ansi", "creation_date", "created_at"});
+        cur_folder.last_modified_ansi = FirstNonEmptyJsonStr(j, {"last_modified_ansi", "last_modified", "modified_date", "updated_at"});
+        if (j.contains("author") && j["author"].is_object()) {
+            cur_folder.author_name = JsonStringOrEmpty(j["author"], "name");
+        }
+        if (j.contains("subscription") && j["subscription"].is_object() &&
+            j["subscription"].contains("subscribed") && j["subscription"]["subscribed"].is_boolean()) {
+            cur_folder.subscription_active = j["subscription"]["subscribed"].get<bool>();
+        }
 
         std::vector<nlohmann::json> items;
         if (coll->is_array()) {
@@ -664,6 +906,23 @@ Result<FolderWalkResult> FileStorageWalker::ParseFolderJson(std::string_view jso
                     sub.parent_id = cur_fid;
                     sub.name = FirstNonEmptyJsonStr(item, {"name", "title"});
                     sub.folder_path = JsonStringOrEmpty(item, "folder_path");
+                    sub.creation_date_ansi = FirstNonEmptyJsonStr(item, {"creation_date_ansi", "creation_date", "created_at"});
+                    sub.last_modified_ansi = FirstNonEmptyJsonStr(item, {"last_modified_ansi", "last_modified", "modified_date", "updated_at"});
+                    if (item.contains("author") && item["author"].is_object()) {
+                        sub.author_name = JsonStringOrEmpty(item["author"], "name");
+                    } else {
+                        sub.author_name = FirstNonEmptyJsonStr(item, {"author", "author_name", "creator_name"});
+                    }
+                    if (item.contains("subscription") && item["subscription"].is_object() &&
+                        item["subscription"].contains("subscribed") && item["subscription"]["subscribed"].is_boolean()) {
+                        sub.subscription_active = item["subscription"]["subscribed"].get<bool>();
+                    } else if (item.contains("subscribed_p")) {
+                        if (item["subscribed_p"].is_boolean()) sub.subscription_active = item["subscribed_p"].get<bool>();
+                        else if (item["subscribed_p"].is_string()) {
+                            const std::string sp = AsciiLower(item["subscribed_p"].get<std::string>());
+                            sub.subscription_active = (sp == "t" || sp == "true" || sp == "1");
+                        }
+                    }
                     out.folders.push_back(std::move(sub));
                 }
             } else if (fs_type == "url" || type == "url") {
@@ -689,10 +948,15 @@ Result<FolderWalkResult> FileStorageWalker::ParseFolderJson(std::string_view jso
                     fr.content_size = JsonU64OrZero(item, "size");
                 }
                 fr.live_revision = JsonStringOrEmpty(item, "live_revision");
-                fr.creation_date_ansi = JsonStringOrEmpty(item, "creation_date_ansi");
-                fr.last_modified_ansi = JsonStringOrEmpty(item, "last_modified_ansi");
+                fr.creation_date_ansi = FirstNonEmptyJsonStr(item, {"creation_date_ansi", "creation_date", "created_at", "publish_date"});
+                fr.last_modified_ansi = FirstNonEmptyJsonStr(item, {"last_modified_ansi", "last_modified", "modified_date", "updated_at", "publish_date"});
+                if (fr.creation_date_ansi.empty() && !fr.last_modified_ansi.empty()) {
+                    fr.creation_date_ansi = fr.last_modified_ansi;
+                }
                 if (item.contains("author") && item["author"].is_object()) {
                     fr.author_name = JsonStringOrEmpty(item["author"], "name");
+                } else {
+                    fr.author_name = FirstNonEmptyJsonStr(item, {"author", "author_name", "creator_name"});
                 }
                 if (item.contains("plagiarism") && item["plagiarism"].is_object()) {
                     const auto& pl = item["plagiarism"];

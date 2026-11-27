@@ -13,15 +13,20 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
+#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <optional>
+#include <regex>
 #include <set>
 #include <sstream>
 #include <string>
+#include <thread>
+#include <unordered_set>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -998,6 +1003,991 @@ int CmdFetchPublicHorarios(const std::vector<std::string>& args) {
     return emit_text(catalog_json);
 }
 
+std::string NormalizeUrlForQueue(const std::string& raw, const std::string& current_url) {
+    std::string u = raw;
+    // trim whitespace
+    while (!u.empty() && static_cast<unsigned char>(u.front()) <= ' ') u.erase(u.begin());
+    while (!u.empty() && static_cast<unsigned char>(u.back()) <= ' ') u.pop_back();
+    if (u.empty()) return {};
+    // Strip fragment unless SPA hash route like #/student
+    size_t hash = u.find('#');
+    if (hash != std::string::npos) {
+        if (hash + 1 < u.size() && u[hash + 1] == '/') {
+            // keep SPA route only for inventory, strip for HTTP GET
+            u = u.substr(0, hash);
+        } else {
+            u = u.substr(0, hash);
+        }
+    }
+    if (u.empty()) return {};
+    std::string low = u;
+    for (char& c : low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    if (low.rfind("javascript:", 0) == 0 || low.rfind("mailto:", 0) == 0 ||
+        low.rfind("tel:", 0) == 0 || low.rfind("data:", 0) == 0) {
+        return {};
+    }
+    if (low.rfind("http://", 0) == 0 || low.rfind("https://", 0) == 0) {
+        return u;
+    }
+    std::string origin = ExtractOrigin(current_url);
+    if (origin.empty()) origin = "https://tecdigital.tec.ac.cr";
+    if (u.front() == '/') {
+        if (u.size() >= 2 && u[1] == '/') return "https:" + u;
+        return origin + u;
+    }
+    // Relative to current path directory
+    ParsedUrl cur = ParseHttpUrl(current_url);
+    std::string dir = cur.valid ? cur.path : "/";
+    size_t sl = dir.rfind('/');
+    dir = (sl == std::string::npos) ? "/" : dir.substr(0, sl + 1);
+    return origin + dir + u;
+}
+
+std::string InferModuleFromPath(const std::string& url) {
+    ParsedUrl p = ParseHttpUrl(url);
+    std::string low = p.valid ? p.path : url;
+    for (char& c : low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    if (p.valid && p.host.find("tec-appsext") != std::string::npos) return "guia_horarios_publica";
+    if (low.find("/tda-expediente-estudiantil") != std::string::npos) return "expediente_estudiantil";
+    if (low.find("/tda-control-plagio") != std::string::npos || low.find("/tda-plagio") != std::string::npos) return "control_plagio";
+    if (low.find("/tda-prematricula") != std::string::npos) return "prematricula";
+    if (low.find("/tda-inclusion-manager") != std::string::npos) return "gestor_inclusiones";
+    if (low.find("/tda-gestor-inscripcion") != std::string::npos) return "gestor_inscripcion";
+    if (low.find("/tda-um") != std::string::npos) return "modelo_usuario";
+    if (low.find("/tda-feria-negocios") != std::string::npos) return "feria_negocios";
+    if (low.find("/tda-evaluacion-desempeno") != std::string::npos || low.find("/tda-performance-evaluation") != std::string::npos) return "evaluacion_docente";
+    if (low.find("/tda-rubrica") != std::string::npos) return "rubricas";
+    if (low.find("/tda-notifications") != std::string::npos || low.find("/notifications") != std::string::npos) return "notificaciones";
+    if (low.find("/tda-motor-juegos") != std::string::npos || low.find("/gaap") != std::string::npos) return "motor_juegos_gaap";
+    if (low.find("/tda-consentimiento-informado") != std::string::npos) return "consentimiento_informado";
+    if (low.find("/evaluation/") != std::string::npos) return "evaluaciones";
+    if (low.find("/file-storage") != std::string::npos) return "documentos_file_storage";
+    if (low.find("/calendar") != std::string::npos) return "calendario";
+    if (low.find("/news") != std::string::npos) return "noticias";
+    if (low.find("/forums") != std::string::npos) return "foros";
+    if (low.find("/tda-sms") != std::string::npos) return "mensajeria_sms";
+    if (low.find("/members") != std::string::npos) return "integrantes";
+    if (low.find("/dotlrn/classes") != std::string::npos) return "cursos_clases";
+    if (low.find("/dotlrn/catedras") != std::string::npos) return "catedras";
+    if (low.find("/dotlrn/escuela") != std::string::npos) return "escuelas_comunidades";
+    if (low.find("/dotlrn/dop") != std::string::npos) return "dop_bienestar";
+    if (low.find("/dotlrn/programas") != std::string::npos) return "programas_institucionales";
+    if (low.find("/dotlrn/estudiantes") != std::string::npos) return "espacios_estudiantiles";
+    if (low.find("/dotlrn/control-panel") != std::string::npos || low.find("/pvt/") != std::string::npos || low.find("/user/") != std::string::npos) return "mi_cuenta_preferencias";
+    if (low.find("/dotlrn") != std::string::npos) return "portal_dotlrn";
+    return "otros_plataforma";
+}
+
+nlohmann::json JsonValueToSchema(const nlohmann::json& v, int depth = 0) {
+    if (depth > 4) return "any";
+    if (v.is_null()) return "null";
+    if (v.is_boolean()) return "boolean";
+    if (v.is_number_integer()) return "integer";
+    if (v.is_number_float()) return "number";
+    if (v.is_string()) return "string";
+    if (v.is_array()) {
+        nlohmann::json arr = nlohmann::json::array();
+        if (!v.empty()) arr.push_back(JsonValueToSchema(v[0], depth + 1));
+        return {{"type", "array"}, {"count_observed", v.size()}, {"item_schema", arr.empty() ? nlohmann::json("unknown") : arr[0]}};
+    }
+    if (v.is_object()) {
+        nlohmann::json obj = nlohmann::json::object();
+        size_t n = 0;
+        for (auto it = v.begin(); it != v.end() && n < 40; ++it, ++n) {
+            obj[it.key()] = JsonValueToSchema(it.value(), depth + 1);
+        }
+        return obj;
+    }
+    return "unknown";
+}
+
+std::string SafeFilenameFromUrl(const std::string& url) {
+    std::string h = Sha256Hex(url).substr(0, 10);
+    ParsedUrl p = ParseHttpUrl(url);
+    std::string base = p.valid ? p.path : url;
+    size_t sl = base.rfind('/');
+    if (sl != std::string::npos) base = base.substr(sl + 1);
+    std::string clean;
+    for (char c : base) {
+        if (std::isalnum(static_cast<unsigned char>(c)) || c == '.' || c == '-' || c == '_') clean.push_back(c);
+        else clean.push_back('_');
+    }
+    if (clean.empty()) clean = "asset";
+    if (clean.size() > 60) clean = clean.substr(clean.size() - 60);
+    return h + "_" + clean;
+}
+
+int CmdCartographyCrawl(const std::vector<std::string>& args) {
+    const std::string base_url = ResolveBaseUrl(GetArgVal(args, "--base-url"));
+    const std::string out_dir = GetArgVal(args, "--out");
+    if (out_dir.empty()) {
+        std::cerr << "cartography-crawl requires --out <dir>\n";
+        return 64;
+    }
+    std::string vault_file = GetArgVal(args, "--vault");
+    if (vault_file.empty()) {
+#ifdef _WIN32
+        char* appbuf = nullptr;
+        size_t app_len = 0;
+        if (_dupenv_s(&appbuf, &app_len, "LOCALAPPDATA") == 0 && appbuf != nullptr) {
+            fs::path p = fs::path(appbuf) / "CuadernU" / "tec_digital" / "tec_credentials.dpapi";
+            std::free(appbuf);
+            if (fs::exists(p)) vault_file = p.u8string();
+        }
+#endif
+    }
+    const int max_pages = std::max(20, std::atoi(GetArgVal(args, "--max-pages", "280").c_str()));
+    const int max_assets = std::max(20, std::atoi(GetArgVal(args, "--max-assets", "160").c_str()));
+    const int delay_ms = std::max(30, std::atoi(GetArgVal(args, "--delay-ms", "90").c_str()));
+
+    ServiceConfig cfg = MakeServiceConfig(base_url, out_dir);
+    if (!vault_file.empty()) {
+        cfg.vault_config.mode = VaultPersistenceMode::EncryptedVault;
+        cfg.vault_config.vault_path = vault_file;
+        cfg.vault_config.session_meta_path = (fs::u8path(vault_file).parent_path() / "cache" / "session_meta.json").u8string();
+        cfg.vault_config.persist_session_cookies = true;
+    }
+    TecDigitalService svc(cfg);
+    AuthResult auth = svc.LoginWithEnvOrVault(false);
+    const Sanitizer san = svc.SnapshotSanitizer();
+    if (!auth.ok) {
+        std::cerr << "auth_failed: " << AuthStatusName(auth.status) << " " << san.SanitizeText(auth.message) << "\n";
+        return 3;
+    }
+    if (svc.GuardedTransport().ActiveMutationsMask() != 0u) {
+        std::cerr << "fatal: non-zero mutation mask in read-only cartography crawl\n";
+        return 9;
+    }
+
+    fs::path outRoot = fs::u8path(out_dir);
+    std::error_code ec;
+    fs::create_directories(outRoot / "assets", ec);
+    fs::create_directories(outRoot / "dom_skeletons", ec);
+
+    // 1. Discover ALL spaces via FetchCoursesAndCommunities
+    nlohmann::json spacesJson = nlohmann::json::array();
+    std::vector<CommunityInfo> allSpaces;
+    if (auto sp = svc.FetchCoursesAndCommunities(false); sp.ok) {
+        allSpaces = std::move(sp.value);
+    }
+
+    struct QueueEntry {
+        std::string url;
+        std::string parent;
+        int depth = 0;
+        std::string source_kind;
+    };
+    std::deque<QueueEntry> q;
+    std::unordered_set<std::string> enqueued;
+    std::unordered_set<std::string> visited;
+    std::unordered_set<std::string> jsUrls;
+    std::unordered_set<std::string> cssUrls;
+    std::map<std::string, std::vector<std::string>> assetOrigins;
+    nlohmann::json blockedList = nlohmann::json::array();
+    std::unordered_set<std::string> blockedSeen;
+    nlohmann::json externalList = nlohmann::json::array();
+    std::unordered_set<std::string> externalSeen;
+    nlohmann::json pagesJson = nlohmann::json::array();
+    nlohmann::json queueAudit = nlohmann::json::array();
+
+    auto isBinaryOrSkipExt = [](const std::string& url) -> bool {
+        ParsedUrl p = ParseHttpUrl(url);
+        std::string low = p.valid ? p.path : url;
+        for (char& c : low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        for (const char* ext : {".pdf", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".woff", ".woff2",
+                                ".ttf", ".eot", ".zip", ".rar", ".7z", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+                                ".mp4", ".mp3", ".wav", ".avi", ".mov", ".csv", ".txt", ".xml", ".ics"}) {
+            size_t el = std::strlen(ext);
+            if (low.size() >= el && low.compare(low.size() - el, el, ext) == 0) return true;
+        }
+        if (low.find("/file-storage/download/") != std::string::npos ||
+            low.find("/file-storage/view/") != std::string::npos ||
+            low.find("/shared/portrait-bits") != std::string::npos ||
+            low.find("/repositorio/") != std::string::npos) {
+            return true;
+        }
+        return false;
+    };
+
+    auto isInfiniteCalendarOrPaginationUrl = [](const std::string& url) -> bool {
+        ParsedUrl p = ParseHttpUrl(url);
+        if (!p.valid) return false;
+        std::string lowq = p.query;
+        for (char& c : lowq) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        // Avoid infinite day/week/month stepping or sort permutations
+        if (lowq.find("date=") != std::string::npos || lowq.find("julian_date=") != std::string::npos ||
+            lowq.find("orderby=") != std::string::npos || lowq.find("sort_by=") != std::string::npos ||
+            lowq.find("cal_item_id=") != std::string::npos) {
+            return true;
+        }
+        if (p.path.find("/news/item") != std::string::npos ||
+            p.path.find("/forums/message-view") != std::string::npos) {
+            return true;
+        }
+        return false;
+    };
+
+    auto enqueueUrl = [&](const std::string& rawUrl, const std::string& parent, int depth, const std::string& kind) {
+        std::string u = NormalizeUrlForQueue(rawUrl, parent.empty() ? base_url : parent);
+        if (u.empty()) return;
+        ParsedUrl pu = ParseHttpUrl(u);
+        if (!pu.valid) return;
+        std::string lowPath = pu.path;
+        for (char& c : lowPath) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+        // Asset classification
+        if (lowPath.size() >= 3 && lowPath.compare(lowPath.size() - 3, 3, ".js") == 0) {
+            if (svc.Policy().IsAllowedOrigin(u)) {
+                jsUrls.insert(u);
+                if (assetOrigins[u].size() < 5) assetOrigins[u].push_back(parent);
+            }
+            return;
+        }
+        if (lowPath.size() >= 4 && lowPath.compare(lowPath.size() - 4, 4, ".css") == 0) {
+            if (svc.Policy().IsAllowedOrigin(u)) {
+                cssUrls.insert(u);
+                if (assetOrigins[u].size() < 5) assetOrigins[u].push_back(parent);
+            }
+            return;
+        }
+        if (isBinaryOrSkipExt(u)) return;
+
+        // External host check
+        if (!svc.Policy().IsAllowedOrigin(u)) {
+            if (externalSeen.insert(pu.host + pu.path).second) {
+                externalList.push_back({
+                    {"host", pu.host},
+                    {"origin", pu.origin},
+                    {"path", san.SanitizeText(pu.path)},
+                    {"discovered_on", san.SanitizeText(parent)}
+                });
+            }
+            return;
+        }
+
+        // Policy check BEFORE enqueue
+        PolicyRequestContext pctx;
+        pctx.method = "GET";
+        pctx.url = u;
+        auto dec = svc.Policy().Evaluate(pctx);
+        if (!dec.allowed) {
+            if (blockedSeen.insert("GET " + u).second) {
+                blockedList.push_back({
+                    {"method", "GET"},
+                    {"url", san.SanitizeText(u)},
+                    {"reason", dec.reason},
+                    {"discovered_on", san.SanitizeText(parent)},
+                    {"module", InferModuleFromPath(u)}
+                });
+            }
+            return;
+        }
+
+        if (isInfiniteCalendarOrPaginationUrl(u)) return;
+        if (depth > 4) return;
+        if (enqueued.insert(u).second) {
+            q.push_back({u, parent, depth, kind});
+        }
+    };
+
+    // Seed core portal & institutional module URLs
+    const std::vector<std::string> coreSeeds = {
+        base_url + "/dotlrn/index",
+        base_url + "/dotlrn/my-communities",
+        base_url + "/dotlrn/classes/",
+        base_url + "/dotlrn/classes/one-community-type?page_num=0",
+        base_url + "/dotlrn/catedras.tec/",
+        base_url + "/dotlrn/calendar/view",
+        base_url + "/dotlrn/calendar/view?view=list",
+        base_url + "/dotlrn/calendar/view?view=month",
+        base_url + "/dotlrn/calendar/view?view=week",
+        base_url + "/dotlrn/file-storage/",
+        base_url + "/dotlrn/control-panel",
+        base_url + "/dotlrn/configure",
+        base_url + "/pvt/home",
+        base_url + "/notifications/manage",
+        base_url + "/tda-notifications/",
+        base_url + "/tda-expediente-estudiantil/",
+        base_url + "/tda-control-plagio/",
+        base_url + "/tda-prematricula/",
+        base_url + "/tda-gestor-inscripcion/",
+        base_url + "/tda-um/",
+        base_url + "/tda-um/info",
+        base_url + "/tda-feria-negocios/",
+        base_url + "/tda-feria-negocios/registro_proyectos",
+        base_url + "/tda-inclusion-manager/",
+        base_url + "/tda-evaluacion-desempeno/",
+        base_url + "/tda-motor-juegos/",
+        base_url + "/tda-consentimiento-informado/",
+        base_url + "/tda-rubrica/",
+        base_url + "/user/",
+        "https://tec-appsext.itcr.ac.cr/guiahorarios/escuela.aspx",
+        "https://tec-appsext.itcr.ac.cr/guiahorarios/verano.aspx",
+        "https://tec-appsext.itcr.ac.cr/guiahorarios/estudiante.aspx"
+    };
+    for (const auto& s : coreSeeds) enqueueUrl(s, "seed", 0, "core_seed");
+
+    // Seed ALL discovered spaces (all courses, catedras, schools, DOP, programs, etc.)
+    for (const auto& c : allSpaces) {
+        std::string su = c.url;
+        if (su.empty()) continue;
+        while (!su.empty() && su.back() == '/') su.pop_back();
+        if (su.rfind("http", 0) != 0) su = base_url + (su.front() == '/' ? su : "/" + su);
+        spacesJson.push_back({
+            {"name", san.SanitizeText(c.name)},
+            {"type", c.type},
+            {"url", san.SanitizeText(su)},
+            {"community_id", c.community_id},
+            {"slug", c.slug},
+            {"department", c.department},
+            {"parent_url", san.SanitizeText(c.parent_url)},
+            {"period", c.period},
+            {"is_current_period", c.is_current_period}
+        });
+        enqueueUrl(su + "/one-community?page_num=0", base_url + "/dotlrn/index", 1, "space_home");
+        enqueueUrl(su + "/file-storage/", su + "/one-community?page_num=0", 2, "space_files");
+        enqueueUrl(su + "/news/", su + "/one-community?page_num=0", 2, "space_news");
+        enqueueUrl(su + "/news/?view=archive", su + "/one-community?page_num=0", 2, "space_news_archive");
+        enqueueUrl(su + "/calendar/view?view=list", su + "/one-community?page_num=0", 2, "space_calendar");
+        if (c.type == "CLASE") {
+            enqueueUrl(su + "/evaluation/tda-ce-estudiante/tda-index", su + "/one-community?page_num=0", 2, "space_evals");
+            enqueueUrl(su + "/tda-sms/", su + "/one-community?page_num=0", 2, "space_sms");
+            enqueueUrl(su + "/members", su + "/one-community?page_num=0", 2, "space_members");
+            enqueueUrl(su + "/forums/", su + "/one-community?page_num=0", 2, "space_forums");
+        }
+    }
+
+    // Regex extractors for structural DOM discovery (all use R"re(...)re" delimiter to allow )" inside patterns)
+    const std::regex reHref(R"re(<a\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+    const std::regex reScriptSrc(R"re(<script\b[^>]*\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+    const std::regex reCssHref(R"re(<link\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+    const std::regex reTitle(R"re(<title[^>]*>([\s\S]*?)</title>)re", std::regex::icase);
+    const std::regex reForm(R"re(<form\b([^>]*)>([\s\S]*?)</form>)re", std::regex::icase);
+    const std::regex reInput(R"re(<(?:input|select|textarea)\b([^>]*)>)re", std::regex::icase);
+    const std::regex reBtn(R"re(<(?:button|input\s+[^>]*type\s*=\s*["']?(?:submit|button)|a\s+[^>]*role\s*=\s*["']?button)([^>]*)>)re", std::regex::icase);
+    const std::regex rePortlet(R"re(class\s*=\s*["'][^"']*portlet-title[^"']*["'][^>]*>([\s\S]*?)</)re", std::regex::icase);
+    const std::regex reImg(R"re(<img\b[^>]*\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+    const std::regex reModal(R"re(<div\b[^>]*\b(?:class\s*=\s*["'][^"']*(?:modal|popup|dialog|pop_up)[^"']*["']|id\s*=\s*["'][^"']*(?:modal|popup|pop_up|dialog)[^"']*["'])[^>]*>)re", std::regex::icase);
+    const std::regex reAccord(R"re(class\s*=\s*["'][^"']*(?:accordion|container_accor|collapse|expand)[^"']*["'])re", std::regex::icase);
+    const std::regex reResp(R"re(\b(?:hidden-xs|visible-xs|hidden-sm|visible-sm|hidden-md|visible-md|hidden-lg|visible-lg|menu-left|menu-mobile|mobile-nav|d-none|d-md-block|d-lg-block)\b)re", std::regex::icase);
+    const std::regex reInlineJs(R"re(<script(?:\s+[^>]*)?>([\s\S]*?)</script>)re", std::regex::icase);
+    const std::regex rePageNum(R"re(one-community\?[^"'\s>]*page_num=\d+[^"'\s>]*)re", std::regex::icase);
+    const std::regex reNgApp(R"re(\b(?:ng-app|ng-controller|ng-click|ng-model|ng-repeat|data-toggle|data-target|data-rubricid)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+
+    auto getAttrSimple = [](const std::string& tag, const std::string& key) -> std::string {
+        std::regex r("(?:^|\\s)" + key + R"re(\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+        std::smatch m;
+        if (std::regex_search(tag, m, r)) {
+            if (m[1].matched) return m.str(1);
+            if (m[2].matched) return m.str(2);
+            if (m[3].matched) return m.str(3);
+        }
+        return {};
+    };
+
+    auto stripTagsSimple = [](const std::string& s) -> std::string {
+        std::string out;
+        bool inTag = false;
+        for (char c : s) {
+            if (c == '<') inTag = true;
+            else if (c == '>') { inTag = false; out.push_back(' '); }
+            else if (!inTag) out.push_back(c);
+        }
+        std::string col;
+        bool ws = true;
+        for (char c : out) {
+            if (static_cast<unsigned char>(c) <= ' ') {
+                if (!ws) { col.push_back(' '); ws = true; }
+            } else { col.push_back(c); ws = false; }
+        }
+        while (!col.empty() && col.back() == ' ') col.pop_back();
+        return col;
+    };
+
+    std::unordered_set<std::string> skeletonModulesSaved;
+    std::cerr << "[CARTOGRAPHY] Seeded " << q.size() << " URLs across " << allSpaces.size() << " spaces. Starting BFS...\n";
+
+    while (!q.empty() && static_cast<int>(visited.size()) < max_pages) {
+        QueueEntry cur = q.front();
+        q.pop_front();
+        if (!visited.insert(cur.url).second) continue;
+
+        if (delay_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+
+        HttpRequest req;
+        req.method = "GET";
+        req.url = cur.url;
+        req.follow_redirects = false;
+        req.connect_timeout_ms = 8000;
+        req.receive_timeout_ms = 12000;
+        if (cur.url.find("tecdigital.tec.ac.cr") != std::string::npos) {
+            req.headers["Cookie"] = svc.Auth().Cookies().BuildCookieHeader(cur.url);
+        }
+        HttpResponse resp = svc.GuardedTransport().Execute(req);
+        const std::string body = resp.BodyAsString();
+        const std::string mod = InferModuleFromPath(cur.url);
+
+        if (visited.size() % 25 == 0) {
+            std::cerr << "[CARTOGRAPHY] Visited " << visited.size() << "/" << max_pages
+                      << " | Queue: " << q.size() << " | JS: " << jsUrls.size()
+                      << " | Blocked: " << blockedList.size() << "\n";
+        }
+
+        // Follow single-hop safe redirect into queue
+        std::string redirTarget;
+        if ((resp.status_code == 301 || resp.status_code == 302 || resp.status_code == 303 || resp.status_code == 307) &&
+            !resp.location.empty()) {
+            redirTarget = ResolveRedirectLocation(cur.url, resp.location);
+            if (!redirTarget.empty() && redirTarget.find("/register/") == std::string::npos) {
+                enqueueUrl(redirTarget, cur.url, cur.depth + 1, "redirect");
+            }
+        }
+
+        nlohmann::json pageRec = {
+            {"id", "PG-" + std::to_string(visited.size())},
+            {"url", san.SanitizeText(cur.url)},
+            {"parent_url", san.SanitizeText(cur.parent)},
+            {"depth", cur.depth},
+            {"source_kind", cur.source_kind},
+            {"module", mod},
+            {"http_status", resp.status_code},
+            {"transport_ok", resp.transport_ok},
+            {"content_type", resp.content_type},
+            {"bytes", body.size()},
+            {"redirect_location", san.SanitizeText(redirTarget)}
+        };
+
+        const bool isHtml = (resp.status_code == 200) &&
+                            (resp.content_type.find("html") != std::string::npos ||
+                             body.find("<html") != std::string::npos ||
+                             body.find("<div") != std::string::npos ||
+                             body.find("<table") != std::string::npos);
+
+        if (isHtml && !body.empty()) {
+            std::smatch tm;
+            if (std::regex_search(body, tm, reTitle)) {
+                pageRec["title"] = san.SanitizeText(stripTagsSimple(tm.str(1)));
+            }
+
+            // Links + dynamic page_num tabs
+            size_t linkCount = 0;
+            std::set<std::string> tabsFound;
+            for (std::sregex_iterator it(body.begin(), body.end(), reHref), end; it != end; ++it) {
+                std::string href = (*it)[1].matched ? (*it)[1].str() : ((*it)[2].matched ? (*it)[2].str() : (*it)[3].str());
+                ++linkCount;
+                if (href.find("page_num=") != std::string::npos) {
+                    tabsFound.insert(san.SanitizeText(href));
+                }
+                enqueueUrl(href, cur.url, cur.depth + 1, "anchor");
+            }
+            for (std::sregex_iterator it(body.begin(), body.end(), rePageNum), end; it != end; ++it) {
+                std::string rel = it->str(0);
+                tabsFound.insert(san.SanitizeText(rel));
+                enqueueUrl(rel, cur.url, cur.depth + 1, "tab_page_num");
+            }
+            pageRec["links_count"] = linkCount;
+            if (!tabsFound.empty()) {
+                nlohmann::json tarr = nlohmann::json::array();
+                for (const auto& t : tabsFound) tarr.push_back(t);
+                pageRec["discovered_tabs"] = std::move(tarr);
+            }
+
+            // Scripts & CSS
+            nlohmann::json pageScripts = nlohmann::json::array();
+            for (std::sregex_iterator it(body.begin(), body.end(), reScriptSrc), end; it != end; ++it) {
+                std::string ssrc = (*it)[1].matched ? (*it)[1].str() : ((*it)[2].matched ? (*it)[2].str() : (*it)[3].str());
+                std::string abs = NormalizeUrlForQueue(ssrc, cur.url);
+                if (!abs.empty()) {
+                    pageScripts.push_back(san.SanitizeText(abs));
+                    if (svc.Policy().IsAllowedOrigin(abs)) {
+                        jsUrls.insert(abs);
+                        if (assetOrigins[abs].size() < 5) assetOrigins[abs].push_back(san.SanitizeText(cur.url));
+                    }
+                }
+            }
+            pageRec["scripts"] = std::move(pageScripts);
+
+            nlohmann::json pageCss = nlohmann::json::array();
+            for (std::sregex_iterator it(body.begin(), body.end(), reCssHref), end; it != end; ++it) {
+                std::string chref = (*it)[1].matched ? (*it)[1].str() : ((*it)[2].matched ? (*it)[2].str() : (*it)[3].str());
+                if (chref.find(".css") == std::string::npos) continue;
+                std::string abs = NormalizeUrlForQueue(chref, cur.url);
+                if (!abs.empty()) {
+                    pageCss.push_back(san.SanitizeText(abs));
+                    if (svc.Policy().IsAllowedOrigin(abs)) {
+                        cssUrls.insert(abs);
+                        if (assetOrigins[abs].size() < 5) assetOrigins[abs].push_back(san.SanitizeText(cur.url));
+                    }
+                }
+            }
+            pageRec["stylesheets"] = std::move(pageCss);
+
+            // Forms (method, action, input field names/types - NO VALUES!)
+            nlohmann::json formsArr = nlohmann::json::array();
+            for (std::sregex_iterator fit(body.begin(), body.end(), reForm), end; fit != end; ++fit) {
+                std::string fattrs = (*fit)[1].str();
+                std::string finner = (*fit)[2].str();
+                std::string act = getAttrSimple(fattrs, "action");
+                std::string meth = getAttrSimple(fattrs, "method");
+                if (meth.empty()) meth = "GET";
+                nlohmann::json fields = nlohmann::json::array();
+                for (std::sregex_iterator iit(finner.begin(), finner.end(), reInput), iend; iit != iend; ++iit) {
+                    std::string ia = (*iit)[1].str();
+                    std::string fn = getAttrSimple(ia, "name");
+                    std::string ft = getAttrSimple(ia, "type");
+                    std::string fid = getAttrSimple(ia, "id");
+                    if (!fn.empty() || !fid.empty()) {
+                        fields.push_back({{"name", fn}, {"type", ft.empty() ? "field" : ft}, {"id", fid}});
+                    }
+                }
+                formsArr.push_back({
+                    {"method", meth},
+                    {"action", san.SanitizeText(act)},
+                    {"id", getAttrSimple(fattrs, "id")},
+                    {"fields_count", fields.size()},
+                    {"fields", std::move(fields)}
+                });
+            }
+            if (!formsArr.empty()) pageRec["forms"] = std::move(formsArr);
+
+            // Portlets, banners, modals, accordions, responsive classes, Angular/data hooks
+            nlohmann::json portlets = nlohmann::json::array();
+            std::set<std::string> seenPort;
+            for (std::sregex_iterator it(body.begin(), body.end(), rePortlet), end; it != end; ++it) {
+                std::string pt = san.SanitizeText(stripTagsSimple((*it)[1].str()));
+                if (!pt.empty() && seenPort.insert(pt).second) portlets.push_back(pt);
+            }
+            if (!portlets.empty()) pageRec["portlets"] = std::move(portlets);
+
+            nlohmann::json banners = nlohmann::json::array();
+            std::set<std::string> seenImg;
+            for (std::sregex_iterator it(body.begin(), body.end(), reImg), end; it != end; ++it) {
+                std::string isrc = (*it)[1].matched ? (*it)[1].str() : ((*it)[2].matched ? (*it)[2].str() : (*it)[3].str());
+                if (isrc.find("/repositorio/") != std::string::npos || isrc.find("banner") != std::string::npos ||
+                    isrc.find("/file-storage/view/") != std::string::npos) {
+                    if (seenImg.insert(isrc).second && banners.size() < 20) banners.push_back(san.SanitizeText(isrc));
+                }
+            }
+            if (!banners.empty()) pageRec["banners"] = std::move(banners);
+
+            size_t btnCount = 0, modalCount = 0, accordCount = 0;
+            for (std::sregex_iterator it(body.begin(), body.end(), reBtn), end; it != end; ++it) ++btnCount;
+            for (std::sregex_iterator it(body.begin(), body.end(), reModal), end; it != end; ++it) ++modalCount;
+            for (std::sregex_iterator it(body.begin(), body.end(), reAccord), end; it != end; ++it) ++accordCount;
+            pageRec["buttons_count"] = btnCount;
+            pageRec["modals_count"] = modalCount;
+            pageRec["accordions_count"] = accordCount;
+
+            std::set<std::string> respSet;
+            for (std::sregex_iterator it(body.begin(), body.end(), reResp), end; it != end; ++it) {
+                respSet.insert(it->str(0));
+            }
+            if (!respSet.empty()) pageRec["responsive_classes"] = respSet;
+
+            std::set<std::string> ngHooks;
+            for (std::sregex_iterator it(body.begin(), body.end(), reNgApp), end; it != end; ++it) {
+                std::string full = it->str(0);
+                if (full.size() <= 90) ngHooks.insert(san.SanitizeText(full));
+            }
+            if (!ngHooks.empty()) {
+                nlohmann::json narr = nlohmann::json::array();
+                for (const auto& h : ngHooks) { if (narr.size() < 40) narr.push_back(h); }
+                pageRec["frontend_directives_attrs"] = std::move(narr);
+            }
+
+            // Inline JS URL / endpoint references (sanitized)
+            std::set<std::string> inlineHints;
+            for (std::sregex_iterator it(body.begin(), body.end(), reInlineJs), end; it != end; ++it) {
+                std::string code = (*it)[1].str();
+                if (code.size() < 10) continue;
+                static const std::regex reUrlLit(R"re(["']((?:/[a-zA-Z0-9_./-]+|https?://[a-zA-Z0-9_.:/-]+))["'])re");
+                for (std::sregex_iterator uit(code.begin(), code.end(), reUrlLit), uend; uit != uend; ++uit) {
+                    std::string u = (*uit)[1].str();
+                    if (u.find("/ajax/") != std::string::npos || u.find("/api/") != std::string::npos ||
+                        u.find("graphql") != std::string::npos || u.find("tda-") != std::string::npos ||
+                        u.find("tds-") != std::string::npos || u.find(".aspx/") != std::string::npos) {
+                        inlineHints.insert(san.SanitizeText(u));
+                    }
+                }
+            }
+            if (!inlineHints.empty()) pageRec["inline_js_endpoint_refs"] = inlineHints;
+
+            // Save 1 sanitized structural DOM skeleton per unique module
+            if (skeletonModulesSaved.insert(mod).second) {
+                std::ostringstream skel;
+                skel << "<!-- Sanitized structural skeleton for module: " << mod << " -->\n";
+                static const std::regex reOpenTag(R"(<(header|nav|main|section|aside|footer|form|table|ul|div|button|select|iframe)\b([^>]*)>)", std::regex::icase);
+                size_t tagN = 0;
+                for (std::sregex_iterator it(body.begin(), body.end(), reOpenTag), end; it != end && tagN < 180; ++it) {
+                    std::string tn = (*it)[1].str();
+                    std::string ta = (*it)[2].str();
+                    std::string idv = getAttrSimple(ta, "id");
+                    std::string clv = getAttrSimple(ta, "class");
+                    std::string rlv = getAttrSimple(ta, "role");
+                    std::string ngc = getAttrSimple(ta, "ng-controller");
+                    std::string nga = getAttrSimple(ta, "ng-app");
+                    if (idv.empty() && clv.empty() && rlv.empty() && ngc.empty() && nga.empty()) continue;
+                    ++tagN;
+                    skel << "<" << tn;
+                    if (!idv.empty()) skel << " id=\"" << san.SanitizeText(idv) << "\"";
+                    if (!clv.empty()) skel << " class=\"" << san.SanitizeText(clv) << "\"";
+                    if (!rlv.empty()) skel << " role=\"" << san.SanitizeText(rlv) << "\"";
+                    if (!nga.empty()) skel << " ng-app=\"" << san.SanitizeText(nga) << "\"";
+                    if (!ngc.empty()) skel << " ng-controller=\"" << san.SanitizeText(ngc) << "\"";
+                    skel << ">\n";
+                }
+                WriteStringToFile(outRoot / "dom_skeletons" / (mod + "_skeleton.html"), skel.str());
+            }
+        }
+        pagesJson.push_back(std::move(pageRec));
+        queueAudit.push_back({
+            {"url", san.SanitizeText(cur.url)},
+            {"parent", san.SanitizeText(cur.parent)},
+            {"depth", cur.depth},
+            {"status", "visited"},
+            {"http_status", resp.status_code},
+            {"module", mod}
+        });
+    }
+
+    // Record any remaining pending items in queue so next agent can resume cleanly
+    while (!q.empty()) {
+        const auto& cur = q.front();
+        queueAudit.push_back({
+            {"url", san.SanitizeText(cur.url)},
+            {"parent", san.SanitizeText(cur.parent)},
+            {"depth", cur.depth},
+            {"status", "pending"},
+            {"module", InferModuleFromPath(cur.url)}
+        });
+        q.pop_front();
+    }
+
+    // 2. Download public client-side JS and CSS bundles (deduplicated by path basename)
+    nlohmann::json assetsManifest = nlohmann::json::array();
+    int assetsFetched = 0;
+    std::unordered_set<std::string> fetchedBaseNames;
+    auto fetchAssetList = [&](const std::unordered_set<std::string>& urls, const std::string& kind) {
+        std::vector<std::string> sortedUrls(urls.begin(), urls.end());
+        std::sort(sortedUrls.begin(), sortedUrls.end());
+        for (const auto& u : sortedUrls) {
+            if (assetsFetched >= max_assets) break;
+            std::string low = u;
+            for (char& c : low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            const bool isVendor = (low.find("jquery") != std::string::npos ||
+                                   low.find("bootstrap") != std::string::npos ||
+                                   low.find("moment") != std::string::npos ||
+                                   low.find("handlebars") != std::string::npos ||
+                                   low.find("swiper") != std::string::npos ||
+                                   low.find("dropzone") != std::string::npos ||
+                                   low.find("angular.min") != std::string::npos ||
+                                   low.find("fontawesome") != std::string::npos ||
+                                   low.find("font-awesome") != std::string::npos);
+            if (isVendor) {
+                assetsManifest.push_back({{"url", san.SanitizeText(u)}, {"kind", kind}, {"vendor_skipped", true}, {"discovered_on", assetOrigins[u]}});
+                continue;
+            }
+            ParsedUrl pu = ParseHttpUrl(u);
+            std::string baseKey = pu.valid ? pu.path : u;
+            size_t sl = baseKey.rfind('/');
+            if (sl != std::string::npos) baseKey = baseKey.substr(sl + 1);
+            if (!fetchedBaseNames.insert(kind + ":" + baseKey).second) {
+                assetsManifest.push_back({{"url", san.SanitizeText(u)}, {"kind", kind}, {"dedup_basename", baseKey}, {"discovered_on", assetOrigins[u]}});
+                continue;
+            }
+            if (delay_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms / 2));
+            HttpRequest ar;
+            ar.method = "GET";
+            ar.url = u;
+            ar.connect_timeout_ms = 8000;
+            ar.receive_timeout_ms = 12000;
+            if (u.find("tecdigital.tec.ac.cr") != std::string::npos) {
+                ar.headers["Cookie"] = svc.Auth().Cookies().BuildCookieHeader(u);
+            }
+            HttpResponse ares = svc.GuardedTransport().Execute(ar);
+            ++assetsFetched;
+            std::string body = ares.BodyAsString();
+            std::string fname = SafeFilenameFromUrl(u);
+            if (ares.status_code == 200 && !body.empty()) {
+                WriteStringToFile(outRoot / "assets" / fname, body);
+            }
+            assetsManifest.push_back({
+                {"url", san.SanitizeText(u)},
+                {"kind", kind},
+                {"vendor_skipped", false},
+                {"http_status", ares.status_code},
+                {"bytes", body.size()},
+                {"file", (ares.status_code == 200 && !body.empty()) ? fname : ""},
+                {"sha256", (ares.status_code == 200 && !body.empty()) ? Sha256Hex(body) : ""},
+                {"discovered_on", assetOrigins[u]}
+            });
+        }
+    };
+    std::cerr << "[CARTOGRAPHY] Downloading " << jsUrls.size() << " JS and " << cssUrls.size() << " CSS bundles...\n";
+    fetchAssetList(jsUrls, "js");
+    fetchAssetList(cssUrls, "css");
+
+    // 3. Probe read-only JSON endpoints and record ONLY structural JSON schemas (zero personal values)
+    nlohmann::json observedSchemas = nlohmann::json::object();
+    const std::vector<std::pair<std::string, std::string>> readOnlyJsonEndpoints = {
+        {"GET", base_url + "/tda-notifications/ajax/has_unread_notifications"},
+        {"GET", base_url + "/tda-notifications/ajax/get_user_notifications"},
+        {"GET", base_url + "/tda-expediente-estudiantil/ajax/i18n"},
+        {"GET", base_url + "/tda-expediente-estudiantil/ajax/i18n_validation"},
+        {"GET", base_url + "/tda-expediente-estudiantil/ajax/combos/carga_sedes_tds_lib"},
+        {"GET", base_url + "/tda-expediente-estudiantil/ajax/combos/carga_periodos_tds_lib"},
+        {"GET", base_url + "/tda-control-plagio/ajax/cargaArbol"},
+        {"GET", base_url + "/tda-performance-evaluation/api/forms/"},
+        {"GET", base_url + "/tda-performance-evaluation/api/evaluations/"},
+        {"GET", base_url + "/tda-motor-juegos/api/user/"},
+        {"GET", base_url + "/tda-feria-negocios/ajax/internationalization"},
+        {"GET", base_url + "/tda-um/ajax/internacionalization"},
+        {"GET", base_url + "/tda-um/ajax/get_gaap_server"},
+        {"GET", base_url + "/tda-consentimiento-informado/ajax/client/get_user_term_condition"}
+    };
+    for (const auto& [meth, epUrl] : readOnlyJsonEndpoints) {
+        HttpRequest jr;
+        jr.method = meth;
+        jr.url = epUrl;
+        jr.headers["Cookie"] = svc.Auth().Cookies().BuildCookieHeader(epUrl);
+        jr.headers["X-Requested-With"] = "XMLHttpRequest";
+        auto jres = svc.GuardedTransport().Execute(jr);
+        std::string jb = jres.BodyAsString();
+        nlohmann::json entry = {
+            {"method", meth},
+            {"http_status", jres.status_code},
+            {"content_type", jres.content_type},
+            {"bytes", jb.size()}
+        };
+        auto parsed = nlohmann::json::parse(jb, nullptr, false);
+        if (!parsed.is_discarded()) {
+            entry["format"] = "json";
+            entry["schema"] = JsonValueToSchema(parsed);
+        } else {
+            entry["format"] = "text_or_html";
+        }
+        observedSchemas[ParseHttpUrl(epUrl).path] = std::move(entry);
+    }
+
+    // Write all sanitized raw outputs into build/cartography_work/
+    WriteStringToFile(outRoot / "spaces.json", spacesJson.dump(2));
+    WriteStringToFile(outRoot / "pages.json", pagesJson.dump(2));
+    WriteStringToFile(outRoot / "queue_state.json", queueAudit.dump(2));
+    WriteStringToFile(outRoot / "blocked.json", blockedList.dump(2));
+    WriteStringToFile(outRoot / "external_services.json", externalList.dump(2));
+    WriteStringToFile(outRoot / "assets_manifest.json", assetsManifest.dump(2));
+    WriteStringToFile(outRoot / "observed_schemas.json", observedSchemas.dump(2));
+
+    nlohmann::json summary = {
+        {"ok", true},
+        {"mutation_mask", svc.GuardedTransport().ActiveMutationsMask()},
+        {"spaces_total", spacesJson.size()},
+        {"pages_visited", pagesJson.size()},
+        {"queue_total", queueAudit.size()},
+        {"blocked_count", blockedList.size()},
+        {"external_services_count", externalList.size()},
+        {"js_discovered", jsUrls.size()},
+        {"css_discovered", cssUrls.size()},
+        {"assets_fetched", assetsFetched},
+        {"json_schemas_probed", observedSchemas.size()}
+    };
+    WriteStringToFile(outRoot / "crawl_summary.json", summary.dump(2));
+    std::cout << summary.dump(2) << "\n";
+    return 0;
+}
+
+int CmdCartographyPass2(const std::vector<std::string>& args) {
+    const std::string base_url = ResolveBaseUrl(GetArgVal(args, "--base-url"));
+    const std::string out_dir = GetArgVal(args, "--out");
+    if (out_dir.empty()) return 64;
+    std::string vault_file = GetArgVal(args, "--vault");
+    if (vault_file.empty()) {
+#ifdef _WIN32
+        char* appbuf = nullptr;
+        size_t app_len = 0;
+        if (_dupenv_s(&appbuf, &app_len, "LOCALAPPDATA") == 0 && appbuf != nullptr) {
+            fs::path p = fs::path(appbuf) / "CuadernU" / "tec_digital" / "tec_credentials.dpapi";
+            std::free(appbuf);
+            if (fs::exists(p)) vault_file = p.u8string();
+        }
+#endif
+    }
+    ServiceConfig cfg = MakeServiceConfig(base_url, out_dir);
+    if (!vault_file.empty()) {
+        cfg.vault_config.mode = VaultPersistenceMode::EncryptedVault;
+        cfg.vault_config.vault_path = vault_file;
+        cfg.vault_config.session_meta_path = (fs::u8path(vault_file).parent_path() / "cache" / "session_meta.json").u8string();
+        cfg.vault_config.persist_session_cookies = true;
+    }
+    TecDigitalService svc(cfg);
+    AuthResult auth = svc.LoginWithEnvOrVault(false);
+    const Sanitizer san = svc.SnapshotSanitizer();
+    if (!auth.ok || svc.GuardedTransport().ActiveMutationsMask() != 0u) return 3;
+
+    fs::path outRoot = fs::u8path(out_dir);
+    std::string pRaw, qRaw, aRaw;
+    if (!ReadFileToString(outRoot / "pages.json", pRaw) ||
+        !ReadFileToString(outRoot / "queue_state.json", qRaw) ||
+        !ReadFileToString(outRoot / "assets_manifest.json", aRaw)) {
+        return 4;
+    }
+    auto pagesJson = nlohmann::json::parse(pRaw);
+    auto queueJson = nlohmann::json::parse(qRaw);
+    auto assetsJson = nlohmann::json::parse(aRaw);
+
+    // 1. Fetch ALL distinct unfetched first-party JS bundles discovered across all pages
+    std::unordered_set<std::string> fetchedBases;
+    for (const auto& a : assetsJson) {
+        if (a.value("kind", "") == "js" && !a.value("file", "").empty()) {
+            ParsedUrl pu = ParseHttpUrl(a.value("url", ""));
+            std::string b = pu.valid ? pu.path : a.value("url", "");
+            size_t sl = b.rfind('/');
+            if (sl != std::string::npos) b = b.substr(sl + 1);
+            fetchedBases.insert(b);
+        }
+    }
+    std::map<std::string, std::string> missingJsByBase;
+    for (const auto& p : pagesJson) {
+        if (!p.contains("scripts") || !p["scripts"].is_array()) continue;
+        for (const auto& sv : p["scripts"]) {
+            std::string u = sv.get<std::string>();
+            if (!svc.Policy().IsAllowedOrigin(u)) continue;
+            // Normalize /./ in Vite asset paths (e.g. /tda-inclusion-manager/./assets/index.js)
+            size_t dotpos;
+            while ((dotpos = u.find("/./")) != std::string::npos) u.replace(dotpos, 3, "/");
+            std::string low = u;
+            for (char& c : low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            if (low.find("jquery") != std::string::npos || low.find("bootstrap") != std::string::npos ||
+                low.find("moment") != std::string::npos || low.find("handlebars") != std::string::npos ||
+                low.find("swiper") != std::string::npos || low.find("dropzone") != std::string::npos ||
+                low.find("angular.min") != std::string::npos || low.find("font") != std::string::npos) continue;
+            ParsedUrl pu = ParseHttpUrl(u);
+            std::string b = pu.valid ? pu.path : u;
+            size_t sl = b.rfind('/');
+            if (sl != std::string::npos) b = b.substr(sl + 1);
+            if (!b.empty() && fetchedBases.count(b) == 0 && missingJsByBase.count(b) == 0) {
+                missingJsByBase[b] = u;
+            }
+        }
+    }
+    int extraJs = 0;
+    for (const auto& [base, u] : missingJsByBase) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        HttpRequest ar;
+        ar.method = "GET";
+        ar.url = u;
+        ar.connect_timeout_ms = 8000;
+        ar.receive_timeout_ms = 12000;
+        if (u.find("tecdigital.tec.ac.cr") != std::string::npos) {
+            ar.headers["Cookie"] = svc.Auth().Cookies().BuildCookieHeader(u);
+        }
+        auto ares = svc.GuardedTransport().Execute(ar);
+        std::string body = ares.BodyAsString();
+        std::string fname = SafeFilenameFromUrl(u);
+        if (ares.status_code == 200 && !body.empty()) {
+            WriteStringToFile(outRoot / "assets" / fname, body);
+            ++extraJs;
+        }
+        assetsJson.push_back({
+            {"url", san.SanitizeText(u)},
+            {"kind", "js"},
+            {"pass", 2},
+            {"vendor_skipped", false},
+            {"http_status", ares.status_code},
+            {"bytes", body.size()},
+            {"file", (ares.status_code == 200 && !body.empty()) ? fname : ""},
+            {"sha256", (ares.status_code == 200 && !body.empty()) ? Sha256Hex(body) : ""}
+        });
+    }
+
+    // 2. Visit remaining unvisited custom tabs (?page_num=N) and distinct module pages in pending queue
+    int extraPages = 0;
+    const std::regex reTitle(R"re(<title[^>]*>([\s\S]*?)</title>)re", std::regex::icase);
+    const std::regex rePortlet(R"re(class\s*=\s*["'][^"']*portlet-title[^"']*["'][^>]*>([\s\S]*?)</)re", std::regex::icase);
+    const std::regex reImg(R"re(<img\b[^>]*\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re", std::regex::icase);
+    for (auto& qitem : queueJson) {
+        if (extraPages >= 140) break;
+        if (qitem.value("status", "") != "pending") continue;
+        std::string u = qitem.value("url", "");
+        std::string mod = qitem.value("module", "");
+        // Filter out repetitive calendar period_days/day links and school-directory 2-letter listings
+        if (u.find("period_days=") != std::string::npos || u.find("view=day") != std::string::npos ||
+            u.find("community-member") != std::string::npos || u.find("revision_id=") != std::string::npos ||
+            u.find("www.knjjk") != std::string::npos || u.find("&amp;") != std::string::npos) {
+            continue;
+        }
+        if (mod == "cursos_clases" && u.find("page_num=") == std::string::npos) continue;
+        if (mod == "calendario" && u.find("cal-options") == std::string::npos) continue;
+
+        PolicyRequestContext pctx;
+        pctx.method = "GET";
+        pctx.url = u;
+        auto dec = svc.Policy().Evaluate(pctx);
+        if (!dec.allowed) {
+            qitem["status"] = "blocked";
+            qitem["block_reason"] = dec.reason;
+            continue;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(70));
+        HttpRequest req;
+        req.method = "GET";
+        req.url = u;
+        req.follow_redirects = false;
+        req.connect_timeout_ms = 8000;
+        req.receive_timeout_ms = 12000;
+        if (u.find("tecdigital.tec.ac.cr") != std::string::npos) {
+            req.headers["Cookie"] = svc.Auth().Cookies().BuildCookieHeader(u);
+        }
+        auto resp = svc.GuardedTransport().Execute(req);
+        std::string body = resp.BodyAsString();
+        qitem["status"] = "visited";
+        qitem["http_status"] = resp.status_code;
+        ++extraPages;
+
+        nlohmann::json pr = {
+            {"id", "PG-" + std::to_string(pagesJson.size() + 1)},
+            {"url", san.SanitizeText(u)},
+            {"parent_url", qitem.value("parent", "")},
+            {"depth", qitem.value("depth", 2)},
+            {"source_kind", "pass2_pending"},
+            {"module", mod},
+            {"http_status", resp.status_code},
+            {"transport_ok", resp.transport_ok},
+            {"content_type", resp.content_type},
+            {"bytes", body.size()}
+        };
+        if (resp.status_code == 200 && !body.empty()) {
+            std::smatch tm;
+            if (std::regex_search(body, tm, reTitle)) pr["title"] = san.SanitizeText(tm.str(1));
+            nlohmann::json ports = nlohmann::json::array();
+            std::set<std::string> sp;
+            for (std::sregex_iterator it(body.begin(), body.end(), rePortlet), end; it != end; ++it) {
+                std::string t = san.SanitizeText((*it)[1].str());
+                if (!t.empty() && sp.insert(t).second) ports.push_back(t);
+            }
+            if (!ports.empty()) pr["portlets"] = std::move(ports);
+            nlohmann::json bans = nlohmann::json::array();
+            std::set<std::string> sb;
+            for (std::sregex_iterator it(body.begin(), body.end(), reImg), end; it != end; ++it) {
+                std::string isrc = (*it)[1].matched ? (*it)[1].str() : ((*it)[2].matched ? (*it)[2].str() : (*it)[3].str());
+                if ((isrc.find("/repositorio/") != std::string::npos || isrc.find("/file-storage/view/") != std::string::npos) &&
+                    sb.insert(isrc).second && bans.size() < 15) {
+                    bans.push_back(san.SanitizeText(isrc));
+                }
+            }
+            if (!bans.empty()) pr["banners"] = std::move(bans);
+        }
+        pagesJson.push_back(std::move(pr));
+    }
+
+    WriteStringToFile(outRoot / "pages.json", pagesJson.dump(2));
+    WriteStringToFile(outRoot / "queue_state.json", queueJson.dump(2));
+    WriteStringToFile(outRoot / "assets_manifest.json", assetsJson.dump(2));
+    std::cout << "PASS2_OK extra_js=" << extraJs << " extra_pages=" << extraPages
+              << " total_pages=" << pagesJson.size() << " total_assets=" << assetsJson.size() << "\n";
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -1027,6 +2017,8 @@ int main(int argc, char** argv) {
     if (cmd == "policy-request") return CmdPolicyRequest(args);
     if (cmd == "canonicalize-urls") return CmdCanonicalizeUrls(args);
     if (cmd == "sanitize") return CmdSanitize(args);
+    if (cmd == "cartography-crawl") return CmdCartographyCrawl(args);
+    if (cmd == "cartography-pass2") return CmdCartographyPass2(args);
 
     std::cerr << "Unknown command: " << cmd << "\n";
     return 64;

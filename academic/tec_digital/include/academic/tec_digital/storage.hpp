@@ -25,6 +25,10 @@ struct FolderRecord {
     std::string community;
     std::string community_type;
     std::string folder_path;
+    std::string creation_date_ansi;
+    std::string last_modified_ansi;
+    std::string author_name;
+    bool subscription_active = false;
     int depth = 0;
     size_t child_count = 0;
 };
@@ -136,13 +140,26 @@ public:
                       SanitizeOptions sanitize_opts = {});
 
     static std::vector<std::string> ExtractRootFolderIds(std::string_view html_text);
+    static std::string ExtractPersonalRootFolderId(std::string_view html_text);
 
     Result<std::vector<std::string>> DiscoverRootFolderIds(
         std::string_view community_base_url,
-        size_t max_candidates = 5);
+        size_t max_candidates = 5,
+        const std::vector<int>& extra_page_nums = {});
+
+    Result<std::string> DiscoverPersonalRootFolderId();
 
     Result<FileDetailedMetadata> FetchFileDetails(std::string_view object_id);
     Result<std::vector<FileVersionRecord>> FetchFileVersions(std::string_view object_id);
+
+    // Legitimate student actions on personal file-storage / folder alerts (guarded by ScopedUserMutationGuard)
+    Result<bool> ToggleFolderNotificationSubscription(std::string_view folder_or_file_id, bool subscribe);
+    Result<std::string> CreatePersonalFolder(std::string_view parent_folder_id, std::string_view folder_name);
+    Result<bool> DeletePersonalItem(std::string_view object_id, bool is_folder);
+    Result<bool> UploadPersonalFile(std::string_view parent_folder_id,
+                                    std::string_view file_name,
+                                    std::string_view mime_type,
+                                    std::string_view bytes);
 
     Result<FolderWalkResult> WalkFolderTree(
         std::string_view root_folder_id,

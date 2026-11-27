@@ -1,0 +1,4942 @@
+{
+  "generated_at": "2026-11-26",
+  "total_concrete_pages_visited": 500,
+  "unique_route_patterns": 235,
+  "routes": [
+    {
+      "route_id": "RT-001",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/index",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Mi portal"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-002",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/my-communities",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-003",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-004",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/one-community-type?page_num={val}",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Asignaturas"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-005",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/",
+      "module": "catedras",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-006",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/calendar/view",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-007",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-008",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "User&#39;s Folders"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-009",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/control-panel",
+      "module": "mi_cuenta_preferencias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Mi Cuenta"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-010",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/configure",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Personalizar este portal"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-011",
+      "pattern": "https://tecdigital.tec.ac.cr/pvt/home",
+      "module": "mi_cuenta_preferencias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Mi Cuenta"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-012",
+      "pattern": "https://tecdigital.tec.ac.cr/notifications/manage",
+      "module": "notificaciones",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Administrar Notificaciones"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-013",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-notifications/",
+      "module": "notificaciones",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Sus Notificaciones"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-014",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil/",
+      "module": "expediente_estudiantil",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Expediente Estudiantil"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-015",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-control-plagio/",
+      "module": "control_plagio",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Control de Plagio"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-016",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-prematricula/",
+      "module": "prematricula",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Preenrollment"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-017",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-gestor-inscripcion/",
+      "module": "gestor_inscripcion",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Gestor de Inscripción"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-018",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-um/",
+      "module": "modelo_usuario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Modelo de Usuario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": true,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-019",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-um/info",
+      "module": "modelo_usuario",
+      "http_statuses_observed": [
+        404
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-020",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-feria-negocios/",
+      "module": "feria_negocios",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Feria de Ideas de Negocios"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-021",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-feria-negocios/registro_proyectos",
+      "module": "feria_negocios",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Registro"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-022",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-inclusion-manager/",
+      "module": "gestor_inclusiones",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Inclusiones"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-023",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-evaluacion-desempeno/",
+      "module": "evaluacion_docente",
+      "http_statuses_observed": [
+        404
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-024",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-motor-juegos/",
+      "module": "motor_juegos_gaap",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "GAAP"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-025",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-consentimiento-informado/",
+      "module": "consentimiento_informado",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Consentimiento informado"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-026",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-rubrica/",
+      "module": "rubricas",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Rúbrica"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-027",
+      "pattern": "https://tecdigital.tec.ac.cr/user/",
+      "module": "mi_cuenta_preferencias",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-028",
+      "pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/escuela.aspx",
+      "module": "guia_horarios_publica",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Guia de Horario de la Escuela"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-029",
+      "pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/verano.aspx",
+      "module": "guia_horarios_publica",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Guía de Horarios de Verano"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-030",
+      "pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/estudiante.aspx",
+      "module": "guia_horarios_publica",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Guía de Horarios del Estudiante"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 0,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-031",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Escuela De Ingenieria En Electronica"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/?page_num=2",
+        "/dotlrn/escuela/escuela.E/?page_num=3",
+        "/dotlrn/escuela/escuela.E/?page_num=4"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-032",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Escuela De Ingenieria En Electronica"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/?page_num=2",
+        "/dotlrn/escuela/escuela.E/?page_num=3",
+        "/dotlrn/escuela/escuela.E/?page_num=4"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-033",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/?page_num=2",
+        "/dotlrn/escuela/escuela.E/?page_num=3",
+        "/dotlrn/escuela/escuela.E/?page_num=4"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-034",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        0,
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/?page_num=2",
+        "/dotlrn/escuela/escuela.E/?page_num=3",
+        "/dotlrn/escuela/escuela.E/?page_num=4"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-035",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/?page_num=2",
+        "/dotlrn/escuela/escuela.E/?page_num=3",
+        "/dotlrn/escuela/escuela.E/?page_num=4"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-036",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Estudiantes E"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-037",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Estudiantes E"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-038",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-039",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        0,
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-040",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/?page_num=2"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-041",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Estudiantes de Electrónica - San Carlos"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-042",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Estudiantes de Electrónica - San Carlos"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-043",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-044",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-045",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num=3"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-046",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Electrónica San Carlos"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-047",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Electrónica San Carlos"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-048",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-049",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-050",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=0",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=1",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=2",
+        "/dotlrn/escuela/escuela.E/campussc/?page_num=3"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-051",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "ASETECA"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-052",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de ASETECA"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-053",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-054",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-055",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=0",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=1",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=2",
+        "/dotlrn/escuela/escuela.E/aseteca/?page_num=3"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-056",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Escuela de Fisica"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-057",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Escuela de Fisica"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-058",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-059",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-060",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/?page_num=2"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-061",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 5,
+      "sample_titles": [
+        "Tutorías y Talleres de Física General"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=4",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=55",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=6",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/one-community?page_num=1",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/one-community?page_num=2",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/one-community?page_num=52",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/one-community?page_num=53&amp;loc=",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/one-community?page_num=54",
+        "one-community?page_num=1"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-062",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Tutorías y Talleres de Física General"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=4",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=55",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-063",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=4",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=55",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-064",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=4",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=55",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-065",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=4",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=55",
+        "/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num=6"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-066",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/one-community?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [
+        "Curso nivelación autodirigido"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=2",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=3",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=7",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=8",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/one-community?page_num=1",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/one-community?page_num=1&amp;loc=",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/one-community?page_num=2",
+        "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/one-community?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-067",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Curso nivelación autodirigido"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=2",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=3",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=7",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=8"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-068",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=2",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=3",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=7",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=8"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-069",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=2",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=3",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=7",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=8"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-070",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=0",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=1",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=2",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=3",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=7",
+        "/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num=8"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-071",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/one-community?page_num={val}",
+      "module": "dop_bienestar",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Orientación y Psicología"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/?page_num=0",
+        "/dotlrn/dop/?page_num=1",
+        "/dotlrn/dop/?page_num=2",
+        "/dotlrn/dop/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-072",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Orientación y Psicología"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/?page_num=0",
+        "/dotlrn/dop/?page_num=1",
+        "/dotlrn/dop/?page_num=2",
+        "/dotlrn/dop/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-073",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/?page_num=0",
+        "/dotlrn/dop/?page_num=1",
+        "/dotlrn/dop/?page_num=2",
+        "/dotlrn/dop/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-074",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/?page_num=0",
+        "/dotlrn/dop/?page_num=1",
+        "/dotlrn/dop/?page_num=2",
+        "/dotlrn/dop/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-075",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/?page_num=0",
+        "/dotlrn/dop/?page_num=1",
+        "/dotlrn/dop/?page_num=2",
+        "/dotlrn/dop/?page_num=3"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-076",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/one-community?page_num={val}",
+      "module": "dop_bienestar",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "PSED-NE (Apoyos educativos)"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/psed/?page_num=0",
+        "/dotlrn/dop/psed/?page_num=1",
+        "/dotlrn/dop/psed/?page_num=2",
+        "/dotlrn/dop/psed/?page_num=3",
+        "/dotlrn/dop/psed/?page_num=4",
+        "/dotlrn/dop/psed/?page_num=5",
+        "/dotlrn/dop/psed/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-077",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de PSED-NE (Apoyos educativos)"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/psed/?page_num=0",
+        "/dotlrn/dop/psed/?page_num=1",
+        "/dotlrn/dop/psed/?page_num=2",
+        "/dotlrn/dop/psed/?page_num=3",
+        "/dotlrn/dop/psed/?page_num=4",
+        "/dotlrn/dop/psed/?page_num=5",
+        "/dotlrn/dop/psed/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-078",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/psed/?page_num=0",
+        "/dotlrn/dop/psed/?page_num=1",
+        "/dotlrn/dop/psed/?page_num=2",
+        "/dotlrn/dop/psed/?page_num=3",
+        "/dotlrn/dop/psed/?page_num=4",
+        "/dotlrn/dop/psed/?page_num=5",
+        "/dotlrn/dop/psed/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-079",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/psed/?page_num=0",
+        "/dotlrn/dop/psed/?page_num=1",
+        "/dotlrn/dop/psed/?page_num=2",
+        "/dotlrn/dop/psed/?page_num=3",
+        "/dotlrn/dop/psed/?page_num=4",
+        "/dotlrn/dop/psed/?page_num=5",
+        "/dotlrn/dop/psed/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-080",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/dop/psed/?page_num=0",
+        "/dotlrn/dop/psed/?page_num=1",
+        "/dotlrn/dop/psed/?page_num=2",
+        "/dotlrn/dop/psed/?page_num=3",
+        "/dotlrn/dop/psed/?page_num=4",
+        "/dotlrn/dop/psed/?page_num=5",
+        "/dotlrn/dop/psed/?page_num=7"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-081",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/one-community?page_num={val}",
+      "module": "catedras",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [
+        "Cátedra de Cálculo y Álgebra Lineal",
+        "Cátedra de Física General II",
+        "Cátedra de Física General III"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=0",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=3",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=5",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-082",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [
+        "Documentos de Cátedra de Cálculo y Álgebra Lineal",
+        "Documentos de Cátedra de Física General II",
+        "Documentos de Cátedra de Física General III"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=0",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=3",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=5",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-083",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=0",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=3",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=5",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-084",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 5,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=0",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=3",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=5",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=7"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-085",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=0",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=3",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=5",
+        "/dotlrn/catedras.tec/calculoyalgebralineal/?page_num=7"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-086",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/one-community?page_num={val}",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Estudiantes"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/?page_num=0",
+        "/dotlrn/estudiantes.tec/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-087",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Estudiantes"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/?page_num=0",
+        "/dotlrn/estudiantes.tec/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-088",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/?page_num=0",
+        "/dotlrn/estudiantes.tec/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-089",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/?page_num=0",
+        "/dotlrn/estudiantes.tec/?page_num=2"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-090",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/?page_num=0",
+        "/dotlrn/estudiantes.tec/?page_num=2"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-091",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/one-community?page_num={val}",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Campus Tecnológico Local San Carlos"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=0",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=1",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=2",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=3",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=4",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=5"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-092",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Campus Tecnológico Local San Carlos"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=0",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=1",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=2",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=3",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=4",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=5"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-093",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=0",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=1",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=2",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=3",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=4",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=5"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-094",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=0",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=1",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=2",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=3",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=4",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=5"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-095",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=0",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=1",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=2",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=3",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=4",
+        "/dotlrn/estudiantes.tec/estudiantes.SC/?page_num=5"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-096",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/one-community?page_num={val}",
+      "module": "programas_institucionales",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Programas"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/?page_num=0",
+        "/dotlrn/programas.tec/?page_num=1",
+        "/dotlrn/programas.tec/?page_num=2",
+        "/dotlrn/programas.tec/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-097",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Programas"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/?page_num=0",
+        "/dotlrn/programas.tec/?page_num=1",
+        "/dotlrn/programas.tec/?page_num=2",
+        "/dotlrn/programas.tec/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-098",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/?page_num=0",
+        "/dotlrn/programas.tec/?page_num=1",
+        "/dotlrn/programas.tec/?page_num=2",
+        "/dotlrn/programas.tec/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-099",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/?page_num=0",
+        "/dotlrn/programas.tec/?page_num=1",
+        "/dotlrn/programas.tec/?page_num=2",
+        "/dotlrn/programas.tec/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-100",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/?page_num=0",
+        "/dotlrn/programas.tec/?page_num=1",
+        "/dotlrn/programas.tec/?page_num=2",
+        "/dotlrn/programas.tec/?page_num=3"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-101",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/one-community?page_num={val}",
+      "module": "programas_institucionales",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Pa y Se_MATEC"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=0",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=1",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=2",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=4",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-102",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Documentos de Pa y Se_MATEC"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=0",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=1",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=2",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=4",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-103",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=0",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=1",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=2",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=4",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-104",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=0",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=1",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=2",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=4",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=6"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-105",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=0",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=1",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=2",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=4",
+        "/dotlrn/programas.tec/pa.y.se.MATEC/?page_num=6"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-106",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/one-community?page_num={val}",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Circuitos eléctricos en corriente continua GR 50",
+        "Física general II GR 50",
+        "Física general III GR 51",
+        "Laboratorio de mediciones eléctricas GR 50"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3",
+        "/shared/send-email?sendto=431239&amp;community_id=245716684&amp;return_url=/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/one-community?page_num=0",
+        "one-community?page_num=0"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-107",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/file-storage/",
+      "module": "documentos_file_storage",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Documentos de Circuitos eléctricos en corriente continua GR 50",
+        "Documentos de Física general II GR 50",
+        "Documentos de Física general III GR 51",
+        "Documentos de Laboratorio de mediciones eléctricas GR 50"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-108",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/news/",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-109",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/news/?view={val}",
+      "module": "noticias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Noticias"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-110",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/view?view={val}",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Calendarios"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3"
+      ],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-111",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/evaluation/tda-ce-estudiante/tda-index",
+      "module": "evaluaciones",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Evaluaciones"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": true,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-112",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/tda-sms/",
+      "module": "mensajeria_sms",
+      "http_statuses_observed": [
+        404
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-113",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/members",
+      "module": "integrantes",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Administrar los 34 miembros",
+        "Administrar los 17 miembros",
+        "Administrar los 37 miembros",
+        "Administrar los 21 miembros"
+      ],
+      "discovered_tabs_sample": [
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=0",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=1",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=2",
+        "/dotlrn/classes/E/EL2113/S-2-2026.SC.EL2113.50/?page_num=3"
+      ],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-114",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/forums/",
+      "module": "foros",
+      "http_statuses_observed": [
+        200,
+        404
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [
+        "Foros de discusión"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-115",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-116",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Mi portal"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-117",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-control-plagio",
+      "module": "control_plagio",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-118",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-prematricula",
+      "module": "prematricula",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-119",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil",
+      "module": "expediente_estudiantil",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-120",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-gestor-inscripcion",
+      "module": "gestor_inscripcion",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-121",
+      "pattern": "https://tecdigital.tec.ac.cr/tda-um",
+      "module": "modelo_usuario",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-122",
+      "pattern": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_estudiantes/",
+      "module": "otros_plataforma",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Guía para Estudiantes"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-123",
+      "pattern": "https://tecdigital.tec.ac.cr/servicios/capacitacion/guia_profesores/",
+      "module": "otros_plataforma",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Guía para profesores"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-124",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-125",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-126",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-127",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-128",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-129",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-130",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-131",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-132",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/",
+      "module": "dop_bienestar",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-133",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/",
+      "module": "dop_bienestar",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-134",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/",
+      "module": "catedras",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-135",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-136",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-137",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/",
+      "module": "programas_institucionales",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-138",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/",
+      "module": "programas_institucionales",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-139",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 17,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-140",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/manage-memberships",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Administrar miembros"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": true,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-141",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/one-community-type",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Asignaturas"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": true,
+      "has_accordions": false,
+      "responsive_classes": [
+        "menu-left"
+      ],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-142",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/ARH/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-143",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/AEN/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-144",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/MRN/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-145",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/MAN/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-146",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/DP/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-147",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/GPM/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-148",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CND/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-149",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/DCS/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-150",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/IMT/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-151",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/ceda/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-152",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CCCA/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-153",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CCSC/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-154",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/DAI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-155",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/DDE/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-156",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/ET/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-157",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/EM/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-158",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/EMA/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-159",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/escience/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-160",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/AU/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-161",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/AE/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-162",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/ATI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-163",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/AIT/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-164",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/AA/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-165",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/AN/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-166",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/BI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-167",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/ME/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-168",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-169",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/ECE/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-170",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CS/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-171",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/SCC/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-172",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CD/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-173",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/FI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-174",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/EIC/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-175",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/MI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-176",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CA/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-177",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CES/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-178",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/CO/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-179",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/E/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-180",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/EMT/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-181",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/PI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-182",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/SHO/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-183",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/MA/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-184",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/QU/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-185",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/DI/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-186",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/IA/",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-187",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}?loc={val}&page_num={val}",
+      "module": "catedras",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Cátedras"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-188",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-189",
+      "pattern": "https://tecdigital.tec.ac.cr/user/email-privacy-level",
+      "module": "mi_cuenta_preferencias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Cambiar el nivel de privacidad de mi email"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-190",
+      "pattern": "https://tecdigital.tec.ac.cr/notifications/",
+      "module": "notificaciones",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-191",
+      "pattern": "https://tecdigital.tec.ac.cr/shared/whos-online",
+      "module": "otros_plataforma",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Quién está conectado"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-192",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/help",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-193",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/region=1&page_id={id}&direction=down&community_id=0&return_url=index&element_id={id}&portal_id={id}&action=op_swap",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        404
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-194",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/community_id=0&return_url=index&element_id={id}&portal_id={id}&action=op_hide",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        404
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-195",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/region=1&page_id={id}&direction=up&community_id=0&return_url=index&element_id={id}&portal_id={id}&action=op_swap",
+      "module": "portal_dotlrn",
+      "http_statuses_observed": [
+        404
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-196",
+      "pattern": "https://tecdigital.tec.ac.cr/pvt/../user/email-privacy-level",
+      "module": "mi_cuenta_preferencias",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Cambiar el nivel de privacidad de mi email"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 1,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-197",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-198",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 5,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-199",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        0
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-200",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        0
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-201",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        0
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-202",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        0,
+        302
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-203",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/estudiantes.E/estesc/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-204",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-205",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/campussc/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-206",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-207",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.E/aseteca/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-208",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-209",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-210",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-211",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/tutorias.fi.gen/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-212",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/?page_num={val}",
+      "module": "escuelas_comunidades",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 6,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-213",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/escuela/escuela.FI/cursonivelacinautodirigido2/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-214",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/?page_num={val}",
+      "module": "dop_bienestar",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-215",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-216",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/?page_num={val}",
+      "module": "dop_bienestar",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 7,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-217",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/dop/psed/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-218",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/?page_num={val}",
+      "module": "catedras",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 12,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-219",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/{catedra_slug}/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 3,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-220",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/?page_num={val}",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-221",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.AL/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        403
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-222",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.CA/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        403
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-223",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.LM/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        403
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-224",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SJ/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        403
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-225",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantespar/",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        403
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": false
+    },
+    {
+      "route_id": "RT-226",
+      "pattern": "https://tec-appsext.itcr.ac.cr/guiahorarios/",
+      "module": "guia_horarios_publica",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "\r\n\r\n"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-227",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-228",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/?page_num={val}",
+      "module": "espacios_estudiantiles",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 6,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-229",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/estudiantes.tec/estudiantes.SC/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-230",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/?page_num={val}",
+      "module": "programas_institucionales",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 4,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-231",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-232",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/?page_num={val}",
+      "module": "programas_institucionales",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 5,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-233",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/programas.tec/pa.y.se.MATEC/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 1,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-234",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/?page_num={val}",
+      "module": "cursos_clases",
+      "http_statuses_observed": [
+        302
+      ],
+      "sample_urls_count": 12,
+      "sample_titles": [],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 2,
+      "verified_live": true
+    },
+    {
+      "route_id": "RT-235",
+      "pattern": "https://tecdigital.tec.ac.cr/dotlrn/classes/{dept}/{course}/{group}/calendar/cal-options",
+      "module": "calendario",
+      "http_statuses_observed": [
+        200
+      ],
+      "sample_urls_count": 2,
+      "sample_titles": [
+        "Calendario"
+      ],
+      "discovered_tabs_sample": [],
+      "has_forms": false,
+      "has_modals": false,
+      "has_accordions": false,
+      "responsive_classes": [],
+      "depth_min": 3,
+      "verified_live": true
+    }
+  ]
+}

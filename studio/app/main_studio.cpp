@@ -225,7 +225,7 @@ struct StudioAppState {
     std::string scheduleSummaryUtf8 = "Listo para planificar tu semestre";
     int cliTecPreviewSection = -1;
     int cliTecPreviewSubView = 0;
-    bool cliTecDemoData = false;
+    int cliTecPreviewInnerTab = 0;
 
     DocumentModel doc;
     CommandStack cmdStack;
@@ -10697,8 +10697,8 @@ void ParseCliArgs(StudioAppState* st, std::wstring& outOpenPath, std::string& ou
             st->cliTecPreviewSection = std::clamp(_wtoi(argv[++i]), 0, 6);
         } else if (arg == L"--tec-subview" && i + 1 < argc) {
             st->cliTecPreviewSubView = std::clamp(_wtoi(argv[++i]), 0, 4);
-        } else if (arg == L"--tec-demo-data") {
-            st->cliTecDemoData = true;
+        } else if (arg == L"--tec-inner-tab" && i + 1 < argc) {
+            st->cliTecPreviewInnerTab = std::clamp(_wtoi(argv[++i]), 0, 9);
         }
     }
     LocalFree(argv);
@@ -11231,9 +11231,8 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
         if (st->cliTecPreviewSection >= 0) {
             if (!st->tecStore) {
                 st->tecStore = std::make_unique<DocStudio::TecDigital::TecAcademicStore>();
-                if (!st->cliTecDemoData) {
-                    st->tecStore->LoadSnapshotFromDisk(nullptr);
-                }
+                st->tecStore->LoadSnapshotFromDisk(nullptr);
+                st->tecStore->TryRestoreVaultSession();
             }
             const auto sec = static_cast<DocStudio::TecDigitalUi::HubSection>(st->cliTecPreviewSection);
             const wchar_t* shotW = st->screenshotOutPath.empty() ? nullptr : st->screenshotOutPath.c_str();
@@ -11250,7 +11249,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
                 nullptr,
                 &st->glassSettings,
                 shotW,
-                st->cliTecDemoData);
+                st->cliTecPreviewInnerTab);
             if (shotW != nullptr) {
                 DestroyWindow(hwnd);
                 st.reset();

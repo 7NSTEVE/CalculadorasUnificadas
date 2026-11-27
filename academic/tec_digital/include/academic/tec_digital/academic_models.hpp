@@ -43,6 +43,38 @@ struct DetailedEvaluationItem {
     std::string teacher_comment;
     std::string linked_gaap_id;
     std::string linked_mlc_id;
+    // 2026 live submission & upload metadata (populated when assignment accepts submissions)
+    bool can_upload = false;
+    bool can_upload_url = false;
+    std::string grade_id;
+    std::string student_id;
+    std::string with_group = "0";
+    std::string due_date_gmt;
+    int max_file_size_mb = 80;
+    std::string latest_revision_id;
+    std::string latest_item_id;
+};
+
+struct EvaluationUploadRequest {
+    std::string community_path;
+    std::string task_id;
+    std::string task_item_id;
+    std::string grade_id;
+    std::string student_id;
+    std::string with_group = "0";
+    std::string file_name;        // non-empty when uploading a local file
+    std::string file_mime = "application/octet-stream";
+    std::string file_bytes;       // binary bytes when uploading a local file
+    std::string submission_url;   // non-empty when submitting a URL link
+};
+
+struct EvaluationUploadResult {
+    bool ok = false;
+    int http_status = 0;
+    std::string revision_id;
+    std::string item_id;
+    std::string result_html;
+    std::string error_message;
 };
 
 struct DetailedEvaluationCategory {
@@ -73,6 +105,9 @@ struct RubricCriterion {
     double earned_points = 0.0;
     double max_points = 0.0;
     std::vector<RubricLevel> levels;
+    double weight_pct = 0.0;        // e.g. 15.0 for "Peso 15%"
+    double earned_weight_pct = 0.0; // e.g. 10.0 when 2/3 of 15%
+    std::string comment;            // per-criterion teacher feedback (tr[comment])
 };
 
 struct RubricBreakdown {
@@ -81,6 +116,9 @@ struct RubricBreakdown {
     double total_score = 0.0;
     double max_score = 0.0;
     std::vector<RubricCriterion> criteria;
+    std::string evaluated_target;   // e.g. "Grupo 5"
+    double max_level_points = 0.0;  // e.g. 3.0 from #div_info_rubric[max_weight]
+    bool is_graded = false;
 };
 
 struct GradeWhatIfScenario {
@@ -159,7 +197,35 @@ struct WeeklyScheduleCell {
     std::string course_name;
     std::string group;
     std::string room;
+    std::string building;
+    std::string professor;
+    int credits = 0;
     std::string raw_text;
+};
+
+struct PersonalAcademicInfo {
+    std::string full_name;
+    std::string campus;
+    std::string career;
+    std::string study_plan;
+    std::string academic_status;
+    std::string entry_year;
+    std::string modality;
+    std::string photo_url;
+    std::vector<std::pair<std::string, std::string>> fields;
+};
+
+struct DarCourseSyncEntry {
+    std::string course_name;
+    std::string status_text;
+    std::string state_code;
+};
+
+struct FeriaNegociosRow {
+    std::string name;
+    std::string start_date;
+    std::string end_date;
+    std::string bases_url;
 };
 
 // Exact 11 columns observed on POST /tda-expediente-estudiantil/ajax/tabla_guia_horario
@@ -223,6 +289,40 @@ struct CourseTeacherCard {
     std::vector<std::string> consultation_hours;
 };
 
+struct SpaceBanner {
+    std::string image_url;
+    std::string alt_text;
+    std::string link_url;
+};
+
+struct SpacePortletBlock {
+    std::string title;
+    std::string body_preview;
+    std::vector<CourseExternalLink> links;
+    std::vector<SpaceBanner> images;           // Infographics & visual cards embedded inside weekly/study portlets
+    std::vector<CourseTabInfo> linked_subpages; // Internal ?page_num=N subpages linked inside this portlet (e.g. S1..S16)
+    std::string module_kind;                   // "weekly" | "exam_notice" | "documents" | "news" | "info"
+};
+
+struct SpacePageSnapshot {
+    int page_num = 0;
+    std::string tab_label;
+    std::string page_url;
+    std::vector<SpaceBanner> banners;
+    std::vector<SpacePortletBlock> portlets;
+    std::vector<CourseExternalLink> links;
+    std::string plain_excerpt;
+};
+
+struct NewsArticleDetail {
+    std::string item_id;
+    std::string url;
+    std::string title;
+    std::string pub_date;
+    std::string author;
+    std::string body_text;
+};
+
 struct CourseOverviewSnapshot {
     std::string community_path;
     std::string title;
@@ -236,6 +336,9 @@ struct CourseOverviewSnapshot {
     std::vector<CourseExternalLink> external_links;
     std::vector<std::string> weekly_sections;
     std::vector<std::string> subgroups;
+    std::vector<SpaceBanner> banners;
+    std::vector<SpacePortletBlock> portlets;
+    std::vector<SpacePageSnapshot> custom_pages;
 };
 
 struct CalendarEventEntry {
@@ -390,7 +493,11 @@ struct CurriculumCriticalPath {
 
 std::string ConvertPeriodKeyToExpedienteFormat(std::string_view period);
 std::string ConvertExpedientePeriodToDotlrnFormat(std::string_view period);
+std::string ConvertPeriodKeyToTablaHorarioFormat(std::string_view period);
 std::vector<std::pair<std::string, std::string>> ParseExpedienteComboJsonOrHtml(std::string_view payload);
+
+double ComputeEvaluationGrade100(const DetailedEvaluationItem& item);
+double ComputeCourseAccumulatedGrade100(const DetailedEvaluationsReport& report);
 
 DetailedEvaluationsReport ParseDetailedEvaluationsHtml(std::string_view html,
                                                        std::string_view community_slug = "");
@@ -465,6 +572,61 @@ struct PublicGuiaFilterOptions {
     bool exclude_reserved = false;
 };
 
+// ============================================================================
+// 5. Change Detection Radar, Motor de Juegos / GAAP & Student Action Results
+// ============================================================================
+
+enum class TecChangeEventKind {
+    NewFile = 0,
+    ModifiedFile = 1,
+    NewFolder = 2,
+    GradePublished = 3,
+    GradeChanged = 4,
+    RubricGraded = 5,
+    NewTeacherComment = 6,
+    NewEvaluation = 7,
+    NewNews = 8,
+    NewWeeklyContent = 9
+};
+
+struct TecChangeEvent {
+    std::string id;                // Deterministic dedup key (e.g. "file_mod:<oid>:<rev/ts>")
+    TecChangeEventKind kind = TecChangeEventKind::NewFile;
+    std::string detected_at_utc;   // YYYY-MM-DDTHH:MM:SSZ
+    std::string space_url;
+    std::string space_name;
+    std::string title;             // Concise headline (e.g. "Evaluación calificada: II Fase (65.0/100)")
+    std::string detail;            // Folder path, timestamp delta, rubric score or news excerpt
+    std::string target_id;         // object_id, assign_id, news_url or page_num
+    bool unread = true;
+};
+
+struct MotorJuegosUserInfo {
+    int64_t user_id = 0;
+    std::string first_names;
+    std::string last_names;
+    bool is_professor = false;
+};
+
+struct MotorJuegosActivity {
+    std::string id;
+    std::string title;
+    std::string community_id;
+    std::string status;
+    std::string due_date;
+    double score = -1.0;
+    bool grade_published = false;
+    std::string url;
+};
+
+struct StudentMutationResult {
+    bool ok = false;
+    int http_status = 0;
+    std::string message;
+    std::string raw_response;
+    std::string created_id;
+};
+
 Result<std::vector<PublicGuiaEscuelaInfo>> ParsePublicGuiaEscuelasResponse(std::string_view raw_json);
 Result<std::vector<PublicGuiaModalidadInfo>> ParsePublicGuiaModalidadesResponse(std::string_view raw_json);
 Result<std::vector<PublicGuiaSessionRow>> ParsePublicGuiaRowsResponse(std::string_view raw_json);
@@ -485,6 +647,13 @@ std::string PublicGuiaRowsToHorariosTecJson(
 CourseOverviewSnapshot ParseCourseOverviewHtml(std::string_view html,
                                                std::string_view community_path = "",
                                                std::string_view base_url = "https://tecdigital.tec.ac.cr");
+SpacePageSnapshot ParseSpacePageHtml(std::string_view html,
+                                     int page_num,
+                                     std::string_view tab_label = "",
+                                     std::string_view page_url = "",
+                                     std::string_view base_url = "https://tecdigital.tec.ac.cr");
+NewsArticleDetail ParseNewsArticleHtml(std::string_view html,
+                                       std::string_view url = "");
 std::vector<CourseExternalLink> ExtractCustomTabLinksHtml(
     std::string_view html,
     std::string_view tab_label = "",
@@ -519,5 +688,13 @@ std::vector<SchoolCatalogEntry> ParseSchoolCatalogHtml(std::string_view html,
                                                        std::string_view base_url = "https://tecdigital.tec.ac.cr");
 std::vector<GaapActivityRecord> ParseGaapHistoryHtmlOrJson(std::string_view payload);
 UserModelSnapshot ParseUserModelInfoJson(std::string_view json_text);
+UserModelDimension ParseUserModelSectionHtml(std::string_view dimension_key,
+                                             std::string_view title,
+                                             std::string_view html);
+PersonalAcademicInfo ParsePersonalAcademicInfoHtml(std::string_view html);
+std::vector<DarCourseSyncEntry> ParseDarActualizarCursosHtml(std::string_view html);
+std::vector<FeriaNegociosRow> ParseFeriaTableHtml(
+    std::string_view html,
+    std::string_view base_url = "https://tecdigital.tec.ac.cr");
 
 }  // namespace academic::tec_digital

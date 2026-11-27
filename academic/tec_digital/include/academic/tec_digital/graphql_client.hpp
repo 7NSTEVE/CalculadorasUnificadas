@@ -79,7 +79,13 @@ struct StudentGeneralInfo {
     double weighted_average = 0.0;
     int outstanding_courses = 0;
     int available_registration_credits = 0;
+    std::string user_id;
     std::vector<StudentRnCourse> rn_courses;
+};
+
+struct GraphQlAcademicHistoryResult {
+    AcademicStatsSummary stats;
+    std::vector<GradeRecordRow> grades;
 };
 
 struct GraphQlCurriculumBundle {
@@ -118,8 +124,20 @@ public:
     Result<ScholarshipStatusInfo> FetchScholarshipStatus(std::string_view campaign_id);
     Result<std::vector<GraphQlActualCourse>> FetchActualPeriodCourses(std::string_view carne);
     Result<AcademicStatsSummary> FetchAcademicHistoryFallback(std::string_view carne);
+    Result<GraphQlAcademicHistoryResult> FetchAcademicHistoryFull(std::string_view carne);
     Result<StudentGeneralInfo> FetchStudentGeneralInfo(std::string_view carne);
     Result<GraphQlCurriculumBundle> FetchStudentCurriculum(std::string_view carne);
+
+    // Legitimate student GraphQL mutations (guarded by ScopedUserMutationGuard::ManageInclusions)
+    Result<StudentMutationResult> SubmitInclusionRequest(std::string_view campaign_id,
+                                                         std::string_view carne,
+                                                         std::string_view course_code,
+                                                         std::string_view group,
+                                                         std::string_view comment);
+    Result<StudentMutationResult> DeleteInclusionRequest(std::string_view request_id);
+    Result<StudentMutationResult> ToggleInclusionRequest(std::string_view request_id, bool active);
+    Result<StudentMutationResult> SetScholarshipSelection(std::string_view campaign_id,
+                                                          std::string_view scholarship_type);
 
 private:
     Sanitizer SnapshotSanitizer() const;

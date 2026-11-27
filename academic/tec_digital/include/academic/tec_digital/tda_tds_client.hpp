@@ -20,11 +20,13 @@ struct CommunityInfo {
     std::string community_id;
     std::string slug;
     std::string name;
-    std::string type;        // "CLASE", "CATEDRA", "COMUNIDAD"
-    std::string department;  // e.g. "E", "ECE", "CA", or "Catedra"
+    std::string type;        // "CLASE", "CATEDRA", "ESCUELA", "SUBGRUPO", "PROGRAMA", "COMUNIDAD"
+    std::string department;  // e.g. "E", "ECE", "CA", "Cátedra", "Escuela", "DOP", "Programas"
     std::string period;      // e.g. "S-2-2026" or "Permanente"
     std::string url;
     std::string root_folder_id;
+    std::string parent_url;
+    bool is_current_period = false;
 };
 
 struct SedeInfo {
@@ -124,6 +126,9 @@ struct ExpedienteSummary {
     std::string guia_horario_html;
     std::string weighted_average_text;
     std::string approval_pct_text;
+    std::string active_schedule_period;
+    std::optional<PersonalAcademicInfo> personal_info;
+    std::vector<DarCourseSyncEntry> dar_sync_preview;
     StructuredExpediente structured;
 };
 
@@ -216,6 +221,7 @@ struct FeriaNegociosSnapshot {
     FeriaLocation student_location;
     std::string active_fairs_raw_json;
     std::vector<FeriaCategory> categories;
+    std::vector<FeriaNegociosRow> feria_rows;
     FeriaIds ids;
 };
 
@@ -363,6 +369,8 @@ public:
 
     // Expediente Estudiantil (tda-expediente-estudiantil)
     Result<ExpedienteSummary> GetExpedienteSummary(std::string_view carne = "");
+    Result<PersonalAcademicInfo> GetPersonalAcademicInfo(std::string_view carne = "");
+    Result<std::vector<DarCourseSyncEntry>> GetDarEnrollmentPreview(std::string_view carne = "");
     Result<std::vector<GraduateAttributeRow>> GetGraduateAttributes(std::string_view carne = "");
     Result<std::vector<WeeklyScheduleCell>> GetCurrentPeriodSchedule(std::string_view periodo = "",
                                                                      std::string_view carne = "");
@@ -389,13 +397,64 @@ public:
     Result<RubricBreakdown> GetRubricBreakdown(std::string_view rubric_id,
                                                std::string_view community_id = "",
                                                std::string_view task_item_id = "",
-                                               std::string_view task_id = "");
+                                               std::string_view task_id = "",
+                                               std::string_view student_id = "");
     Result<CourseOverviewSnapshot> GetCourseOverview(std::string_view community_path);
+    Result<SpacePageSnapshot> GetSpacePage(std::string_view community_path,
+                                           int page_num,
+                                           std::string_view tab_label = "");
+    Result<std::vector<SpacePageSnapshot>> FetchCustomSpacePages(
+        std::string_view community_path,
+        const std::vector<CourseTabInfo>& tabs,
+        int max_tabs = 10,
+        int polite_delay_ms = 250);
+    Result<NewsArticleDetail> GetNewsArticleDetail(std::string_view news_url);
     Result<std::vector<CourseExternalLink>> CrawlCustomCommunityTabs(
         std::string_view community_path,
         const std::vector<CourseTabInfo>& tabs,
         int max_tabs = 12,
         int polite_delay_ms = 320);
+
+    // Explicit user-confirmed student mutations (gated by ScopedUserMutationGuard; blocked by default)
+    static std::string BuildEvaluationUploadMultipartBody(const EvaluationUploadRequest& req,
+                                                          std::string_view boundary);
+    Result<EvaluationUploadResult> UploadEvaluationSubmission(const EvaluationUploadRequest& req);
+    Result<bool> DeleteEvaluationRevision(std::string_view community_path,
+                                          std::string_view revision_id,
+                                          std::string_view item_id);
+    Result<bool> MarkNotificationRead(std::string_view notification_by_user_id);
+    Result<bool> DeleteUserNotification(std::string_view notification_by_user_id);
+    Result<bool> DeleteAllUserNotifications();
+    Result<bool> RequestEvaluationNotifications(std::string_view community_path,
+                                                std::string_view assign_id,
+                                                bool enabled);
+    Result<bool> SaveBrowserNotificationPref(bool enabled);
+    Result<bool> RefreshEnrolledCoursesFromDar();
+    Result<StudentMutationResult> SyncExpedienteDarCourses();
+    Result<StudentMutationResult> RefreshExpedienteData();
+    Result<StudentMutationResult> UploadPlagiarismFile(std::string_view folder_id,
+                                                       std::string_view file_name,
+                                                       std::string_view mime_type,
+                                                       std::string_view bytes);
+    Result<StudentMutationResult> SubmitPlagiarismEphorus(std::string_view doc_uid,
+                                                          std::string_view item_id);
+    Result<StudentMutationResult> UpdatePlagiarismVisibility(std::string_view doc_uid, bool visible);
+    Result<StudentMutationResult> SavePrematriculaSelection(std::string_view pre_enrollment_id,
+                                                            std::string_view curriculum_id,
+                                                            std::string_view course_codes_csv);
+    Result<StudentMutationResult> RegisterFairProject(std::string_view fair_id,
+                                                      std::string_view title,
+                                                      std::string_view description,
+                                                      std::string_view category_id,
+                                                      std::string_view sede_id);
+    Result<StudentMutationResult> SaveUserPrivacySettings(std::string_view query_params);
+    Result<StudentMutationResult> SubmitConsentAnswer(std::string_view module_key, bool accepted);
+
+    // Native Motor de Juegos & GAAP read-only helpers + safe image caching
+    Result<MotorJuegosUserInfo> GetMotorJuegosUser();
+    Result<std::vector<MotorJuegosActivity>> GetMotorJuegosActivities();
+    Result<std::string> GetMotorJuegosCommunityDetails(std::string_view community_id);
+    Result<std::string> DownloadBinaryResource(std::string_view path_or_url, size_t max_bytes = 4 * 1024 * 1024);
 
     // Unified Calendar, Control de Plagio, SMS, Subscriptions, Forums, School Catalog, User Model, GAAP
     Result<std::vector<CalendarEventEntry>> GetCalendarEvents(std::string_view date_iso = "",
@@ -403,9 +462,11 @@ public:
                                                               std::string_view community_path = "");
     Result<PlagiarismTreeSnapshot> GetPlagiarismTree();
     Result<std::vector<PlagiarismMisDocItem>> GetPlagiarismMisDocs(std::string_view folder_id);
+    Result<std::vector<PlagiarismMisDocItem>> GetPlagiarismCourseDocs(std::string_view community_id);
     Result<bool> GetPlagiarismTermsAccepted();
     Result<std::string> GetPlagiarismDocInfo(std::string_view doc_uid);
     Result<std::string> GetPlagiarismReportUrl(std::string_view doc_uid);
+    Result<std::string> GetServerDateTime();
     Result<std::vector<GaapActivityRecord>> GetGaapActivityHistory(std::string_view community_path);
     Result<std::vector<SmsMessageRecord>> GetCourseSmsMessages(std::string_view community_path);
     Result<std::vector<NotificationSubscriptionItem>> GetNotificationSubscriptions();
@@ -439,6 +500,7 @@ public:
 
     // Feria de Negocios (read-only metadata)
     Result<FeriaNegociosSnapshot> GetFeriaNegociosSnapshot(std::string_view location_id = "");
+    Result<std::vector<FeriaNegociosRow>> GetFeriaListRows();
     Result<FeriaLocation> GetFeriaStudentLocation();
     Result<std::vector<FeriaCategory>> GetFeriaCategories();
     Result<FeriaIds> GetFeriaIds();
@@ -486,7 +548,8 @@ private:
                                   std::string_view path_or_url,
                                   std::string_view body = "",
                                   std::string_view content_type = "",
-                                  std::string_view accept = "application/json, text/plain, */*");
+                                  std::string_view accept = "application/json, text/plain, */*",
+                                  int timeout_ms = 0);
 
     PolicyEnforcingTransport& transport_;
     AuthClient& auth_;

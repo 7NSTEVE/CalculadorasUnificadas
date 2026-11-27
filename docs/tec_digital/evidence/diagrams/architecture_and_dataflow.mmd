@@ -1,0 +1,33 @@
+flowchart TB
+    subgraph ClientSurface["Superficie TEC Digital 2026 (Observada en Cliente)"]
+        P1["Portal dotLRN / OpenACS (HTML + jQuery + TDS-Lib)"]
+        P2["File-Storage & Malla (AngularJS 1.x)"]
+        P3["Gestor de Inclusiones (React + Vite + Apollo GraphQL)"]
+        P4["Motor de Juegos / GAAP (Angular Moderno)"]
+        P5["Guía Pública de Horarios (ASP.NET WebForms)"]
+    end
+
+    subgraph CuadernUCore["CuadernU C++17 Nativo (0% WebView, 0% GPU, MUTATION_MASK=0)"]
+        POL["ReadOnlyRequestPolicy + PolicyEnforcingTransport"]
+        AUTH["AuthClient + DPAPI CredentialVault"]
+        TDA["TdaTdsClient (HTML/AJAX)"]
+        GQL["TecGraphQlClient (api.tec.ac.cr:3005)"]
+        PUB["PublicGuiaHorariosClient (90 escuelas)"]
+        PRS["Parsers Deterministas (academic_parsers.cpp)"]
+        STR["TecAcademicStore + Snapshot JSON v2 (0-PII)"]
+        UI["Win32 + GDI+ guías de interfaz / material translúcido (7 Secciones)"]
+    end
+
+    P1 --> POL
+    P2 --> POL
+    P3 --> GQL
+    P4 --> POL
+    P5 --> PUB
+    AUTH --> POL
+    POL --> TDA
+    POL --> GQL
+    TDA --> PRS
+    GQL --> PRS
+    PUB --> STR
+    PRS --> STR
+    STR --> UI

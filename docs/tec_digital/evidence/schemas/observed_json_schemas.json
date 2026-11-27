@@ -1,0 +1,223 @@
+{
+  "captured_at": "2026-11-26",
+  "read_only_mutation_mask": 0,
+  "note": "Structural JSON key/type schemas only; zero personal values.",
+  "endpoints": {
+    "/tda-consentimiento-informado/ajax/client/get_user_term_condition": {
+      "bytes": 7822,
+      "content_type": "text/html; charset=utf-8",
+      "format": "text_or_html",
+      "http_status": 422,
+      "method": "GET"
+    },
+    "/tda-control-plagio/ajax/cargaArbol": {
+      "bytes": 87,
+      "content_type": "text/html; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "MyFiles": {
+          "folder_id": "integer",
+          "isStudent": "integer",
+          "name": "string"
+        },
+        "periods": "string"
+      }
+    },
+    "/tda-expediente-estudiantil/ajax/combos/carga_periodos_tds_lib": {
+      "bytes": 697,
+      "content_type": "text/html; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "count_observed": 14,
+        "item_schema": {
+          "data": "string",
+          "key": "string"
+        },
+        "type": "array"
+      }
+    },
+    "/tda-expediente-estudiantil/ajax/combos/carga_sedes_tds_lib": {
+      "bytes": 1102,
+      "content_type": "text/html; charset=utf-8",
+      "format": "text_or_html",
+      "http_status": 200,
+      "method": "GET"
+    },
+    "/tda-expediente-estudiantil/ajax/i18n": {
+      "bytes": 1336,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "PackageId": "integer",
+        "aceptar": "string",
+        "actualizacionDAR": "string",
+        "anno": "string",
+        "cancelar": "string",
+        "cantidad": "string",
+        "carne": "string",
+        "categoria": "string",
+        "contenidoErrorNavegador": "string",
+        "creditos": "string",
+        "descripcion": "string",
+        "domingo": "string",
+        "estado": "string",
+        "estudiante": "string",
+        "fecha": "string",
+        "hora": "string",
+        "informacion": "string",
+        "jueves": "string",
+        "lunes": "string",
+        "martes": "string",
+        "materia": "string",
+        "miercoles": "string",
+        "modalidad": "string",
+        "nota": "string",
+        "origen_datos": "string",
+        "periodo": "string",
+        "rNotas": "string",
+        "rNotasAprobadas": "string",
+        "rNotasReprobadas": "string",
+        "rNotasTodas": "string",
+        "resumen_historial": "string",
+        "sabado": "string",
+        "sinInfoPeriodo": "string",
+        "sin_valor_legal": "string",
+        "tituloErrorNavegador": "string",
+        "ver_stats": "string",
+        "ver_tabla": "string",
+        "viernes": "string"
+      }
+    },
+    "/tda-expediente-estudiantil/ajax/i18n_validation": {
+      "bytes": 130,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "email_error": "string",
+        "just_numbers": "string"
+      }
+    },
+    "/tda-feria-negocios/ajax/internationalization": {
+      "bytes": 7793,
+      "content_type": "text/html; charset=utf-8",
+      "format": "text_or_html",
+      "http_status": 422,
+      "method": "GET"
+    },
+    "/tda-motor-juegos/api/user/": {
+      "bytes": 101,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "isProfessor": "integer",
+        "userFirstNames": "string",
+        "userId": "integer",
+        "userLastNames": "string"
+      }
+    },
+    "/tda-notifications/ajax/get_user_notifications": {
+      "bytes": 3367,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "category_sort": "boolean",
+        "notifications": {
+          "count_observed": 10,
+          "item_schema": {
+            "category_id": "integer",
+            "creation_date": "string",
+            "expiration_date": "string",
+            "notification_id": "string",
+            "origin": "integer",
+            "state": "string",
+            "text": "string",
+            "title": "string",
+            "url": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "/tda-notifications/ajax/has_unread_notifications": {
+      "bytes": 16,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "quantity": "integer"
+      }
+    },
+    "/tda-performance-evaluation/api/evaluations/": {
+      "bytes": 2,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "count_observed": 0,
+        "item_schema": "unknown",
+        "type": "array"
+      }
+    },
+    "/tda-performance-evaluation/api/forms/": {
+      "bytes": 2730,
+      "content_type": "application/json; charset=utf-8",
+      "format": "json",
+      "http_status": 200,
+      "method": "GET",
+      "schema": {
+        "id": "integer",
+        "instructions": "string",
+        "name": "string",
+        "sections": {
+          "count_observed": 4,
+          "item_schema": {
+            "description": "string",
+            "id": "integer",
+            "items": {
+              "count_observed": 10,
+              "item_schema": {
+                "description": "any",
+                "id": "any",
+                "order": "any",
+                "type": "any"
+              },
+              "type": "array"
+            },
+            "name": "string",
+            "order": "integer",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "/tda-um/ajax/get_gaap_server": {
+      "bytes": 28,
+      "content_type": "text/html; charset=utf-8",
+      "format": "text_or_html",
+      "http_status": 200,
+      "method": "GET"
+    },
+    "/tda-um/ajax/internacionalization": {
+      "bytes": 7800,
+      "content_type": "text/html; charset=utf-8",
+      "format": "text_or_html",
+      "http_status": 422,
+      "method": "GET"
+    }
+  }
+}

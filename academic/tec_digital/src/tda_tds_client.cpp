@@ -10,6 +10,7 @@
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <regex>
 #include <set>
@@ -542,10 +543,15 @@ std::string TdaTdsClient::ResolveStudentCarne(std::string_view explicit_carne) {
     std::string discovered;
     auto probe_carne_from_text = [](std::string_view text) -> std::string {
         std::string s(text);
-        static const std::regex kAttrRe(
-            R"((?:name|id)\s*=\s*["'](?:carne|carnet|student_id|carneOficial)["'][^>]*value\s*=\s*["'](\d{6,12})["'])",
+        // Priority 1: Live TEC Expediente hidden span <span hidden="true" id='carne_expediente'>CARNE</span>
+        static const std::regex kSpanCarneRe(
+            R"(<span[^>]*\bid\s*=\s*["'](?:carne_expediente|tmp_carne)["'][^>]*>\s*(\d{6,12})\s*<)",
             std::regex::ECMAScript | std::regex::icase);
         std::smatch m;
+        if (std::regex_search(s, m, kSpanCarneRe)) return m.str(1);
+        static const std::regex kAttrRe(
+            R"((?:name|id)\s*=\s*["'](?:carne|carnet|student_id|carneOficial|carne_tdsLib)["'][^>]*value\s*=\s*["'](\d{6,12})["'])",
+            std::regex::ECMAScript | std::regex::icase);
         if (std::regex_search(s, m, kAttrRe)) return m.str(1);
         static const std::regex kJsRe(
             R"((?:carne|carnet|student_id|carneOficial)["']?\s*[:=]\s*["']?(\d{6,12})["']?)",
@@ -579,7 +585,8 @@ Result<std::string> TdaTdsClient::FetchText(std::string_view method,
                                             std::string_view path_or_url,
                                             std::string_view body,
                                             std::string_view content_type,
-                                            std::string_view accept) {
+                                            std::string_view accept,
+                                            int timeout_ms) {
     std::string url = (path_or_url.rfind("http://", 0) == 0 ||
                        path_or_url.rfind("https://", 0) == 0)
                           ? std::string(path_or_url)
@@ -591,6 +598,11 @@ Result<std::string> TdaTdsClient::FetchText(std::string_view method,
     req.follow_redirects = true;
     req.max_redirects = 5;
     req.body = std::string(body);
+    if (timeout_ms > 0) {
+        req.connect_timeout_ms = timeout_ms;
+        req.send_timeout_ms = timeout_ms;
+        req.receive_timeout_ms = timeout_ms;
+    }
     if (!content_type.empty()) {
         req.headers["Content-Type"] = std::string(content_type);
     }
@@ -761,6 +773,42 @@ std::vector<CommunityInfo> TdaTdsClient::ParseCommunitiesHtml(std::string_view h
     static const std::regex kCatedraPathRe(
         R"(^/dotlrn/catedras\.tec/([^/?#]+))",
         std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kEscuelaPathRe(
+        R"(^/dotlrn/escuela/([^/?#]+)(?:/([^/?#]+))?(?:/([^/?#]+))?)",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kDopPathRe(
+        R"(^/dotlrn/dop(?:/([^/?#]+))?)",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kProgramasPathRe(
+        R"(^/dotlrn/programas\.tec(?:/([^/?#]+))?)",
+        std::regex::ECMAScript | std::regex::icase);
+    static const std::regex kEstudiantesPathRe(
+        R"(^/dotlrn/estudiantes\.tec(?:/([^/?#]+))?)",
+        std::regex::ECMAScript | std::regex::icase);
+
+    auto clean_title = [](std::string raw) -> std::string {
+        std::string t = StripTags(raw);
+        for (const char* tok : {"bookmark_check", "loupe"}) {
+            size_t p = 0;
+            while ((p = t.find(tok, p)) != std::string::npos) {
+                t.erase(p, std::strlen(tok));
+            }
+        }
+        return TrimAscii(t);
+    };
+
+    auto is_utility_segment = [](const std::string& seg) -> bool {
+        if (seg.empty()) return false;
+        std::string low = AsciiLower(seg);
+        return low == "one-community" || low == "one-community-type" ||
+               low == "file-storage" || low == "calendar" || low == "evaluation" ||
+               low == "news" || low == "forums" || low == "members" ||
+               low == "control-panel" || low == "configure" || low == "search" ||
+               low == "whos-online" || low == "manage-memberships" ||
+               low == "register" || low == "deregister" || low == "ajax" ||
+               low == "index" || low == "courses" || low == "communities" ||
+               low == "my-communities" || low.rfind("member-confirm", 0) == 0;
+    };
 
     std::string html(html_text);
     std::sregex_iterator it(html.begin(), html.end(), kAnchorRe);
@@ -768,16 +816,26 @@ std::vector<CommunityInfo> TdaTdsClient::ParseCommunitiesHtml(std::string_view h
     for (; it != end; ++it) {
         std::string href = (*it)[1].matched ? (*it)[1].str() : (*it)[2].str();
         href = TrimAscii(HeadlessCrawler::HtmlUnescape(href));
-        if (href.empty()) continue;
+        if (href.empty() || href.find("page_num=") != std::string::npos ||
+            href.find("one-community-type") != std::string::npos ||
+            href.find("member-confirm") != std::string::npos ||
+            href.find("/news/") != std::string::npos ||
+            href.find("/file-storage") != std::string::npos ||
+            href.find("/calendar") != std::string::npos ||
+            href.find("/evaluation") != std::string::npos) {
+            continue;
+        }
 
         auto canon = UrlCanonicalizer::Canonicalize(href, base_url);
         if (!canon.ok) continue;
         ParsedUrl pu = ParseHttpUrl(canon.value);
         if (!pu.valid) continue;
 
+        std::string label = clean_title((*it)[3].str());
         std::smatch m;
         if (std::regex_search(pu.path, m, kClassPathRe)) {
             std::string slug = m.str(3);
+            if (is_utility_segment(slug)) continue;
             std::string comm_url = pu.origin + "/dotlrn/classes/" + m.str(1) + "/" + m.str(2) + "/" + slug;
             if (!seen_urls.insert(comm_url).second) continue;
 
@@ -789,12 +847,11 @@ std::vector<CommunityInfo> TdaTdsClient::ParseCommunitiesHtml(std::string_view h
             info.url = std::move(comm_url);
             size_t dot = slug.find('.');
             info.period = (dot != std::string::npos) ? slug.substr(0, dot) : "";
-            info.name = StripTags((*it)[3].str());
-            if (info.name.empty()) info.name = m.str(2) + " (" + slug + ")";
+            info.name = label.empty() ? (m.str(2) + " (" + slug + ")") : label;
             out.push_back(std::move(info));
         } else if (std::regex_search(pu.path, m, kCatedraPathRe)) {
             std::string slug = m.str(1);
-            if (slug == "one-community-type" || slug == "one-community") continue;
+            if (is_utility_segment(slug)) continue;
             std::string comm_url = pu.origin + "/dotlrn/catedras.tec/" + slug;
             if (!seen_urls.insert(comm_url).second) continue;
 
@@ -805,9 +862,116 @@ std::vector<CommunityInfo> TdaTdsClient::ParseCommunitiesHtml(std::string_view h
             info.type = "CATEDRA";
             info.period = "Permanente";
             info.url = std::move(comm_url);
-            info.name = StripTags((*it)[3].str());
-            if (info.name.empty()) info.name = slug;
+            info.name = label.empty() ? slug : label;
             out.push_back(std::move(info));
+        } else if (std::regex_search(pu.path, m, kEscuelaPathRe)) {
+            std::string esc = m.str(1);
+            std::string sub1 = m[2].matched ? m.str(2) : "";
+            std::string sub2 = m[3].matched ? m.str(3) : "";
+            if (is_utility_segment(esc) || is_utility_segment(sub1) || is_utility_segment(sub2)) continue;
+            std::string path = "/dotlrn/escuela/" + esc;
+            std::string parent;
+            if (!sub1.empty()) {
+                parent = pu.origin + path;
+                path += "/" + sub1;
+            }
+            if (!sub2.empty()) {
+                parent = pu.origin + path;
+                path += "/" + sub2;
+            }
+            std::string comm_url = pu.origin + path;
+            if (!seen_urls.insert(comm_url).second) continue;
+
+            CommunityInfo info;
+            std::string dept = esc;
+            size_t dpos = dept.rfind('.');
+            if (dpos != std::string::npos && dpos + 1 < dept.size()) dept = dept.substr(dpos + 1);
+            info.department = dept;
+            info.slug = !sub2.empty() ? sub2 : (!sub1.empty() ? sub1 : esc);
+            info.community_id = info.slug;
+            info.type = sub1.empty() ? "ESCUELA" : "SUBGRUPO";
+            info.period = "Permanente";
+            info.url = std::move(comm_url);
+            info.parent_url = std::move(parent);
+            info.name = label.empty() ? info.slug : label;
+            out.push_back(std::move(info));
+        } else if (std::regex_search(pu.path, m, kDopPathRe)) {
+            std::string sub1 = m[1].matched ? m.str(1) : "";
+            if (is_utility_segment(sub1)) continue;
+            std::string comm_url = pu.origin + "/dotlrn/dop" + (sub1.empty() ? "" : ("/" + sub1));
+            if (!seen_urls.insert(comm_url).second) continue;
+
+            CommunityInfo info;
+            info.department = "DOP";
+            info.slug = sub1.empty() ? "dop" : sub1;
+            info.community_id = info.slug;
+            info.type = sub1.empty() ? "COMUNIDAD" : "SUBGRUPO";
+            info.period = "Permanente";
+            info.url = std::move(comm_url);
+            if (!sub1.empty()) info.parent_url = pu.origin + "/dotlrn/dop";
+            info.name = label.empty() ? info.slug : label;
+            out.push_back(std::move(info));
+        } else if (std::regex_search(pu.path, m, kProgramasPathRe)) {
+            std::string sub1 = m[1].matched ? m.str(1) : "";
+            if (is_utility_segment(sub1)) continue;
+            std::string comm_url = pu.origin + "/dotlrn/programas.tec" + (sub1.empty() ? "" : ("/" + sub1));
+            if (!seen_urls.insert(comm_url).second) continue;
+
+            CommunityInfo info;
+            info.department = "Programas";
+            info.slug = sub1.empty() ? "programas.tec" : sub1;
+            info.community_id = info.slug;
+            info.type = "PROGRAMA";
+            info.period = "Permanente";
+            info.url = std::move(comm_url);
+            if (!sub1.empty()) info.parent_url = pu.origin + "/dotlrn/programas.tec";
+            info.name = label.empty() ? info.slug : label;
+            out.push_back(std::move(info));
+        } else if (std::regex_search(pu.path, m, kEstudiantesPathRe)) {
+            std::string sub1 = m[1].matched ? m.str(1) : "";
+            if (is_utility_segment(sub1)) continue;
+            std::string comm_url = pu.origin + "/dotlrn/estudiantes.tec" + (sub1.empty() ? "" : ("/" + sub1));
+            if (!seen_urls.insert(comm_url).second) continue;
+
+            CommunityInfo info;
+            info.department = "Estudiantes";
+            info.slug = sub1.empty() ? "estudiantes.tec" : sub1;
+            info.community_id = info.slug;
+            info.type = sub1.empty() ? "COMUNIDAD" : "SUBGRUPO";
+            info.period = "Permanente";
+            info.url = std::move(comm_url);
+            if (!sub1.empty()) info.parent_url = pu.origin + "/dotlrn/estudiantes.tec";
+            info.name = label.empty() ? info.slug : label;
+            out.push_back(std::move(info));
+        }
+    }
+
+    // Rank periods chronologically (e.g. "S-2-2026" > "S-1-2026" > "V-1-2025") and mark active period
+    auto period_score = [](const std::string& p) -> int {
+        static const std::regex kPerRe(R"(^([A-Za-z]+)-(\d+)-(\d{4})$)");
+        std::smatch pm;
+        if (!std::regex_match(p, pm, kPerRe)) return -1;
+        int year = std::atoi(pm.str(3).c_str());
+        int num = std::atoi(pm.str(2).c_str());
+        std::string mod = AsciiLower(pm.str(1));
+        int mod_rank = (mod == "v") ? 0 : 1; // Verano before Semestre within same year/index
+        return year * 100 + num * 10 + mod_rank;
+    };
+    int best_score = -1;
+    std::string best_period;
+    for (const auto& c : out) {
+        if (c.type != "CLASE") continue;
+        int sc = period_score(c.period);
+        if (sc > best_score) {
+            best_score = sc;
+            best_period = c.period;
+        }
+    }
+    if (!best_period.empty()) {
+        for (auto& c : out) {
+            if (c.type == "CLASE" && c.period == best_period) {
+                c.is_current_period = true;
+            }
         }
     }
     return out;
@@ -1243,9 +1407,40 @@ Result<std::vector<RssNewsItem>> TdaTdsClient::ParseRssXml(std::string_view xml_
         item.link = ExtractXmlTag(block, "link");
         item.guid = ExtractXmlTag(block, "guid");
         item.description = ExtractXmlTag(block, "description");
+        {
+            // Strip real HTML markup tags (<p>, <br>, <div ...>, <span>, <a>, etc.) even for short RSS
+            // descriptions, while preserving literal non-HTML tokens inside CDATA (e.g. "</description>", "</item>").
+            static const std::regex kHtmlMarkupRe(
+                R"(</?(?:p|br|div|span|a|b|strong|i|em|u|ul|ol|li|table|thead|tbody|tfoot|tr|td|th|font|img|h[1-6]|hr|blockquote|pre|code|section|article|header|footer|small|sub|sup)\b[^>]*>)",
+                std::regex::icase);
+            if (std::regex_search(item.description, kHtmlMarkupRe)) {
+                item.description = std::regex_replace(item.description, kHtmlMarkupRe, " ");
+                item.description = HeadlessCrawler::HtmlUnescape(item.description);
+                std::string compact;
+                compact.reserve(item.description.size());
+                bool prev_ws = false;
+                for (char ch : item.description) {
+                    if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') {
+                        if (!prev_ws && !compact.empty()) compact.push_back(' ');
+                        prev_ws = true;
+                    } else {
+                        compact.push_back(ch);
+                        prev_ws = false;
+                    }
+                }
+                item.description = TrimAscii(compact);
+            }
+        }
+        if (item.description.size() > 800) {
+            item.description = StripTags(item.description);
+            if (item.description.size() > 800) {
+                item.description = TrimAscii(item.description.substr(0, 797)) + "...";
+            }
+        }
         item.pub_date = ExtractXmlTag(block, "pubDate");
         if (!item.title.empty() || !item.link.empty() || !item.description.empty()) {
             out.push_back(std::move(item));
+            if (out.size() >= 40) break;
         }
         pos = after_end;
     }
@@ -1635,13 +1830,28 @@ Result<ExpedienteSummary> TdaTdsClient::GetExpedienteSummary(std::string_view ca
 
     std::string q = resolved_carne.empty() ? "" : ("?carne=" + UrlEncode(resolved_carne));
     std::string post_carne = resolved_carne.empty() ? "" : ("carne=" + UrlEncode(resolved_carne));
-    if (auto r = FetchText("GET", "/tda-expediente-estudiantil/ajax/detalle_notas" + q,
-                           "", "", "text/html, */*"); r.ok) {
+
+    // Discover active schedule radio period (e.g. "S 2 2026") from /tda-expediente-estudiantil/
+    if (auto eh = FetchText("GET", "/tda-expediente-estudiantil/", "", "", "text/html, */*"); eh.ok) {
+        static const std::regex kPerRadioRe1(
+            R"(<input[^>]*name\s*=\s*["']periodos["'][^>]*value\s*=\s*["']([^"']+)["'])",
+            std::regex::icase);
+        static const std::regex kPerRadioRe2(
+            R"(<input[^>]*value\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']periodos["'])",
+            std::regex::icase);
+        std::smatch pm;
+        if (std::regex_search(eh.value, pm, kPerRadioRe1) || std::regex_search(eh.value, pm, kPerRadioRe2)) {
+            sum.active_schedule_period = TrimAscii(pm.str(1));
+        }
+    }
+
+    if (auto r = post_or_get("/tda-expediente-estudiantil/ajax/detalle_notas",
+                             post_carne, q, "text/html, */*"); r.ok) {
         sum.detalle_notas_html = std::move(r.value);
         sum.structured.grades = ParseDetalleNotasHtml(sum.detalle_notas_html);
     }
-    if (auto r = FetchText("GET", "/tda-expediente-estudiantil/ajax/detalle_promedio_ponderado" + q,
-                           "", "", "text/html, */*"); r.ok) {
+    if (auto r = post_or_get("/tda-expediente-estudiantil/ajax/detalle_promedio_ponderado",
+                             post_carne, q, "text/html, */*"); r.ok) {
         sum.detalle_promedio_html = r.value;
         static const std::regex kNotaRe(
             R"(<[^>]*\bid\s*=\s*["']nota["'][^>]*>([\s\S]*?)</[^>]+>)",
@@ -1666,11 +1876,27 @@ Result<ExpedienteSummary> TdaTdsClient::GetExpedienteSummary(std::string_view ca
                              post_carne, q, "text/html, */*"); r.ok) {
         sum.detalle_historial_html = std::move(r.value);
         sum.structured.stats = ParseAcademicStatsHtml(sum.detalle_historial_html);
+        if (sum.weighted_average_text.empty() && sum.structured.stats.weighted_avg_general > 0.0) {
+            char buf[32]{};
+            std::snprintf(buf, sizeof(buf), "%.2f", sum.structured.stats.weighted_avg_general);
+            sum.weighted_average_text = buf;
+        }
+        if (sum.approval_pct_text.empty() && sum.structured.stats.passed_pct > 0.0) {
+            char buf[32]{};
+            std::snprintf(buf, sizeof(buf), "%.1f%%", sum.structured.stats.passed_pct);
+            sum.approval_pct_text = buf;
+        }
     }
     if (auto r = post_or_get("/tda-expediente-estudiantil/ajax/citas_matricula",
                              post_carne, q, "text/html, */*"); r.ok) {
         sum.citas_matricula_html = std::move(r.value);
         sum.structured.citas_matricula = ParseCitasMatriculaHtml(sum.citas_matricula_html);
+    }
+    if (auto pi = GetPersonalAcademicInfo(resolved_carne); pi.ok) {
+        sum.personal_info = std::move(pi.value);
+    }
+    if (auto dp = GetDarEnrollmentPreview(resolved_carne); dp.ok) {
+        sum.dar_sync_preview = std::move(dp.value);
     }
     if (auto r = post_or_get("/tda-expediente-estudiantil/ajax/guia_horario",
                              post_carne, q, "text/html, */*"); r.ok) {
@@ -1703,12 +1929,50 @@ Result<ExpedienteSummary> TdaTdsClient::GetExpedienteSummary(std::string_view ca
     return Result<ExpedienteSummary>::Success(std::move(sum));
 }
 
+Result<PersonalAcademicInfo> TdaTdsClient::GetPersonalAcademicInfo(std::string_view carne) {
+    std::string resolved = ResolveStudentCarne(carne);
+    std::string body = resolved.empty() ? "" : ("carne=" + UrlEncode(resolved));
+    auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/info_personal",
+                       body, "application/x-www-form-urlencoded", "text/html, */*");
+    if (!r.ok) return Result<PersonalAcademicInfo>::Failure(r.error_code, r.error_message);
+    auto info = ParsePersonalAcademicInfoHtml(r.value);
+    const Sanitizer san = SnapshotSanitizer();
+    info.full_name = san.SanitizeText(info.full_name);
+    info.campus = san.SanitizeText(info.campus);
+    info.career = san.SanitizeText(info.career);
+    info.study_plan = san.SanitizeText(info.study_plan);
+    info.academic_status = san.SanitizeText(info.academic_status);
+    info.entry_year = san.SanitizeText(info.entry_year);
+    info.modality = san.SanitizeText(info.modality);
+    for (auto& kv : info.fields) {
+        kv.first = san.SanitizeText(kv.first);
+        kv.second = san.SanitizeText(kv.second);
+    }
+    return Result<PersonalAcademicInfo>::Success(std::move(info));
+}
+
+Result<std::vector<DarCourseSyncEntry>> TdaTdsClient::GetDarEnrollmentPreview(std::string_view carne) {
+    std::string resolved = ResolveStudentCarne(carne);
+    std::string body = resolved.empty() ? "" : ("carne=" + UrlEncode(resolved));
+    auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/actualizar_cursos",
+                       body, "application/x-www-form-urlencoded", "text/html, */*");
+    if (!r.ok) return Result<std::vector<DarCourseSyncEntry>>::Failure(r.error_code, r.error_message);
+    auto entries = ParseDarActualizarCursosHtml(r.value);
+    const Sanitizer san = SnapshotSanitizer();
+    for (auto& e : entries) {
+        e.course_name = san.SanitizeText(e.course_name);
+        e.status_text = san.SanitizeText(e.status_text);
+    }
+    return Result<std::vector<DarCourseSyncEntry>>::Success(std::move(entries));
+}
+
 Result<std::vector<GraduateAttributeRow>> TdaTdsClient::GetGraduateAttributes(
     std::string_view carne) {
     std::string resolved = ResolveStudentCarne(carne);
     std::string body = "student_id=" + UrlEncode(resolved);
+    // Bounded 8s timeout: TEC's get_data_attributes endpoint frequently stalls for 20s+
     auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/get_data_attributes",
-                       body, "application/x-www-form-urlencoded", "text/html, */*");
+                       body, "application/x-www-form-urlencoded", "text/html, */*", 8000);
     if (!r.ok) {
         return Result<std::vector<GraduateAttributeRow>>::Failure(r.error_code, r.error_message);
     }
@@ -1726,16 +1990,48 @@ Result<std::vector<WeeklyScheduleCell>> TdaTdsClient::GetCurrentPeriodSchedule(
     std::string_view periodo,
     std::string_view carne) {
     std::string resolved = ResolveStudentCarne(carne);
-    std::string exp_period = ConvertPeriodKeyToExpedienteFormat(periodo);
-    std::string body = "periodo=" + UrlEncode(exp_period) + "&carne=" + UrlEncode(resolved);
-    auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/tabla_horario",
-                       body, "application/x-www-form-urlencoded", "text/html, */*");
-    if (!r.ok) return Result<std::vector<WeeklyScheduleCell>>::Failure(r.error_code, r.error_message);
-    auto cells = ParseTablaHorarioHtml(r.value);
+    std::string raw_p = TrimAscii(periodo);
+    // Live TEC expects space-separated format ("S 2 2026"); legacy fixtures expect "2026_S_2".
+    // If caller already passed space-separated ("S 2 2026"), try it first; otherwise try
+    // ConvertPeriodKeyToExpedienteFormat first and automatically fallback to space-separated!
+    std::vector<std::string> candidates;
+    if (raw_p.find(' ') != std::string::npos) {
+        candidates.push_back(raw_p);
+        std::string alt = ConvertPeriodKeyToExpedienteFormat(raw_p);
+        if (!alt.empty() && alt != raw_p) candidates.push_back(alt);
+    } else {
+        std::string exp_p = ConvertPeriodKeyToExpedienteFormat(raw_p);
+        if (!exp_p.empty()) candidates.push_back(exp_p);
+        std::string sp_p = ConvertPeriodKeyToTablaHorarioFormat(raw_p);
+        if (!sp_p.empty() && sp_p != exp_p) candidates.push_back(sp_p);
+    }
+    if (candidates.empty()) candidates.push_back("");
+
+    Result<std::string> last_err = Result<std::string>::Failure("empty", "no schedule returned");
+    std::vector<WeeklyScheduleCell> cells;
+    for (const auto& cand : candidates) {
+        std::string body = "periodo=" + UrlEncode(cand) + "&carne=" + UrlEncode(resolved);
+        auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/tabla_horario",
+                           body, "application/x-www-form-urlencoded", "text/html, */*");
+        if (!r.ok) {
+            if (r.error_code == "session_expired") {
+                return Result<std::vector<WeeklyScheduleCell>>::Failure(r.error_code, r.error_message);
+            }
+            last_err = std::move(r);
+            continue;
+        }
+        cells = ParseTablaHorarioHtml(r.value);
+        if (!cells.empty()) break;
+    }
+    if (cells.empty() && !last_err.ok && last_err.error_code != "empty") {
+        return Result<std::vector<WeeklyScheduleCell>>::Failure(last_err.error_code, last_err.error_message);
+    }
     const Sanitizer san = SnapshotSanitizer();
     for (auto& c : cells) {
         c.course_code = san.SanitizeText(c.course_code);
         c.course_name = san.SanitizeText(c.course_name);
+        c.professor = san.SanitizeText(c.professor);
+        c.building = san.SanitizeText(c.building);
         c.raw_text = san.SanitizeText(c.raw_text);
         c.room = san.SanitizeText(c.room);
     }
@@ -1806,18 +2102,31 @@ Result<DetailedEvaluationsReport> TdaTdsClient::GetDetailedCourseEvaluations(
 Result<RubricBreakdown> TdaTdsClient::GetRubricBreakdown(std::string_view rubric_id,
                                                          std::string_view community_id,
                                                          std::string_view task_item_id,
-                                                         std::string_view task_id) {
-    std::string path = "/tda-rubrica/tda_evaluacion_rubrica?rubric_id=" + UrlEncode(rubric_id) + "&accion=ver";
-    if (!community_id.empty()) path += "&community_id=" + UrlEncode(community_id);
-    if (!task_item_id.empty()) path += "&task_item_id=" + UrlEncode(task_item_id);
-    if (!task_id.empty()) path += "&task_id=" + UrlEncode(task_id);
-    auto r = FetchText("GET", path, "", "", "text/html, */*");
+                                                         std::string_view task_id,
+                                                         std::string_view student_id) {
+    // Official live JS (tda-index.1.0.4.min.js) uses POST with accion=ver, course_id, student_id, task_item_id, task_id, rubric_id
+    std::string body = "rubric_id=" + UrlEncode(rubric_id) + "&accion=ver";
+    if (!community_id.empty()) {
+        body += "&course_id=" + UrlEncode(community_id) + "&community_id=" + UrlEncode(community_id);
+    }
+    if (!student_id.empty()) body += "&student_id=" + UrlEncode(student_id);
+    if (!task_item_id.empty()) body += "&task_item_id=" + UrlEncode(task_item_id);
+    if (!task_id.empty()) body += "&task_id=" + UrlEncode(task_id);
+
+    auto r = FetchText("POST", "/tda-rubrica/tda_evaluacion_rubrica",
+                       body, "application/x-www-form-urlencoded", "text/html, */*");
+    if (!r.ok && r.error_code != "session_expired" &&
+        (r.error_code == "http_405" || r.error_code == "http_404")) {
+        r = FetchText("GET", "/tda-rubrica/tda_evaluacion_rubrica?" + body, "", "", "text/html, */*");
+    }
     if (!r.ok) return Result<RubricBreakdown>::Failure(r.error_code, r.error_message);
     auto rb = ParseRubricHtml(r.value, rubric_id);
     const Sanitizer san = SnapshotSanitizer();
     rb.title = san.SanitizeText(rb.title);
+    rb.evaluated_target = san.SanitizeText(rb.evaluated_target);
     for (auto& c : rb.criteria) {
         c.category_name = san.SanitizeText(c.category_name);
+        c.comment = san.SanitizeText(c.comment);
         for (auto& lv : c.levels) {
             lv.label = san.SanitizeText(lv.label);
             lv.description = san.SanitizeText(lv.description);
@@ -1836,7 +2145,257 @@ Result<CourseOverviewSnapshot> TdaTdsClient::GetCourseOverview(std::string_view 
     ov.description = san.SanitizeText(ov.description);
     ov.teacher.name = san.SanitizeText(ov.teacher.name);
     ov.teacher.office = san.SanitizeText(ov.teacher.office);
+    for (auto& b : ov.banners) {
+        b.image_url = san.SanitizeUrl(b.image_url);
+        b.alt_text = san.SanitizeText(b.alt_text);
+        b.link_url = san.SanitizeUrl(b.link_url);
+    }
+    for (auto& p : ov.portlets) {
+        p.title = san.SanitizeText(p.title);
+        p.body_preview = san.SanitizeText(p.body_preview);
+    }
     return Result<CourseOverviewSnapshot>::Success(std::move(ov));
+}
+
+Result<SpacePageSnapshot> TdaTdsClient::GetSpacePage(std::string_view community_path,
+                                                     int page_num,
+                                                     std::string_view tab_label) {
+    std::string comm = NormalizeCommPath(community_path);
+    std::string rel_url = comm + "/one-community?page_num=" + std::to_string(page_num) + "&loc=";
+    auto r = FetchText("GET", rel_url, "", "", "text/html, */*");
+    if (!r.ok) return Result<SpacePageSnapshot>::Failure(r.error_code, r.error_message);
+    auto page = ParseSpacePageHtml(r.value, page_num, tab_label, JoinUrl(base_url_, rel_url), base_url_);
+    const Sanitizer san = SnapshotSanitizer();
+    page.tab_label = san.SanitizeText(page.tab_label);
+    page.plain_excerpt = san.SanitizeText(page.plain_excerpt);
+    for (auto& b : page.banners) {
+        b.image_url = san.SanitizeUrl(b.image_url);
+        b.alt_text = san.SanitizeText(b.alt_text);
+    }
+    for (auto& p : page.portlets) {
+        p.title = san.SanitizeText(p.title);
+        p.body_preview = san.SanitizeText(p.body_preview);
+    }
+    for (auto& l : page.links) {
+        l.label = san.SanitizeText(l.label);
+        l.url = san.SanitizeUrl(l.url);
+    }
+    return Result<SpacePageSnapshot>::Success(std::move(page));
+}
+
+Result<std::vector<SpacePageSnapshot>> TdaTdsClient::FetchCustomSpacePages(
+    std::string_view community_path,
+    const std::vector<CourseTabInfo>& tabs,
+    int max_tabs,
+    int polite_delay_ms) {
+    std::vector<SpacePageSnapshot> out;
+    int fetched = 0;
+    for (const auto& t : tabs) {
+        if (t.page_num == 0) continue;
+        std::string low = AsciiLower(t.label);
+        if (low == "calendario" || low == "documentos" || low == "evaluaciones" ||
+            low == "integrantes" || low == "miembros" || low == "gaap" ||
+            low.rfind("ver m", 0) == 0 || low == "more") {
+            continue;
+        }
+        if (max_tabs > 0 && fetched >= max_tabs) break;
+        ++fetched;
+        if (polite_delay_ms > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(polite_delay_ms));
+        }
+        auto pr = GetSpacePage(community_path, t.page_num, t.label);
+        if (!pr.ok) {
+            if (pr.error_code == "session_expired") {
+                return Result<std::vector<SpacePageSnapshot>>::Failure(pr.error_code, pr.error_message);
+            }
+            continue;
+        }
+        out.push_back(std::move(pr.value));
+    }
+    return Result<std::vector<SpacePageSnapshot>>::Success(std::move(out));
+}
+
+Result<NewsArticleDetail> TdaTdsClient::GetNewsArticleDetail(std::string_view news_url) {
+    if (news_url.empty()) {
+        return Result<NewsArticleDetail>::Failure("invalid_arg", "news_url is empty");
+    }
+    ParsedUrl pu = ParseHttpUrl(news_url);
+    std::string path = pu.valid ? pu.target : std::string(news_url);
+    auto r = FetchText("GET", path, "", "", "text/html, */*");
+    if (!r.ok) return Result<NewsArticleDetail>::Failure(r.error_code, r.error_message);
+    auto art = ParseNewsArticleHtml(r.value, news_url);
+    const Sanitizer san = SnapshotSanitizer();
+    art.title = san.SanitizeText(art.title);
+    art.pub_date = san.SanitizeText(art.pub_date);
+    art.author = san.SanitizeText(art.author);
+    art.body_text = san.SanitizeText(art.body_text);
+    return Result<NewsArticleDetail>::Success(std::move(art));
+}
+
+std::string TdaTdsClient::BuildEvaluationUploadMultipartBody(const EvaluationUploadRequest& req,
+                                                             std::string_view boundary) {
+    std::string out;
+    auto add_field = [&](std::string_view name, std::string_view value) {
+        out += "--";
+        out.append(boundary);
+        out += "\r\nContent-Disposition: form-data; name=\"";
+        out.append(name);
+        out += "\"\r\n\r\n";
+        out.append(value);
+        out += "\r\n";
+    };
+
+    add_field("task_id", req.task_id);
+    add_field("task_item_id", req.task_item_id);
+    add_field("grade_id", req.grade_id);
+    add_field("student_id", req.student_id);
+    add_field("with_group", req.with_group.empty() ? "0" : req.with_group);
+
+    if (!req.file_name.empty()) {
+        // Strip path separators & quotes from filename
+        std::string safe_fn = req.file_name;
+        size_t sl = safe_fn.find_last_of("/\\");
+        if (sl != std::string::npos) safe_fn = safe_fn.substr(sl + 1);
+        for (char& c : safe_fn) {
+            if (c == '"' || c == '\r' || c == '\n') c = '_';
+        }
+        out += "--";
+        out.append(boundary);
+        out += "\r\nContent-Disposition: form-data; name=\"upload_file\"; filename=\"" + safe_fn + "\"\r\n";
+        out += "Content-Type: " + (req.file_mime.empty() ? std::string("application/octet-stream") : req.file_mime) + "\r\n\r\n";
+        out.append(req.file_bytes);
+        out += "\r\n";
+        add_field("url", "");
+    } else {
+        add_field("upload_file", "");
+        add_field("url", req.submission_url);
+    }
+
+    out += "--";
+    out.append(boundary);
+    out += "--\r\n";
+    return out;
+}
+
+Result<EvaluationUploadResult> TdaTdsClient::UploadEvaluationSubmission(
+    const EvaluationUploadRequest& req) {
+    if (req.community_path.empty() || req.task_id.empty() || req.task_item_id.empty()) {
+        return Result<EvaluationUploadResult>::Failure(
+            "invalid_arg", "community_path, task_id, and task_item_id are required");
+    }
+    if (req.file_name.empty() && req.submission_url.empty()) {
+        return Result<EvaluationUploadResult>::Failure(
+            "invalid_arg", "either file_name or submission_url is required");
+    }
+    if (!req.file_name.empty() && req.file_bytes.size() > 80ULL * 1024ULL * 1024ULL) {
+        return Result<EvaluationUploadResult>::Failure(
+            "file_too_large", "file exceeds 80 MB TEC Digital upload limit");
+    }
+
+    const std::string comm = NormalizeCommPath(req.community_path);
+    const std::string boundary = "----CuadernUTecEvalBoundary7f9a3d21";
+    std::string body = BuildEvaluationUploadMultipartBody(req, boundary);
+
+    HttpRequest hreq;
+    hreq.method = "POST";
+    hreq.url = JoinUrl(base_url_, comm + "/evaluation/tda-ce-estudiante/ajax/upload_evaluation");
+    hreq.follow_redirects = false;
+    hreq.body = std::move(body);
+    hreq.headers["Content-Type"] = "multipart/form-data; boundary=" + boundary;
+    hreq.headers["Accept"] = "application/json, text/plain, */*";
+    hreq.headers["Referer"] = JoinUrl(base_url_, comm + "/evaluation/tda-ce-estudiante/tda-index");
+    hreq.headers["X-Requested-With"] = "XMLHttpRequest";
+    hreq.send_timeout_ms = 120000;
+    hreq.receive_timeout_ms = 120000;
+
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(hreq));
+    if (!resp.transport_ok) {
+        if (resp.error_message.rfind("read-only-request-guard:", 0) == 0) {
+            return Result<EvaluationUploadResult>::Failure("policy_blocked", resp.error_message);
+        }
+        return Result<EvaluationUploadResult>::Failure("transport_error", resp.error_message);
+    }
+    auto val = auth_.ValidateResponse(resp, hreq.url, true);
+    if (val == ResponseValidity::SessionExpired) {
+        return Result<EvaluationUploadResult>::Failure("session_expired", "session expired uploading evaluation");
+    }
+
+    EvaluationUploadResult out;
+    out.http_status = resp.status_code;
+    std::string raw = resp.BodyAsString();
+    if (resp.status_code < 200 || resp.status_code >= 300) {
+        out.error_message = "HTTP " + std::to_string(resp.status_code);
+        return Result<EvaluationUploadResult>::Failure("http_error", out.error_message);
+    }
+
+    auto j = nlohmann::json::parse(raw, nullptr, false);
+    if (!j.is_discarded() && j.is_object()) {
+        std::string res_str = JsonAsString(j, "result");
+        if (res_str == "-1") {
+            out.ok = false;
+            out.error_message = "El servidor rechazó la entrega (result=-1).";
+            return Result<EvaluationUploadResult>::Failure("upload_rejected", out.error_message);
+        }
+        out.ok = true;
+        out.revision_id = JsonAsString(j, "revision_id");
+        out.item_id = JsonAsString(j, "item_id");
+        out.result_html = SnapshotSanitizer().SanitizeHtml(res_str);
+        return Result<EvaluationUploadResult>::Success(std::move(out));
+    }
+
+    out.ok = true;
+    out.result_html = SnapshotSanitizer().SanitizeText(raw);
+    return Result<EvaluationUploadResult>::Success(std::move(out));
+}
+
+Result<bool> TdaTdsClient::DeleteEvaluationRevision(std::string_view community_path,
+                                                    std::string_view revision_id,
+                                                    std::string_view item_id) {
+    if (community_path.empty() || revision_id.empty() || item_id.empty()) {
+        return Result<bool>::Failure("invalid_arg", "community_path, revision_id, and item_id are required");
+    }
+    const std::string comm = NormalizeCommPath(community_path);
+    std::string body = "revision_id=" + UrlEncode(revision_id) + "&item_id=" + UrlEncode(item_id);
+    auto r = FetchText("POST", comm + "/evaluation/tda-ce-estudiante/ajax/delete_version_answer",
+                       body, "application/x-www-form-urlencoded", "text/html, */*");
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    if (AsciiLower(r.value).find("!doctype") != std::string::npos) {
+        return Result<bool>::Failure("session_expired", "unexpected HTML document returned on delete");
+    }
+    return Result<bool>::Success(true);
+}
+
+Result<bool> TdaTdsClient::MarkNotificationRead(std::string_view notification_by_user_id) {
+    if (notification_by_user_id.empty()) {
+        return Result<bool>::Failure("invalid_arg", "notification_by_user_id is required");
+    }
+    auto r = FetchText("GET",
+                       "/tda-notifications/ajax/update_notification_state?notification_by_user_id=" +
+                           UrlEncode(notification_by_user_id),
+                       "", "", "text/plain, application/json, */*");
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    std::string t = TrimAscii(r.value);
+    return Result<bool>::Success(t == "1" || AsciiLower(t) == "true" || t.find("\"ok\"") != std::string::npos);
+}
+
+Result<bool> TdaTdsClient::DeleteUserNotification(std::string_view notification_by_user_id) {
+    if (notification_by_user_id.empty()) {
+        return Result<bool>::Failure("invalid_arg", "notification_by_user_id is required");
+    }
+    auto r = FetchText("GET",
+                       "/tda-notifications/ajax/delete_user_notification?notification_by_user_id=" +
+                           UrlEncode(notification_by_user_id),
+                       "", "", "text/plain, application/json, */*");
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    std::string t = TrimAscii(r.value);
+    return Result<bool>::Success(t == "1" || AsciiLower(t) == "true" || t.find("\"ok\"") != std::string::npos);
+}
+
+Result<bool> TdaTdsClient::RefreshEnrolledCoursesFromDar() {
+    auto r = FetchText("POST", "/dotlrn/ajax/actualizar_cursos", "",
+                       "application/x-www-form-urlencoded", "text/plain, application/json, */*");
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    return Result<bool>::Success(true);
 }
 
 Result<std::vector<EvalSubmissionRevision>> TdaTdsClient::GetEvaluationSubmissionHistory(
@@ -1936,8 +2495,25 @@ Result<std::vector<CalendarEventEntry>> TdaTdsClient::GetCalendarEvents(
     std::string_view view,
     std::string_view community_path) {
     std::string prefix = community_path.empty() ? "/dotlrn" : NormalizeCommPath(community_path);
-    std::string path = prefix + "/calendar/view?view=" + UrlEncode(view.empty() ? "list" : view);
-    if (!date_iso.empty()) path += "&date=" + UrlEncode(date_iso);
+    const std::string eff_view = view.empty() ? "list" : std::string(view);
+    std::string path = prefix + "/calendar/view?view=" + UrlEncode(eff_view);
+    if (!date_iso.empty()) {
+        path += "&date=" + UrlEncode(date_iso);
+    } else if (eff_view == "list") {
+        // Cover the entire active semester (from 75 days back + 180 days window) in one read-only GET
+        const std::time_t now_t = std::time(nullptr);
+        const std::time_t start_t = (now_t > 75 * 86400) ? (now_t - 75 * 86400) : now_t;
+        std::tm tm_buf{};
+#ifdef _WIN32
+        localtime_s(&tm_buf, &start_t);
+#else
+        localtime_r(&start_t, &tm_buf);
+#endif
+        char dbuf[16]{};
+        std::snprintf(dbuf, sizeof(dbuf), "%04d-%02d-%02d",
+                      tm_buf.tm_year + 1900, tm_buf.tm_mon + 1, tm_buf.tm_mday);
+        path += "&date=" + UrlEncode(dbuf) + "&period_days=180";
+    }
     auto r = FetchText("GET", path, "", "", "text/html, */*");
     if (!r.ok) return Result<std::vector<CalendarEventEntry>>::Failure(r.error_code, r.error_message);
     auto evs = ParseCalendarListHtml(r.value);
@@ -1997,6 +2573,34 @@ Result<std::vector<PlagiarismMisDocItem>> TdaTdsClient::GetPlagiarismMisDocs(
         d.status = san.SanitizeText(d.status);
     }
     return Result<std::vector<PlagiarismMisDocItem>>::Success(std::move(docs));
+}
+
+Result<std::vector<PlagiarismMisDocItem>> TdaTdsClient::GetPlagiarismCourseDocs(
+    std::string_view community_id) {
+    if (community_id.empty()) {
+        return Result<std::vector<PlagiarismMisDocItem>>::Failure("invalid_arg", "community_id required");
+    }
+    auto r = FetchText("GET",
+                       "/tda-control-plagio/ajax/cargaDocumentos/cargaDocsCurso?community_id=" +
+                           UrlEncode(community_id),
+                       "", "", "text/html, */*");
+    if (!r.ok) {
+        return Result<std::vector<PlagiarismMisDocItem>>::Failure(r.error_code, r.error_message);
+    }
+    auto docs = ParsePlagiarismMisDocsHtml(r.value);
+    const Sanitizer san = SnapshotSanitizer();
+    for (auto& d : docs) {
+        d.file_name = san.SanitizeText(d.file_name);
+        d.status = san.SanitizeText(d.status);
+    }
+    return Result<std::vector<PlagiarismMisDocItem>>::Success(std::move(docs));
+}
+
+Result<std::string> TdaTdsClient::GetServerDateTime() {
+    auto r = FetchText("GET", "/theme-td/ajax/get_date_server", "", "", "text/plain, application/json, */*");
+    if (!r.ok) return r;
+    r.value = SnapshotSanitizer().SanitizeText(TrimAscii(r.value));
+    return r;
 }
 
 Result<bool> TdaTdsClient::GetPlagiarismTermsAccepted() {
@@ -2294,30 +2898,51 @@ Result<UserModelSnapshot> TdaTdsClient::GetUserModelSnapshot() {
         snap.consent_status = TrimAscii(c0.value);
     }
 
-    static const char* kSelectors[] = {
-        "#personal_info_container",
-        "#learning_style_info",
-        "#learning_needs_info",
-        "#socioacademic_info",
-        "#achievement_info",
-        "#temperament_info",
-        "#entrepreneur_info",
-        "#comunication_info"
+    static const std::pair<const char*, const char*> kSections[] = {
+        {"#learning_style_info", "Estilo de aprendizaje (Felder)"},
+        {"#learning_needs_info", "Necesidades de aprendizaje"},
+        {"#socioacademic_info", "Perfil socioacadémico"},
+        {"#achievement_info", "Orientación al logro"},
+        {"#temperament_info", "Temperamento"},
+        {"#entrepreneur_info", "Perfil emprendedor"},
+        {"#comunication_info", "Comunicación"},
+        {"#privacy_info", "Privacidad"},
+        {"#general_statistic_course", "Estadísticas generales"},
+        {"#personal_info_container", "Información básica"}
     };
+    const Sanitizer san = SnapshotSanitizer();
     std::unordered_set<std::string> seen_dims;
-    for (const char* sel : kSelectors) {
+    for (const auto& [sel, title] : kSections) {
         auto r = FetchText("POST", "/tda-um/ajax/get_info",
                            "section_type=" + UrlEncode(sel),
-                           "application/x-www-form-urlencoded");
+                           "application/x-www-form-urlencoded",
+                           "text/html, application/json, */*");
         if (!r.ok) {
             if (r.error_code == "session_expired") {
                 return Result<UserModelSnapshot>::Failure(r.error_code, r.error_message);
             }
             continue;
         }
-        auto parsed = ParseUserModelInfoJson(r.value);
-        for (auto& dim : parsed.dimensions) {
-            if (seen_dims.insert(dim.dimension_key).second) {
+        std::string trimmed = TrimAscii(r.value);
+        if (trimmed.empty()) continue;
+        if (trimmed.front() == '{') {
+            auto parsed = ParseUserModelInfoJson(trimmed);
+            for (auto& dim : parsed.dimensions) {
+                for (auto& kv : dim.metrics) {
+                    kv.first = san.SanitizeText(kv.first);
+                    kv.second = san.SanitizeText(kv.second);
+                }
+                if (seen_dims.insert(dim.dimension_key).second) {
+                    snap.dimensions.push_back(std::move(dim));
+                }
+            }
+        } else {
+            auto dim = ParseUserModelSectionHtml(sel, title, trimmed);
+            for (auto& kv : dim.metrics) {
+                kv.first = san.SanitizeText(kv.first);
+                kv.second = san.SanitizeText(kv.second);
+            }
+            if (!dim.metrics.empty() && seen_dims.insert(dim.dimension_key).second) {
                 snap.dimensions.push_back(std::move(dim));
             }
         }
@@ -2575,6 +3200,25 @@ Result<FeriaIds> TdaTdsClient::GetFeriaIds() {
     }
 }
 
+Result<std::vector<FeriaNegociosRow>> TdaTdsClient::GetFeriaListRows() {
+    auto r = FetchText("POST", "/tda-feria-negocios/ajax/ferias/get_ferias", "",
+                       "application/x-www-form-urlencoded", "text/html, */*");
+    if (!r.ok && r.error_code != "session_expired" &&
+        (r.error_code == "http_405" || r.error_code == "http_404")) {
+        r = FetchText("GET", "/tda-feria-negocios/ajax/ferias/get_ferias", "", "", "text/html, */*");
+    }
+    if (!r.ok) return Result<std::vector<FeriaNegociosRow>>::Failure(r.error_code, r.error_message);
+    auto rows = ParseFeriaTableHtml(r.value, base_url_);
+    const Sanitizer san = SnapshotSanitizer();
+    for (auto& fr : rows) {
+        fr.name = san.SanitizeText(fr.name);
+        fr.start_date = san.SanitizeText(fr.start_date);
+        fr.end_date = san.SanitizeText(fr.end_date);
+        fr.bases_url = san.SanitizeUrl(fr.bases_url);
+    }
+    return Result<std::vector<FeriaNegociosRow>>::Success(std::move(rows));
+}
+
 Result<FeriaNegociosSnapshot> TdaTdsClient::GetFeriaNegociosSnapshot(std::string_view location_id) {
     FeriaNegociosSnapshot snap;
     auto ri = FetchText("POST", "/tda-feria-negocios/ajax/internationalization", "",
@@ -2603,6 +3247,9 @@ Result<FeriaNegociosSnapshot> TdaTdsClient::GetFeriaNegociosSnapshot(std::string
     }
     if (auto r = GetFeriaCategories(); r.ok) {
         snap.categories = std::move(r.value);
+    }
+    if (auto r = GetFeriaListRows(); r.ok) {
+        snap.feria_rows = std::move(r.value);
     }
     if (auto r = GetFeriaIds(); r.ok) {
         snap.ids = r.value;
@@ -2638,9 +3285,28 @@ Result<NotificationsFeed> TdaTdsClient::GetUserNotifications() {
 
 Result<std::vector<RssNewsItem>> TdaTdsClient::GetCommunityNewsRss(std::string_view community_path) {
     std::string comm = NormalizeCommPath(community_path);
-    auto r = FetchText("GET", comm + "/news/rss/rss.xml", "", "", "application/xml, text/xml, */*");
-    if (!r.ok) return Result<std::vector<RssNewsItem>>::Failure(r.error_code, r.error_message);
-    auto parsed = ParseRssXml(r.value);
+    HttpRequest req;
+    req.method = "GET";
+    req.url = JoinUrl(base_url_, comm + "/news/rss/rss.xml");
+    req.follow_redirects = true;
+    req.max_redirects = 5;
+    req.connect_timeout_ms = 10000;
+    req.send_timeout_ms = 10000;
+    req.receive_timeout_ms = 12000;
+    req.headers["Accept"] = "application/xml, text/xml, */*";
+    req.headers["Referer"] = JoinUrl(base_url_, "/dotlrn/");
+
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+    auto val = auth_.ValidateResponse(resp, req.url, true);
+    if (val == ResponseValidity::SessionExpired) {
+        return Result<std::vector<RssNewsItem>>::Failure("session_expired", "session expired on rss");
+    }
+    if (!resp.transport_ok || resp.status_code < 200 || resp.status_code >= 300) {
+        return Result<std::vector<RssNewsItem>>::Failure(
+            resp.transport_ok ? ("http_" + std::to_string(resp.status_code)) : "transport_error",
+            SnapshotSanitizer().SanitizeText(resp.error_message));
+    }
+    auto parsed = ParseRssXml(resp.BodyAsString());
     const Sanitizer san = SnapshotSanitizer();
     if (parsed.ok) SanitizeRssItems(parsed.value, san);
     else parsed.error_message = san.SanitizeText(parsed.error_message);
@@ -2704,6 +3370,287 @@ Result<std::string> TdaTdsClient::GetCommunityMembersCsv(std::string_view commun
     if (!r.ok) return r;
     r.value = SnapshotSanitizer().SanitizeText(r.value);
     return r;
+}
+
+Result<bool> TdaTdsClient::DeleteAllUserNotifications() {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageNotifications);
+    auto r = FetchText("GET", "/tda-notifications/ajax/delete_all_user_notifications");
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    return Result<bool>::Success(true);
+}
+
+Result<bool> TdaTdsClient::RequestEvaluationNotifications(std::string_view community_path,
+                                                          std::string_view assign_id,
+                                                          bool enabled) {
+    if (community_path.empty()) return Result<bool>::Failure("invalid_arg", "community_path is empty");
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageNotifications);
+    std::string comm = NormalizeCommPath(community_path);
+    std::string body = "assign_id=" + UrlEncode(assign_id) + "&enabled=" + (enabled ? "1" : "0");
+    auto r = FetchText("POST", comm + "/evaluation/tda-ce-estudiante/ajax/request_notifications",
+                       body, "application/x-www-form-urlencoded; charset=UTF-8");
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    return Result<bool>::Success(true);
+}
+
+Result<bool> TdaTdsClient::SaveBrowserNotificationPref(bool enabled) {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageNotifications);
+    auto r = FetchText("GET", std::string("/dotlrn/ajax/save_browser_notification?enabled=") + (enabled ? "1" : "0"));
+    if (!r.ok) return Result<bool>::Failure(r.error_code, r.error_message);
+    return Result<bool>::Success(true);
+}
+
+Result<StudentMutationResult> TdaTdsClient::SyncExpedienteDarCourses() {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::RefreshEnrolledCourses);
+    auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/actualizar_cursos2",
+                       "accion=actualizar", "application/x-www-form-urlencoded; charset=UTF-8");
+    StudentMutationResult out;
+    out.ok = r.ok;
+    out.http_status = r.ok ? 200 : 0;
+    out.message = r.ok ? "Sincronización DAR ejecutada" : r.error_message;
+    if (r.ok) out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::RefreshExpedienteData() {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::RefreshEnrolledCourses);
+    auto r = FetchText("POST", "/tda-expediente-estudiantil/ajax/actualizar__datos",
+                       "", "application/x-www-form-urlencoded; charset=UTF-8");
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Datos del expediente actualizados";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::UploadPlagiarismFile(std::string_view folder_id,
+                                                                 std::string_view file_name,
+                                                                 std::string_view mime_type,
+                                                                 std::string_view bytes) {
+    if (file_name.empty() || bytes.empty()) {
+        return Result<StudentMutationResult>::Failure("invalid_arg", "file_name and bytes are required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePlagiarism);
+    const std::string boundary = "----CuadernUPlagioBoundary91a8f3";
+    std::string body;
+    if (!folder_id.empty()) {
+        body += "--" + boundary + "\r\nContent-Disposition: form-data; name=\"folder_id\"\r\n\r\n" +
+                std::string(folder_id) + "\r\n";
+    }
+    body += "--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"" +
+            std::string(file_name) + "\"\r\nContent-Type: " +
+            (mime_type.empty() ? std::string("application/octet-stream") : std::string(mime_type)) + "\r\n\r\n";
+    body.append(bytes.data(), bytes.size());
+    body += "\r\n--" + boundary + "--\r\n";
+
+    auto r = FetchText("POST", "/tda-control-plagio/ajax/fileUpload",
+                       body, "multipart/form-data; boundary=" + boundary);
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Documento enviado a Control de Plagio";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::SubmitPlagiarismEphorus(std::string_view doc_uid,
+                                                                    std::string_view item_id) {
+    if (doc_uid.empty() && item_id.empty()) {
+        return Result<StudentMutationResult>::Failure("invalid_arg", "doc_uid or item_id required");
+    }
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePlagiarism);
+    std::string url = "/tda-control-plagio/ajax/addDocumentEphorus?doc_uid=" + UrlEncode(doc_uid) +
+                      "&item_id=" + UrlEncode(item_id);
+    auto r = FetchText("GET", url);
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Análisis de similitud solicitado";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::UpdatePlagiarismVisibility(std::string_view doc_uid, bool visible) {
+    if (doc_uid.empty()) return Result<StudentMutationResult>::Failure("invalid_arg", "doc_uid required");
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePlagiarism);
+    std::string url = "/tda-control-plagio/ajax/actualizaVisibilidad?doc_uid=" + UrlEncode(doc_uid) +
+                      "&visibilidad=" + (visible ? "1" : "0");
+    auto r = FetchText("GET", url);
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = visible ? "Documento visible" : "Documento privado";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::SavePrematriculaSelection(std::string_view pre_enrollment_id,
+                                                                      std::string_view curriculum_id,
+                                                                      std::string_view course_codes_csv) {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManagePrematricula);
+    std::string url = "/tda-prematricula/ajax/guardar_prematricula?pre_enrollment_id=" + UrlEncode(pre_enrollment_id) +
+                      "&curriculum_id=" + UrlEncode(curriculum_id) +
+                      "&courses=" + UrlEncode(course_codes_csv);
+    auto r = FetchText("GET", url);
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Prematrícula enviada correctamente";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::RegisterFairProject(std::string_view fair_id,
+                                                                std::string_view title,
+                                                                std::string_view description,
+                                                                std::string_view category_id,
+                                                                std::string_view sede_id) {
+    if (title.empty()) return Result<StudentMutationResult>::Failure("invalid_arg", "title required");
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageFairs);
+    std::string body = "fair_id=" + UrlEncode(fair_id) +
+                       "&title=" + UrlEncode(title) +
+                       "&description=" + UrlEncode(description) +
+                       "&category_id=" + UrlEncode(category_id) +
+                       "&location_id=" + UrlEncode(sede_id);
+    auto r = FetchText("POST", "/tda-feria-negocios/ajax/registrar_proyectos/record_project",
+                       body, "application/x-www-form-urlencoded; charset=UTF-8");
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Proyecto de feria registrado";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::SaveUserPrivacySettings(std::string_view query_params) {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageProfileAndConsent);
+    std::string path = "/tda-um/ajax/save_privacy_settings";
+    if (!query_params.empty()) {
+        path += (query_params.front() == '?' ? "" : "?");
+        path += std::string(query_params);
+    }
+    auto r = FetchText("GET", path);
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = "Preferencias de privacidad guardadas";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<StudentMutationResult> TdaTdsClient::SubmitConsentAnswer(std::string_view module_key, bool accepted) {
+    ScopedUserMutationGuard guard(transport_, AllowedStudentMutation::ManageProfileAndConsent);
+    std::string body = "module=" + UrlEncode(module_key) + "&answer=" + (accepted ? "1" : "0");
+    auto r = FetchText("POST", "/tda-consentimiento-informado/ajax/client/set_term_condition_answer",
+                       body, "application/x-www-form-urlencoded; charset=UTF-8");
+    if (!r.ok) return Result<StudentMutationResult>::Failure(r.error_code, r.error_message);
+    StudentMutationResult out;
+    out.ok = true;
+    out.http_status = 200;
+    out.message = accepted ? "Consentimiento registrado" : "Respuesta registrada";
+    out.raw_response = SnapshotSanitizer().SanitizeText(r.value);
+    return Result<StudentMutationResult>::Success(std::move(out));
+}
+
+Result<MotorJuegosUserInfo> TdaTdsClient::GetMotorJuegosUser() {
+    auto r = FetchText("GET", "/tda-motor-juegos/api/user/");
+    if (!r.ok) return Result<MotorJuegosUserInfo>::Failure(r.error_code, r.error_message);
+    MotorJuegosUserInfo u;
+    try {
+        auto j = nlohmann::json::parse(r.value);
+        if (j.is_object()) {
+            u.user_id = JsonAsInt64(j, "userId");
+            u.first_names = SnapshotSanitizer().SanitizeText(JsonAsString(j, "userFirstNames"));
+            u.last_names = SnapshotSanitizer().SanitizeText(JsonAsString(j, "userLastNames"));
+            u.is_professor = (JsonAsInt64(j, "isProfessor") != 0);
+        }
+    } catch (...) {
+        return Result<MotorJuegosUserInfo>::Failure("invalid_json", "invalid motor-juegos user json");
+    }
+    return Result<MotorJuegosUserInfo>::Success(std::move(u));
+}
+
+Result<std::vector<MotorJuegosActivity>> TdaTdsClient::GetMotorJuegosActivities() {
+    auto r = FetchText("GET", "/tda-motor-juegos/api/activities/");
+    if (!r.ok) return Result<std::vector<MotorJuegosActivity>>::Failure(r.error_code, r.error_message);
+    std::vector<MotorJuegosActivity> out;
+    const Sanitizer san = SnapshotSanitizer();
+    try {
+        auto j = nlohmann::json::parse(r.value);
+        const nlohmann::json* arr = j.is_array() ? &j
+                                                 : ((j.is_object() && j.contains("activities") && j["activities"].is_array())
+                                                        ? &j["activities"]
+                                                        : ((j.is_object() && j.contains("data") && j["data"].is_array())
+                                                               ? &j["data"]
+                                                               : nullptr));
+        if (arr) {
+            for (const auto& item : *arr) {
+                if (!item.is_object()) continue;
+                MotorJuegosActivity act;
+                act.id = JsonAsString(item, "id");
+                if (act.id.empty()) act.id = JsonAsString(item, "activity_id");
+                act.title = san.SanitizeText(JsonAsString(item, "name"));
+                if (act.title.empty()) act.title = san.SanitizeText(JsonAsString(item, "title"));
+                act.community_id = JsonAsString(item, "community_id");
+                act.status = san.SanitizeText(JsonAsString(item, "status"));
+                act.due_date = san.SanitizeText(JsonAsString(item, "due_date"));
+                if (item.contains("score") && item["score"].is_number()) act.score = item["score"].get<double>();
+                else if (item.contains("grade") && item["grade"].is_number()) act.score = item["grade"].get<double>();
+                if (item.contains("published") && item["published"].is_boolean()) {
+                    act.grade_published = item["published"].get<bool>();
+                }
+                act.url = san.SanitizeText(JsonAsString(item, "url"));
+                if (!act.id.empty() || !act.title.empty()) {
+                    out.push_back(std::move(act));
+                }
+            }
+        }
+    } catch (...) {
+        // Non-JSON empty or status response -> return empty vector gracefully
+    }
+    return Result<std::vector<MotorJuegosActivity>>::Success(std::move(out));
+}
+
+Result<std::string> TdaTdsClient::GetMotorJuegosCommunityDetails(std::string_view community_id) {
+    if (community_id.empty()) return Result<std::string>::Failure("invalid_arg", "community_id empty");
+    nlohmann::json payload = {{"community_id", std::string(community_id)}};
+    auto r = FetchText("POST", "/tda-motor-juegos/api/community_details/",
+                       payload.dump(), "application/json; charset=UTF-8");
+    if (!r.ok) return r;
+    r.value = SnapshotSanitizer().SanitizeText(r.value);
+    return r;
+}
+
+Result<std::string> TdaTdsClient::DownloadBinaryResource(std::string_view path_or_url, size_t max_bytes) {
+    if (path_or_url.empty()) return Result<std::string>::Failure("invalid_arg", "empty url");
+    HttpRequest req;
+    req.method = "GET";
+    req.url = (path_or_url.rfind("http://", 0) == 0 || path_or_url.rfind("https://", 0) == 0)
+                  ? std::string(path_or_url)
+                  : JoinUrl(base_url_, path_or_url);
+    req.follow_redirects = true;
+    req.headers["Accept"] = "image/*, */*";
+    req.headers["Referer"] = JoinUrl(base_url_, "/dotlrn/");
+    HttpResponse resp = detail::ExecuteSessionRequest(transport_, auth_, std::move(req));
+    if (auth_.ValidateResponse(resp, req.url, true) == ResponseValidity::SessionExpired) {
+        return Result<std::string>::Failure("session_expired", "session expired");
+    }
+    if (!resp.transport_ok || resp.status_code != 200 || resp.body.empty()) {
+        return Result<std::string>::Failure("http_error", "HTTP " + std::to_string(resp.status_code));
+    }
+    if (resp.body.size() > max_bytes) {
+        return Result<std::string>::Failure("too_large", "resource exceeds size limit");
+    }
+    std::string raw(reinterpret_cast<const char*>(resp.body.data()), resp.body.size());
+    return Result<std::string>::Success(std::move(raw));
 }
 
 Result<TdaTdsCatalog> TdaTdsClient::FetchCatalog(const TdaTdsCatalogOptions& opts) {

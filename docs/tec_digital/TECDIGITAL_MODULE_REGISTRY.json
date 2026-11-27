@@ -1,0 +1,564 @@
+{
+  "generated_at": "2026-11-26",
+  "total_modules": 32,
+  "modules": [
+    {
+      "module_id": "MOD-01",
+      "key": "portal_dotlrn",
+      "name": "Inicio y Portal Principal (dotLRN)",
+      "entry_route": "/dotlrn/index",
+      "description": "Acceso central a Grupos, Aplicaciones, SMS y portlets personales",
+      "pages_visited": 12,
+      "apis_documented": 10,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/portal_dotlrn_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Inicio (HubSection::Resumen)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-02",
+      "key": "cursos_clases",
+      "name": "Cursos y Clases Matriculadas (Actuales e Históricos)",
+      "entry_route": "/dotlrn/classes/{dept}/{course}/{group}/",
+      "description": "Espacios por curso con pestañas personalizadas, portada, evaluación y documentos",
+      "pages_visited": 94,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/cursos_clases_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos (HubSection::Cursos)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-03",
+      "key": "catedras",
+      "name": "Cátedras Institucionales",
+      "entry_route": "/dotlrn/catedras.tec/{slug}/",
+      "description": "Espacios de cátedra con banners, cronogramas, repositorios de exámenes y pestañas ?page_num=N no consecutivas",
+      "pages_visited": 20,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/catedras_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos (filtro Cátedras)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-04",
+      "key": "escuelas_comunidades",
+      "name": "Escuelas, Asociaciones y Subcomunidades",
+      "entry_route": "/dotlrn/escuela/{escuela}/[{subgrupo}/]",
+      "description": "Espacios de escuela, asociaciones estudiantiles, tutorías y cursos autodirigidos con anidación multi-nivel",
+      "pages_visited": 57,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/escuelas_comunidades_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos (filtro Comunidades)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-05",
+      "key": "dop_bienestar",
+      "name": "DOP y Bienestar Estudiantil (PSED-NE)",
+      "entry_route": "/dotlrn/dop/[psed/]",
+      "description": "Apoyos educativos, escalas psicoeducativas, tips académicos y bienestar estudiantil",
+      "pages_visited": 15,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/dop_bienestar_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos (filtro Comunidades)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-06",
+      "key": "programas_institucionales",
+      "name": "Programas Institucionales (PAySE / MATEC)",
+      "entry_route": "/dotlrn/programas.tec/{programa}/",
+      "description": "Programas de acompañamiento y nivelación matemática/científica",
+      "pages_visited": 13,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/programas_institucionales_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos (filtro Comunidades)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-07",
+      "key": "espacios_estudiantiles",
+      "name": "Espacios Estudiantiles por Campus",
+      "entry_route": "/dotlrn/estudiantes.tec/[estudiantes.{sede}/]",
+      "description": "Comunidades estudiantiles generales y por sede/campus",
+      "pages_visited": 17,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/espacios_estudiantiles_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos (filtro Comunidades)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-08",
+      "key": "documentos_file_storage",
+      "name": "Documentos y Mis Documentos (file-storage)",
+      "entry_route": "/dotlrn/file-storage/ y <espacio>/file-storage/",
+      "description": "Gestor documental AngularJS 1.x (td-documents) con $rootScope.GL_FOLDER_ID, árbol de carpetas, versiones y descargas",
+      "pages_visited": 35,
+      "apis_documented": 21,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/documentos_file_storage_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Documentos + Biblioteca Offline",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-09",
+      "key": "evaluaciones",
+      "name": "Evaluaciones, Calificaciones y Entregas (tda-ce-estudiante)",
+      "entry_route": "<curso>/evaluation/tda-ce-estudiante/tda-index",
+      "description": "Calificaciones ponderadas (base 100 + aporte %), fechas de entrega, tardías, Dropzone subida y eliminación de revisiones",
+      "pages_visited": 17,
+      "apis_documented": 7,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/evaluaciones_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Evaluaciones (Nota base 100 + What-If + Subida confirmada)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-10",
+      "key": "rubricas",
+      "name": "Rúbricas Analíticas de Evaluación (tda-rubrica)",
+      "entry_route": "/tda-rubrica/tda_evaluacion_rubrica",
+      "description": "Matriz analítica con criterios, pesos %, escala de puntos, celdas seleccionadas (criterion_selected) y comentarios por criterio (tr[comment])",
+      "pages_visited": 1,
+      "apis_documented": 20,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/rubricas_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Evaluaciones (Sincronización automática + Matriz guías de interfaz)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-11",
+      "key": "expediente_estudiantil",
+      "name": "Expediente Estudiantil, Notas, Promedios y Citas",
+      "entry_route": "/tda-expediente-estudiantil/",
+      "description": "Historial oficial (9 cols + GraphQL), promedio ponderado por semestre (12 periodos), 8 estados oficiales, citas de matrícula, horario oficial 4-secciones e info personal",
+      "pages_visited": 2,
+      "apis_documented": 24,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/expediente_estudiantil_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Expediente y Malla (HubSection::ExpedienteYMalla)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-12",
+      "key": "malla_curricular",
+      "name": "Malla Curricular Interactiva (tds-curriculum-exp)",
+      "entry_route": "/tds-curriculum-exp/ajax/*",
+      "description": "Plan de estudios gráfico por niveles, correquisitos/requisitos, colores por estado y perfil estudiantil",
+      "pages_visited": 0,
+      "apis_documented": 15,
+      "technologies_evidenced": [
+        "AngularJS 1.x",
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "jQuery"
+      ],
+      "dom_skeleton": null,
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Expediente → Malla Curricular",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-13",
+      "key": "guia_horarios_publica",
+      "name": "Guía Pública de Horarios de Todo el TEC",
+      "entry_route": "https://tec-appsext.itcr.ac.cr/guiahorarios/",
+      "description": "Buscador público ASP.NET WebForms de 90+ escuelas, 5 sedes, verano, modalidad y consulta por carné",
+      "pages_visited": 4,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/guia_horarios_publica_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "HorariosTEC (HubSection::HorariosVivo — Buscador Global + Planificador)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-14",
+      "key": "calendario",
+      "name": "Calendario Unificado (Portal y por Curso)",
+      "entry_route": "/dotlrn/calendar/view y <curso>/calendar/view",
+      "description": "Vistas lista, semanal y mensual; eventos institucionales, de cada curso, entregas y citas de matrícula",
+      "pages_visited": 58,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/calendario_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Calendario (HubSection::Calendario — Mes / Semana / Agenda + ICS)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-15",
+      "key": "notificaciones",
+      "name": "Notificaciones y Suscripciones",
+      "entry_route": "/tda-notifications/ y /notifications/manage",
+      "description": "Bandeja de campana, contador no leídas, marcar leída/eliminar (mutación confirmada) y 79+ suscripciones",
+      "pages_visited": 3,
+      "apis_documented": 5,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/notificaciones_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Inicio + Trámites → Notificaciones y Cuenta",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-16",
+      "key": "noticias",
+      "name": "Noticias y Archivo Histórico de Noticias",
+      "entry_route": "<espacio>/news/ y <espacio>/news/?view=archive",
+      "description": "RSS reciente + archivo histórico completo + artículos individuales",
+      "pages_visited": 78,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/noticias_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Novedades",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-17",
+      "key": "foros",
+      "name": "Foros de Discusión",
+      "entry_route": "<curso>/forums/",
+      "description": "Hilos y mensajes de foro cuando el curso monta el módulo (HTTP 404 si no montado)",
+      "pages_visited": 17,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/foros_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Actividades",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-18",
+      "key": "mensajeria_sms",
+      "name": "Mensajería SMS de Curso y Portal",
+      "entry_route": "<curso>/tda-sms/ y /tda-sms-configuration/",
+      "description": "Historial de mensajes SMS enviados por docentes (solo lectura; registro/envío bloqueado)",
+      "pages_visited": 17,
+      "apis_documented": 3,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "dom_skeleton": null,
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Actividades",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-19",
+      "key": "integrantes",
+      "name": "Integrantes y Equipo Docente",
+      "entry_route": "<curso>/members y /dotlrn/.../ajax/load_members",
+      "description": "Listado de docentes y compañeros con rol y correo",
+      "pages_visited": 17,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/integrantes_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Cursos → Novedades y Personas",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-20",
+      "key": "control_plagio",
+      "name": "Control de Plagio (Ephorus / Turnitin)",
+      "entry_route": "/tda-control-plagio/",
+      "description": "Árbol de carpetas (cargaArbol), mis documentos (cargaMisDocs), docs por curso (cargaDocsCurso) y reporte de similitud (generaReporte)",
+      "pages_visited": 2,
+      "apis_documented": 18,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/control_plagio_skeleton.html",
+      "cuadernu_integration_status": "PARTIAL_BEING_COMPLETED",
+      "cuadernu_screen": "Trámites → Control de Plagio (corrigiendo rutas reales cargaMisDocs/cargaDocsCurso en Paso 7)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-21",
+      "key": "gestor_inclusiones",
+      "name": "Gestor de Inclusiones y Becas (SPA + GraphQL)",
+      "entry_route": "/tda-inclusion-manager/ + api.tec.ac.cr:3005/graphql",
+      "description": "SPA React/Vite/Apollo con 48 operaciones GraphQL (32 queries, 16 mutaciones); consulta campaña activa, solicitudes, beca, RN y cursos pendientes",
+      "pages_visited": 1,
+      "apis_documented": 51,
+      "technologies_evidenced": [
+        "GraphQL Client",
+        "React (Vite SPA)",
+        "Visualization/Export Lib",
+        "dotLRN / OpenACS"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/gestor_inclusiones_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Resumen y DAR + Expediente",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-22",
+      "key": "prematricula",
+      "name": "Prematrícula",
+      "entry_route": "/tda-prematricula/",
+      "description": "Consulta de estado, electivas y cursos habilitados/deshabilitados (solo lectura; guardar prematrícula bloqueado)",
+      "pages_visited": 2,
+      "apis_documented": 28,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/prematricula_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Resumen y DAR",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-23",
+      "key": "gestor_inscripcion",
+      "name": "Gestor de Inscripción de Eventos y Talleres",
+      "entry_route": "/tda-gestor-inscripcion/",
+      "description": "Convocatorias, calendario de eventos e inscripciones (solo lectura; matrícula bloqueada)",
+      "pages_visited": 2,
+      "apis_documented": 5,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/gestor_inscripcion_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Resumen y DAR",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-24",
+      "key": "modelo_usuario",
+      "name": "Modelo de Usuario (tda-um)",
+      "entry_route": "/tda-um/info",
+      "description": "9–10 dimensiones HTML (Felder, Necesidades, Socioacadémico, Logro, Temperamento, Emprendedor, Comunicación, Privacidad, Info básica)",
+      "pages_visited": 3,
+      "apis_documented": 11,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/modelo_usuario_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Modelo de Usuario",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-25",
+      "key": "feria_negocios",
+      "name": "Feria de Ideas de Negocios",
+      "entry_route": "/tda-feria-negocios/registro_proyectos",
+      "description": "Tabla de ferias (#tferias, 13–14 ferias), categorías (5) y enlaces a bases (registro de proyectos bloqueado)",
+      "pages_visited": 2,
+      "apis_documented": 23,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/feria_negocios_skeleton.html",
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Eval. Docente y Ferias",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-26",
+      "key": "evaluacion_docente",
+      "name": "Evaluación de Desempeño Docente",
+      "entry_route": "/tda-performance-evaluation/api/*",
+      "description": "Formularios oficiales (4 secciones) y evaluaciones pendientes por estudiante",
+      "pages_visited": 1,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": null,
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Eval. Docente y Ferias",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-27",
+      "key": "sincronizacion_dar",
+      "name": "Sincronización de Cursos desde DAR",
+      "entry_route": "/tda-expediente-estudiantil/ajax/actualizar_cursos y /dotlrn/ajax/actualizar_cursos",
+      "description": "Vista previa read-only de cursos DAR + sincronización explícitamente confirmada por el usuario",
+      "pages_visited": 0,
+      "apis_documented": 1,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": null,
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Resumen y DAR",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-28",
+      "key": "motor_juegos_gaap",
+      "name": "Motor de Juegos y Actividades GAAP",
+      "entry_route": "/tda-motor-juegos/ y /servicios/gaap_oacs/",
+      "description": "SPA Angular moderna (main-6DE5OU7V.js) + histórico GAAP; puerto api.tec.ac.cr:3003 requiere autenticación separada (401)",
+      "pages_visited": 1,
+      "apis_documented": 14,
+      "technologies_evidenced": [
+        "Visualization/Export Lib",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/motor_juegos_gaap_skeleton.html",
+      "cuadernu_integration_status": "PARTIAL",
+      "cuadernu_screen": "Cursos → Actividades (histórico y enlace seguro; motor interactivo externo en navegador)",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-29",
+      "key": "consentimiento_informado",
+      "name": "Consentimiento Informado",
+      "entry_route": "/tda-consentimiento-informado/",
+      "description": "Consulta de términos y condiciones vigentes por módulo (aceptación/admin bloqueados)",
+      "pages_visited": 1,
+      "apis_documented": 2,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "jQuery"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/consentimiento_informado_skeleton.html",
+      "cuadernu_integration_status": "PARTIAL",
+      "cuadernu_screen": "Solo lectura en policy/cliente; sin modal de firma automática por seguridad",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-30",
+      "key": "mi_cuenta_preferencias",
+      "name": "Mi Cuenta, Privacidad y Preferencias",
+      "entry_route": "/dotlrn/control-panel, /pvt/home, /user/",
+      "description": "Información personal, nivel de privacidad de correo, retrato y configuración de portal (escrituras bloqueadas por política read-only)",
+      "pages_visited": 5,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "dotLRN / OpenACS HTML"
+      ],
+      "dom_skeleton": "evidence/dom_skeletons/mi_cuenta_preferencias_skeleton.html",
+      "cuadernu_integration_status": "PARTIAL",
+      "cuadernu_screen": "Expediente → Información Académica + Trámites → Notificaciones y Cuenta",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-31",
+      "key": "ayuda_y_guias",
+      "name": "Ayuda, Guías de Uso y Accesibilidad",
+      "entry_route": "/dotlrn/help, /servicios/capacitacion/guia_profesores/",
+      "description": "SPA Angular de guía institucional, páginas de ayuda de autenticación y enlaces a KapiBOT/Soporte",
+      "pages_visited": 0,
+      "apis_documented": 1,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "dotLRN / OpenACS",
+        "jQuery"
+      ],
+      "dom_skeleton": null,
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Trámites → Enlaces Institucionales Seguros",
+      "locally_reconstructed": true
+    },
+    {
+      "module_id": "MOD-32",
+      "key": "libreria_tds_lib",
+      "name": "Librería UI Transversal (tds-lib / theme-td)",
+      "entry_route": "/resources/tds-lib/ y /resources/theme-td/",
+      "description": "Componentes compartidos, tema responsivo escritorio/móvil, reloj del servidor (get_date_server), session-timeout y tracking TAM (bloqueado)",
+      "pages_visited": 0,
+      "apis_documented": 0,
+      "technologies_evidenced": [
+        "TDS-Lib (TEC Digital UI)",
+        "Vanilla JS",
+        "Visualization/Export Lib",
+        "jQuery"
+      ],
+      "dom_skeleton": null,
+      "cuadernu_integration_status": "IMPLEMENTED",
+      "cuadernu_screen": "Reconstruido nativamente con guías de interfaz + material translúcido GDI+ (0% GPU)",
+      "locally_reconstructed": true
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-11-26",
+  "policy_enforcer": "academic/tec_digital/src/policy.cpp (ReadOnlyRequestPolicy + PolicyEnforcingTransport)",
+  "default_mutation_mask": 0,
+  "permission_tiers": [
+    {
+      "tier": "PUBLIC_UNAUTHENTICATED",
+      "origins": [
+        "https://tec-appsext.itcr.ac.cr/guiahorarios/"
+      ],
+      "methods_allowed": [
+        "GET",
+        "POST (read-only ASP.NET WebMethods listed in IsPublicGuiaHorariosReadOnlyPostPath)"
+      ],
+      "tested_live": true,
+      "examples": [
+        "escuela.aspx/cargaescuelas",
+        "escuela.aspx/getdatosescuelaano",
+        "verano.aspx/getdatosverano"
+      ]
+    },
+    {
+      "tier": "STUDENT_AUTHENTICATED_READ_ONLY",
+      "origins": [
+        "https://tecdigital.tec.ac.cr",
+        "https://api.tec.ac.cr:3005/graphql (query only)"
+      ],
+      "methods_allowed": [
+        "GET (non-mutating)",
+        "POST (allowlisted read-only paths & conditional accion=ver / tipo=1,2,5)"
+      ],
+      "tested_live": true,
+      "examples": [
+        "/dotlrn/index",
+        "/dotlrn/file-storage/api/folder/{id}",
+        "POST /tda-rubrica/tda_evaluacion_rubrica (accion=ver)",
+        "POST /tda-expediente-estudiantil/ajax/tabla_horario",
+        "POST /tda-expediente-estudiantil/ajax/actualizar_cursos (preview)"
+      ]
+    },
+    {
+      "tier": "STUDENT_EXPLICIT_USER_CONFIRMED_WRITE",
+      "origins": [
+        "https://tecdigital.tec.ac.cr"
+      ],
+      "guard_mechanism": "RAII ScopedUserMutationGuard (MUTATION_MASK=0 by default; NEVER auto-run against production)",
+      "allowed_scopes": [
+        {
+          "scope": "UploadEvaluation",
+          "endpoint": "POST .../evaluation/tda-ce-estudiante/ajax/upload_evaluation",
+          "tested_with": "Local loopback HTTP mock server"
+        },
+        {
+          "scope": "DeleteEvaluationRevision",
+          "endpoint": "POST .../evaluation/tda-ce-estudiante/ajax/delete_version_answer",
+          "tested_with": "Local loopback HTTP mock server"
+        },
+        {
+          "scope": "ManageNotifications",
+          "endpoint": "GET /tda-notifications/ajax/update_notification_state & delete_user_notification",
+          "tested_with": "Local loopback HTTP mock server"
+        },
+        {
+          "scope": "RefreshEnrolledCourses",
+          "endpoint": "POST /dotlrn/ajax/actualizar_cursos",
+          "tested_with": "Local loopback HTTP mock server"
+        }
+      ]
+    },
+    {
+      "tier": "PERMANENTLY_BLOCKED_IN_CLIENT_POLICY",
+      "reasons": [
+        "Destructive/account-altering mutations",
+        "Mutating GET actions (logout, unsubscribe, op_swap, request_notifications, make-invisible)",
+        "Telemetry/tracking endpoints (tam-tracking, log_registration)",
+        "All 16 GraphQL mutations in tda-inclusion-manager",
+        "All professor/admin/rubric-grading/prematricula-save/feria-write/plagio-upload writes"
+      ],
+      "blocked_urls_intercepted_in_live_crawl": 373
+    },
+    {
+      "tier": "SERVER_OR_ROLE_RESTRICTED_UNOBSERVABLE",
+      "description": "Endpoints referenced in client bundles requiring professor, coordinator, or admin privileges or separate SPA auth.",
+      "examples": [
+        "https://api.tec.ac.cr:3003/* (GAAP external service returns HTTP 401 without separate SPA token)",
+        "GraphQL admin/coordinator queries (GetCampaignResults, ExportInclusionsReport, GetStudentsForReport, SearchStudent, getPreconfStepOneCourses)",
+        "/dotlrn/admin/*, /tda-rubrica/ajax/accion_permisos, /tda-consentimiento-informado/ajax/admin/*"
+      ]
+    }
+  ]
+}

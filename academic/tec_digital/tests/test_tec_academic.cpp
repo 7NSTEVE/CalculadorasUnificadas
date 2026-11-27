@@ -3131,6 +3131,610 @@ void TestPublicGuiaHorarios() {
     }
 }
 
+void TestLive2026ParsersAndContracts() {
+    // 1. Live TEC Evaluation grade scale (earned/weight in .vt_grade_student + Nota obtenida / 100)
+    {
+        const std::string evalHtml = R"html(
+            <div class='sub_total' category_id='c1' item_weight='30'>Exámenes 11.4 / 30</div>
+            <div class='container_accor' assign_id='a101' task_id='t10' task_item_id='ti10'>
+              <div class='head_subaccord'>
+                <span class='assignNameText'>Examen Parcial 1</span>
+                <span class='text_right vt_grade_student' title='11.4 / 15'> 11.4 / 15</span>
+              </div>
+              <div class='content_delivery'>
+                <p class='title_subsection'>Descripción :</p><div class='body_style'>Evaluación sobre nodos y mallas</div>
+                <p class='title_subsection'>Valor de la Asignación:</p><div class='body_style'>15</div>
+                <p class='title_subsection'>Nota obtenida:</p><div class='body_style'>76.0 / 100</div>
+                <p class='title_subsection'>Comentarios:</p><div class='body_style'>Buen desarrollo en mallas</div>
+                <p class='title_subsection'>Rúbrica:</p>
+                <input type='radio' disabled><label>Sí</label>
+                <input type='radio' disabled checked><label>No</label>
+                <p>Enunciado: <a href='/dotlrn/classes/E/EL2113/S-2-2026/evaluation/view/p1.pdf'>p1.pdf</a></p>
+                <p>Solución: <a href='/dotlrn/classes/E/EL2113/S-2-2026/evaluation/view/sol1.pdf'>sol1.pdf</a></p>
+              </div>
+            </div>
+            <div class='container_accor' assign_id='a102'>
+              <div class='head_subaccord'>
+                <span class=assignNameText>Examen Parcial 2</span>
+                <span class='text_right vt_grade_student' title='12.75 / 15'> 12.75 / 15</span>
+              </div>
+              <div class='content_delivery'>
+                <p class='title_subsection'>Valor de la Asignación:</p><div class='body_style'>15</div>
+                <button class='seeRubric' data-rubric_id='555' data-course_id='888' data-student_id='777' data-task_item_id='666' data-task_id='444'>Ver</button>
+              </div>
+            </div>
+            <div class='container_accor' assign_id='a103'>
+              <div class='head_subaccord'>
+                <span class='assignNameText'>Examen Parcial 3</span>
+                <span class='text_right vt_grade_student' title='-- / 20'> -- / 20</span>
+              </div>
+              <div class='content_delivery'>
+                <p class='title_subsection'>Valor de la Asignación:</p><div class='body_style'>20</div>
+              </div>
+            </div>
+        )html";
+        auto rep = ParseDetailedEvaluationsHtml(evalHtml, "el2113");
+        CHECK(rep.categories.size() == 1);
+        CHECK(rep.categories[0].items.size() == 3);
+        const auto& i0 = rep.categories[0].items[0];
+        CHECK(i0.is_graded);
+        CHECK(std::abs(i0.earned_pct - 11.4) < 0.01);
+        CHECK(std::abs(i0.weight_pct - 15.0) < 0.01);
+        CHECK(std::abs(i0.raw_grade_100 - 76.0) < 0.01);
+        CHECK(std::abs(ComputeEvaluationGrade100(i0) - 76.0) < 0.01);
+        CHECK(!i0.has_rubric);
+        CHECK(i0.description == "Evaluación sobre nodos y mallas");
+        CHECK(i0.teacher_comment == "Buen desarrollo en mallas");
+        CHECK(i0.attachment_url.find("p1.pdf") != std::string::npos);
+        CHECK(i0.solution_url.find("sol1.pdf") != std::string::npos);
+
+        // Item 2 has unquoted class=assignNameText and NO "Nota obtenida" -> derive 85.0/100 from 12.75 / 15
+        const auto& i1 = rep.categories[0].items[1];
+        CHECK(i1.name == "Examen Parcial 2");
+        CHECK(i1.is_graded);
+        CHECK(std::abs(i1.earned_pct - 12.75) < 0.01);
+        CHECK(std::abs(i1.weight_pct - 15.0) < 0.01);
+        CHECK(std::abs(ComputeEvaluationGrade100(i1) - 85.0) < 0.05);
+        CHECK(i1.has_rubric && i1.rubric_id == "555" && i1.community_id == "888" && i1.student_id == "777");
+
+        // Item 3 is ungraded (-- / 20)
+        const auto& i2 = rep.categories[0].items[2];
+        CHECK(!i2.is_graded && ComputeEvaluationGrade100(i2) < 0.0 && std::abs(i2.weight_pct - 20.0) < 0.01);
+
+        // Accumulated course grade base 100 = (11.4 + 12.75) / (15 + 15) * 100 = 80.5
+        CHECK(std::abs(ComputeCourseAccumulatedGrade100(rep) - 80.5) < 0.05);
+
+        // 1a-bis. Live TEC enclosing .asign_student category header + numeric-only .sub_total
+        const std::string liveCatHtml = R"html(
+            <div id="h_245716934" class="asign_student title_acor_grade iconOpenGA row">
+              <i class="material-icons">add_circle_outline</i>
+              <span>Proyecto de Física</span>
+              <div class="title_right sub_total hasGradeClass" item_weight="15">6.562</div>
+            </div>
+            <div class="container_accor" assign_id="a201">
+              <div class="head_subaccord"><span class=assignNameText>II Fase</span><span class="vt_grade_student">3.25 / 5</span></div>
+              <div class="content_delivery"><p class="title_subsection">Valor de la Asignación:</p><div class="body_style">5</div></div>
+            </div>
+        )html";
+        auto liveRep = ParseDetailedEvaluationsHtml(liveCatHtml, "fi2103");
+        CHECK(liveRep.categories.size() == 1);
+        CHECK(liveRep.categories[0].name == "Proyecto de Física");
+        CHECK(liveRep.categories[0].category_id == "245716934");
+        CHECK(std::abs(liveRep.categories[0].weight_pct - 15.0) < 0.01);
+        CHECK(std::abs(liveRep.categories[0].earned_pct - 6.562) < 0.01);
+        CHECK(liveRep.categories[0].items.size() == 1 && liveRep.categories[0].items[0].name == "II Fase");
+
+        // 1b. Live TEC analytic rubric table (#table_body_evaluation, Peso %, criterion_selected, tr[comment], calculate_score)
+        const std::string rubHtml = R"html(
+            <div id='container_table'>
+              <table id='table_body_evaluation' levels_org='4'>
+                <thead>
+                  <tr class='header'>
+                    <th id='th_name'>
+                      <div class='right_note'>Evaluar Grupo: Grupo 5</div>
+                      <div class='right_note'>Puntuación: <label id='lbl_score'>0</label></div>
+                      <div class='name_rubric'>2S-2026- Fase II Proyecto</div>
+                    </th>
+                    <th level_col='0' id='level0' wlevel='3'>Excelente<div><span id='weight0'>3</span> Puntos</div></th>
+                    <th level_col='1' id='level1' wlevel='2'>Satisfactorio<div><span id='weight1'>2</span> Puntos</div></th>
+                    <th level_col='2' id='level2' wlevel='1'>En desarrollo<div><span id='weight2'>1</span> Puntos</div></th>
+                    <th level_col='3' id='level3' wlevel='0'>Insuficiente<div><span id='weight3'>0</span> Puntos</div></th>
+                  </tr>
+                </thead>
+                <tr class='category' row='0' category_id='10' comment='Faltó aclarar condiciones del modelo.'>
+                  <td><div id='div_1_0'>Fundamento físico</div><div><span>Peso <span id='category_weight0'>95</span>%</span></div></td>
+                  <td class='criterion_padding' row='0' level='0'>Completo</td>
+                  <td class='criterion_padding criterion_selected' row='0' level='1'>Correcto con pequeñas omisiones<span class='tooltip_box'>Faltó aclarar condiciones del modelo.</span></td>
+                  <td class='criterion_padding' row='0' level='2'>Parcial</td>
+                  <td class='criterion_padding' row='0' level='3'>Sin fundamento</td>
+                </tr>
+                <tr class='category' row='1' category_id='11' comment='Incluir bitácora completa.'>
+                  <td><div id='div_1_1'>Presentación</div><div><span>Peso <span id='category_weight1'>5</span>%</span></div></td>
+                  <td class='criterion_padding' row='1' level='0'>Excelente</td>
+                  <td class='criterion_padding' row='1' level='1'>Adecuado</td>
+                  <td class='criterion_padding criterion_selected' row='1' level='2'>Incompleto</td>
+                  <td class='criterion_padding' row='1' level='3'>Deficiente</td>
+                </tr>
+              </table>
+            </div>
+            <div id='div_info_rubric' max_weight='3'></div>
+        )html";
+        auto rb = ParseRubricHtml(rubHtml, "23678");
+        CHECK(rb.title == "2S-2026- Fase II Proyecto");
+        CHECK(rb.evaluated_target == "Grupo 5");
+        CHECK(rb.is_graded);
+        CHECK(std::abs(rb.max_level_points - 3.0) < 0.01);
+        CHECK(std::abs(rb.max_score - 100.0) < 0.01);
+        // 95 * (2/3) + 5 * (1/3) = 63.3333 + 1.6667 = 65.0
+        CHECK(std::abs(rb.total_score - 65.0) < 0.05);
+        CHECK(rb.criteria.size() == 2);
+        CHECK(rb.criteria[0].category_name == "Fundamento físico");
+        CHECK(std::abs(rb.criteria[0].weight_pct - 95.0) < 0.01);
+        CHECK(rb.criteria[0].comment.find("condiciones del modelo") != std::string::npos);
+        CHECK(rb.criteria[0].levels.size() == 4 && rb.criteria[0].levels[1].achieved && !rb.criteria[0].levels[0].achieved);
+        CHECK(rb.criteria[0].levels[1].description == "Correcto con pequeñas omisiones");
+        CHECK(rb.criteria[1].levels[2].achieved && rb.criteria[1].comment.find("bitácora") != std::string::npos);
+    }
+
+    // 2. Live 9-column detalle_notas HTML (2 empty spacer columns)
+    {
+        const std::string notas9 = R"html(
+            <table id='tRegistro'>
+              <thead><tr><th>Año</th><th>Estado</th><th>Nota</th><th></th><th>Materia</th><th></th><th>Modalidad</th><th>Periodo</th><th>Créditos</th></tr></thead>
+              <tbody>
+                <tr><td>2026</td><td>Aprobada</td><td>88</td><td></td><td>EL2113 - Circuitos CC</td><td></td><td>Semestre</td><td>1</td><td>4</td></tr>
+                <tr><td>2026</td><td>En curso</td><td>--</td><td></td><td>FI1102 - Física II</td><td></td><td>Semestre</td><td>2</td><td>4</td></tr>
+              </tbody>
+            </table>
+        )html";
+        auto grades = ParseDetalleNotasHtml(notas9);
+        CHECK(grades.size() == 2);
+        CHECK(grades[0].year == 2026 && grades[0].state == "Aprobada" && std::abs(grades[0].grade - 88.0) < 0.01);
+        CHECK(grades[0].course_code == "EL2113" && grades[0].course_name == "Circuitos CC" && grades[0].credits == 4);
+        CHECK(grades[1].course_code == "FI1102" && grades[1].period == "2");
+    }
+
+    // 3. Live detalle_historial HTML (#nota BEFORE label + #hCursadas + #porcentaje_aprobado)
+    {
+        const std::string histHtml = R"html(
+            <div id='general'>
+              <span id='nota' class='tds-lib_text_detail'>83.45</span>
+              <span class='tds-lib_text_marker'>Promedio ponderado general</span>
+              <span id='hCursadas'>114 Horas cursadas</span>
+              <span id='porcentaje_aprobado'>91.5%</span>
+              <span id='porcentaje_reprobado'>8.5%</span>
+            </div>
+            <table>
+              <tr><td>Cursos</td><td>Aprobados</td><td>22</td></tr>
+              <tr><td>Cursos</td><td>Matriculados</td><td>3</td></tr>
+              <tr><td>Cursos</td><td>Retirados</td><td>2</td></tr>
+            </table>
+        )html";
+        auto st = ParseAcademicStatsHtml(histHtml);
+        CHECK(std::abs(st.weighted_avg_general - 83.45) < 0.01);
+        CHECK(st.hours_taken == 114);
+        CHECK(std::abs(st.passed_pct - 91.5) < 0.05);
+        CHECK(std::abs(st.failed_pct - 8.5) < 0.05);
+        CHECK(st.count_aprobadas == 22 && st.count_en_curso == 3 && st.count_retiradas == 2);
+    }
+
+    // 4. Live malformed <tr>-less citas_matricula HTML
+    {
+        const std::string citasMalformed =
+            "<table id='tcitas_Matricula'><thead><th>Fecha</th><th>Periodo</th><th>Modalidad</th><th>Hora</th></thead>"
+            "<tbody><td>2026-07-15</td><td>2</td><td>Semestral Ordinaria</td><td>08:15:00</td></tr>"
+            "<td>2026-01-20</td><td>1</td><td>Semestral Ordinaria</td><td>14:00:00</td></tr></tbody></table>";
+        auto citas = ParseCitasMatriculaHtml(citasMalformed);
+        CHECK(citas.size() == 2);
+        CHECK(citas[0].date == "2026-07-15" && citas[0].time == "08:15:00" && citas[0].modality == "Semestral Ordinaria");
+        CHECK(citas[1].date == "2026-01-20" && citas[1].period == "1");
+    }
+
+    // 5. Live 4-part '-----'-delimited tabla_horario + space period converter
+    {
+        CHECK(ConvertPeriodKeyToTablaHorarioFormat("S-2-2026") == "S 2 2026");
+        CHECK(ConvertPeriodKeyToTablaHorarioFormat("2026_S_2") == "S 2 2026");
+        const std::string horarioPayload =
+            "<table></table>-----16 10 17 55 03|09 45 11 30 05-----"
+            "Circuitos*1*2*3*EL2113*PROF UNO*03-E|Fisica*1*2*3*FI1102*PROF DOS*02-A-----"
+            "IDE_MATERIA*EL2113*DSC_MATERIA*Circuitos CC*CAN_CREDITOS*4*IDE_GRUPO*50*NOM_PROFESOR*RODRIGUEZ PABLO*"
+            "COD_DIA*3*NOM_DIA*MIERCOLES*IDE_EDIFICIO*E*IDE_AULA*03*NUM_HORA_INICIO*16:10*NUM_HORA_FIN*17:55*celdas*16 10 17 55 03|"
+            "IDE_MATERIA*FI1102*DSC_MATERIA*Física II*CAN_CREDITOS*4*IDE_GRUPO*50*NOM_PROFESOR*ALVARADO ROMMEL*"
+            "COD_DIA*5*NOM_DIA*VIERNES*IDE_EDIFICIO*A*IDE_AULA*02*NUM_HORA_INICIO*09:45*NUM_HORA_FIN*11:30*celdas*09 45 11 30 05";
+        auto cells = ParseTablaHorarioHtml(horarioPayload);
+        CHECK(cells.size() == 2);
+        CHECK(cells[0].course_code == "EL2113" && cells[0].day_index_0_mon == 2 && cells[0].room == "E-03");
+        CHECK(cells[0].professor == "RODRIGUEZ PABLO" && cells[0].start_minute == 16 * 60 + 10 && cells[0].end_minute == 17 * 60 + 55);
+        CHECK(cells[1].course_code == "FI1102" && cells[1].day_index_0_mon == 4 && cells[1].room == "A-02");
+    }
+
+    // 6. User Model HTML, Personal Academic Info HTML, DAR Preview HTML, Feria Table HTML
+    {
+        auto dim = ParseUserModelSectionHtml(
+            "#learning_style_info", "Estilo de aprendizaje",
+            "<section class='test_description'><h1>Felder</h1><p>Basado en el test de Felder.</p>"
+            "<table><tr><td>Visual / Verbal</td><td>Visual (7)</td></tr></table></section>");
+        CHECK(dim.dimension_key == "#learning_style_info" && !dim.metrics.empty());
+
+        auto pi = ParsePersonalAcademicInfoHtml(
+            "<div id='InformacionAcademica_lib'><h2 class='labelInf'>Carrera</h2><span class='detailInf'>Ingeniería Electrónica</span>"
+            "<h2 class='labelInf'>Sede</h2><span class='detailInf'>Cartago</span></div>");
+        CHECK(pi.career == "Ingeniería Electrónica" && pi.campus == "Cartago");
+
+        auto dar = ParseDarActualizarCursosHtml(
+            "<div class=course estado=1><div class=courseName>Circuitos CC</div><div>Miembro</div></div>"
+            "<div class=course estado=1><div class=courseName>Física general Ii</div><div>Miembro</div></div>"
+            "<div class=course estado=1><div class=courseName>Física general Iii</div><div>Miembro</div></div>");
+        CHECK(dar.size() == 3 && dar[0].course_name == "Circuitos CC" && dar[0].status_text == "Miembro");
+        CHECK(dar[1].course_name == "Física general II" && dar[2].course_name == "Física general III");
+
+        auto ferias = ParseFeriaTableHtml(
+            "<table id=tferias><tr><td>Feria 2026</td><td>01/08/2026</td><td>30/09/2026</td><td><a href='/bases.pdf'>Ver</a></td></tr></table>");
+        CHECK(ferias.size() == 1 && ferias[0].name == "Feria 2026" && ferias[0].bases_url.find("bases.pdf") != std::string::npos);
+    }
+
+    // 7. Policy guards: read-only preview allowed, mutating DAR / actualizar_cursos2 blocked
+    {
+        ReadOnlyRequestPolicy pol;
+        PolicyRequestContext pPreview;
+        pPreview.url = "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil/ajax/actualizar_cursos";
+        pPreview.method = "POST";
+        CHECK(pol.Evaluate(pPreview).allowed);
+
+        PolicyRequestContext pNotas;
+        pNotas.url = "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil/ajax/detalle_notas";
+        pNotas.method = "POST";
+        CHECK(pol.Evaluate(pNotas).allowed);
+
+        PolicyRequestContext pMut1;
+        pMut1.url = "https://tecdigital.tec.ac.cr/dotlrn/ajax/actualizar_cursos";
+        pMut1.method = "POST";
+        CHECK(!pol.Evaluate(pMut1).allowed);
+
+        PolicyRequestContext pMut2;
+        pMut2.url = "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil/ajax/actualizar_cursos2";
+        pMut2.method = "POST";
+        CHECK(!pol.Evaluate(pMut2).allowed);
+
+        // Mutating GET discovered in live recursive crawl (op_swap reorders portal portlets) MUST be blocked
+        PolicyRequestContext pOpSwap;
+        pOpSwap.url = "https://tecdigital.tec.ac.cr/dotlrn/region=1&page_id=10&direction=down&action=op_swap";
+        pOpSwap.method = "GET";
+        CHECK(!pol.Evaluate(pOpSwap).allowed);
+
+        // Read-only plagiarism docs & server clock endpoints discovered in JS bundles MUST be allowed
+        PolicyRequestContext pPlag;
+        pPlag.url = "https://tecdigital.tec.ac.cr/tda-control-plagio/ajax/cargaDocumentos/cargaDocsCurso?community_id=12345";
+        pPlag.method = "GET";
+        CHECK(pol.Evaluate(pPlag).allowed);
+
+        PolicyRequestContext pClock;
+        pClock.url = "https://tecdigital.tec.ac.cr/theme-td/ajax/get_date_server";
+        pClock.method = "GET";
+        CHECK(pol.Evaluate(pClock).allowed);
+        // 8. Calendar parser ignores #at-a-glance mini-calendar ("Lun"/"Mié"/"28") and parses real list-table Spanish dates
+        const std::string liveCalHtml = R"html(
+            <table id="at-a-glance">
+              <thead><tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr></thead>
+              <tbody><tr><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td>1</td><td>2</td></tr></tbody>
+            </table>
+            <table class="list-table" summary="Datos para items-list">
+              <thead><tr><th>Fecha</th><th>Hora</th><th>Evento</th><th>Calendario</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td>25 noviembre 2026</td><td>08:30 - 11:00</td><td>Tercer Examen Parcial</td><td>Cátedra de Física General II</td><td>Aula Cartago</td></tr>
+                <tr><td></td><td>14:00</td><td>Entrega Proyecto</td><td>FI2103</td><td>Fase final</td></tr>
+                <tr><td>Sin eventos</td><td></td><td>No hay elementos</td><td></td><td></td></tr>
+              </tbody>
+            </table>
+        )html";
+        auto calEvs = ParseCalendarListHtml(liveCalHtml);
+        CHECK(calEvs.size() == 2);
+        CHECK(calEvs[0].date_iso == "2026-11-25" && calEvs[0].start_time == "08:30" && calEvs[0].end_time == "11:00");
+        CHECK(calEvs[0].title == "Tercer Examen Parcial" && calEvs[0].calendar_name == "Cátedra de Física General II");
+        CHECK(calEvs[1].date_iso == "2026-11-25" && calEvs[1].title == "Entrega Proyecto");
+
+        // 9. Course overview strips timeout-overlay chrome & ignores in-portlet "ver más" ?page_num= links
+        const std::string ovHtml = R"html(
+            <div id="timeout-overlay">Límite de tiempo de sesión close Por políticas de seguridad</div>
+            <section id="sub-navigation"><ul id="selectable_subnavbar">
+              <li><a href="?page_num=0">Portada</a></li>
+              <li><a href="?page_num=1">Contenidos</a></li>
+              <li><a href="?page_num=4">Cronograma</a></li>
+              <li><a href="?page_num=6">Documentos</a></li>
+              <li><a href="?page_num=7">Evaluaciones</a></li>
+            </ul></section>
+            <div id="main-content">
+              <div class="portlet-wrap"><div class="portlet-title">Semana 1 y 2</div><img alt="Módulo de cinemática y oscilaciones" src="/img/s1.png"/></div>
+              <a href="?page_num=10">ver más</a>
+              <a href="?page_num=11">ver más</a>
+            </div>
+        )html";
+        auto ov = ParseCourseOverviewHtml(ovHtml, "/dotlrn/classes/ECE/FI2103/S-2-2026.SC.FI2103.51", "https://tecdigital.tec.ac.cr");
+        CHECK(ov.tabs.size() == 5);
+        int customCnt = 0;
+        for (const auto& tb : ov.tabs) {
+            if (tb.label == "Documentos" || tb.label == "Evaluaciones") CHECK(!tb.is_custom);
+            if (tb.is_custom) ++customCnt;
+        }
+        CHECK(customCnt == 2);  // Only Contenidos & Cronograma
+        CHECK(ov.description.find("Límite de tiempo de sesión") == std::string::npos);
+        CHECK(ov.portlets.size() == 1 && ov.portlets[0].title == "Semana 1 y 2");
+        CHECK(ov.portlets[0].body_preview.find("oscilaciones") != std::string::npos);
+
+        // Dedup "Fecha de entrega para PIM" vs "Entrega: PIM" on same date
+        std::vector<CalendarEventEntry> portEvs;
+        CalendarEventEntry ce;
+        ce.date_iso = "2026-11-23";
+        ce.start_time = "23:29";
+        ce.title = "Fecha de entrega para PIM";
+        ce.source_kind = "calendar";
+        portEvs.push_back(ce);
+        DetailedEvaluationsReport rep;
+        rep.community_slug = "FI2103";
+        decltype(rep.categories)::value_type cat;
+        cat.name = "Proyectos";
+        decltype(cat.items)::value_type it;
+        it.assign_id = "101";
+        it.name = "PIM";
+        it.due_date_iso = "2026-11-23 23:59";
+        it.weight_pct = 15.0;
+        it.submission_status = "Calificada";
+        cat.items.push_back(it);
+        rep.categories.push_back(cat);
+        auto unified = BuildUnifiedCalendarEvents(portEvs, { rep }, {});
+        CHECK(unified.size() == 1);
+        CHECK(unified[0].source_kind == "evaluation");
+        CHECK(unified[0].title == "Entrega: PIM");
+
+        // Short RSS news descriptions (<800 chars) must ALWAYS strip HTML tags
+        const std::string rssXml = R"xml(<?xml version="1.0"?>
+            <rss version="2.0"><channel><item>
+                <title>Aviso de Cátedra</title>
+                <link>https://tecdigital.tec.ac.cr/news/item?item_id=1</link>
+                <description>&lt;p&gt;Estimables estudiantes.&lt;br&gt;&lt;div id="TextareaHtml"&gt;Nueva guía publicada.&lt;/div&gt;&lt;/p&gt;</description>
+                <pubDate>Tue, 24 Nov 2026 03:38:01 GMT</pubDate>
+            </item></channel></rss>)xml";
+        auto rssRes = TdaTdsClient::ParseRssXml(rssXml);
+        CHECK(rssRes.ok && rssRes.value.size() == 1);
+        CHECK(rssRes.value[0].description.find("<p>") == std::string::npos);
+        CHECK(rssRes.value[0].description.find("<div") == std::string::npos);
+        CHECK(rssRes.value[0].description.find("Nueva guía publicada") != std::string::npos);
+
+        // Rubric parser strips trailing "Copiar comentario" UI button text
+        const std::string rubHtml = R"html(
+            <div id="div_info_rubric" max_weight="3"></div>
+            <div class="name_rubric">Rúbrica Fase II</div>
+            <table><thead><tr><th>Cat</th><th level_col="0" wlevel="3">Excelente</th></tr></thead>
+            <tbody id="table_body_evaluation">
+              <tr class="category" row="0" comment="Buen análisis del modelo físico. Copiar comentario">
+                <td><div id="div_1_0">Fundamento</div><span id="category_weight0">100</span></td>
+                <td level="0" class="criterion_selected">Explicación clara</td>
+              </tr>
+            </tbody></table>)html";
+        auto rb = ParseRubricHtml(rubHtml, "99");
+        CHECK(rb.criteria.size() == 1);
+        CHECK(rb.criteria[0].comment == "Buen análisis del modelo físico.");
+    }
+}
+
+void TestV3SuperPlanParsersAndPolicy() {
+    // 1. ParseFolderJson extracts creation_date_ansi, last_modified_ansi, author_name, subscription_active on folders & files
+    {
+        const std::string fJson = R"json({
+            "folder_id": "5001",
+            "name": "Raíz",
+            "elements": [
+                {
+                    "object_id": "5010",
+                    "parent_id": "5001",
+                    "fs_type": "folder",
+                    "name": "Semana 1",
+                    "creation_date_ansi": "2026-08-03 09:15:00",
+                    "last_modified_ansi": "2026-08-05 14:22:00",
+                    "author_name": "Prof. Física",
+                    "subscribed_p": "t",
+                    "content_size": 3
+                },
+                {
+                    "object_id": "5020",
+                    "parent_id": "5001",
+                    "fs_type": "file",
+                    "name": "guia_oscilaciones.pdf",
+                    "title": "Guía Oscilaciones",
+                    "mime_type": "application/pdf",
+                    "content_size": 245760,
+                    "live_revision": "3",
+                    "creation_date_ansi": "2026-08-04 10:00:00",
+                    "last_modified_ansi": "2026-08-19 16:45:00",
+                    "author": "Prof. Física",
+                    "url": "/dotlrn/file-storage/download/guia_oscilaciones.pdf?version_id=5020"
+                }
+            ]
+        })json";
+        auto parsed = FileStorageWalker::ParseFolderJson(fJson, "5001");
+        CHECK(parsed.ok);
+        CHECK(parsed.value.folders.size() == 2); // root 5001 + subfolder 5010
+        if (parsed.value.folders.size() == 2) {
+            const auto& sf = parsed.value.folders[1];
+            CHECK(sf.creation_date_ansi == "2026-08-03 09:15:00");
+            CHECK(sf.last_modified_ansi == "2026-08-05 14:22:00");
+            CHECK(sf.author_name == "Prof. Física");
+            CHECK(sf.subscription_active);
+        }
+        CHECK(parsed.value.files.size() == 1);
+        if (parsed.value.files.size() == 1) {
+            const auto& f = parsed.value.files[0];
+            CHECK(f.creation_date_ansi == "2026-08-04 10:00:00");
+            CHECK(f.last_modified_ansi == "2026-08-19 16:45:00");
+            CHECK(f.live_revision == "3");
+            CHECK(f.author_name == "Prof. Física");
+            CHECK(f.mime_type == "application/pdf");
+        }
+    }
+
+    // 2. ParseSpacePageHtml captures weekly linked_subpages (S1, S2), embedded infographics, module_kind & cleans "article"
+    {
+        const std::string wkHtml = R"html(
+            <html><body>
+            <div class="portlet-wrap">
+                <div class="portlet-header"><h2>Semana 1 y 2 — Oscilaciones</h2></div>
+                <div class="portlet-body">
+                    <p>Contenidos semanales y guía gráfica.</p>
+                    <a href="/dotlrn/clubs/ctedras/fisica3/?page_num=3">S1</a>
+                    <a href="/dotlrn/clubs/ctedras/fisica3/?page_num=4">S2</a>
+                    <a href="/dotlrn/clubs/ctedras/fisica3/?page_num=99">ver más</a>
+                    <a href="/dotlrn/file-storage/download/guia_s1.pdf"><i class="material-icons">article</i> Guía Semana 1</a>
+                    <a href="https://tecdigital.tec.ac.cr/dotlrn/clubs/ctedras/fisica3/infografia_s1.png">
+                        <img src="/dotlrn/clubs/ctedras/fisica3/infografia_s1.png" alt="Infografía Semana 1"/>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-wrap">
+                <div class="portlet-header"><h2>Repositorio de Exámenes</h2></div>
+                <div class="portlet-body"><p>Parciales anteriores.</p></div>
+            </div>
+            </body></html>)html";
+        auto pg = ParseSpacePageHtml(wkHtml, 1, "Contenidos",
+                                     "https://tecdigital.tec.ac.cr/dotlrn/clubs/ctedras/fisica3/?page_num=1",
+                                     "https://tecdigital.tec.ac.cr");
+        CHECK(pg.portlets.size() == 2);
+        if (pg.portlets.size() == 2) {
+            const auto& p0 = pg.portlets[0];
+            CHECK(p0.module_kind == "weekly");
+            CHECK(p0.linked_subpages.size() == 2);
+            CHECK(p0.linked_subpages[0].page_num == 3 && p0.linked_subpages[0].label == "S1");
+            CHECK(p0.linked_subpages[1].page_num == 4 && p0.linked_subpages[1].label == "S2");
+            CHECK(!p0.images.empty() && p0.images[0].image_url.find("infografia_s1.png") != std::string::npos);
+            CHECK(!p0.links.empty());
+            for (const auto& lk : p0.links) {
+                CHECK(lk.label.find("article") == std::string::npos);
+            }
+            CHECK(pg.portlets[1].module_kind == "exam_notice");
+        }
+    }
+
+    // 2b. ParseSpacePageHtml resolves real S1..S2 card headings behind Material-icon "ver más<i class='material-icons'>loupe</i>" buttons & strips play_arrow/go_back
+    {
+        const std::string catHtml = R"html(
+            <html><body>
+            <div class="portlet-wrap">
+                <div class="portlet-header"><h2>Contenidos</h2></div>
+                <div class="portlet-body">
+                    <div class="card"><span>S1 Movimiento periódico</span><a href="/dotlrn/catedras.tec/fisica3/one-community?page_num=11">ver más<i class="material-icons">loupe</i></a></div>
+                    <div class="card"><div style="margin:0;padding:12px;border:1px solid #ccc;background:#fff;width:100%;box-sizing:border-box;"><span style="color: #002856ff; font-size: 16pt;">S2 M.A.S y sus aplicaciones</span><p style="font-size:11pt;color:#444;">Contenido detallado del módulo semanal con recursos, ejercicios y videos.</p></div><a href="/dotlrn/catedras.tec/fisica3/one-community?page_num=12">ver más<i class="material-icons">loupe</i></a></div>
+                    <a href="/dotlrn/catedras.tec/fisica3/one-community?page_num=0"><img src="/repositorio/go_back.png" alt="regresar al portal"/></a>
+                    <a href="/dotlrn/catedras.tec/fisica3/one-community?page_num=25"><i class="material-icons">play_arrow</i>Exámenes de otros semestres</a>
+                </div>
+            </div>
+            </body></html>)html";
+        auto pg = ParseSpacePageHtml(catHtml, 1, "Contenidos",
+                                     "https://tecdigital.tec.ac.cr/dotlrn/catedras.tec/fisica3/one-community?page_num=1",
+                                     "https://tecdigital.tec.ac.cr");
+        CHECK(pg.portlets.size() == 1);
+        if (pg.portlets.size() == 1) {
+            const auto& subs = pg.portlets[0].linked_subpages;
+            CHECK(subs.size() == 3);
+            if (subs.size() == 3) {
+                CHECK(subs[0].page_num == 11 && subs[0].label == "S1 Movimiento periódico");
+                CHECK(subs[1].page_num == 12 && subs[1].label.rfind("S2 M.A.S y sus aplicaciones", 0) == 0);
+                CHECK(subs[1].label.find("color:") == std::string::npos && subs[1].label.find('>') == std::string::npos);
+                CHECK(subs[2].page_num == 25 && subs[2].label == "Exámenes de otros semestres");
+            }
+            for (const auto& s : subs) {
+                CHECK(s.label.find("loupe") == std::string::npos);
+                CHECK(s.label.find("play_arrow") == std::string::npos);
+                CHECK(s.page_num > 0);
+            }
+        }
+        CHECK(pg.plain_excerpt.find("loupe") == std::string::npos);
+        CHECK(pg.plain_excerpt.find("play_arrow") == std::string::npos);
+    }
+
+    // 3. Policy matrix: MUTATION_MASK=0 blocks ALL 10 mutation groups while allowing read-only GAAP/Motor-Juegos
+    {
+        PolicyOptions popts;
+        ReadOnlyRequestPolicy pol(popts);
+
+        // Read-only GAAP origin & tda-motor-juegos read-only POST allowed under MUTATION_MASK=0
+        PolicyRequestContext pGaap;
+        pGaap.url = "https://api.tec.ac.cr:3003/activities/list";
+        pGaap.method = "GET";
+        CHECK(pol.Evaluate(pGaap).allowed);
+
+        PolicyRequestContext pMj;
+        pMj.url = "https://tecdigital.tec.ac.cr/tda-motor-juegos/api/activities/";
+        pMj.method = "POST";
+        CHECK(pol.Evaluate(pMj).allowed);
+
+        // All new student mutations MUST be blocked by default (MUTATION_MASK=0)
+        const std::vector<std::pair<std::string, std::string>> mutReqs = {
+            {"POST", "https://tecdigital.tec.ac.cr/tda-notifications/ajax/delete_all_user_notifications"},
+            {"GET",  "https://tecdigital.tec.ac.cr/dotlrn/file-storage/api/notification/subscribe/5010"},
+            {"POST", "https://tecdigital.tec.ac.cr/tda-expediente-estudiantil/ajax/actualizar_cursos2"},
+            {"POST", "https://tecdigital.tec.ac.cr/tda-control-plagio/ajax/fileUpload"},
+            {"POST", "https://tecdigital.tec.ac.cr/tda-control-plagio/ajax/addDocumentEphorus"},
+            {"POST", "https://tecdigital.tec.ac.cr/tda-prematricula/ajax/guardar_prematricula"},
+            {"POST", "https://tecdigital.tec.ac.cr/tda-feria-negocios/ajax/record_project"},
+            {"POST", "https://tecdigital.tec.ac.cr/tda-um/ajax/save_privacy_settings"},
+            {"POST", "https://tecdigital.tec.ac.cr/dotlrn/file-storage/api/folder-create"},
+            {"DELETE", "https://tecdigital.tec.ac.cr/dotlrn/file-storage/api/file/5020"}
+        };
+        for (const auto& [m, u] : mutReqs) {
+            PolicyRequestContext ctx;
+            ctx.method = m;
+            ctx.url = u;
+            CHECK(!pol.Evaluate(ctx).allowed);
+        }
+
+        // GraphQL student inclusion mutation blocked by default, allowed ONLY with ManageInclusions bit
+        PolicyRequestContext gqlMut;
+        gqlMut.method = "POST";
+        gqlMut.url = "https://api.tec.ac.cr:3005/graphql";
+        gqlMut.post_data = R"({"query":"mutation SetInclusionRequest { setInclusionRequest(course:\"FI2103\") { ok } }"})";
+        CHECK(!pol.Evaluate(gqlMut).allowed);
+        {
+            const uint32_t incMask = static_cast<uint32_t>(AllowedStudentMutation::ManageInclusions);
+            gqlMut.allowed_mutations_mask = incMask;
+            CHECK(pol.Evaluate(gqlMut).allowed);
+            // Unrelated plagiarism upload MUST remain blocked under ManageInclusions
+            PolicyRequestContext pPlagUp;
+            pPlagUp.method = "POST";
+            pPlagUp.url = "https://tecdigital.tec.ac.cr/tda-control-plagio/ajax/fileUpload";
+            pPlagUp.allowed_mutations_mask = incMask;
+            CHECK(!pol.Evaluate(pPlagUp).allowed);
+            // Admin GraphQL mutation MUST remain blocked even with ManageInclusions
+            PolicyRequestContext gqlAdmin;
+            gqlAdmin.method = "POST";
+            gqlAdmin.url = "https://api.tec.ac.cr:3005/graphql";
+            gqlAdmin.post_data = R"({"query":"mutation DropEverything { deleteAllUsers }"})";
+            gqlAdmin.allowed_mutations_mask = incMask;
+            CHECK(!pol.Evaluate(gqlAdmin).allowed);
+        }
+        gqlMut.allowed_mutations_mask = 0u;
+        CHECK(!pol.Evaluate(gqlMut).allowed);
+
+        // Personal files mask enables folder creation & DELETE while keeping logout permanently blocked
+        {
+            const uint32_t pfMask = static_cast<uint32_t>(AllowedStudentMutation::ManagePersonalFiles);
+            PolicyRequestContext mkf;
+            mkf.method = "POST";
+            mkf.url = "https://tecdigital.tec.ac.cr/dotlrn/file-storage/api/folder/5001";
+            mkf.allowed_mutations_mask = pfMask;
+            CHECK(pol.Evaluate(mkf).allowed);
+            PolicyRequestContext delF;
+            delF.method = "DELETE";
+            delF.url = "https://tecdigital.tec.ac.cr/dotlrn/file-storage/api/file/5020";
+            delF.allowed_mutations_mask = pfMask;
+            CHECK(pol.Evaluate(delF).allowed);
+            PolicyRequestContext logOut;
+            logOut.method = "GET";
+            logOut.url = "https://tecdigital.tec.ac.cr/register/logout";
+            logOut.allowed_mutations_mask = pfMask;
+            CHECK(!pol.Evaluate(logOut).allowed);
+        }
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -3144,6 +3748,8 @@ int main() {
     TestR4Remediations();
     TestPhase2LiveProtocolAndGraphQl();
     TestPublicGuiaHorarios();
+    TestLive2026ParsersAndContracts();
+    TestV3SuperPlanParsersAndPolicy();
 
     std::cout << "TecDigitalAcademicTest: " << gPasses << " passed, " << gFailures << " failed.\n";
     return (gFailures == 0) ? 0 : 1;

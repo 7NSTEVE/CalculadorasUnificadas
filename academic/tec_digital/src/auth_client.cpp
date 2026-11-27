@@ -111,9 +111,7 @@ bool AuthClient::ContainsLoginMarkers(std::string_view body) {
         ContainsMarkerCI(low, "name=\"userpassword\"") ||
         ContainsMarkerCI(low, "formcontrolname=\"userpassword\"") ||
         ContainsMarkerCI(low, "api/login/new-form") ||
-        ContainsMarkerCI(low, "ingresar con idtecbeta") ||
-        ContainsMarkerCI(low, "iniciar sesi\xc3\xb3n") ||
-        ContainsMarkerCI(low, "iniciar sesion")) {
+        ContainsMarkerCI(low, "ingresar con idtecbeta")) {
         return true;
     }
 
@@ -125,6 +123,24 @@ bool AuthClient::ContainsLoginMarkers(std::string_view body) {
             return true;
         }
         pos += 10;
+    }
+
+    // Authenticated 2026 TEC Digital pages embed an inactivity-timeout modal with
+    // "<button class=\"timeout-modal-button\" onclick=\"logout()\">Iniciar sesión nuevamente</button>"
+    // alongside #header-td and #platform_user_panel. Only treat plain "iniciar sesión"
+    // text as a login wall when authenticated portal chrome is absent.
+    const bool has_authenticated_portal_chrome =
+        ContainsMarkerCI(low, "id=\"platform_user_panel\"") ||
+        ContainsMarkerCI(low, "id='platform_user_panel'") ||
+        ContainsMarkerCI(low, "id=\"header-td\"") ||
+        ContainsMarkerCI(low, "id='header-td'") ||
+        ContainsMarkerCI(low, "timeout-modal-overlay") ||
+        ContainsMarkerCI(low, "/register/logout");
+
+    if (!has_authenticated_portal_chrome &&
+        (ContainsMarkerCI(low, "iniciar sesi\xc3\xb3n") ||
+         ContainsMarkerCI(low, "iniciar sesion"))) {
+        return true;
     }
     return false;
 }

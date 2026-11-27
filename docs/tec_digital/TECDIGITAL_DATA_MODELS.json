@@ -1,0 +1,687 @@
+{
+  "generated_at": "2026-11-26",
+  "cuadernu_cpp_structs_count": 101,
+  "cuadernu_cpp_structs": [
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 19,
+      "struct": "DetailedEvaluationItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 58,
+      "struct": "EvaluationUploadRequest"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 71,
+      "struct": "EvaluationUploadResult"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 80,
+      "struct": "DetailedEvaluationCategory"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 88,
+      "struct": "DetailedEvaluationsReport"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 96,
+      "struct": "RubricLevel"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 103,
+      "struct": "RubricCriterion"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 113,
+      "struct": "RubricBreakdown"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 124,
+      "struct": "GradeWhatIfScenario"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 141,
+      "struct": "AcademicStatsSummary"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 165,
+      "struct": "GradeRecordRow"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 177,
+      "struct": "WeightedAveragePeriodRow"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 184,
+      "struct": "MatriculaAppointment"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 191,
+      "struct": "WeeklyScheduleCell"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 206,
+      "struct": "PersonalAcademicInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 218,
+      "struct": "DarCourseSyncEntry"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 224,
+      "struct": "FeriaNegociosRow"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 232,
+      "struct": "GuiaHorarioRow"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 246,
+      "struct": "GraduateAttributeRow"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 257,
+      "struct": "StructuredExpediente"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 270,
+      "struct": "CourseTabInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 277,
+      "struct": "CourseExternalLink"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 283,
+      "struct": "CourseTeacherCard"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 292,
+      "struct": "SpaceBanner"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 298,
+      "struct": "SpacePortletBlock"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 304,
+      "struct": "SpacePageSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 314,
+      "struct": "NewsArticleDetail"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 323,
+      "struct": "CourseOverviewSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 341,
+      "struct": "CalendarEventEntry"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 352,
+      "struct": "PlagiarismDocRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 363,
+      "struct": "PlagiarismTreeSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 371,
+      "struct": "SmsMessageRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 378,
+      "struct": "NotificationSubscriptionItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 386,
+      "struct": "GaapActivityRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 395,
+      "struct": "UserModelDimension"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 401,
+      "struct": "UserModelSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 406,
+      "struct": "ForumThreadSummary"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 415,
+      "struct": "SchoolCatalogEntry"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 421,
+      "struct": "FileVersionRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 436,
+      "struct": "EvalSubmissionRevision"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 445,
+      "struct": "PlagiarismMisDocItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 458,
+      "struct": "ForumMessagePost"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 466,
+      "struct": "PerformanceEvalPending"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 476,
+      "struct": "CurriculumCriticalPath"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 528,
+      "struct": "PublicGuiaEscuelaInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 533,
+      "struct": "PublicGuiaModalidadInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 539,
+      "struct": "PublicGuiaSessionRow"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/academic_models.hpp",
+      "line": 564,
+      "struct": "PublicGuiaFilterOptions"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 18,
+      "struct": "InclusionCampaignInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 28,
+      "struct": "PendingGradCourse"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 35,
+      "struct": "CourseRequisitesCheck"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 45,
+      "struct": "InclusionApplicationRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 55,
+      "struct": "ScholarshipStatusInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 62,
+      "struct": "GraphQlActualCourse"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 71,
+      "struct": "StudentRnCourse"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 77,
+      "struct": "StudentGeneralInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 86,
+      "struct": "GraphQlAcademicHistoryResult"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/graphql_client.hpp",
+      "line": 91,
+      "struct": "GraphQlCurriculumBundle"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/public_guia_client.hpp",
+      "line": 17,
+      "struct": "PublicGuiaAllFetchStats"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 19,
+      "struct": "CommunityInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 32,
+      "struct": "SedeInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 37,
+      "struct": "CarreraInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 42,
+      "struct": "PlanInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 47,
+      "struct": "ColorCodeInfo"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 52,
+      "struct": "ColorCodeCatalog"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 58,
+      "struct": "CurriculumCourseNode"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 71,
+      "struct": "CurriculumLevel"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 76,
+      "struct": "CurriculumGraph"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 85,
+      "struct": "CourseGradeAttempt"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 97,
+      "struct": "StudentCourseRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 103,
+      "struct": "StudentCurriculumProfile"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 107,
+      "struct": "StudentCareerRecord"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 114,
+      "struct": "ExpedienteSummary"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 135,
+      "struct": "PrematriculaCourseEntry"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 142,
+      "struct": "PrematriculaRequestEntry"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 147,
+      "struct": "PrematriculaSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 157,
+      "struct": "PerformanceFormItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 164,
+      "struct": "PerformanceFormSection"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 173,
+      "struct": "PerformanceForm"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 180,
+      "struct": "CourseEvaluationItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 186,
+      "struct": "CourseEvaluationCategory"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 193,
+      "struct": "CourseEvaluationsSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 202,
+      "struct": "FeriaLocation"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 207,
+      "struct": "FeriaCategory"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 212,
+      "struct": "FeriaIds"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 218,
+      "struct": "FeriaNegociosSnapshot"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 228,
+      "struct": "NotificationItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 240,
+      "struct": "NotificationsFeed"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 246,
+      "struct": "RssNewsItem"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 254,
+      "struct": "CommunityMember"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 263,
+      "struct": "PerformanceEvaluationStatus"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 268,
+      "struct": "TdaTdsCatalogOptions"
+    },
+    {
+      "file": "academic/tec_digital/include/academic/tec_digital/tda_tds_client.hpp",
+      "line": 290,
+      "struct": "TdaTdsCatalog"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 33,
+      "struct": "TecAcademicSnapshot"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 99,
+      "struct": "TecSyncOptions"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 131,
+      "struct": "LiveScheduleSolveResult"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 146,
+      "struct": "PublicGuiaQuery"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 154,
+      "struct": "GlobalHorariosGroupEntry"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 180,
+      "struct": "GlobalHorariosIndex"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 194,
+      "struct": "GlobalHorariosSearchFilter"
+    },
+    {
+      "file": "studio/integrations/tec_digital/tec_academic_store.hpp",
+      "line": 207,
+      "struct": "Sm2FlashcardDraft"
+    }
+  ],
+  "canonical_domain_entities": [
+    {
+      "entity": "CommunityInfo",
+      "source": "/dotlrn/index, /dotlrn/my-communities",
+      "fields": [
+        "community_id",
+        "slug",
+        "name",
+        "type (CLASE|CATEDRA|ESCUELA|SUBGRUPO|PROGRAMA|COMUNIDAD)",
+        "department",
+        "period",
+        "url",
+        "root_folder_id",
+        "parent_url",
+        "is_current_period"
+      ]
+    },
+    {
+      "entity": "DetailedEvaluationItem",
+      "source": "<curso>/evaluation/tda-ce-estudiante/tda-index",
+      "fields": [
+        "assign_id",
+        "category_name",
+        "name (unquoted .assignNameText)",
+        "weight_pct",
+        "earned_pct",
+        "raw_grade_100 (Nota obtenida or earned/weight*100)",
+        "is_graded",
+        "description",
+        "teacher_comment",
+        "due_date_text",
+        "due_date_iso",
+        "allow_late_submission",
+        "can_upload",
+        "has_rubric",
+        "rubric_id",
+        "task_id",
+        "task_item_id",
+        "community_id",
+        "grade_id",
+        "submitted_files",
+        "attachment_url",
+        "solution_url",
+        "feedback_url",
+        "student_id (RAM-only, NEVER persisted)"
+      ]
+    },
+    {
+      "entity": "RubricBreakdown",
+      "source": "POST /tda-rubrica/tda_evaluacion_rubrica (accion=ver)",
+      "fields": [
+        "rubric_id",
+        "title",
+        "evaluated_target",
+        "total_score (calculate_score)",
+        "max_score",
+        "max_level_points",
+        "is_graded",
+        "criteria[{category_name, weight_pct, earned_weight_pct, earned_points, max_points, comment (tr[comment]), levels[{label, points, description, achieved (td.criterion_selected)}]}]"
+      ]
+    },
+    {
+      "entity": "ExpedienteSummary",
+      "source": "/tda-expediente-estudiantil/ajax/* + GraphQL getStudentAcademicHistory",
+      "fields": [
+        "active_schedule_period",
+        "stats (20 metrics, 8 official TEC states)",
+        "grades (merged 9-col detalle_notas + 44-row GraphQL history)",
+        "weighted_averages (12+ periods)",
+        "citas_matricula (<tr>-less HTML parser)",
+        "personal_info",
+        "dar_sync_preview",
+        "graduate_attributes",
+        "sedes_combo",
+        "periodos_combo"
+      ]
+    },
+    {
+      "entity": "WeeklyScheduleCell",
+      "source": "POST /tda-expediente-estudiantil/ajax/tabla_horario (4-part '-----' payload)",
+      "fields": [
+        "day_index_0_mon",
+        "start_minute",
+        "end_minute",
+        "time_range",
+        "course_code",
+        "course_name",
+        "group",
+        "professor",
+        "building",
+        "room",
+        "credits"
+      ]
+    },
+    {
+      "entity": "GlobalHorariosIndex",
+      "source": "https://tec-appsext.itcr.ac.cr/guiahorarios/ (90+ schools, 5 campuses)",
+      "fields": [
+        "year",
+        "totalSchoolsFetched",
+        "uniqueCoursesCount",
+        "campuses",
+        "schools",
+        "careers",
+        "periods",
+        "modalities",
+        "entries[{courseCode, courseName, group, campus, school, professor, modality, period, sessions, seatsAvailable}]"
+      ]
+    },
+    {
+      "entity": "FolderWalkResult / FileRecord",
+      "source": "GET /dotlrn/file-storage/api/folder/{id}",
+      "fields": [
+        "root_folder_id (from $rootScope.GL_FOLDER_ID)",
+        "folders[]",
+        "files[{object_id, name, mime_type, content_size, last_modified_ansi, file_url, download_url, local_path, sha256}]",
+        "url_links[]"
+      ]
+    },
+    {
+      "entity": "NotificationsFeed & Subscriptions",
+      "source": "/tda-notifications/ajax/* + /notifications/manage",
+      "fields": [
+        "unread_count",
+        "notifications[{notification_id, title, text, origin, category_id, state (U|R), url, creation_date}]",
+        "subscriptions[{request_id, community, notice_type, element, frequency}]"
+      ]
+    },
+    {
+      "entity": "UserModelSnapshot",
+      "source": "POST /tda-um/ajax/get_info (10 HTML sections)",
+      "fields": [
+        "consent_status",
+        "dimensions[{dimension_key, title, metrics[{label, value}]}]"
+      ]
+    },
+    {
+      "entity": "PlagiarismTreeSnapshot",
+      "source": "/tda-control-plagio/ajax/cargaArbol + cargaMisDocs + cargaDocsCurso + generaReporte",
+      "fields": [
+        "root_folder_id",
+        "nodes[]",
+        "documents[{doc_uid, duplicate_uid, title, course, similarity_pct, status, report_url}]"
+      ]
+    },
+    {
+      "entity": "FeriaNegociosSnapshot",
+      "source": "/tda-feria-negocios/ajax/ferias/get_ferias + categorias/load_categorias",
+      "fields": [
+        "categories[]",
+        "feria_rows[{name, start_date, end_date, bases_url}]"
+      ]
+    },
+    {
+      "entity": "PerformanceEvaluation",
+      "source": "/tda-performance-evaluation/api/forms/ + /evaluations/",
+      "fields": [
+        "forms[{id, name, sections[{id, title, questions[]}]}]",
+        "pending_evaluations[]"
+      ]
+    },
+    {
+      "entity": "CurriculumGraph & InclusionStatus",
+      "source": "GraphQL api.tec.ac.cr:3005 + /tds-curriculum-exp/ajax/*",
+      "fields": [
+        "levels[]",
+        "courses[]",
+        "edges (prereq/coreq)",
+        "rn_courses[]",
+        "pendingGraduationCourses[]",
+        "inclusionCampaign",
+        "inclusionApplications[]",
+        "scholarshipInfo"
+      ]
+    }
+  ]
+}
