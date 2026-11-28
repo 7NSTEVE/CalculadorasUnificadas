@@ -10,7 +10,8 @@ Revisar **todas las lecciones, paso por paso y renglón por renglón**, buscando
 1. cualquier defecto visual (fórmulas mal dibujadas, cosas que se salen o se tapan, subrayados corridos, dibujos en blanco);
 2. cualquier **paso o paso intermedio que falte** (dos movimientos de álgebra en un solo renglón, cuentas sin mostrar);
 3. cualquier **dato cuyo origen no se señale**: cada número y cada letra tiene que venir de algo visible, subrayado en el enunciado, escrito en un renglón anterior o tomado de una casilla de la hoja de fórmulas;
-4. si el tutor **no sabe señalar con la voz y en la pizarra** de dónde salió algo cuando el estudiante lo pide.
+4. si el tutor **no sabe señalar con la voz y en la pizarra** de dónde salió algo cuando el estudiante lo pide;
+5. cualquier defecto visual o de efectos **en el resto de la app**: cada pantalla del tutor, cada panel y cada ventana de CuadernU (sección 9).
 
 El tutor es para un estudiante que necesita pasos muy cortos y **base cero en cálculo**. La vara es esta: si alguien que no sabe integrar ni despejar no puede pasar de un renglón al siguiente con lo que está en pantalla y lo que dice la voz, eso es un defecto.
 
@@ -65,6 +66,9 @@ Lo que esos controles ya marcan va al informe como «ya detectado». **Tu trabaj
    (await fetch('/api/banco?token=auditoria').then((r) => r.json())).lecciones.map((l) => l.id)
    ```
 3. Trabajá **en lotes de 10 lecciones**. Al cerrar cada lote, actualizá `build/auditoria_visual/avance.json` (cada id con «revisada» o «pendiente») y escribí sus hallazgos. Si te cortan, se retoma desde ahí.
+4. **La recorrida de toda la app (sección 9)** se hace dos veces:
+   - al principio, porque es rápida y encuentra defectos que afectan a todas las lecciones;
+   - al final, para confirmar que siguen ahí o que ya no.
 
 ## 3. Cómo recorrer una lección
 
@@ -259,6 +263,116 @@ window.lanzarAuditoria = (id) => {
 - `origen: 0` en un paso que trae valores de otro lado: hay que revisar C4 a mano.
 - `termino` distinto de «espera» o «fin»: el paso no terminó en 90 s (J2). Si pasa en **todos** los pasos y cada uno tarda justo 90 s, el problema no es la lección: la ventana del navegador está oculta o minimizada y el tutor no termina de escribir aunque el audio ya acabó. Hacela visible y repetí la lección.
 
-## 9. Texto corto para pegar en Antigravity
+## 9. Toda la app: cada pantalla y cada ventana
 
-> Leé `docs/INSTRUCCIONES_AUDITORIA_VISUAL_PASO_A_PASO.md` y seguilo al pie de la letra. Es una auditoría: no cambies código, no hagas commits, no crees ramas y no toques `procedencia.py`, `reproductor.js`, `asistente.js` ni `banco_api.py`, que los está trabajando otra sesión. Respaldá el progreso del estudiante antes de abrir el tutor y dejalo idéntico al final. Empezá por las 76 lecciones del plan «Reposición II-2026» en el orden del calendario, en lotes de 10. En cada paso buscá defectos visuales, pasos intermedios que falten y cualquier número o letra cuyo origen no se señale (subrayado en el enunciado, renglón anterior o casilla de la hoja). Probá «¿De dónde salió?» (tecla O) y «Encerrar» en cada valor dudoso. Entregá `build/auditoria_visual/INFORME.md` con un resumen de 15 líneas arriba, y `hallazgos.jsonl` con una línea por hallazgo y una propuesta concreta de arreglo. Decí con honestidad qué no revisaste.
+Lo mismo que con las lecciones, pero en el resto de la app. Cada defecto es un hallazgo con un código K, con la gravedad de la sección 5 y el formato de la sección 6. En vez de la lección, se anota la pantalla:
+
+```json
+{"leccion": "-", "pantalla": "Biblioteca", "tema": "dark", "zoom": 200, "codigo": "K4", "gravedad": "G2", "que_pasa": "El nombre de cada grupo es gris sobre gris y casi no se lee.", "como_reproducir": "__tutor.acciones.biblioteca(), tema oscuro, zoom 200 %", "evidencia": "build/auditoria_visual/capturas/app_biblioteca_dark_200.png", "propuesta": "Usar el color de texto principal del tema para los títulos de grupo."}
+```
+
+### 9.1 Cuidados
+
+Esta parte toca cosas que el estudiante usa todos los días:
+
+- **No guardes, no exportes, no borres y no subas nada.** Cada ventana se abre, se revisa y se cierra con Cancelar o Esc.
+- **Archivos y micrófono.** El botón de adjuntar (`btn-adjuntar`) abre el cuadro de archivos: cancelalo. No concedas el micrófono (`btn-mic`). Lo que dependa de eso va como «no verificable».
+- **Claves y cuentas.** Si una pantalla pide una clave de API o una cuenta, no escribas nada: anotalo.
+- **Ajustes.** Anotá cómo estaban y dejalos igual al terminar. Para probar los temas, usá `__tutor.aplicarTema(...)`, que cambia el tema sin guardarlo.
+
+### 9.2 El tutor, pantalla por pantalla
+
+Con el servidor de la sección 1 y la ventana visible:
+
+| Pantalla | Cómo abrirla | Qué probar, además de la lista K |
+|---|---|---|
+| Inicio («Hoy») | `__tutor.acciones.inicio()` | Que el ejercicio que propone sea el que toca según el calendario del plan. |
+| Preparación | `__tutor.acciones.preparacion()` | Los 11 días con sus fechas, y que cada ejercicio abra su lección. |
+| Biblioteca | `__tutor.acciones.biblioteca()` | Cada filtro (Recomendados, Superexamen, Exámenes y PDFs, Me faltan), los grupos por tema y el código de cada lección. Que «Exámenes y PDFs» liste los documentos y abra sus recortes. |
+| Estudio del formulario | `__tutor.acciones.estudiarFormulario()` | Cada casilla de la hoja dibujada como fórmula, sin LaTeX crudo. |
+| Simulacro | `__tutor.acciones.simulacro()` | Que se pueda empezar, responder, terminar y salir. |
+| Lección | `await __tutor.acciones.abrir('O26-8')` | **Pizarra:** la barra de abajo (`btn-anterior`, `btn-repetir`, `btn-pausa`, `btn-siguiente`, `btn-ayuda`, `btn-mic`, la caja de preguntar) y los puntos de progreso. **Barra izquierda:** lápiz, Encerrar, borrar el lápiz (`btn-borrar-lapiz`) y el zoom (`btn-menos`, `btn-mas`). **Además:** el panel Apoyo (`btn-apoyo`), el modo enfoque (`btn-enfoque` o la tecla F), el menú Ayuda (tecla A), el menú de Encerrar, los avisos y la pantalla de cierre al terminar. |
+| Ajustes | botón `btn-ajustes` | Voz, letra, tema y ritmo: cada control hace lo que dice. Probá cada estilo de letra en una lección. |
+
+**Hacé la recorrida completa en cada combinación:**
+
+- los tres temas: `__tutor.aplicarTema('light')`, `('dark')` y `('high-contrast')`;
+- la ventana a 1280 × 800 y a pantalla completa;
+- el zoom del navegador (Ctrl + y Ctrl −) al 100 %, 150 % y 200 %. Así se ve qué pasa con letra grande y con la escala de Windows alta.
+
+### 9.3 CuadernU nativo
+
+El ejecutable es `build/studio-x64/Release/CuadernU.exe`.
+
+- **Si no existe,** no lo compiles sin permiso. CuadernU se compila solo en `build/studio-x64` (AGENTS.md, regla 5).
+- **Si el estudiante ya lo tiene abierto,** no lo cierres: preguntá.
+- **El tutor se abre** desde el botón «Estudio» de la barra → «Pizarra Tutor Audiovisual (Voz + Lazo + PDF)…». En modo examen ese botón puede estar desactivado.
+- **Dentro de CuadernU está el progreso real.** El tutor es la misma web, dentro de WebView2, pero trabaja con el progreso real. Hacé el respaldo y el hash de la sección 1 antes de abrirlo.
+- **Al terminar,** cerrá CuadernU si lo abriste vos, y recién después restaurá el progreso (sección 7): al cerrarse, puede volver a guardarlo.
+
+Recorré:
+
+- la ventana principal: barra, menús, lienzo y paneles;
+- **cada ventana o diálogo que se abra desde los menús** (configuración, exportar, ayuda, estudio, historial), con la lista K;
+- el tutor dentro de CuadernU: lo mismo de 9.2, por lo menos en una lección completa;
+- si hay un monitor 4K, la escala de Windows al 150 % y al 200 %. Si no lo hay, anotalo como no verificado.
+
+Las calculadoras CASIO son otro programa y no entran, salvo que el dueño lo pida.
+
+### 9.4 Lista de control K
+
+- **K1. Se ve roto:**
+  - texto cortado, encimado o que se sale;
+  - barra de desplazamiento horizontal;
+  - algo tapado por otro panel;
+  - iconos en blanco o cuadros vacíos por un símbolo que falta.
+- **K2. Código a la vista:** `$`, `\frac`, `{}`, `undefined`, `NaN`, `[object Object]`, ids internos o mensajes de depuración.
+- **K3. Botón o tecla que falla:**
+  - no hace lo que dice, o no hace nada;
+  - no hay forma de volver;
+  - Tab, Enter o Esc no funcionan donde deberían.
+- **K4. Tema:**
+  - algo ilegible en claro, oscuro o contraste;
+  - gris sobre gris;
+  - colores sin sentido;
+  - el foco del teclado no se ve.
+- **K5. Escala:**
+  - al 150 % o 200 % algo se rompe, se corta o queda diminuto;
+  - grandes vacíos con controles chicos.
+- **K6. Inconsistencia entre pantallas:**
+  - la misma acción con nombres distintos;
+  - botones, radios, espaciados o letra que cambian sin razón;
+  - una ventana que no sigue el tema.
+- **K7. Estética de IA** (los 18 antipatrones de AGENTS.md):
+  - emojis como iconos;
+  - jerga interna («LaTeX», «Core oficial», «Registro visual»);
+  - demasiados botones a la vista;
+  - neón o resplandores;
+  - tarjetas dentro de tarjetas;
+  - todo en píldora;
+  - paneles de métricas;
+  - decoración sin función;
+  - controles repetidos.
+- **K8. Animaciones y efectos:**
+  - parpadeos;
+  - cosas que saltan de lugar al cargar;
+  - animaciones que no terminan;
+  - transiciones que tapan contenido;
+  - el lápiz que deja rastros;
+  - transparencias o desenfoques que vuelven ilegible el texto.
+- **K9. Mensajes y errores:**
+  - errores en la consola (F12) o en `build/auditoria_visual/servidor_err.log` mientras usás la pantalla;
+  - avisos que no se entienden;
+  - avisos que no dicen la verdad, como «guardado» cuando no se guardó.
+- **K10. Matemática como texto plano:** fórmulas, unidades o letras griegas escritas como texto común en vez de notación matemática (AGENTS.md, «Tipografía matemática»).
+
+### 9.5 Evidencia obligatoria
+
+- **Una captura por pantalla en cada tema,** y otra en tema claro con zoom al 200 %, en `build/auditoria_visual/capturas/app_<pantalla>_<tema>_<zoom>.png`. Lo mismo para cada ventana de CuadernU.
+- **En el `INFORME.md`, una tabla de pantallas por temas** que diga en cada casilla «revisada» o «no revisada», y por qué.
+
+Sin esa tabla completa y sus capturas, la recorrida no cuenta como hecha.
+
+## 10. Texto corto para pegar en Antigravity
+
+> Leé `docs/INSTRUCCIONES_AUDITORIA_VISUAL_PASO_A_PASO.md` y seguilo al pie de la letra. Es una auditoría: no cambies código, no hagas commits, no crees ramas y no toques `procedencia.py`, `reproductor.js`, `asistente.js` ni `banco_api.py`, que los está trabajando otra sesión. Respaldá el progreso del estudiante antes de abrir el tutor o CuadernU y dejalo idéntico al final. Primero hacé la recorrida de toda la app de la sección 9: cada pantalla del tutor y cada ventana de CuadernU, en tema claro, oscuro y contraste, y con zoom al 100, 150 y 200 %, con una captura de cada una. Después seguí con las 76 lecciones del plan «Reposición II-2026» en el orden del calendario, en lotes de 10. En cada paso buscá defectos visuales, pasos intermedios que falten y cualquier número o letra cuyo origen no se señale (subrayado en el enunciado, renglón anterior o casilla de la hoja). Probá «¿De dónde salió?» (tecla O) y «Encerrar» en cada valor dudoso. No guardes, no exportes ni borres nada en la app. Entregá `build/auditoria_visual/INFORME.md`, con un resumen de 15 líneas arriba y la tabla de pantallas por temas, y `hallazgos.jsonl`, con una línea por hallazgo y una propuesta concreta de arreglo. Decí con honestidad qué no revisaste.
