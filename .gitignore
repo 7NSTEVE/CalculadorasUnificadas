@@ -6,6 +6,14 @@ private_local/
 # never committed to the public repository.
 /Fisica_III/
 
+# Course material for Fisica General II (exam PDFs, book chapters, slides): kept in the root on
+# purpose by the owner (27-nov-2026), never committed to the public repository.
+/Física II/
+
+# More course material copied to the root by the owner (27-nov-2026), same rule as above.
+/Cálculo y Álgebra Lineal/
+/Circuitos eléctricos en Corriente Continua/
+
 # Uncompressed warm-state duplicate (cg50_warm_state.bin.gz is tracked instead) and ad-hoc dumps
 assets/roms/cg50_warm_state.bin
 tests/**/warm_state.bin
