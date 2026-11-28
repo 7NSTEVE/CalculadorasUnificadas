@@ -20,6 +20,7 @@ import argparse
 import fnmatch
 import os
 import pathlib
+import re
 import subprocess
 import sys
 
@@ -122,6 +123,51 @@ def matches_forbidden(name: str) -> bool:
     return any(fnmatch.fnmatch(low, pat.lower()) for pat in FORBIDDEN_PATTERNS)
 
 
+# Private words gate (owner decision 2026-11-27). The word list lives only on the owner's PC,
+# inside private_local/ (git-ignored), so this check never publishes the words it looks for.
+# Format: one regex per line; "permitir:<regex>" marks allowed matches (platform names);
+# "omitir:<prefix>" skips third-party paths. Without the file (CI, clones) the gate is skipped.
+PRIVATE_WORDS_FILE = ROOT / "private_local" / "palabras_privadas.txt"
+
+
+def load_private_words():
+    if not PRIVATE_WORDS_FILE.is_file():
+        return None
+    banned, allowed, skipped = [], [], []
+    for raw in PRIVATE_WORDS_FILE.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("permitir:"):
+            allowed.append(re.compile(line[len("permitir:"):].strip()))
+        elif line.startswith("omitir:"):
+            skipped.append(line[len("omitir:"):].strip())
+        else:
+            banned.append(re.compile(line))
+    return banned, allowed, tuple(skipped)
+
+
+def private_word_hits(rel: str, data: bytes, banned, allowed) -> list[str]:
+    hits: list[str] = []
+    texts = [rel]
+    if b"\0" in data[:8000]:
+        # Binary: also look at UTF-16 strings (font name tables) by dropping the NUL bytes.
+        texts.append(data.replace(b"\0", b"").decode("latin-1"))
+    else:
+        texts.append(data.decode("utf-8", errors="replace"))
+    for idx, text in enumerate(texts):
+        for rx in banned:
+            for m in rx.finditer(text):
+                ok = any(a.start() <= m.start() and m.end() <= a.end()
+                         for al in allowed
+                         for a in al.finditer(text, max(0, m.start() - 80), min(len(text), m.end() + 80)))
+                if not ok:
+                    where = "path" if idx == 0 else f"line {text.count(chr(10), 0, m.start()) + 1}"
+                    hits.append(f"[PRIVATE_WORD] {rel} ({where})")
+                    break
+    return hits
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--staged", action="store_true", help="Check staged Git paths + root rules")
@@ -183,6 +229,32 @@ def main() -> int:
                 errors.append(f"[PRIVATE_OR_BUILD_TRACKED] '{rel}' must NEVER be tracked in Git")
             if matches_forbidden(parts[-1]):
                 errors.append(f"[FORBIDDEN_TRACKED] Forbidden file tracked/staged in Git: {rel}")
+
+    # 3b. Private words gate on everything that Git tracks or is about to commit.
+    # -z + core.quotePath=false: paths with accents are not quoted (they used to be skipped).
+    # With --staged the staged blob is checked (what will really be committed), not the disk.
+    words = load_private_words()
+    if words is not None:
+        banned, allowed, skipped = words
+        listing = subprocess.run(
+            ["git", "-C", str(ROOT), "-c", "core.quotePath=false"]
+            + (["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"] if args.staged
+               else ["ls-files", "-z"]),
+            capture_output=True,
+        )
+        if listing.returncode == 0:
+            for rel in listing.stdout.decode("utf-8", errors="replace").split("\0"):
+                if not rel or rel.startswith(skipped):
+                    continue
+                if args.staged:
+                    blob = subprocess.run(["git", "-C", str(ROOT), "cat-file", "blob", f":{rel}"],
+                                          capture_output=True)
+                    if blob.returncode == 0:
+                        errors.extend(private_word_hits(rel, blob.stdout, banned, allowed))
+                else:
+                    f = ROOT / rel
+                    if f.is_file():
+                        errors.extend(private_word_hits(rel, f.read_bytes(), banned, allowed))
 
     # 4. Full workspace walk (when not --staged)
     if not args.staged:

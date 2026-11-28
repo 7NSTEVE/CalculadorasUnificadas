@@ -8,8 +8,7 @@
 
 ## Documentos y Reportes en este Módulo
 
-- `ImageStitcher_Horarios/horario.html` (8.1 KB) — HTML: Horario de Clases
-- `ImageStitcher_Horarios/horario_premium.html` (12.7 KB) — HTML: Horario Premium
+- `ImageStitcher_Horarios/` — horario personal; queda solo en la PC del dueño y no se publica.
 - `WebUI/index.html` (3.1 KB) — HTML: Horarios TEC - Visualizador & Monitoreo de Cupos
 
 ## Ejecutables y Paquetes en este Módulo

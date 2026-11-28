@@ -13,7 +13,7 @@ Revisar **todas las lecciones, paso por paso y renglón por renglón**, buscando
 4. si el tutor **no sabe señalar con la voz y en la pizarra** de dónde salió algo cuando el estudiante lo pide;
 5. cualquier defecto visual o de efectos **en el resto de la app**: cada pantalla del tutor, cada panel y cada ventana de CuadernU (sección 9).
 
-El tutor es para un estudiante que necesita pasos muy cortos y **base cero en cálculo**. La vara es esta: si alguien que no sabe integrar ni despejar no puede pasar de un renglón al siguiente con lo que está en pantalla y lo que dice la voz, eso es un defecto.
+El tutor es para un estudiante que parte de **cero en cálculo** y necesita pasos muy cortos. La vara es esta: si alguien que no sabe integrar ni despejar no puede pasar de un renglón al siguiente con lo que está en pantalla y lo que dice la voz, eso es un defecto.
 
 ## 0. Reglas que no se negocian
 

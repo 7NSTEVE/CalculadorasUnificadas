@@ -1,7 +1,6 @@
 #pragma once
 
-// Funciones experimentales de CuadernU (revisión de código del 27-nov-2026,
-// docs/INVESTIGACION_COMPETENCIA_2026.md).
+// Funciones experimentales de CuadernU (revisión de código del 27-nov-2026).
 //
 // Son comandos cuyo resultado es simulado o que pueden cambiar lo escrito sin
 // pedirlo. Con «Mostrar funciones experimentales» apagado (valor por defecto)

@@ -1,7 +1,9 @@
-<!-- UI_DESIGN_IPADOS_HIG_POLICY_BEGIN -->
-# Reglas Permanentes de Diseño UI/UX (guías de interfaz + material translúcido + Cero Estética IA)
+<!-- UI_DESIGN_POLICY_BEGIN -->
+# Reglas Permanentes de Diseño UI/UX (Guías de Interfaz, Material Translúcido y Cero Estética IA)
 
-Al diseñar, rediseñar o auditar cualquier interfaz en este espacio de trabajo (**Calculadora Unificada** y **Document Studio / CuadernU**), priorizar las **guías de diseño de interfaces** (``) y **material translúcido** como referencia de calidad, sin copiar ciegamente macOS ni sacrificar convenciones útiles de Windows.
+Al diseñar, rediseñar o auditar cualquier interfaz en este espacio de trabajo (**Calculadora Unificada** y **Document Studio / CuadernU**), priorizar guías de diseño de interfaces reconocidas y un **material translúcido** con función como referencia de calidad, sin copiar ciegamente macOS ni sacrificar convenciones útiles de Windows.
+
+Si existe `private_local/AGENTS_LOCAL.md` (solo en la PC del dueño), sus referencias de diseño también son obligatorias.
 
 ## Filosofía Visual
 - **Minimalismo real**: no significa eliminar funciones; significa eliminar la complejidad innecesaria de su presentación (divulgación progresiva y menús contextuales).
@@ -31,7 +33,7 @@ Al diseñar, rediseñar o auditar cualquier interfaz en este espacio de trabajo 
 
 ## Tipografía Matemática y Científica
 - Renderizar visualmente en notación matemática natural 2D todas las ecuaciones, fórmulas, unidades físicas y letras griegas, sin LaTeX crudo, sin texto plano monoespaciado y sin textos meta anunciando que está renderizado en LaTeX.
-<!-- UI_DESIGN_IPADOS_HIG_POLICY_END -->
+<!-- UI_DESIGN_POLICY_END -->
 
 <!-- WORKSPACE_HYGIENE_CONTRACT_BEGIN -->
 # Reglas Permanentes de Orden, Clasificación y Anti-Despiche

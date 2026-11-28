@@ -1,14 +1,14 @@
 # Backlog de CuadernU
 
-> **Origen:** [`INVESTIGACION_COMPETENCIA_2026.md`](INVESTIGACION_COMPETENCIA_2026.md) (27-nov-2026).
+> **Origen:** la investigación de competencia (documento local, no se publica) (27-nov-2026).
 > **Alcance:** Windows con lápiz + iPad con lápiz del iPad, uso personal.
 > **Estados de una tarea:**
 > - **Pendiente:** no empezó.
 > - **En curso:** alguien la está haciendo, siempre en `main` (no hay ramas).
 > - **Hecha:** compilada, probada y vista funcionando. Si no se verificó, no está hecha.
 >
-> **IDs de la hoja:** la columna `tarea_backlog` de [`competencia_2026/evidencias/revision_codigo_2026-11-27.csv`](competencia_2026/evidencias/revision_codigo_2026-11-27.csv) dice qué requisitos cubre cada tarea.
-> **Diseño para la concentración:** las tareas T2 a T5 ya tienen su plan en [`AUDITORIA_ATENCION_APP_COMPLETA.md`](AUDITORIA_ATENCION_APP_COMPLETA.md); aquí solo se enlazan.
+> **IDs de la hoja:** la columna `tarea_backlog` de la revisión de código del 27-nov (hoja local, no se publica) dice qué requisitos cubre cada tarea.
+> **Diseño para la concentración:** las tareas T2 a T5 ya tienen su plan en un documento local (no se publica); aquí solo se enlazan.
 
 ## Nivel 0. Que no dañe ni mienta (bloque 1)
 
@@ -189,7 +189,7 @@
 
 ### N3-4. TEC Digital: un cuaderno por curso · Pendiente
 
-## Diseño para la concentración (plan en `AUDITORIA_ATENCION_APP_COMPLETA.md`)
+## Diseño para la concentración (plan en un documento local)
 
 - **T2:** modo simple de CuadernU · Pendiente · 6 IDs.
 - **T3:** «Hoy», cuenta regresiva y reloj de estudio · Pendiente.

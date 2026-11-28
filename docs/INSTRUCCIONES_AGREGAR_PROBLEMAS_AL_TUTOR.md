@@ -14,7 +14,7 @@ Convertir problemas de exámenes en lecciones del tutor con el mismo nivel que l
 - «¿Por qué?» en cada paso;
 - todo comprobado con calculadora, contra la solución oficial y **mirando la pantalla**.
 
-El estudiante tiene pasos muy cortos y base cero en cálculo. Si alguien así no puede pasar de un renglón al siguiente con lo que ve y oye, la lección no está terminada.
+El tutor es para alguien que parte de cero en cálculo y necesita pasos muy cortos. Si alguien así no puede pasar de un renglón al siguiente con lo que ve y oye, la lección no está terminada.
 
 ## 0. Reglas que no se negocian
 
