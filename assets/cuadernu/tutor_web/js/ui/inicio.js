@@ -3,17 +3,24 @@
  * Nada de paneles ni estadísticas: lo único que compite por la atención es el siguiente paso.
  */
 
-import { ajustes, bus, guardarAjuste } from '../nucleo/api.js';
+import { ajustes, bus, guardarAjuste, pedir } from '../nucleo/api.js';
 import { aMedias, banco, estaHecha, nombreTema } from './banco.js';
 import { ponerTextoMate } from './preparacion.js';
 
 const PLANES = [
+  ['sprint6', 'Sprint 6 días (desde cero)'],
   ['repo26', 'Reposición II-2026'],
-  ['radar', 'Radar Cartago II-2026'],
   ['extraordinario', 'Extraordinario'],
   ['reposicion', 'Reposiciones anteriores'],
   ['rutas', 'Rutas del III parcial'],
 ];
+
+function diasParaReposicion() {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const meta = new Date(2026, 11, 8); // martes 8-dic-2026
+  return Math.round((meta - hoy) / 86400000);
+}
 
 // Una sola vez: quien venía estudiando para el III parcial pasa al plan de la reposición.
 // Si después elige otro plan, se respeta.
@@ -87,8 +94,10 @@ export class Inicio {
     h.textContent = 'Hoy';
     const sub = document.createElement('p');
     sub.className = 'portada-sub';
+    const dRest = diasParaReposicion();
+    const cuenta = dRest > 1 ? `Faltan ${dRest} días para la Reposición (martes 8-dic). ` : dRest === 1 ? 'Mañana es la Reposición (martes 8-dic). ' : dRest === 0 ? 'Hoy es la Reposición. ' : '';
     sub.textContent = banco.listo
-      ? 'Una cosa a la vez. Puedes pausar, repetir o volver atrás cuando quieras.'
+      ? `${cuenta}Una cosa a la vez. Puedes pausar, girar el 3D o repetir cuando quieras.`
       : banco.viejo
         ? 'El motor que está abierto es de una versión anterior. Ciérralo y vuelve a abrir el tutor para usar el banco.'
         : 'Preparando el motor. Esto toma unos segundos.';
@@ -98,6 +107,10 @@ export class Inicio {
     if (banco.listo) {
       const plan = planActual();
       caja.appendChild(this._selectorPlan(plan));
+      const repasoBox = document.createElement('div');
+      repasoBox.className = 'hoy-repaso-slot';
+      caja.appendChild(repasoBox);
+      this._llenarRepaso(gen, repasoBox);
       const hero = document.createElement('div');
       hero.className = 'hoy-hero';
       caja.appendChild(hero);
@@ -134,9 +147,45 @@ export class Inicio {
     return fila;
   }
 
+  async _llenarRepaso(gen, slot) {
+    try {
+      const data = await pedir('/api/repaso/hoy?limite=4', { tiempo: 8000 });
+      if (gen !== this.gen || !slot.isConnected) return;
+      const cola = Array.isArray(data.cola) ? data.cola : [];
+      if (!cola.length) return;
+      const prim = cola[0];
+      const baseId = String(prim.skill_id || '').split(':')[0];
+      const box = document.createElement('div');
+      box.className = 'repaso-rescate';
+      const txt = document.createElement('div');
+      const tit = document.createElement('strong');
+      tit.textContent = `Rescate rápido (5 min) · ${cola.length} pendiente${cola.length === 1 ? '' : 's'} por repasar`;
+      const det = document.createElement('small');
+      det.textContent = prim.error_activo
+        ? `Prioridad: ${prim.titulo} — ${prim.error_activo.nota}`
+        : `Refuerza sin ver: ${prim.titulo} (dominio actual ${Math.round((prim.p_know || 0) * 100)} %)`;
+      txt.append(tit, det);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-principal';
+      btn.textContent = 'Practicar sin ver';
+      btn.addEventListener('click', () => {
+        if (this.acciones.practicaCiega) this.acciones.practicaCiega(baseId);
+        else if (banco.mapa.has(baseId)) this.acciones.abrir(baseId);
+      });
+      box.append(txt, btn);
+      slot.replaceChildren(box);
+    } catch { /* sin repasos aún */ }
+  }
+
   /* ---------------------------------------------------------------- la única acción grande */
 
   async _llenarHero(gen, hero, plan, rutasEl) {
+    if (plan === 'sprint6') {
+      const b = boton('accion-grande', `<span><strong>Sprint 6 días desde cero (0 → 100 % Reposición)</strong><small>Micro-bloques de 10–15 min: bases, modelos 3D, práctica sin ver y 2 simulacros</small></span>${svg(ICO.seguir)}`, () => this.acciones.preparacion('sprint6'));
+      hero.replaceChildren(b);
+      return;
+    }
     if (plan === 'rutas') {
       this._heroRutas(hero, rutasEl);
       return;

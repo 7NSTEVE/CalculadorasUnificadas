@@ -12,10 +12,11 @@ import io
 import os
 import pathlib
 import re
+import tempfile
 import threading
 import unicodedata
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import fitz
@@ -39,9 +40,9 @@ FUENTES: Dict[str, Tuple[Tuple[str, ...], str, str]] = {
     "25-I-T3": (("evaluaciones i-2025/tarea 3/tarea_3_enunciado.pdf",), "Tarea 3 I-2025", "tarea"),
     "25-II-T3": (("evaluaciones ii-2025/tareas 2025-ii/tarea3_catedra_fg3_ii2025.pdf", "tarea3_catedra_fg3_ii2025.pdf"), "Tarea 3 II-2025", "tarea"),
     "26-I-T3": (("documentos i-2026/tareas/tarea3_catedra_fg3_i2026.pdf", "tarea3_catedra_fg3_i2026.pdf"), "Tarea 3 I-2026", "tarea"),
-    "formulario": (("documentos-ii-2026_ecuaciones_tercer_parcial_fg3.pdf",), "Formulario del III Parcial", "hoja"),
-    "formulario_p1": (("documentos-ii-2026_ecuaciones_importantes_parcial_1.pdf",), "Formulario del I Parcial", "hoja"),
-    "formulario_p2": (("documentos-ii-2026_ecuaciones_segundo_parcial_fg3(1).pdf", "documentos-ii-2026_ecuaciones_segundo_parcial_fg3.pdf"), "Formulario del II Parcial", "hoja"),
+    "formulario": (("documentos-ii-2026_ecuaciones_tercer_parcial_fg3.pdf", "ecuaciones_tercer_parcial_fg3.pdf"), "Formulario del III Parcial", "hoja"),
+    "formulario_p1": (("documentos-ii-2026_ecuaciones_importantes_parcial_1.pdf", "ecuaciones_importantes_parcial_1.pdf"), "Formulario del I Parcial", "hoja"),
+    "formulario_p2": (("documentos-ii-2026_ecuaciones_segundo_parcial_fg3(1).pdf", "documentos-ii-2026_ecuaciones_segundo_parcial_fg3.pdf", "ecuaciones_segundo_parcial_fg3.pdf"), "Formulario del II Parcial", "hoja"),
     "programa": (("documentos-ii-2026_fi2103_fisica_general_iii_2026-ii (2).pdf", "documentos-ii-2026_fi2103_fisica_general_iii_2026-ii.pdf"), "Programa del curso FI2103 II-2026", "hoja"),
     "23-II-O": (("banco-de-examenes_ii-2023_ii_examen_parcial_ordinario.pdf",), "III Parcial ordinario II-2023", "examen"),
     "23-II-E": (("banco-de-examenes_ii-2023_ii_examen_extraordinario.pdf",), "III Parcial extraordinario II-2023", "examen"),
@@ -671,6 +672,7 @@ def ajustar_datos(j: Dict[str, Any], palabras: Sequence[Dict[str, Any]]) -> int:
                 if a.get("a") == "dato" and a.get("frase"):
                     nueva = ajustar_frase(a["frase"], palabras)
                     if nueva != a["frase"]:
+                        a["frase_original"] = a["frase"]
                         a["frase"] = nueva
                         n += 1
     return n
@@ -682,6 +684,8 @@ def carpetas_por_defecto(raiz: pathlib.Path) -> List[pathlib.Path]:
     cs = [raiz / "private_local" / "tutor_documentos"]
     extra = os.environ.get("TUTOR_DOCUMENTOS", "")
     cs += [pathlib.Path(x) for x in extra.split(os.pathsep) if x.strip()]
+    curso = raiz / "Fisica_III"
+    cs += [curso / "Documentos II - 2026", curso]
     casa = pathlib.Path.home()
     cs += [
         casa / "Downloads",
@@ -713,8 +717,8 @@ class Documentos:
         self._tipo: Dict[str, str] = {k: v[2] for k, v in FUENTES.items()}
         self._titulo: Dict[str, str] = {k: v[1] for k, v in FUENTES.items()}
         self._cruce: Optional[Dict[Tuple[str, str], str]] = None
-        self._formulario_png: Optional[bytes] = None
-        self._formularios_parcial_png: Dict[int, bytes] = {}
+        self._formularios_png: Dict[int, Tuple[Optional[str], bytes, Optional[str]]] = {}
+        self._huellas_hoja: Dict[pathlib.Path, Tuple[Tuple[int, int, int], str]] = {}
 
     # ------------------------------------------------------------ archivos
 
@@ -833,129 +837,152 @@ class Documentos:
         base = f"{id}|{p.clave}|{ZOOM}|sin-resaltador-v2|{[(i, [round(v, 1) for v in r]) for i, r in p.tiras]}"
         return hashlib.sha256(base.encode()).hexdigest()[:20]
 
-    def png(self, id: str, clave: str) -> bytes:
-        p = self.problema(id, clave)
+    def _guarda_png(self, destino: pathlib.Path, png: bytes) -> None:
+        parcial = None
+        try:
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=destino.parent, suffix=".parcial", delete=False) as archivo:
+                parcial = pathlib.Path(archivo.name)
+                archivo.write(png)
+            parcial.replace(destino)
+        except OSError:
+            if parcial is not None:
+                try:
+                    parcial.unlink(missing_ok=True)
+                except OSError:
+                    pass
+
+    def _problema_visible(self, id: str, clave: str, omite_desde: str) -> Problema:
+        problema = self.problema(id, clave)
+        if not omite_desde:
+            return problema
+        if omite_desde not in {"D", "E"}:
+            raise KeyError(omite_desde)
+        anterior = chr(ord(omite_desde) - 1)
+        etiqueta = re.compile(r"^(?:\(([A-Ea-e])\)|([A-Ea-e])\s*[).:])(?:\s|$)")
+        incisos = []
+        with self._c:
+            doc = self._abre(id)
+            for indice, (pagina, rect) in enumerate(problema.tiras):
+                for linea in _lineas(doc[pagina]):
+                    if linea.y0 < rect.y0 or linea.y1 > rect.y1 + 1 or not (rect.x0 <= linea.x0 < rect.x1):
+                        continue
+                    m = etiqueta.match(unicodedata.normalize("NFKC", linea.texto))
+                    if m:
+                        incisos.append(((m[1] or m[2]).upper(), indice, linea.y0, linea.y1))
+        indices = [i for i, (letra, *_resto) in enumerate(incisos) if letra == omite_desde]
+        # Solo se corta un inciso final con inicio inequívoco y un inciso anterior comprobado.
+        if len(indices) != 1 or indices[0] == 0 or indices[0] != len(incisos) - 1:
+            raise KeyError(f"{id}/{clave}: inciso {omite_desde}")
+        letra, indice, y, _ = incisos[-1]
+        previa, indice_previo, _, base_previa = incisos[-2]
+        if letra != omite_desde or previa != anterior or (indice == indice_previo and y <= base_previa):
+            raise KeyError(f"{id}/{clave}: límite del inciso {omite_desde}")
+        pagina, rect = problema.tiras[indice]
+        tiras = list(problema.tiras[:indice])
+        if y - rect.y0 > 1:
+            tiras.append((pagina, fitz.Rect(rect.x0, rect.y0, rect.x1, y - 0.4)))
+        if not tiras:
+            raise KeyError(f"{id}/{clave}: enunciado vacío tras el corte")
+        return replace(problema, tiras=tiras)
+
+    def png(self, id: str, clave: str, omite_desde: str = "") -> bytes:
+        p = self._problema_visible(id, clave, omite_desde)
         if self.cache is not None:
             f = self.cache / f"{self._clave_cache(id, p)}.png"
             if f.is_file():
                 return f.read_bytes()
         b = self._pinta(id, p)
         if self.cache is not None:
-            try:
-                self.cache.mkdir(parents=True, exist_ok=True)
-                tmp = f.with_suffix(".parcial")
-                tmp.write_bytes(b)
-                tmp.replace(f)
-            except OSError:
-                pass
+            self._guarda_png(f, b)
         return b
 
-    def hoja_formulario_png(self) -> bytes:
-        """Renderiza la hoja oficial del formulario II-2026 recortada exactamente a CAJAS_CELDAS."""
+    def _archivo_hoja(self, parcial: int) -> Tuple[Optional[pathlib.Path], Optional[str]]:
+        id = "formulario" if parcial == 3 else f"formulario_p{parcial}"
+        alias = FUENTES[id][0]
+        for carpeta in self.carpetas:
+            rutas = (carpeta, carpeta / "Documentos II - 2026") if _norma_archivo(carpeta.name) == "fisica_iii" else (carpeta,)
+            for raiz in rutas:
+                try:
+                    indice = {_norma_archivo(f.name): f for f in raiz.iterdir() if f.suffix.lower() == ".pdf"}
+                except OSError:
+                    continue
+                for nombre in alias:
+                    ruta = indice.get(nombre)
+                    if ruta is None:
+                        continue
+                    try:
+                        info = ruta.stat()
+                        sello = (info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                        huella = self._huellas_hoja.get(ruta)
+                        if huella is None or huella[0] != sello:
+                            with ruta.open("rb") as archivo:
+                                huella = (sello, hashlib.file_digest(archivo, "sha256").hexdigest())
+                            self._huellas_hoja[ruta] = huella
+                        return ruta, f"{huella[1]}-v2"
+                    except OSError:
+                        continue
+        return None, None
+
+    def hoja_formulario(self, parcial: int) -> Tuple[bytes, Optional[str]]:
+        """Devuelve la imagen y su versión únicamente cuando procede de un PDF oficial."""
+        from PIL import Image, ImageDraw
+        from .fisica3.formulario_ii_2026 import CAJAS_CELDAS, CROP_NORM, HOJA_ASPECTO, NOMBRES_CELDAS
+        from .fisica3.formularios_p1_p2 import _HOJAS_PARCIAL, catalogo_formulario_parcial
+
+        if parcial not in (1, 2, 3):
+            raise KeyError(parcial)
+        if parcial == 3:
+            zona, aspecto = CROP_NORM, HOJA_ASPECTO
+            titulo = "Ecuaciones y constantes importantes · FI2103 II-2026"
+            celdas = [(caja, f"{id}: {NOMBRES_CELDAS.get(id, '')}") for id, caja in CAJAS_CELDAS.items()]
+        else:
+            info = _HOJAS_PARCIAL[parcial]
+            zona, aspecto, titulo = info["crop_norm"], info["aspecto"], info["titulo"]
+            celdas = [(c["caja"], f"{c['id']}: {c['nombre']}") for c in catalogo_formulario_parcial(parcial)["celdas"]]
+
         with self._c:
-            if self._formulario_png is not None:
-                return self._formulario_png
-            cache_f = self.cache / "formulario_ii_2026_hoja_v1.png" if self.cache is not None else None
-            if cache_f is not None and cache_f.is_file():
-                self._formulario_png = cache_f.read_bytes()
-                return self._formulario_png
-
-            from PIL import Image, ImageDraw
-            from .fisica3.formulario_ii_2026 import CAJAS_CELDAS, CROP_NORM, HOJA_ASPECTO, NOMBRES_CELDAS
-
-            b: bytes
+            ruta, sello = self._archivo_hoja(parcial)
+            actual = self._formularios_png.get(parcial)
+            if actual is not None and actual[0] == sello:
+                return actual[1:]
+            version = sello
+            cache = self.cache / f"formulario_ii_2026_p{parcial}_{sello}.png" if self.cache and sello else None
             try:
-                doc = self._abre("formulario")
-                page = doc[0]
-                r = page.rect
-                x0, y0, x1, y1 = CROP_NORM
-                clip = fitz.Rect(r.width * x0, r.height * y0, r.width * x1, r.height * y1)
-                px = page.get_pixmap(matrix=fitz.Matrix(200.0 / 72.0, 200.0 / 72.0), clip=clip, alpha=False)
-                im = Image.frombytes("RGB", (px.width, px.height), px.samples)
-                buf = io.BytesIO()
-                im.save(buf, "PNG", optimize=True)
-                b = buf.getvalue()
-            except (KeyError, OSError, RuntimeError):
-                # Respaldo limpio si el PDF no está en la carpeta de descargas
-                w, h = HOJA_ASPECTO
+                if ruta is None:
+                    raise FileNotFoundError
+                if cache and cache.is_file():
+                    b = cache.read_bytes()
+                else:
+                    with fitz.open(str(ruta)) as doc:
+                        pagina = doc[0]
+                        w, h = pagina.rect.width, pagina.rect.height
+                        x0, y0, x1, y1 = zona
+                        clip = fitz.Rect(w * x0, h * y0, w * x1, h * y1)
+                        b = pagina.get_pixmap(dpi=200, clip=clip, alpha=False).tobytes("png")
+                    if cache:
+                        self._guarda_png(cache, b)
+            except (OSError, RuntimeError, ValueError, IndexError):
+                version = None
+                w, h = aspecto
                 im = Image.new("RGB", (w, h), "white")
                 dr = ImageDraw.Draw(im)
-                dr.text((42, 24), "Ecuaciones y constantes importantes · FI2103 II-2026", fill=(22, 33, 63))
-                for cid, (cx0, cy0, cx1, cy1) in CAJAS_CELDAS.items():
-                    box = [int(cx0 * w), int(cy0 * h), int(cx1 * w), int(cy1 * h)]
-                    dr.rectangle(box, outline=(180, 190, 205), width=2)
-                    dr.text((box[0] + 10, box[1] + 14), f"{cid}: {NOMBRES_CELDAS.get(cid, '')}", fill=(35, 45, 70))
+                dr.text((36, 20), titulo, fill=(22, 33, 63))
+                for (x0, y0, x1, y1), etiqueta in celdas:
+                    caja = (int(x0 * w), int(y0 * h), int(x1 * w), int(y1 * h))
+                    dr.rectangle(caja, outline=(180, 190, 205), width=2)
+                    dr.text((caja[0] + 8, caja[1] + 10), etiqueta, fill=(35, 45, 70))
                 buf = io.BytesIO()
                 im.save(buf, "PNG", optimize=True)
                 b = buf.getvalue()
+            self._formularios_png[parcial] = (sello, b, version)
+            return b, version
 
-            self._formulario_png = b
-            if cache_f is not None:
-                try:
-                    cache_f.parent.mkdir(parents=True, exist_ok=True)
-                    tmp = cache_f.with_suffix(".parcial")
-                    tmp.write_bytes(b)
-                    tmp.replace(cache_f)
-                except OSError:
-                    pass
-            return b
+    def hoja_formulario_png(self) -> bytes:
+        return self.hoja_formulario(3)[0]
 
     def hoja_formulario_parcial_png(self, parcial: int) -> bytes:
-        """Renderiza la hoja oficial del Parcial 1, 2 o 3 recortada a sus celdas."""
-        if parcial == 3:
-            return self.hoja_formulario_png()
-        if parcial not in (1, 2):
-            raise KeyError(f"parcial {parcial}")
-        with self._c:
-            if parcial in self._formularios_parcial_png:
-                return self._formularios_parcial_png[parcial]
-            cache_f = self.cache / f"formulario_ii_2026_p{parcial}_v1.png" if self.cache is not None else None
-            if cache_f is not None and cache_f.is_file():
-                data = cache_f.read_bytes()
-                self._formularios_parcial_png[parcial] = data
-                return data
-
-            from PIL import Image, ImageDraw
-            from .fisica3.formularios_p1_p2 import _HOJAS_PARCIAL, catalogo_formulario_parcial
-
-            info = _HOJAS_PARCIAL[parcial]
-            doc_id = f"formulario_p{parcial}"
-            b: bytes
-            try:
-                doc = self._abre(doc_id)
-                page = doc[0]
-                r = page.rect
-                x0, y0, x1, y1 = info["crop_norm"]
-                clip = fitz.Rect(r.width * x0, r.height * y0, r.width * x1, r.height * y1)
-                px = page.get_pixmap(matrix=fitz.Matrix(200.0 / 72.0, 200.0 / 72.0), clip=clip, alpha=False)
-                im = Image.frombytes("RGB", (px.width, px.height), px.samples)
-                buf = io.BytesIO()
-                im.save(buf, "PNG", optimize=True)
-                b = buf.getvalue()
-            except (KeyError, OSError, RuntimeError):
-                w, h = info["aspecto"]
-                im = Image.new("RGB", (w, h), "white")
-                dr = ImageDraw.Draw(im)
-                dr.text((36, 20), info["titulo"], fill=(22, 33, 63))
-                for c in catalogo_formulario_parcial(parcial)["celdas"]:
-                    cx0, cy0, cx1, cy1 = c["caja"]
-                    box = [int(cx0 * w), int(cy0 * h), int(cx1 * w), int(cy1 * h)]
-                    dr.rectangle(box, outline=(180, 190, 205), width=2)
-                    dr.text((box[0] + 8, box[1] + 10), f"{c['id']}: {c['nombre']}", fill=(35, 45, 70))
-                buf = io.BytesIO()
-                im.save(buf, "PNG", optimize=True)
-                b = buf.getvalue()
-
-            self._formularios_parcial_png[parcial] = b
-            if cache_f is not None:
-                try:
-                    cache_f.parent.mkdir(parents=True, exist_ok=True)
-                    tmp = cache_f.with_suffix(".parcial")
-                    tmp.write_bytes(b)
-                    tmp.replace(cache_f)
-                except OSError:
-                    pass
-            return b
+        return self.hoja_formulario(parcial)[0]
 
     def _pinta(self, id: str, p: Problema) -> bytes:
         from PIL import Image, ImageDraw
@@ -1045,9 +1072,9 @@ class Documentos:
                 p.extra["_resaltado"] = any(not (t & r).is_empty for i, r in p.tiras for t, _ in self._resaltes(d[i]))
         return bool(p.extra["_resaltado"])
 
-    def recorte(self, id: str, clave: str) -> Dict[str, Any]:
+    def recorte(self, id: str, clave: str, omite_desde: str = "") -> Dict[str, Any]:
         """Datos del recorte para la pizarra: dirección, palabras con su caja y pie."""
-        p = self.problema(id, clave)
+        p = self._problema_visible(id, clave, omite_desde)
         with self._c:
             d = self._abre(id)
             anchos = [r.width for _, r in p.tiras]
@@ -1066,8 +1093,11 @@ class Documentos:
                         "w": round((x1 - x0) * z / W, 4), "h": round((y1 - y0) * z / H, 4),
                     })
                 y += r.height * z + sep
+        url = f"/api/documentos/{id}/recorte/{clave}.png?v={self._clave_cache(id, p)[:8]}"
+        if omite_desde:
+            url += f"&omite_desde={omite_desde}"
         return {
-            "url": f"/api/documentos/{id}/recorte/{clave}.png?v={self._clave_cache(id, p)[:8]}",
+            "url": url,
             "palabras": pal[:420], "etiqueta": self.etiqueta(id, clave), "pie": f"{self.titulo(id)}, página {p.pagina}",
             "ancho": round(W), "alto": round(H),
         }
@@ -1110,13 +1140,17 @@ class Documentos:
         q = self.cruce().get((id, str(clave).lower()))
         return q if q and registro.existe(q) else None
 
-    def recorte_de_leccion(self, lec: Any) -> Optional[Dict[str, Any]]:
+    def recorte_de_leccion(self, lec: Any, omite_desde: str = "") -> Optional[Dict[str, Any]]:
         f = lec.fuente or {}
         doc = f.get("doc")
         try:
             if re.fullmatch(r"Q\d{3}", lec.id):
-                p = self.problema("superexamen", lec.id)
-                e, q = p.extra.get("examen"), str(p.extra.get("preg") or "")
+                try:
+                    p = self.problema("superexamen", lec.id)
+                except KeyError:
+                    p = None
+                e = (p.extra.get("examen") if p else None) or f.get("examen")
+                q = str((p.extra.get("preg") if p else None) or f.get("preg") or "")
                 orig = f.get("original")  # (examen, pregunta) cuando se fuerza el original
                 if orig:
                     e, q = str(orig[0]), str(orig[1])
@@ -1124,21 +1158,20 @@ class Documentos:
                 # respuesta con resaltador, el recorte sale con ese fondo borrado (ver _blanquear).
                 if e in self.rutas() and q:
                     try:
-                        if True:
-                            rec = self.recorte(e, q)
-                            rec["pie"] = f"{lec.id} del Superexamen · {rec['etiqueta']}"
-                            rec["etiqueta"] = f"{lec.id} · {self.titulo(e)}"
-                            return rec
+                        rec = self.recorte(e, q, omite_desde)
+                        rec["pie"] = f"{lec.id} del Superexamen · {rec['etiqueta']}"
+                        rec["etiqueta"] = f"{lec.id} · {self.titulo(e)}"
+                        return rec
                     except KeyError:
                         pass
-                rec = self.recorte("superexamen", lec.id)
+                rec = self.recorte("superexamen", lec.id, omite_desde)
                 if e:
                     rec["pie"] = f"{rec['pie']} · sale en {self.titulo(e)}, pregunta {q}"
                 return rec
             if re.fullmatch(r"E\d{1,2}", lec.id):
-                return self.recorte("recomendados", lec.id[1:])
+                return self.recorte("recomendados", lec.id[1:], omite_desde)
             if doc and f.get("num") is not None:
-                return self.recorte(str(doc), str(f["num"]))
+                return self.recorte(str(doc), str(f["num"]), omite_desde)
         except (KeyError, ValueError, RuntimeError):
             return None
         return None

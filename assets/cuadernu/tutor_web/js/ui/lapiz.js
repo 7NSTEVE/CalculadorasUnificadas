@@ -289,14 +289,9 @@ export class Lapiz {
     const q = $('sel-pregunta').value.trim();
     this.cerrarMenu();
     const que2 = sel.texto || 'lo que encerré en la imagen';
-    // Lo determinista primero: el origen escrito en la lección
-    if (que === 'origen' && this.rep.lec && !sel.imagen) {
-      const f = this._origenConocido(sel.texto);
-      if (f) {
-        const t = Date.now();
-        this.rep.contar(this.asistente.miniPaso([{ habla: f.voz, acc: [{ a: 'texto', txt: `${f.que} · ${f.de}`, id: `os${t}` }] }]), `¿De dónde salió ${sel.texto}?`);
-        return;
-      }
+    if (this.rep.lec) {
+      if (que === 'origen') return this.asistente.origen(sel);
+      if (que === 'despacio') return this.asistente.despacio(sel);
     }
     const textos = {
       origen: `¿De dónde salió "${que2}"? Explica paso a paso, sin saltarte nada.`,
@@ -307,16 +302,4 @@ export class Lapiz {
     this.asistente.preguntar(textos[que], { seleccion: { texto: sel.texto, tex: sel.tex || '' }, imagen: this._recorteDe(sel) });
   }
 
-  _origenConocido(txt) {
-    const limpio = (s) => String(s || '').replace(/\\[a-zA-Z]+/g, (m) => ({ '\\gamma': 'γ', '\\Delta': 'Δ', '\\alpha': 'α', '\\beta': 'β', '\\sigma': 'σ', '\\pi': 'π', '\\eta': 'η' }[m] || '')).replace(/[\s$_{}^\\]/g, '');
-    const b = limpio(txt);
-    if (!b) return null;
-    for (let k = this.rep.i; k >= 0; k -= 1) {
-      const p = this.rep.lec.pasos[k];
-      for (const o of p.origen || []) {
-        if (limpio(o.que) === b || limpio(o.que).split(/[=≈]/)[0] === b) return { que: o.que, de: o.de, voz: `${o.de}` };
-      }
-    }
-    return null;
-  }
 }

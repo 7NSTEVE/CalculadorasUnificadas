@@ -1072,6 +1072,320 @@ def _v_calorimetria_fusion_trampa(rng: random.Random) -> Leccion:
     return lec
 
 
+def _v_resorte_fase(rng: random.Random) -> Leccion:
+    """Parcial 1: Masa-resorte con fase φ, período T y energía total."""
+    m = rng.choice([0.50, 1.00, 2.00, 4.00])
+    k = rng.choice([200.0, 400.0, 800.0, 1600.0])
+    A = rng.choice([0.08, 0.10, 0.12, 0.16])
+    sentido = rng.choice([-1, 1])
+    x0 = A / 2.0
+    w = math.sqrt(k / m)
+    T = 2.0 * math.pi / w
+    phi = -math.pi / 3.0 if sentido > 0 else math.pi / 3.0
+    E = 0.5 * k * A * A
+    v0 = -w * A * math.sin(phi)
+    signo_txt = "positiva" if sentido > 0 else "negativa"
+
+    lec = Leccion(
+        f"VAR-MAS-{rng.randint(100,999)}",
+        "Variante · Masa-resorte con fase φ y energía",
+        tema="ondas", tipo="desarrollo", nivel=3, parcial=1,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Un bloque de masa $m = {fmt(m,2)}\\,\\text{{kg}}$ unido a un resorte de constante $k = {fmt(k,1)}\\,\\text{{N/m}}$ "
+            f"oscila en MAS con amplitud $A = {fmt(A,2)}\\,\\text{{m}}$. En $t = 0$ pasa por $x_0 = {fmt(x0,3)}\\,\\text{{m}}$ "
+            f"con velocidad {signo_txt}. Calcule: A) $\\omega$ y período $T$, B) la fase $\\phi$ en radianes y C) la energía total $E$."
+        ),
+    ).usa(r"\omega^2 = \frac{k}{m}", r"T = \frac{2\pi}{\omega}", r"x = A\cos(\omega t + \phi)", r"E = \frac{1}{2}kA^2")
+
+    lec.paso("A) Frecuencia angular ω y período T")\
+        .por_que("En un resorte ideal, ω = √(k/m) y T = 2π/ω salen directo de m y k.")\
+        .di("Calculamos omega y el período con las casillas del formulario del Parcial 1.",
+            {"a": "mate", "tex": rf"\omega = \sqrt{{\frac{{{fmt(k,1)}}}{{{fmt(m,2)}}}}} = {fmt(w,2)}\,\text{{rad/s}}", "color": "azul"},
+            {"a": "mate", "tex": rf"T = \frac{{2\pi}}{{{fmt(w,2)}}} = {fmt(T,3)}\,\text{{s}}", "color": "verde", "rol": "resultado"})
+    lec.paso("B) Elegir la fase φ correcta con el signo de v(0)")\
+        .por_que("cos(φ) = x₀/A = 1/2 da ±π/3; el signo de v(0) = −ωA sen(φ) decide cuál cuadrante es el verdadero.")\
+        .di("De la posición inicial despejamos el coseno de fi y usamos el signo de la velocidad inicial.",
+            {"a": "mate", "tex": r"\cos\phi = \frac{x_0}{A} = \frac{1}{2} \implies \phi = \pm\frac{\pi}{3}", "color": "azul"},
+            {"a": "mate", "tex": rf"v(0) = {fmt(v0,2)}\,\text{{m/s}} \implies \phi = {fmt(phi,3)}\,\text{{rad}}", "color": "verde", "rol": "resultado"})
+    lec.paso("C) Energía mecánica total E")\
+        .por_que("La energía total de un oscilador armónico es ½ k A².")\
+        .di("Sustituimos k y la amplitud A en la fórmula de energía.",
+            {"a": "mate", "tex": rf"E = \frac{{1}}{{2}}({fmt(k,1)})({fmt(A,2)})^2 = {fmt(E,3)}\,\text{{J}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"T = {fmt(T,3)}\,\text{{s}}", valor=round(T, 3), unidad="s")
+    lec.responde("B)", rf"\phi = {fmt(phi,3)}\,\text{{rad}}", valor=round(phi, 3), unidad="rad")
+    lec.responde("C)", rf"E = {fmt(E,3)}\,\text{{J}}", valor=round(E, 3), unidad="J")
+    lec.te_toca("Si la amplitud $A$ se duplicara, ¿cuánto valdría la energía total $E$ en joules?", round(4 * E, 3), "J",
+                pista="E es proporcional a A²: duplicar A multiplica E por 4.", solucion=f"E' = 4({fmt_txt(E,3)}) = {fmt_txt(4*E,3)} J.")
+    return lec
+
+
+def _v_pendulo_simple_fisico(rng: random.Random) -> Leccion:
+    """Parcial 1: Péndulo simple y físico (varilla uniforme colgada de un extremo)."""
+    L = rng.choice([0.80, 1.20, 1.50, 2.00, 2.40])
+    g = 9.80
+    T_simp = 2.0 * math.pi * math.sqrt(L / g)
+    T_fis = 2.0 * math.pi * math.sqrt((2.0 * L) / (3.0 * g))
+    lec = Leccion(
+        f"VAR-PEND-{rng.randint(100,999)}",
+        "Variante · Péndulo simple contra varilla rígida",
+        tema="ondas", tipo="desarrollo", nivel=3, parcial=1,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Compare el período de: A) un péndulo simple de longitud $L = {fmt(L,2)}\\,\\text{{m}}$ y "
+            f"B) una varilla uniforme del mismo largo $L = {fmt(L,2)}\\,\\text{{m}}$ que oscila desde un extremo "
+            f"($I = \\tfrac{{1}}{{3}}mL^2$, $d = L/2$)."
+        ),
+    ).usa(r"\omega^2 = \frac{g}{L}", r"\omega^2 = \frac{mgd}{I}", r"T = \frac{2\pi}{\omega}")
+    lec.paso("A) Período del péndulo simple")\
+        .por_que("En el péndulo simple ω = √(g/L) y T = 2π√(L/g).")\
+        .di("Sustituimos el largo y la gravedad.",
+            {"a": "mate", "tex": rf"T_{{\text{{simple}}}} = 2\pi\sqrt{{\frac{{{fmt(L,2)}}}{{9{{,}}80}}}} = {fmt(T_simp,3)}\,\text{{s}}", "color": "verde", "rol": "resultado"})
+    lec.paso("B) Período de la varilla (péndulo físico)")\
+        .por_que("Con I = (1/3)mL² y d = L/2, la masa se cancela y queda I/(mgd) = 2L/(3g).")\
+        .di("Usamos la casilla de péndulo físico y simplificamos la masa.",
+            {"a": "mate", "tex": rf"T_{{\text{{varilla}}}} = 2\pi\sqrt{{\frac{{2({fmt(L,2)})}}{{3(9{{,}}80)}}}} = {fmt(T_fis,3)}\,\text{{s}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"T_{{\text{{simple}}}} = {fmt(T_simp,3)}\,\text{{s}}", valor=round(T_simp, 3), unidad="s")
+    lec.responde("B)", rf"T_{{\text{{varilla}}}} = {fmt(T_fis,3)}\,\text{{s}}", valor=round(T_fis, 3), unidad="s")
+    return lec
+
+
+def _v_cuerda_armonicos(rng: random.Random) -> Leccion:
+    """Parcial 1: Cuerda tensada con densidad lineal μ, rapidez v y armónico n."""
+    L = rng.choice([0.60, 0.80, 1.00, 1.20])
+    m_g = rng.choice([4.0, 6.0, 8.0, 10.0])
+    m = m_g / 1000.0
+    F_ten = rng.choice([64.0, 100.0, 144.0, 196.0])
+    n_arm = rng.choice([2, 3, 4])
+    mu = m / L
+    v = math.sqrt(F_ten / mu)
+    f1 = v / (2.0 * L)
+    fn = n_arm * f1
+    lec = Leccion(
+        f"VAR-CUERDA-{rng.randint(100,999)}",
+        f"Variante · Cuerda tensada y {n_arm}.º armónico",
+        tema="ondas", tipo="desarrollo", nivel=3, parcial=1,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Una cuerda de largo $L = {fmt(L,2)}\\,\\text{{m}}$ y masa $m = {fmt(m_g,1)}\\,\\text{{g}}$ está sometida a una tensión "
+            f"$F = {fmt(F_ten,1)}\\,\\text{{N}}$. Calcule: A) la rapidez de onda $v$, B) la frecuencia fundamental $f_1$ y "
+            f"C) la frecuencia del armónico $n = {n_arm}$."
+        ),
+    ).usa(r"\mu = \frac{m}{L}", r"v = \sqrt{\frac{F}{\mu}}", r"\lambda_n = \frac{2L}{n}", r"f_n = n f_1")
+    lec.paso("A) Densidad lineal μ y rapidez v")\
+        .por_que("Primero se pasa la masa a kilogramos para hallar μ = m/L y luego v = √(F/μ).")\
+        .di("Pasamos la masa a kilogramos y hallamos mu y la rapidez.",
+            {"a": "mate", "tex": rf"\mu = \frac{{{fmt(m,4)}}}{{{fmt(L,2)}}} = {fmt(mu,5)}\,\text{{kg/m}}", "color": "azul"},
+            {"a": "mate", "tex": rf"v = \sqrt{{\frac{{{fmt(F_ten,1)}}}{{{fmt(mu,5)}}}}} = {fmt(v,2)}\,\text{{m/s}}", "color": "verde", "rol": "resultado"})
+    lec.paso(f"B) Fundamental f₁ y armónico n = {n_arm}")\
+        .por_que("Para cuerda fija en ambos extremos, λ₁ = 2L, f₁ = v/(2L) y f_n = n·f₁.")\
+        .di("Calculamos la frecuencia fundamental y la multiplicamos por ene.",
+            {"a": "mate", "tex": rf"f_1 = \frac{{{fmt(v,2)}}}{{2({fmt(L,2)})}} = {fmt(f1,2)}\,\text{{Hz}}", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"f_{n_arm} = {n_arm}({fmt(f1,2)}) = {fmt(fn,2)}\,\text{{Hz}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"v = {fmt(v,2)}\,\text{{m/s}}", valor=round(v, 2), unidad="m/s")
+    lec.responde("B)", rf"f_1 = {fmt(f1,2)}\,\text{{Hz}}", valor=round(f1, 2), unidad="Hz")
+    lec.responde("C)", rf"f_{n_arm} = {fmt(fn,2)}\,\text{{Hz}}", valor=round(fn, 2), unidad="Hz")
+    return lec
+
+
+def _v_onda_estacionaria(rng: random.Random) -> Leccion:
+    """Parcial 1: Onda estacionaria y(x,t) = A_OE sen(kx) sen(ωt)."""
+    A_oe = rng.choice([0.040, 0.050, 0.060, 0.080])
+    k_pi = rng.choice([4, 6, 8, 10])
+    w_pi = rng.choice([120, 160, 200, 240])
+    lam = 2.0 / k_pi
+    v = w_pi / k_pi
+    v_trans = (w_pi * math.pi) * A_oe
+    lec = Leccion(
+        f"VAR-OE-{rng.randint(100,999)}",
+        "Variante · Onda estacionaria: λ, v y rapidez transversal máxima",
+        tema="ondas", tipo="desarrollo", nivel=3, parcial=1,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Una onda estacionaria en una cuerda se describe por $y(x,t) = {fmt(A_oe,3)}\\sen({k_pi}\\pi x)\\sen({w_pi}\\pi t)$ "
+            f"(en metros y segundos). Calcule: A) longitud de onda $\\lambda$, B) rapidez de propagación $v$ y C) rapidez transversal máxima en un antinodo."
+        ),
+    ).usa(r"y(x,t) = A_{\text{OE}}\sen(kx)\sen(\omega t)", r"k = \frac{2\pi}{\lambda}", r"v = \lambda f = \frac{\omega}{k}")
+    lec.paso("A) Leer k y ω y calcular λ y v")\
+        .por_que("k multiplica a x y ω multiplica a t; de ahí salen λ = 2π/k y v = ω/k.")\
+        .di("Leemos k y omega directamente de la ecuación.",
+            {"a": "mate", "tex": rf"\lambda = \frac{{2\pi}}{{{k_pi}\pi}} = {fmt(lam,3)}\,\text{{m}}", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"v = \frac{{{w_pi}\pi}}{{{k_pi}\pi}} = {fmt(v,2)}\,\text{{m/s}}", "color": "verde", "rol": "resultado"})
+    lec.paso("C) Rapidez transversal máxima")\
+        .por_que("En un antinodo sen(kx) = ±1, así que la rapidez máxima transversal es ω·A_OE.")\
+        .di("Multiplicamos omega por la amplitud de la estacionaria.",
+            {"a": "mate", "tex": rf"v_{{y,\text{{máx}}}} = ({w_pi}\pi)({fmt(A_oe,3)}) = {fmt(v_trans,2)}\,\text{{m/s}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"\lambda = {fmt(lam,3)}\,\text{{m}}", valor=round(lam, 3), unidad="m")
+    lec.responde("B)", rf"v = {fmt(v,2)}\,\text{{m/s}}", valor=round(v, 2), unidad="m/s")
+    lec.responde("C)", rf"v_{{y,\text{{máx}}}} = {fmt(v_trans,2)}\,\text{{m/s}}", valor=round(v_trans, 2), unidad="m/s")
+    return lec
+
+
+def _v_sonido_intensidad(rng: random.Random) -> Leccion:
+    """Parcial 1: Intensidad de onda sonora esférica I = P/(4πr²) (casilla nueva II-2026)."""
+    r1 = rng.choice([5.0, 6.0, 8.0, 10.0])
+    I1 = rng.choice([0.09, 0.16, 0.25, 0.36])
+    I2 = 1.0
+    r2 = r1 * math.sqrt(I1 / I2)
+    P = I1 * 4.0 * math.pi * r1 * r1
+    lec = Leccion(
+        f"VAR-SON-{rng.randint(100,999)}",
+        "Variante · Fuente sonora puntual e intensidad",
+        tema="ondas", tipo="desarrollo", nivel=2, parcial=1,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Una fuente puntual emite sonido uniforme. A $r_1 = {fmt(r1,1)}\\,\\text{{m}}$ la intensidad es "
+            f"$I_1 = {fmt(I1,2)}\\,\\text{{W/m}}^2$. Calcule: A) la potencia sonora $P$ y B) la distancia $r_2$ donde $I_2 = 1{{,}}00\\,\\text{{W/m}}^2$."
+        ),
+    ).usa(r"I = \frac{P}{4\pi r^2}", r"\frac{I_1}{I_2} = \frac{r_2^2}{r_1^2}")
+    lec.paso("A) Potencia sonora P y B) distancia r₂")\
+        .por_que("La misma potencia P se reparte en esferas 4πr², así que I₁/I₂ = r₂²/r₁².")\
+        .di("Despejamos P de la intensidad y luego r dos de la razón de intensidades.",
+            {"a": "mate", "tex": rf"P = 4\pi r_1^2 I_1 = 4\pi({fmt(r1,1)})^2({fmt(I1,2)}) = {fmt(P,2)}\,\text{{W}}", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"r_2 = r_1\sqrt{{\frac{{I_1}}{{I_2}}}} = {fmt(r1,1)}\sqrt{{{fmt(I1,2)}}} = {fmt(r2,2)}\,\text{{m}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"P = {fmt(P,2)}\,\text{{W}}", valor=round(P, 2), unidad="W")
+    lec.responde("B)", rf"r_2 = {fmt(r2,2)}\,\text{{m}}", valor=round(r2, 2), unidad="m")
+    return lec
+
+
+def _v_flotacion_arquimedes(rng: random.Random) -> Leccion:
+    """Parcial 2: Bloque que flota en agua y aceite (Arquímedes)."""
+    rho_obj = rng.choice([550.0, 600.0, 650.0, 720.0])
+    rho_ac = rng.choice([800.0, 850.0, 900.0])
+    V = rng.choice([0.020, 0.040, 0.050])
+    g = 9.80
+    FB = rho_obj * V * g
+    frac_agua = (rho_obj / 1000.0) * 100.0
+    frac_ac = (rho_obj / rho_ac) * 100.0
+    lec = Leccion(
+        f"VAR-FLOT-{rng.randint(100,999)}",
+        "Variante · Flotación en agua y en aceite",
+        tema="fluidos", tipo="desarrollo", nivel=2, parcial=2,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Un bloque de volumen $V = {fmt(V,3)}\\,\\text{{m}}^3$ y densidad $\\rho = {fmt(rho_obj,0)}\\,\\text{{kg/m}}^3$ "
+            f"flota primero en agua ($1000\\,\\text{{kg/m}}^3$) y luego en aceite ($\\rho_{{\\text{{ac}}}} = {fmt(rho_ac,0)}\\,\\text{{kg/m}}^3$). "
+            f"Calcule: A) el empuje $F_B$, B) el porcentaje sumergido en agua y C) el porcentaje sumergido en aceite."
+        ),
+    ).usa(r"F_B = \rho g V", r"\rho = \frac{m}{V}")
+    lec.paso("A) Empuje igual al peso y porcentajes sumergidos")\
+        .por_que("Cuando el cuerpo flota en equilibrio, F_B = mg y la fracción sumergida es ρ_obj / ρ_líq.")\
+        .di("Como flota, el empuje es igual al peso del bloque y la fracción sumergida es el cociente de densidades.",
+            {"a": "mate", "tex": rf"F_B = \rho_{{\text{{obj}}}} V g = ({fmt(rho_obj,0)})({fmt(V,3)})(9{{,}}80) = {fmt(FB,2)}\,\text{{N}}", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"\%_{{\text{{agua}}}} = \frac{{{fmt(rho_obj,0)}}}{{1000}} = {fmt(frac_agua,1)}\,\%\qquad \%_{{\text{{aceite}}}} = \frac{{{fmt(rho_obj,0)}}}{{{fmt(rho_ac,0)}}} = {fmt(frac_ac,1)}\,\%", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"F_B = {fmt(FB,2)}\,\text{{N}}", valor=round(FB, 2), unidad="N")
+    lec.responde("B)", rf"{fmt(frac_agua,1)}\,\%", valor=round(frac_agua, 1), unidad="%")
+    lec.responde("C)", rf"{fmt(frac_ac,1)}\,\%", valor=round(frac_ac, 1), unidad="%")
+    return lec
+
+
+def _v_venturi_bernoulli(rng: random.Random) -> Leccion:
+    """Parcial 2: Tubo Venturi horizontal con caudal, continuidad y Bernoulli."""
+    r1 = rng.choice([0.030, 0.040, 0.050])
+    r2 = r1 / 2.0
+    v1 = rng.choice([1.0, 1.5, 2.0])
+    rho = 1000.0
+    g = 9.80
+    v2 = v1 * (r1 / r2) ** 2
+    Q = math.pi * r1 * r1 * v1
+    dp = 0.5 * rho * (v2 * v2 - v1 * v1)
+    dh = dp / (rho * g)
+    lec = Leccion(
+        f"VAR-VENT-{rng.randint(100,999)}",
+        "Variante · Tubo Venturi horizontal (continuidad y Bernoulli)",
+        tema="fluidos", tipo="desarrollo", nivel=3, parcial=2,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Por un tubo Venturi horizontal con agua ($\\rho = 1000\\,\\text{{kg/m}}^3$), el radio pasa de $r_1 = {fmt(r1*100,1)}\\,\\text{{cm}}$ "
+            f"a $r_2 = {fmt(r2*100,1)}\\,\\text{{cm}}$. Si $v_1 = {fmt(v1,2)}\\,\\text{{m/s}}$, calcule: A) $v_2$, "
+            f"B) la diferencia de presión $p_1 - p_2$ en kPa y C) la diferencia de alturas $\\Delta h$ en los tubos piezométricos."
+        ),
+    ).usa(r"A_1 v_1 = A_2 v_2", r"p_1 + \rho g y_1 + \frac{1}{2}\rho v_1^2 = p_2 + \rho g y_2 + \frac{1}{2}\rho v_2^2", r"p = p_0 + \rho gh")
+    lec.paso("A) Continuidad para hallar v₂")\
+        .por_que("A = πr²: al reducirse el radio a la mitad, el área se reduce 4 veces y v₂ = 4·v₁.")\
+        .di("Aplicamos continuidad entre las dos secciones.",
+            {"a": "mate", "tex": rf"v_2 = v_1\left(\frac{{r_1}}{{r_2}}\right)^2 = ({fmt(v1,2)})(4) = {fmt(v2,2)}\,\text{{m/s}}", "color": "verde", "rol": "resultado"})
+    lec.paso("B) Bernoulli y C) diferencia de altura Δh")\
+        .por_que("Como el tubo es horizontal, y₁ = y₂ y Δp = ½ρ(v₂² − v₁²); en los tubos verticales Δp = ρgΔh.")\
+        .di("Calculamos delta p con Bernoulli y luego delta hache.",
+            {"a": "mate", "tex": rf"p_1 - p_2 = \frac{{1}}{{2}}(1000)({fmt(v2,2)}^2 - {fmt(v1,2)}^2) = {fmt(dp/1000,2)}\,\text{{kPa}}", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"\Delta h = \frac{{p_1 - p_2}}{{\rho g}} = {fmt(dh,3)}\,\text{{m}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"v_2 = {fmt(v2,2)}\,\text{{m/s}}", valor=round(v2, 2), unidad="m/s")
+    lec.responde("B)", rf"\Delta p = {fmt(dp/1000,2)}\,\text{{kPa}}", valor=round(dp / 1000, 2), unidad="kPa")
+    lec.responde("C)", rf"\Delta h = {fmt(dh,3)}\,\text{{m}}", valor=round(dh, 3), unidad="m")
+    return lec
+
+
+def _v_poiseuille_reynolds(rng: random.Random) -> Leccion:
+    """Parcial 2: Flujo laminar viscoso (Poiseuille y número de Reynolds)."""
+    R_mm = rng.choice([4.0, 5.0, 6.0])
+    R = R_mm / 1000.0
+    L = rng.choice([2.0, 4.0, 5.0])
+    eta = rng.choice([0.050, 0.080, 0.100])
+    rho = 900.0
+    dp_kpa = rng.choice([8.0, 12.0, 16.0])
+    dp = dp_kpa * 1000.0
+    Q = (dp * math.pi * (R ** 4)) / (8.0 * eta * L)
+    v_med = Q / (math.pi * R * R)
+    Re = (rho * v_med * (2.0 * R)) / eta
+    lec = Leccion(
+        f"VAR-POIS-{rng.randint(100,999)}",
+        "Variante · Aceite en tubería: Poiseuille y Reynolds",
+        tema="fluidos", tipo="desarrollo", nivel=3, parcial=2,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Aceite ($\\rho = 900\\,\\text{{kg/m}}^3$, $\\eta = {fmt(eta,3)}\\,\\text{{Pa}}\\cdot\\text{{s}}$) fluye por un tubo "
+            f"de radio $R = {fmt(R_mm,1)}\\,\\text{{mm}}$ y largo $L = {fmt(L,1)}\\,\\text{{m}}$ bajo $\\Delta p = {fmt(dp_kpa,1)}\\,\\text{{kPa}}$. "
+            f"Calcule: A) caudal $dV/dt$ en $\\text{{cm}}^3/\\text{{s}}$, B) rapidez media $v$ y C) número de Reynolds $N_R$."
+        ),
+    ).usa(r"\frac{dV}{dt} = \frac{(p_1 - p_2)\pi R^4}{8\eta L}", r"\frac{dV}{dt} = Av", r"N_R = \frac{\rho v D}{\eta}")
+    lec.paso("A) Caudal con Poiseuille, B) rapidez media y C) Reynolds")\
+        .por_que("Con viscosidad η aplica Poiseuille (usando radio R en metros a la cuarta potencia).")\
+        .di("Sustituimos todo en unidades del SI y evaluamos Reynolds con el diámetro D igual a dos R.",
+            {"a": "mate", "tex": rf"\frac{{dV}}{{dt}} = \frac{{({fmt(dp,0)})\pi({fmt(R,4)})^4}}{{8({fmt(eta,3)})({fmt(L,1)})}} = {fmt(Q*1e6,2)}\,\text{{cm}}^3/\text{{s}}", "color": "verde", "rol": "resultado"},
+            {"a": "mate", "tex": rf"v = \frac{{Q}}{{\pi R^2}} = {fmt(v_med,3)}\,\text{{m/s}}\qquad N_R = \frac{{\rho v (2R)}}{{\eta}} = {fmt(Re,1)}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"Q = {fmt(Q*1e6,2)}\,\text{{cm}}^3/\text{{s}}", valor=round(Q * 1e6, 2), unidad="cm³/s")
+    lec.responde("B)", rf"v = {fmt(v_med,3)}\,\text{{m/s}}", valor=round(v_med, 3), unidad="m/s")
+    lec.responde("C)", rf"N_R = {fmt(Re,1)}", valor=round(Re, 1), unidad="")
+    return lec
+
+
+def _v_represa_integral(rng: random.Random) -> Leccion:
+    """Parcial 2: Fuerza hidrostática sobre una represa trapezoidal mediante integral."""
+    H = rng.choice([10.0, 20.0, 30.0, 40.0])
+    b_sup = rng.choice([30.0, 40.0, 50.0])
+    b_inf = b_sup - rng.choice([10.0, 15.0, 20.0])
+    rho, g = 1000.0, 9.80
+    # L(h) = b_sup - m*h, con m = (b_sup - b_inf)/H
+    m = (b_sup - b_inf) / H
+    # F = rho*g * integral_0^H (b_sup*h - m*h^2) dh = rho*g * (b_sup*H^2/2 - m*H^3/3)
+    F_tot = rho * g * (b_sup * H * H / 2.0 - m * (H ** 3) / 3.0)
+    F_mn = F_tot / 1e6
+    lec = Leccion(
+        f"VAR-PRES-{rng.randint(100,999)}",
+        "Variante · Fuerza del agua sobre represa trapezoidal (integral)",
+        tema="fluidos", tipo="desarrollo", nivel=4, parcial=2,
+        fuente={"doc": "variante", "nota": "Generada con otros números en Python"},
+        enunciado=(
+            f"Una represa trapezoidal retiene agua hasta una profundidad $H = {fmt(H,1)}\\,\\text{{m}}$. "
+            f"Mide ${fmt(b_sup,1)}\\,\\text{{m}}$ de ancho en la superficie y ${fmt(b_inf,1)}\\,\\text{{m}}$ en el fondo. "
+            f"Plantee el diferencial $dF$ y calcule la fuerza total del agua $F$ en MN."
+        ),
+        visual={"tipo": "pared", "forma": "trapecio", "H": H, "ancho_sup": b_sup, "ancho_inf": b_inf, "titulo": "Represa trapezoidal"},
+    ).usa(r"p = p_0 + \rho gh", r"F_\perp = \int p\,dA")
+    lec.paso("1) Ancho L(h) y diferencial de fuerza dF")\
+        .por_que("En una franja horizontal a profundidad h, la presión es p = ρgh y el área dA = L(h)dh.")\
+        .di("El ancho baja linealmente desde la superficie hasta el fondo.",
+            {"a": "mate", "tex": rf"L(h) = {fmt(b_sup,1)} - {fmt(m,3)}\,h", "color": "azul"},
+            {"a": "mate", "tex": rf"dF = \rho g h\,L(h)\,dh = \rho g\left({fmt(b_sup,1)}\,h - {fmt(m,3)}\,h^2\right)dh", "color": "azul"})
+    lec.paso("2) Integrar de h = 0 a H")\
+        .por_que("Aplicamos la regla de la potencia a h y a h² y evaluamos arriba menos abajo.")\
+        .di("Integramos término por término desde cero hasta H.",
+            {"a": "mate", "tex": rf"F = \rho g\left[{fmt(b_sup/2,2)}\,h^2 - \frac{{{fmt(m,3)}}}{{3}}\,h^3\right]_0^{{{fmt(H,1)}}} = {fmt(F_mn,2)}\,\text{{MN}}", "color": "verde", "rol": "resultado"})
+    lec.responde("A)", rf"F = {fmt(F_mn,2)}\,\text{{MN}}", valor=round(F_mn, 2), unidad="MN")
+    return lec
+
+
 ARQUETIPOS: Dict[str, Callable[[random.Random], Leccion]] = {
     "conduccion_area": _v_conduccion_area,
     "conduccion_k_radial": _v_conduccion_k_radial,
@@ -1088,6 +1402,17 @@ ARQUETIPOS: Dict[str, Callable[[random.Random], Leccion]] = {
     "esfuerzo_termico": _v_esfuerzo_termico,
     "otto_completo_inverso": _v_otto_completo_inverso,
     "calorimetria_fusion_trampa": _v_calorimetria_fusion_trampa,
+    # Parcial 1 (5 arquetipos de Reposición)
+    "resorte_fase": _v_resorte_fase,
+    "pendulo_simple_fisico": _v_pendulo_simple_fisico,
+    "cuerda_armonicos": _v_cuerda_armonicos,
+    "onda_estacionaria": _v_onda_estacionaria,
+    "sonido_intensidad": _v_sonido_intensidad,
+    # Parcial 2 (4 arquetipos de Reposición)
+    "flotacion_arquimedes": _v_flotacion_arquimedes,
+    "venturi_bernoulli": _v_venturi_bernoulli,
+    "poiseuille_reynolds": _v_poiseuille_reynolds,
+    "represa_integral": _v_represa_integral,
 }
 
 _MAPA_DIRECTO: Dict[str, str] = {
@@ -1098,6 +1423,11 @@ _MAPA_DIRECTO: Dict[str, str] = {
     "Q060": "conduccion_k_radial",
     "E16": "ciclo_pv",
     "Q111": "ciclo_pv",
+    "Q110": "ciclo_pv",
+    "Q109": "ciclo_pv",
+    "Q108": "ciclo_recta_integral",
+    "Q106": "ciclo_pv",
+    "Q107": "ciclo_pv",
     "E5": "calorimetria_fase",
     "Q038": "conduccion_serie_paralelo",
     "E1": "dilatacion_barras",
@@ -1110,9 +1440,11 @@ _MAPA_DIRECTO: Dict[str, str] = {
     "PR1-4": "conduccion_cono",
     "PR2-D1": "conduccion_cono",
     "Q041": "conduccion_cono",
+    "T-CONO": "conduccion_cono",
     "PR2-D2": "conduccion_exponencial",
     "PR2-D10": "conduccion_exponencial",
     "PR1-3": "conduccion_cilindro_capas",
+    "Q045": "conduccion_cilindro_capas",
     "PR1-5": "ciclo_recta_integral",
     "PR2-D4": "ciclo_recta_integral",
     "P26-1": "esfuerzo_termico",
@@ -1121,6 +1453,41 @@ _MAPA_DIRECTO: Dict[str, str] = {
     "PR1-2": "calorimetria_fusion_trampa",
     "PR2-D7": "calorimetria_fusion_trampa",
     "PR2-D12": "calorimetria_fusion_trampa",
+    # Mapeo directo P1 y P2
+    "RP-26I-7": "resorte_fase",
+    "RP-24II-1": "resorte_fase",
+    "RP-25II-1": "resorte_fase",
+    "P1O26-8": "resorte_fase",
+    "T-MAS": "resorte_fase",
+    "P1E26-8": "pendulo_simple_fisico",
+    "RP-26I-2": "pendulo_simple_fisico",
+    "T-PEND": "pendulo_simple_fisico",
+    "P1O26-9": "cuerda_armonicos",
+    "P1E26-9": "cuerda_armonicos",
+    "RP-24I-1": "cuerda_armonicos",
+    "RP-26I-1": "cuerda_armonicos",
+    "T-ONDA": "cuerda_armonicos",
+    "RP-23II-1": "onda_estacionaria",
+    "P1O26-6": "onda_estacionaria",
+    "P1O26-2": "sonido_intensidad",
+    "T-SON": "sonido_intensidad",
+    "RP-26I-3": "flotacion_arquimedes",
+    "P2O26-2": "flotacion_arquimedes",
+    "P2E26-1": "flotacion_arquimedes",
+    "T-FLOT": "flotacion_arquimedes",
+    "RP-24II-2": "venturi_bernoulli",
+    "RP-26I-8": "venturi_bernoulli",
+    "SUF26-4": "venturi_bernoulli",
+    "T-BERN": "venturi_bernoulli",
+    "RP-23II-2": "poiseuille_reynolds",
+    "P2O26-9": "poiseuille_reynolds",
+    "P2E26-9": "poiseuille_reynolds",
+    "T-VISC": "poiseuille_reynolds",
+    "RP-24I-2": "represa_integral",
+    "RP-25II-2": "represa_integral",
+    "P2E26-8": "represa_integral",
+    "E2-8": "represa_integral",
+    "T-PARED": "represa_integral",
 }
 
 _MAPA_TEMA: Dict[str, str] = {
@@ -1133,6 +1500,8 @@ _MAPA_TEMA: Dict[str, str] = {
     "ciclos": "ciclo_pv",
     "maquinas": "maquina_otto_refrig",
     "entropia": "maquina_otto_refrig",
+    "ondas": "resorte_fase",
+    "fluidos": "venturi_bernoulli",
 }
 
 

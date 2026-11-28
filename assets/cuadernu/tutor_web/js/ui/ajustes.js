@@ -181,31 +181,40 @@ export function armarAjustes(el, acciones) {
     reporte.textContent = 'Marcar un fallo';
     reporte.addEventListener('click', () => { el.hidePopover?.(); acciones.reportar(); });
 
-    const nodos = [
-      titulo('Voz'),
-      bloque('Velocidad', velCaja),
+    const avanzado = document.createElement('details');
+    avanzado.className = 'ajustes-avanzado';
+    const sumAv = document.createElement('summary');
+    sumAv.textContent = 'Opciones técnicas (motor de voz e IA)';
+    avanzado.append(
+      sumAv,
       fila('Motor de voz', motor),
       ...(ajustes.motorVoz === 'local_http'
         ? [fila('URL local (loopback)', urlLocal), bloque('Voz local', httpCaja)]
         : [bloque('Voz del profesor', vozCaja)]),
       fila('Respaldo sin internet', vloc),
-      titulo('Lectura'),
+      fila('Inteligencia', modelo),
+      fila('Resolver al pegar una imagen', casilla('resolverAlPegar')),
+    );
+
+    const nodos = [
+      titulo('Voz y lectura'),
+      bloque('Velocidad', velCaja),
       bloque('Letra', seg(Object.entries(ESTILOS_LETRA).map(([k, v]) => [k, v.nombre]), ajustes.letra, async (v) => {
         ajustes.letra = v;
         await usarLetra(v);
         guardarAjuste('letra', v);
       })),
       bloque('Tema', seg([['light', 'Claro'], ['dark', 'Oscuro'], ['high-contrast', 'Contraste']], ajustes.tema, (v) => { guardarAjuste('tema', v); aplicarTema(v); })),
-      titulo('Ritmo'),
+      titulo('Concentración'),
       fila('Abrir las lecciones en modo enfoque', casilla('enfoque')),
+      fila('Tarjeta de Memoria Viva y 3 capas', casilla('memoriaViva')),
+      fila('Checkpoints activos (aprender de verdad)', casilla('aprenderDeVerdad')),
       fila('Plegar los pasos anteriores', casilla('foco')),
       fila('Modo sin saltos (mostrar despejes)', casilla('sinSaltos')),
       fila('Mostrar qué es cada letra al escribir', casilla('simbolos')),
       fila('Pasar solo al siguiente paso', casilla('autoSeguir')),
       fila('Menos movimiento', casilla('menosMovimiento')),
-      titulo('Preguntas libres e imágenes'),
-      fila('Inteligencia', modelo),
-      fila('Resolver al pegar una imagen', casilla('resolverAlPegar')),
+      avanzado,
     ];
     if (acciones.enCuaderno) {
       const g = document.createElement('button');

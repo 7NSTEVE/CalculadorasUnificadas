@@ -149,6 +149,8 @@ export class EstudioFormulario {
   constructor({ el, acciones }) {
     this.el = el;
     this.acciones = acciones;
+    this.parcial = 3;
+    this.guias = new Map();
     this.guia = null;
     this.porId = new Map();
     this.indiceTexto = new Map();
@@ -183,31 +185,35 @@ export class EstudioFormulario {
     window.addEventListener('keydown', (e) => this._alTecla(e));
   }
 
-  async _cargar() {
-    if (this.guia) return this.guia;
-    if (!this._cargando) {
-      this._cargando = pedir('/api/formulario/guia', { tiempo: 20000 }).then((g) => {
-        this.guia = g;
-        this.porId = new Map((g.celdas || []).map((c) => [c.id, c]));
-        this.indiceTexto = new Map((g.celdas || []).map((c) => [c.id, textoBusquedaCelda(c)]));
-        this._prepararEntrenador(false);
-        return g;
-      });
+  async _cargar(parcial = this.parcial) {
+    const p = [1, 2, 3].includes(Number(parcial)) ? Number(parcial) : 3;
+    this.parcial = p;
+    if (this.guias.has(p)) {
+      const g = this.guias.get(p);
+      this._activarGuia(g);
+      return g;
     }
-    try {
-      return await this._cargando;
-    } catch (err) {
-      this._cargando = null;
-      throw err;
-    }
+    const g = await pedir(`/api/formulario/guia?parcial=${p}`, { tiempo: 20000 });
+    this.guias.set(p, g);
+    this._activarGuia(g);
+    return g;
   }
 
-  async abrir({ celda = null, modo = null } = {}) {
-    if (!this.guia) {
-      this.el.innerHTML = '<div class="est-wrap"><p class="vacio">Cargando guía de las 42 casillas del formulario oficial…</p></div>';
+  _activarGuia(g) {
+    this.guia = g;
+    this.porId = new Map((g.celdas || []).map((c) => [c.id, c]));
+    this.indiceTexto = new Map((g.celdas || []).map((c) => [c.id, textoBusquedaCelda(c)]));
+    this._prepararEntrenador(false);
+  }
+
+  async abrir({ celda = null, modo = null, parcial = null } = {}) {
+    const pInferido = parcial
+      || (celda && String(celda).startsWith('P1-') ? 1 : celda && String(celda).startsWith('P2-') ? 2 : this.parcial);
+    if (!this.guias.has(pInferido)) {
+      this.el.innerHTML = `<div class="est-wrap"><p class="vacio">Cargando guía oficial del Parcial ${pInferido}…</p></div>`;
     }
     try {
-      await this._cargar();
+      await this._cargar(pInferido);
     } catch {
       this.el.innerHTML = '<div class="est-wrap"><p class="vacio">No pude cargar el formulario oficial. Verifica que el motor local siga activo.</p></div>';
       return;
@@ -218,7 +224,6 @@ export class EstudioFormulario {
     if (celda && this.porId.has(celda)) {
       this.celdaId = celda;
       this.modo = 'hoja';
-      // Si el filtro activo ocultara la celda pedida, volver a Todas para que se vea destacada
       if (!this._filtradas().some((c) => c.id === celda)) {
         this.filtro = 'todas';
         this.busqueda = '';
@@ -355,8 +360,23 @@ export class EstudioFormulario {
     volver.textContent = 'Volver';
     volver.addEventListener('click', () => this.acciones.inicio());
 
+    const segParcial = document.createElement('div');
+    segParcial.className = 'seg est-parciales';
+    segParcial.setAttribute('role', 'group');
+    segParcial.setAttribute('aria-label', 'Hoja oficial por parcial');
+    for (const [pNum, pTxt] of [[1, 'Parcial 1'], [2, 'Parcial 2'], [3, 'Parcial 3']]) {
+      const bp = document.createElement('button');
+      bp.type = 'button';
+      bp.textContent = pTxt;
+      bp.setAttribute('aria-pressed', String(this.parcial === pNum));
+      bp.addEventListener('click', () => {
+        if (this.parcial !== pNum) this.abrir({ parcial: pNum, modo: this.modo });
+      });
+      segParcial.appendChild(bp);
+    }
+
     fin.append(dom, volver);
-    barra.append(seg, fin);
+    barra.append(segParcial, seg, fin);
 
     const cuerpo = document.createElement('div');
     cuerpo.className = 'est-cuerpo';

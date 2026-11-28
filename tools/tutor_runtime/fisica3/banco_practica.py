@@ -1345,11 +1345,11 @@ def pr2_d10() -> Leccion:
     # Perfil ilustrativo (T₁ = 100, T₂ = 0, L = 1) con la T(x) de la parte c
     pts = [[round(i / 40, 4), round(100.0 - 100.0 * (math.exp(i / 40) - 1.0) / e1, 2)] for i in range(41)]
     L = _des("PR2-D10", "Barra con área A(x) = A₀ e^(−x/L)", "5.5", _f2("D10", 13),
-             "Barra homogénea de longitud $L$ y conductividad $k$ con área $A(x)=A_0e^{-x/L}$. En $x=0$ está a $T_1$ y en $x=L$ a $T_2<T_1$; lateral aislada, régimen estacionario. a) Resistencia térmica total y $H$. b) Razón con una barra uniforme de área $A_0$. c) $T(x)$ y extremo con mayor $|dT/dx|$.",
+             "Barra homogénea de longitud $L$ y conductividad $k$ con área $A(x)=A_0e^{-x/L}$, donde $A_0$ es el área en $x=0$. En $x=0$ está a $T_1$ y en $x=L$ a $T_2<T_1$; lateral aislada, régimen estacionario. a) Resistencia térmica total y $H$. b) Razón con una barra uniforme de área $A_0$. c) $T(x)$ y extremo con mayor $|dT/dx|$.",
              claves=["área exponencial", "resistencia térmica", "simbólico", "práctica"],
              visual={"tipo": "conduccion", "geo": "pared", "L": 1.0, "T1": 100, "T2": 0, "eje": "x", "uT": "°C", "forma": "exp(-u)", "pts": pts, "etA": "A₀e^(−x/L)"})
     L.paso("Qué nos dan y qué piden")\
-        .di("El área se achica de forma exponencial: al final es la de inicio dividida entre e.", DATO("A0"),
+        .di("El área se achica de forma exponencial: al final es la de inicio dividida entre e.", DATO("donde A0 es el área"),
             M(r"A(0)=A_0\qquad A(L)=A_0e^{-1}=\frac{A_0}{e}"))
     L.paso("a) Fourier y separar variables")\
         .di("Partimos de la ley de Fourier de la hoja, con el área que cambia.", F(r"H=-kA\,\frac{dT}{dx}"), M(r"H=-k\,A(x)\,\frac{dT}{dx}"))\
@@ -1367,7 +1367,8 @@ def pr2_d10() -> Leccion:
         .di("La integral de e a la u es la misma e a la u. Por eso queda la exponencial multiplicada por ele.".replace("por ele", "por " + dice("L", "ele")),
             M(r"\int e^{x/L}dx=\int e^{u}\,L\,du=L\,e^{u}=L\,e^{x/L}"), NOTA("Regla 4 de la lección **T-MAT2**."))\
         .di("Arriba menos abajo.", M(r"\int_0^Le^{x/L}dx=L\Big[e^{x/L}\Big]_0^L=L\left(e^{L/L}-e^{0/L}\right)"))\
-        .di("E a la uno es e; e a la cero es uno.", M(r"=L\left(e^{1}-e^{0}\right)=L\,(e-1)"))
+        .di("E a la uno es e y e a la cero es uno. En la calculadora, e se aproxima a dos coma siete uno ocho.",
+            M(r"=L\left(e^{1}-e^{0}\right)=L\,(e-1)"), M(r"e=\exp(1)\approx2{,}718", "pr2-valor-e"))
     L.paso("a) Resistencia y despeje de H")\
         .di("Lo ponemos en la ecuación.", M(r"T_1-T_2=\frac{H}{kA_0}\,L\,(e-1)=\frac{H\,L\,(e-1)}{kA_0}"))\
         .di("La resistencia es la caída de temperatura entre el flujo: dividimos los dos lados entre hache.".replace("hache", dice("H", "hache")),
@@ -1378,7 +1379,10 @@ def pr2_d10() -> Leccion:
         .di("La barra uniforme de área A cero sale directo de la hoja.".replace("A cero", dice("A₀", "A cero")), F(r"H=kA\,\frac{T_H-T_C}{L}"), M(r"H_0=\frac{kA_0\,(T_1-T_2)}{L}"))\
         .di("Dividimos: multiplicar por el inverso del de abajo. Todo se cancela menos e menos uno.".replace("e menos uno", dice("(e − 1)", "e menos uno")),
             M(r"\frac{H}{H_0}=\frac{kA_0(T_1-T_2)}{L\,(e-1)}\cdot\frac{L}{kA_0(T_1-T_2)}=\frac{1}{e-1}"))\
-        .di("En la calculadora, e menos uno es uno coma siete uno ocho.", M(rf"\frac{{H}}{{H_0}}=\frac{{1}}{{{tex(e1, 4)}}}"), R(rf"\frac{{H}}{{H_0}}={tex(1 / e1, 3)}", "rb"))
+        .di("Sustituimos e por dos coma siete uno ocho y restamos uno. Dividimos uno entre ese resultado.",
+            M(r"e-1\approx2{,}718-1=1{,}718", "pr2-e-menos-uno"),
+            M(rf"\frac{{H}}{{H_0}}\approx\frac{{1}}{{{tex(e1, 4)}}}", "pr2-cociente"),
+            R(rf"\frac{{H}}{{H_0}}={tex(1 / e1, 3)}", "rb"))
     L.paso("c) Temperatura a lo largo")\
         .di("Integramos solo desde cero hasta una equis cualquiera, con la misma regla cuatro.".replace("una equis", "una " + dice("x", "equis")), V(foco="punto"),
             M(r"\int_0^xe^{x/L}dx=L\Big[e^{x/L}\Big]_0^x=L\left(e^{x/L}-1\right)"), M(r"T_1-T(x)=\frac{H}{kA_0}\,L\left(e^{x/L}-1\right)=\frac{HL}{kA_0}\left(e^{x/L}-1\right)"))\

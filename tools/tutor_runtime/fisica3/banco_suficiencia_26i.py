@@ -208,7 +208,7 @@ def suf26_3() -> Leccion:
     )
     L.paso("A) Altura de cada capa")\
         .di("El depósito es un cilindro: volumen es área de la base por altura. Despejamos la altura de cada líquido.",
-            DATO("3,46 m"),
+            DATO("3,46 m2 de base"),
             M(rf"h_{{\text{{agua}}}}=\frac{{12{{,}}87}}{{3{{,}}46}}={tex(hw, 4)}\ \text{{m}}"),
             M(rf"h_{{\text{{aceite}}}}=\frac{{8{{,}}58}}{{3{{,}}46}}={tex(ho, 4)}\ \text{{m}}"),
             R(rf"h_{{\text{{agua}}}}={tex(hw, 3)}\ \text{{m}}\qquad h_{{\text{{aceite}}}}={tex(ho, 3)}\ \text{{m}}"))

@@ -11,10 +11,11 @@
 
 import { ajustes, bus, guardarAjuste, pedir } from '../nucleo/api.js';
 import { banco, estaHecha, nombreTema } from './banco.js';
+import { PanelIntensivo } from './intensivo.js';
 
 const CLAVE_PREP = 'tutor.preparacion.atencion.v1';
-// 'repo26' es el plan por días de la Reposición II-2026 (fisica3/reposicion_ii_2026.py)
-const TABS = ['repo26', 'extraordinario', 'radar', 'reposicion'];
+// 'sprint6' = Sprint 6 días desde cero; 'repo26' = plan diario Reposición II-2026
+const TABS = ['sprint6', 'repo26', 'extraordinario', 'radar', 'reposicion'];
 
 /** Nombre del tipo de ejercicio para las etiquetas. */
 function tipoTexto(t) {
@@ -89,7 +90,7 @@ function formatoReloj(seg) {
 export function ponerTextoMate(el, texto) {
   el.replaceChildren();
   const s = String(texto || '');
-  const re = /_\{([^}]+)\}|_([A-Za-z0-9ÁÉÍÓÚáéíóú]+)|\^\{([^}]+)\}|\^\(([^)]+)\)|\^([A-Za-z0-9γ−\-+]+)/g;
+  const re = /_\{([^}]+)\}|_([A-Za-z0-9ÁÉÍÓÚáéíóú⊥∥]+)|\^\{([^}]+)\}|\^\(([^)]+)\)|\^([A-Za-z0-9γ−\-+]+)/g;
   let ult = 0;
   let m;
   while ((m = re.exec(s)) !== null) {
@@ -120,6 +121,7 @@ export class PreparacionExamenes {
     this.sprintActivo = false;
     this.sprintPausaAviso = false;
     this._timer = null;
+    this.intensivo = new PanelIntensivo({ acciones });
 
     bus.on('progreso', () => {
       if (!this.el.hidden && this.datos) this.pintar();
@@ -169,13 +171,15 @@ export class PreparacionExamenes {
     } catch {
       return { error: true };
     }
-    const mod = plan === 'repo26'
-      ? this.datos.reposicion_ii_2026
-      : plan === 'reposicion'
-        ? this.datos.reposicion
-        : plan === 'radar'
-          ? this.datos.radar_ii_2026
-          : this.datos.extraordinario;
+    const mod = plan === 'sprint6'
+      ? this.datos.sprint_6_dias
+      : plan === 'repo26'
+        ? this.datos.reposicion_ii_2026
+        : plan === 'reposicion'
+          ? this.datos.reposicion
+          : plan === 'radar'
+            ? this.datos.radar_ii_2026
+            : this.datos.extraordinario;
     if (!mod) return { error: true };
     const todos = this._todosItems(mod);
     const it = this._siguientePendiente(mod);
@@ -195,8 +199,10 @@ export class PreparacionExamenes {
   siguienteTras(id) {
     if (!this.datos) return null;
     const r26 = this.datos.reposicion_ii_2026;
+    const s6 = this.datos.sprint_6_dias;
     const ordenMods = {
-      repo26: [r26, this.datos.reposicion, this.datos.radar_ii_2026, this.datos.extraordinario],
+      sprint6: [s6, r26, this.datos.reposicion, this.datos.extraordinario],
+      repo26: [r26, s6, this.datos.reposicion, this.datos.radar_ii_2026, this.datos.extraordinario],
       radar: [this.datos.radar_ii_2026, this.datos.extraordinario, this.datos.reposicion, r26],
       reposicion: [this.datos.reposicion, r26, this.datos.radar_ii_2026, this.datos.extraordinario],
       extraordinario: [this.datos.extraordinario, this.datos.radar_ii_2026, this.datos.reposicion, r26],
@@ -314,6 +320,7 @@ export class PreparacionExamenes {
   /* ---------------------------------------------------------------- helpers de datos */
 
   _moduloActivo() {
+    if (this.st.tab === 'sprint6' && this.datos.sprint_6_dias) return this.datos.sprint_6_dias;
     if (this.st.tab === 'repo26' && this.datos.reposicion_ii_2026) return this.datos.reposicion_ii_2026;
     if (this.st.tab === 'reposicion') return this.datos.reposicion;
     if (this.st.tab === 'radar' && this.datos.radar_ii_2026) return this.datos.radar_ii_2026;
@@ -376,6 +383,9 @@ export class PreparacionExamenes {
     seg.setAttribute('role', 'tablist');
     seg.setAttribute('aria-label', 'Módulo de preparación');
     const pestanas = [];
+    if (this.datos.sprint_6_dias) {
+      pestanas.push(['sprint6', `Sprint 6 días (${this.datos.sprint_6_dias.total})`]);
+    }
     if (this.datos.reposicion_ii_2026) {
       pestanas.push(['repo26', `Reposición II-2026 (${this.datos.reposicion_ii_2026.total})`]);
     }
@@ -474,6 +484,12 @@ export class PreparacionExamenes {
 
     // 2. Tarjeta única protagonista: "Tu siguiente paso ahora"
     wrap.appendChild(this._construirHero(mod, siguiente, hechos, total));
+
+    // 2s. Sprint 6 días: Diagnóstico 1-pregunta-a-la-vez + Minipruebas A y B (30 pts, rúbrica 2+4+2)
+    if (this.st.tab === 'sprint6') {
+      wrap.appendChild(this.intensivo.el);
+      this.intensivo.cargarYPintar();
+    }
 
     // 2a. Reposición II-2026: qué viene en el examen y las recetas fijas (plegados)
     if (esRepo26 && mod.prediccion) {

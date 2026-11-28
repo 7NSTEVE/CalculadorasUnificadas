@@ -74,29 +74,43 @@ export class Simulacro {
 
     const cab = document.createElement('div');
     const h = document.createElement('h1');
-    h.textContent = 'Simulacro II-2026';
+    h.textContent = 'Simulacros FI2103 II-2026';
     const sub = document.createElement('p');
     sub.className = 'portada-sub';
-    sub.textContent = 'Alineado al corte del III parcial: sin Carnot, entropía ni Van der Waals por defecto.';
+    sub.textContent = 'Simulacro completo de Reposición (los 3 Parciales, corte ≤ 20.5) o práctica rápida por tema.';
     cab.append(h, sub);
     caja.appendChild(cab);
 
-    const btnPred = document.createElement('button');
-    btnPred.type = 'button';
-    btnPred.className = 'accion-grande';
-    btnPred.dataset.modo = 'predictivo';
-    btnPred.innerHTML = '<span><strong>Simulacro predictivo II-2026</strong><small>Formato I-2026: 4 conceptuales (2 pts) + 3 cálculos (3 pts) = 17 pts y 3 desarrollos sugeridos</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>';
-    btnPred.addEventListener('click', () => this.iniciar('predictivo'));
-    caja.appendChild(btnPred);
+    const btnRepo1 = document.createElement('button');
+    btnRepo1.type = 'button';
+    btnRepo1.className = 'accion-grande';
+    btnRepo1.dataset.modo = 'reposicion_i2026';
+    btnRepo1.innerHTML = '<span><strong>Simulacro Reposición · 3 Parciales (Formato I-2026)</strong><small>150 min · 6 selecciones (2 P1 + 2 P2 + 2 P3) + 3 desarrollos (P1, P2 y ciclo P3)</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>';
+    btnRepo1.addEventListener('click', () => this.iniciarReposicion('i2026'));
+    caja.appendChild(btnRepo1);
 
     const acc = document.createElement('div');
     acc.className = 'accesos';
+
+    const btnRepo2 = document.createElement('button');
+    btnRepo2.type = 'button';
+    btnRepo2.className = 'acceso';
+    btnRepo2.dataset.modo = 'reposicion_ii2025';
+    btnRepo2.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v2H5V4Zm0 5h14v2H5V9Zm0 5h10v2H5v-2Zm0 5h14v2H5v-2Z"/></svg><span><strong>Reposición · 4 Desarrollos (II-2025)</strong><small>150 min · P1, P2, Conducción variable y Ciclo (60 pts)</small></span>';
+    btnRepo2.addEventListener('click', () => this.iniciarReposicion('ii2025'));
+
+    const btnPred = document.createElement('button');
+    btnPred.type = 'button';
+    btnPred.className = 'acceso';
+    btnPred.dataset.modo = 'predictivo';
+    btnPred.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg><span><strong>Solo III Parcial (predictivo)</strong><small>4 conceptuales + 3 cálculos + 3 desarrollos de Termo</small></span>';
+    btnPred.addEventListener('click', () => this.iniciar('predictivo'));
 
     const btnRap = document.createElement('button');
     btnRap.type = 'button';
     btnRap.className = 'acceso';
     btnRap.dataset.modo = 'rapido';
-    btnRap.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v4.6l3.5 2.1-1 1.7L11 12.8V7h2Z"/></svg><span><strong>Práctica rápida (8 preguntas)</strong><small>Selección variada del corte II-2026 por temas</small></span>';
+    btnRap.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v4.6l3.5 2.1-1 1.7L11 12.8V7h2Z"/></svg><span><strong>Práctica rápida (8 preguntas)</strong><small>Selección variada del corte II-2026</small></span>';
     btnRap.addEventListener('click', () => this.iniciar('rapido', { n: 8 }));
 
     const btnVolver = document.createElement('button');
@@ -105,7 +119,7 @@ export class Simulacro {
     btnVolver.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12l4.6-4.6Z"/></svg><span><strong>Volver al inicio</strong><small>Regresar a las rutas de estudio</small></span>';
     btnVolver.addEventListener('click', () => this.acciones.inicio());
 
-    acc.append(btnRap, btnVolver);
+    acc.append(btnRepo2, btnPred, btnRap, btnVolver);
     caja.appendChild(acc);
 
     const opt = document.createElement('label');
@@ -118,6 +132,153 @@ export class Simulacro {
     sp.textContent = 'Incluir histórico completo (Carnot, entropía y Van der Waals)';
     opt.append(chk, sp);
     caja.appendChild(opt);
+
+    this.el.replaceChildren(caja);
+    this.el.scrollTop = 0;
+  }
+
+  async iniciarReposicion(formato = 'i2026') {
+    let data;
+    try {
+      data = await pedir(`/api/simulacro/reposicion?formato=${encodeURIComponent(formato)}`, { tiempo: 20000 });
+    } catch {
+      aviso('No pude generar el simulacro de reposición.', { mal: true });
+      return;
+    }
+    this._pintarReposicion(data);
+  }
+
+  _pintarReposicion(data) {
+    clearInterval(this.reloj);
+    document.body.dataset.vista = 'inicio';
+    const caja = document.createElement('div');
+    caja.className = 'portada';
+    caja.dataset.simulacroModo = `reposicion_${data.formato}`;
+
+    const h = document.createElement('h1');
+    h.textContent = data.titulo;
+    const p = document.createElement('p');
+    p.className = 'portada-sub';
+    const reloj = document.createElement('strong');
+    p.append(document.createTextNode(`${data.puntos} pts · ${data.minutos} min · Usa las 3 hojas oficiales y calculadora. Tiempo restante: `), reloj);
+    caja.append(h, p);
+
+    let segRest = (data.minutos || 150) * 60;
+    const pintarReloj = () => {
+      const hh = Math.floor(segRest / 3600);
+      const mm = Math.floor((segRest % 3600) / 60);
+      const ss = segRest % 60;
+      reloj.textContent = `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    };
+    pintarReloj();
+    this.reloj = setInterval(() => { segRest = Math.max(0, segRest - 1); pintarReloj(); }, 1000);
+
+    const selecciones = [];
+    (data.items || []).forEach(({ parte, pts, lec }, idx) => {
+      const sec = document.createElement('section');
+      sec.className = 'seccion';
+      sec.dataset.lecId = lec.id;
+      const t = document.createElement('h2');
+      t.textContent = `${idx + 1}. ${parte}`;
+      const bp = document.createElement('span');
+      bp.className = 'simulacro-pts';
+      bp.textContent = `${pts} pts`;
+      t.append(' ', bp);
+      sec.appendChild(t);
+      sec.appendChild(texto(lec.enunciado || '', { px: 20 }));
+
+      if (lec.tipo === 'seleccion' && lec.opciones && Object.keys(lec.opciones).length) {
+        const ul = document.createElement('div');
+        ul.className = 'opciones';
+        let elegida = '';
+        for (const [L, val] of Object.entries(lec.opciones)) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'opcion';
+          b.style.textAlign = 'left';
+          b.style.width = '100%';
+          b.setAttribute('aria-pressed', 'false');
+          b.innerHTML = `<span class="opcion-letra">${L}</span>`;
+          b.appendChild(texto(val, { px: 18, etiqueta: 'span' }));
+          b.addEventListener('click', () => {
+            elegida = L;
+            ul.querySelectorAll('.opcion').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+            b.setAttribute('aria-pressed', 'true');
+          });
+          ul.appendChild(b);
+        }
+        const feed = document.createElement('div');
+        feed.className = 'sim-feed';
+        sec.append(ul, feed);
+        selecciones.push({ lec, get: () => elegida, feed, ul, pts });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.rows = 3;
+        ta.className = 'ciega-inp';
+        ta.style.width = '100%';
+        ta.placeholder = 'Anota tus respuestas numéricas o planteo aquí antes de revisar…';
+        const fila = document.createElement('div');
+        fila.className = 'fila-botones';
+        const bVer = document.createElement('button');
+        bVer.type = 'button';
+        bVer.className = 'btn btn-suave';
+        bVer.textContent = 'Revisar paso a paso en pizarra 3D';
+        bVer.addEventListener('click', () => this.acciones.abrir(lec.id, { corte: '20.5' }));
+        const bCieg = document.createElement('button');
+        bCieg.type = 'button';
+        bCieg.className = 'btn';
+        bCieg.textContent = 'Practicar otra variante sin ver';
+        bCieg.addEventListener('click', () => this.acciones.practicaCiega?.(lec.id));
+        fila.append(bVer, bCieg);
+        sec.append(ta, fila);
+      }
+      caja.appendChild(sec);
+    });
+
+    const resumen = document.createElement('div');
+    resumen.className = 'sim-resumen';
+    const pie = document.createElement('div');
+    pie.className = 'fila-botones';
+    if (selecciones.length) {
+      const btnCor = document.createElement('button');
+      btnCor.type = 'button';
+      btnCor.className = 'btn btn-principal';
+      btnCor.textContent = 'Calificar selecciones y registrar errores';
+      btnCor.addEventListener('click', () => {
+        clearInterval(this.reloj);
+        let okPts = 0;
+        let maxPts = 0;
+        for (const s of selecciones) {
+          maxPts += s.pts;
+          const bien = s.get() === s.lec.correcta;
+          if (bien) okPts += s.pts;
+          s.feed.textContent = bien
+            ? `Correcto (${s.lec.correcta}) · +${s.pts} pts`
+            : `Incorrecto (elegiste ${s.get() || 'nada'}, era ${s.lec.correcta}). Se agregó a tu cola de rescate FSRS-5.`;
+          s.feed.className = `sim-feed ${bien ? 'bien' : 'mal'}`;
+          pedir('/api/progreso', {
+            metodo: 'POST',
+            cuerpo: {
+              tipo: 'simulacro',
+              id: s.lec.id,
+              titulo: s.lec.titulo,
+              bien,
+              categoria: bien ? '' : 'SimulacroFail',
+              nota: bien ? '' : `Fallaste en simulacro (correcta: ${s.lec.correcta})`,
+            },
+          }).catch(() => {});
+        }
+        resumen.textContent = `Selecciones: ${okPts} de ${maxPts} pts. Ahora revisa cada desarrollo en la pizarra 3D.`;
+      });
+      pie.appendChild(btnCor);
+    }
+    const bVolver = document.createElement('button');
+    bVolver.type = 'button';
+    bVolver.className = 'btn';
+    bVolver.textContent = 'Volver';
+    bVolver.addEventListener('click', () => { clearInterval(this.reloj); this.abrir(); });
+    pie.appendChild(bVolver);
+    caja.append(resumen, pie);
 
     this.el.replaceChildren(caja);
     this.el.scrollTop = 0;

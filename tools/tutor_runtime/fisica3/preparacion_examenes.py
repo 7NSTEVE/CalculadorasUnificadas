@@ -18,32 +18,37 @@ from .formularios_p1_p2 import mapear_formulario_por_parcial
 
 _RE_FUERA_20_5 = re.compile(r"entrop[íi]a|\\Delta\s*S|dS\s*=|Carnot", re.I)
 
-# (id -> (etiqueta_omitida, patron_enunciado_trim, reemplazo_titulo))
-_MIXTOS_20_5: Dict[str, Tuple[str, re.Pattern[str], Tuple[str, str]]] = {
+# id -> (aviso, patrón del enunciado, reemplazo del título, primer inciso que se omite)
+_MIXTOS_20_5: Dict[str, Tuple[str, re.Pattern[str], Tuple[str, str], str]] = {
     "Q092": (
         "Inciso D omitido (entropía ΔS · sección 20.7)",
         re.compile(r"\s*D\)\s*[^.]*\.(?:\s*$)?", re.I),
         ("", ""),
+        "D",
     ),
     "Q097": (
         "Inciso E omitido (entropía ΔS · sección 20.7)",
         re.compile(r"\s*E\)\s*[^.]*\.(?:\s*$)?", re.I),
         (" y ΔS", ""),
+        "E",
     ),
     "Q128": (
         "Inciso D omitido (eficiencia de Carnot · sección 20.6)",
         re.compile(r"\s*D\)\s*[^.]*\.(?:\s*$)?", re.I),
         (" y Carnot", ""),
+        "D",
     ),
     "Q127": (
         "Paso auxiliar de entropía omitido (sección 20.7); resuelto solo con Kelvin-Planck (F10C1)",
         re.compile(r"$^"),
         (" y entropía", ""),
+        "",
     ),
     "Q108": (
         "Inciso D omitido (entropía ΔS · sección 20.7)",
         re.compile(r"\s*D\)\s*[^.]*\.(?:\s*$)?", re.I),
         (", e y ΔS", " y e"),
+        "D",
     ),
 }
 
@@ -56,7 +61,7 @@ def filtrar_leccion_corte_20_5(lec_json: Dict[str, Any]) -> Dict[str, Any]:
         out["corte_aplicado"] = "20.5"
         return out
 
-    nota_corte, pat_enun, (t_old, t_new) = _MIXTOS_20_5[lid]
+    nota_corte, pat_enun, (t_old, t_new), inciso = _MIXTOS_20_5[lid]
     if t_old:
         out["titulo"] = str(out.get("titulo") or "").replace(t_old, t_new)
 
@@ -89,12 +94,16 @@ def filtrar_leccion_corte_20_5(lec_json: Dict[str, Any]) -> Dict[str, Any]:
 
     aviso_prev = str(out.get("aviso") or "").strip()
     prefijo = f"Corte ≤ 20.5 activo: {nota_corte}. Los demás incisos se desarrollan completos desde el formulario II-2026."
+    if lid == "Q108":
+        prefijo += " Los incisos A, B y C suman 11 puntos del ejercicio original."
     if aviso_prev and not _RE_FUERA_20_5.search(aviso_prev) and "20.5" not in aviso_prev and "20.6" not in aviso_prev:
         out["aviso"] = f"{prefijo} {aviso_prev}".strip()
     else:
         out["aviso"] = prefijo
     out["corte_aplicado"] = "20.5"
     out["inciso_omitido"] = nota_corte
+    if inciso:
+        out["recorte_omite_desde"] = inciso
     return out
 
 
@@ -692,4 +701,127 @@ def preparacion_completa() -> Dict[str, Any]:
     from .reposicion_ii_2026 import construir_ruta
 
     _CACHE_PREP["reposicion_ii_2026"] = construir_ruta(_arma_item)
+
+    # Sprint Maestro de 6 Días desde cero (< 1 semana → 100 % Reposición FI2103 II-2026)
+    _SPRINT_6_DIAS_DEF = (
+        (
+            "S6-D1", 1, "Día 1 · Bases rápidas + Ciclos (el problema de mayor puntaje)",
+            "Sin saber nada antes: despejes, unidades SI, gas ideal, 1.ª ley en 3D y 3 ciclos reales (5/5 reposiciones).",
+            False,
+            (
+                ("Bases", "1", "T-BASE1", "Despejes y signos en 2 renglones sin miedo."),
+                ("Bases", "2", "T-BASE2", "Las 6 conversiones SI y trucos de calculadora Casio."),
+                ("Teoría", "3", "T-GAS", "Gas ideal pV = nRT, C_V y γ en el pistón 3D."),
+                ("Teoría", "4", "T-PV", "Primera ley ΔU = Q − W y los 4 procesos p–V."),
+                ("Teoría", "5", "T-MAQ", "Eficiencia e, refrigerador K y ciclo Otto."),
+                ("26-I-R", "9", "Q110", "Refrigerador de 2,50 mol de helio (16 pts, I-2026)."),
+                ("25-II-R", "4", "Q109", "Ciclo isocórico-adiabático-isobárico de 0,378 mol."),
+                ("24-II-R", "3", "Q108", "Ciclo de 3 etapas con trapecios (corte ≤ 20.5)."),
+            ),
+        ),
+        (
+            "S6-D2", 2, "Día 2 · Parcial 3 completo: calor, dilatación y conducción 3D",
+            "Todo lo demás de Termodinámica + la esfera cortada O26-8, el cono y conducción con k(y).",
+            False,
+            (
+                ("Teoría", "1", "T-DIL", "Dilatación térmica 3D (barras, huecos que crecen y derrame)."),
+                ("Teoría", "2", "T-CAL", "Calorimetría, calor latente y mezclas ΣQ = 0."),
+                ("Teoría", "3", "T-CON", "Conducción y ley de Fourier en pared, tubo y esfera."),
+                ("Teoría", "4", "T-RAD", "Radiación Stefan-Boltzmann H = AeσT⁴ (T en Kelvin)."),
+                ("Teoría", "5", "T-MAT1", "Qué es dT/dx y qué es una integral, sin saber cálculo."),
+                ("26-II-O", "10", "O26-10", "Desarrollo P3: agua, aluminio y hielo a −15 °C."),
+                ("26-II-O", "8", "O26-8", "Desarrollo P3: esfera cortada 3D con disco A(y) = π(R² − y²)."),
+                ("25-II-R", "3", "Q050", "Conducción con k(y) = 200 + 1000y (posible 4.º problema)."),
+            ),
+        ),
+        (
+            "S6-D3", 3, "Día 3 · Parcial 2 desde cero: hidrostática, flotación, Bernoulli y Poiseuille",
+            "Modelos 3D de manómetros, tanques de flotación, tubos Venturi y perfil parabólico laminar.",
+            False,
+            (
+                ("Teoría", "1", "T-HIDRO", "Presión hidrostática p = p₀ + ρgh y manómetros 3D."),
+                ("Teoría", "2", "T-FLOT", "Empuje de Arquímedes F_B = ρgV y porcentaje hundido."),
+                ("Teoría", "3", "T-BERN", "Caudal, continuidad A₁v₁ = A₂v₂, Venturi y Bernoulli 3D."),
+                ("Teoría", "4", "T-VISC", "Poiseuille (R⁴), Reynolds, Stokes y tensión γ = F/(2l)."),
+                ("26-II-2O", "8", "P2O26-8", "Manómetro multilíquido 3D (20 pts, II parcial II-2026)."),
+                ("26-I-R", "8", "RP-26I-8", "Tanque con nivel constante: caudal y Bernoulli."),
+                ("24-II-R", "2", "RP-24II-2", "Tubo Venturi con dos columnas piezométricas."),
+                ("26-II-2O", "9", "P2O26-9", "Tuberías con Poiseuille y número de Reynolds."),
+            ),
+        ),
+        (
+            "S6-D4", 4, "Día 4 · Integrales desde cero en 3D: represas, compuertas y cono",
+            "Las únicas 4 geometrías y la regla de la potencia viendo las franjas y discos en 3D.",
+            False,
+            (
+                ("Bases", "1", "T-BASE4", "Geometría de cortes 3D: recta del trapecio y Pitágoras."),
+                ("Teoría", "2", "T-INT0", "Integrar es sumar N franjas en la pared 3D."),
+                ("Teoría", "3", "T-INT1", "Una sola regla: ∫hⁿ dh = hⁿ⁺¹/(n+1) y arriba menos abajo."),
+                ("Teoría", "4", "T-PLANTEO", "Plantear cualquier integral con 5 preguntas y 3 pedacitos."),
+                ("Teoría", "5", "T-PARED", "Receta de 5 pasos: rectángulo, trapecio y parábola."),
+                ("26-II-2E", "8", "P2E26-8", "Ventana cuadrada sumergida (integral más corta)."),
+                ("24-I-R", "2", "RP-24I-2", "Compuerta mitad rectangular y mitad parabólica."),
+                ("25-II-R", "2", "RP-25II-2", "Represa trapezoidal 3D con integral y Bernoulli."),
+                ("Teoría", "9", "T-CONO", "Tronco de cono 3D y tubo cilíndrico Q045."),
+            ),
+        ),
+        (
+            "S6-D5", 5, "Día 5 · Parcial 1 completo desde cero en 3D: MAS, péndulos, cuerdas y sonido",
+            "Círculo fasorial 3D para nunca fallar la fase φ, péndulo físico, armónicos y ondas estacionarias.",
+            False,
+            (
+                ("Bases", "1", "T-BASE3", "Radianes (RAD), coseno y fase φ con el fasor 3D."),
+                ("Teoría", "2", "T-MAS", "Resorte 3D, ω = √(k/m), período T y energía ½kA²."),
+                ("Teoría", "3", "T-PEND", "Péndulo simple vs péndulo físico y ejes paralelos."),
+                ("Teoría", "4", "T-ONDA", "Cuerdas 3D, μ = m/L, nodos, traste y ondas estacionarias."),
+                ("Teoría", "5", "T-SON", "Intensidad sonora esférica I = P/(4πr²) (casilla nueva)."),
+                ("26-I-R", "7", "RP-26I-7", "Masa-resorte con fase correcta y energía (I-2026)."),
+                ("26-II-1O", "8", "P1O26-8", "MAS leído desde las curvas de energía K y U."),
+                ("26-II-1E", "8", "P1E26-8", "Péndulo simple contra péndulo físico de 2,00 m."),
+                ("26-II-1E", "9", "P1E26-9", "Cuerda vibrante en banco de pruebas (armónicos y nodos)."),
+                ("26-II-1O", "2", "P1O26-2", "El dron y la intensidad del sonido (casilla nueva)."),
+            ),
+        ),
+        (
+            "S6-D6", 6, "Día 6 · Simulacros completos cronometrados (3 Parciales) y reparación de errores",
+            "Resuelve dos simulacros reales de 150 min (sin ver) y repite tu cola FSRS-5 hasta 0 errores abiertos.",
+            True,
+            (
+                ("26-II-1E", "1", "P1E26-1", "Selección P1: péndulo simple más corto."),
+                ("26-II-1O", "6", "P1O26-6", "Selección P1: nodos en el 2.º armónico."),
+                ("26-II-2O", "2", "P2O26-2", "Selección P2: madera en agua y aceite."),
+                ("26-II-2E", "2", "P2E26-2", "Selección P2: tensión superficial γ = F/(2l)."),
+                ("26-II-O", "1", "O26-1", "Selección P3: C_p en grados Fahrenheit (casilla nueva)."),
+                ("26-II-O", "3", "O26-3", "Selección P3: dilatación con el doble de α."),
+                ("26-II-1O", "9", "P1O26-9", "Desarrollo P1: cuerda presionada contra un traste."),
+                ("26-I-SUF", "4", "SUF26-4", "Desarrollo P2: tubería en descenso con Bernoulli."),
+                ("26-II-O", "9", "O26-9", "Desarrollo P3: ciclo del III parcial ordinario II-2026."),
+            ),
+        ),
+    )
+
+    bloques_sprint6: List[Dict[str, Any]] = []
+    for bid, dia, titulo, sub, es_sim, items_def in _SPRINT_6_DIAS_DEF:
+        lista_s6 = [_arma_item(ex, num, lid, meta) for ex, num, lid, meta in items_def if registro.existe(lid)]
+        bloques_sprint6.append({
+            "id": bid,
+            "dia": dia,
+            "titulo": titulo,
+            "subtitulo": sub,
+            "simulacro": es_sim,
+            "minutos": 150 if es_sim else sum(x["minutos"] for x in lista_s6),
+            "items": lista_s6,
+        })
+
+    _CACHE_PREP["sprint_6_dias"] = {
+        "titulo": "Sprint 6 Días desde Cero · 0 → 100 % Reposición FI2103",
+        "descripcion": (
+            "Ruta intensiva para pasos muy cortos (< 1 semana): arranca desde cero con bases rápidas y modelos 3D "
+            "para los 3 Parciales, activa práctica «sin ver» en cada arquetipo y cierra con simulacros completos."
+        ),
+        "examenes": ["Bases", "Teoría", "26-I-R", "25-II-R", "24-II-R", "24-I-R", "26-II-1O", "26-II-1E", "26-II-2O", "26-II-2E", "26-II-O"],
+        "total": sum(len(b["items"]) for b in bloques_sprint6),
+        "bloques": bloques_sprint6,
+        "mixtos_recortados": [{"id": "Q108", "nota": _MIXTOS_20_5["Q108"][0]}],
+    }
     return _CACHE_PREP

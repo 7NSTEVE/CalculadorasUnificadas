@@ -1990,6 +1990,7 @@ def guia_completa() -> Dict[str, Any]:
             })
 
         _CACHE_GUIA = {
+            "parcial": 3,
             "titulo": "Estudio del formulario oficial · III Parcial FI2103 II-2026",
             "hoja_url": cat["hoja_url"],
             "aspecto": cat["aspecto"],
@@ -2006,3 +2007,155 @@ def guia_completa() -> Dict[str, Any]:
             "entrenador": list(ESCENARIOS_ENTRENADOR),
         }
         return _CACHE_GUIA
+
+
+_CACHE_GUIA_PARCIAL: Dict[int, Dict[str, Any]] = {}
+
+_BLOQUES_P1: Tuple[Dict[str, str], ...] = (
+    {"id": "mas", "nombre": "MAS y resorte con fase", "color": "azul"},
+    {"id": "pendulos", "nombre": "Péndulo simple, físico y torsión", "color": "morado"},
+    {"id": "energia_sonido", "nombre": "Energía del MAS e intensidad sonora", "color": "naranja"},
+    {"id": "ondas", "nombre": "Cuerdas, ondas viajeras y estacionarias", "color": "verde"},
+    {"id": "constantes", "nombre": "Constantes", "color": "gris"},
+)
+
+_BLOQUES_P2: Tuple[Dict[str, str], ...] = (
+    {"id": "elasticidad", "nombre": "Módulos elásticos y tensión superficial", "color": "morado"},
+    {"id": "hidrostatica", "nombre": "Densidad, presión, manómetros y paredes", "color": "azul"},
+    {"id": "dinamica", "nombre": "Caudal, continuidad, Bernoulli y empuje", "color": "verde"},
+    {"id": "viscosidad", "nombre": "Stokes, Reynolds y Poiseuille", "color": "naranja"},
+    {"id": "constantes", "nombre": "Constantes", "color": "gris"},
+)
+
+
+def _bloque_p1(cid: str, es_const: bool) -> Tuple[str, str, str, str]:
+    if es_const:
+        return "constantes", "Constante gravitacional estándar en el SI.", "m/s²", "Siempre 9,8 m/s² salvo que el enunciado diga otra cosa."
+    fila = int(cid.split("F")[1].split("C")[0]) if "F" in cid else 1
+    if fila <= 3:
+        return "mas", "Relaciona posición, velocidad, aceleración, fase φ y período en el movimiento armónico simple.", "x en m, ω en rad/s, T en s, φ en rad", "Pon la calculadora en RAD y usa el signo de v(0) para elegir el cuadrante correcto de φ."
+    if fila <= 5:
+        return "pendulos", "Gobierna oscilaciones angulares de péndulo simple, péndulo físico (con Steiner) y torsión.", "L y d en m, I en kg·m², ω en rad/s", "No confundas d (pivote al centro de masa) con L; usa I = I_cm + m·d² al trasladar el eje."
+    if fila == 6:
+        return "energia_sonido", "Energía mecánica del oscilador o intensidad de ondas sonoras esféricas (casillas nuevas II-2026).", "E en J, I en W/m², r en m", "I = P/(4πr²) cae con el cuadrado de r; en MAS la energía total depende solo de k y A²."
+    return "ondas", "Describe ondas viajeras, estacionarias, densidad lineal μ, rapidez en cuerdas y frecuencias armónicas.", "μ en kg/m, F en N, v en m/s, λ en m, f en Hz", "Recuerda: distancia entre dos nodos seguidos es λ/2, y cada viajera tiene la mitad de amplitud de la estacionaria."
+
+
+def _bloque_p2(cid: str, es_const: bool) -> Tuple[str, str, str, str]:
+    if es_const:
+        return "constantes", "Constante física de fluidos del formulario oficial.", "SI", "Verifica unidades antes de sustituir."
+    fila = int(cid.split("F")[1].split("C")[0]) if "F" in cid else 1
+    if fila == 1 or cid in ("P2-F3C2", "P2-F3C3"):
+        return "elasticidad", "Deformación elástica de sólidos (Young, volumen, corte) o tensión superficial en películas.", "σ y Y en Pa, γ en N/m, l en m", "En película jabonosa con alambre móvil hay DOS superficies: por eso γ = F/(2l)."
+    if fila in (2, 4, 5) and cid != "P2-F5C3":
+        return "hidrostatica", "Presión hidrostática, manómetros de varios líquidos y fuerza integral sobre paredes/compuertas.", "ρ en kg/m³, p en Pa, h en m, F en N", "Si la presión varía con la profundidad h en una pared, usa franja horizontal dA = L(h)dh e integra."
+    if cid in ("P2-F3C1", "P2-F5C3", "P2-F6C1", "P2-F6C2", "P2-F6C3"):
+        return "dinamica", "Flotación de Arquímedes, caudal volumétrico/másico, continuidad y ecuación de Bernoulli.", "Q en m³/s, v en m/s, p en Pa, F_B en N", "En continuidad A = πr² (pasa diámetros a radios en m). En Arquímedes ρ es del LÍQUIDO y V el sumergido."
+    return "viscosidad", "Flujo viscoso real en tuberías (Poiseuille, Reynolds) y esferas cayendo en fluidos (Stokes).", "η en Pa·s, R en m, Q en m³/s", "En Poiseuille va el RADIO a la cuarta potencia (R⁴), nunca el diámetro."
+
+
+def guia_por_parcial(parcial: int = 3) -> Dict[str, Any]:
+    """Devuelve la guía interactiva del formulario oficial para Parcial 1, 2 o 3."""
+    p = int(parcial)
+    if p == 3:
+        return guia_completa()
+    if p not in (1, 2):
+        return guia_completa()
+
+    with _CANDADO:
+        if p in _CACHE_GUIA_PARCIAL:
+            return _CACHE_GUIA_PARCIAL[p]
+
+        from .formularios_p1_p2 import catalogo_formulario_parcial, mapear_formulario_por_parcial
+
+        cat = catalogo_formulario_parcial(p)
+        bloques = _BLOQUES_P1 if p == 1 else _BLOQUES_P2
+        blk_map = {b["id"]: b for b in bloques}
+
+        # Recopilar ejemplos reales del banco de ese parcial
+        ejemplos: Dict[str, List[Dict[str, str]]] = {}
+        for lid in registro.ids():
+            lec = registro.obtener(lid)
+            if lec.parcial != p or lec.tipo == "teoria":
+                continue
+            mapa = mapear_formulario_por_parcial(lec.a_json())
+            it = {"id": lid, "titulo": lec.titulo, "tipo": lec.tipo}
+            for c in mapa.get("celdas") or []:
+                lst = ejemplos.setdefault(c["id"], [])
+                if len(lst) < 5:
+                    lst.append(it)
+
+        nuevas_set = {"P1-F6C1", "P1-F6C2", "P2-F3C3", "P2-F8C3"}
+        celdas_out: List[Dict[str, Any]] = []
+        for c in cat["celdas"]:
+            cid = c["id"]
+            es_const = bool(c.get("es_constante"))
+            blk_id, desc, unid, err = _bloque_p1(cid, es_const) if p == 1 else _bloque_p2(cid, es_const)
+            blk = blk_map[blk_id]
+            sims = simbolos.simbolos_de(c["tex"], simbolos.grupo_celda(cid))
+            celdas_out.append({
+                **c,
+                "bloque": blk_id,
+                "bloque_nombre": blk["nombre"],
+                "color": blk["color"],
+                "estado_ii_2026": "nueva" if cid in nuevas_set else "fija",
+                "estado_ordinario_ii_2026": "constante" if es_const else "evaluada",
+                "prioridad": "alta" if not es_const else "media",
+                "que_es": f"{c['nombre']}. {desc}",
+                "cuando_si": [f"Cuando el problema involucra {c['nombre'].lower()} y datos compatibles con la hoja del Parcial {p}."],
+                "cuando_no": ["No sustituyas sin convertir primero a SI (m, kg, s, rad, Pa)."],
+                "unidades": unid,
+                "errores": [err],
+                "confundir_con": [],
+                "se_deriva": [],
+                "pistas_enunciado": [c["nombre"].lower()],
+                "patron_examen": {
+                    "en_formularios": f"Hoja oficial Parcial {p} · II-2026",
+                    "parte": "Reposición (Selección y Desarrollo)",
+                    "historial": "Casilla nueva en II-2026 (repasar bien)." if cid in nuevas_set else "Casilla base de la hoja oficial.",
+                },
+                "simbolos": sims,
+                "ejemplos": ejemplos.get(cid, []),
+            })
+
+        decisiones = (
+            [
+                {"sintoma": "Resorte con x(0) y v(0) pidiendo x(t) y fase φ", "celdas": ["P1-F1C4", "P1-F3C2", "P1-F3C3", "P1-F2C2", "P1-F2C3"], "clave": "Usa el signo de v(0) para elegir el cuadrante correcto de φ (en RAD)."},
+                {"sintoma": "Péndulo físico (varilla + esfera) colgado de un pivote", "celdas": ["P1-F4C4", "P1-F5C4", "P1-F3C2"], "clave": "Calcula I respecto al pivote con Steiner y d desde el pivote al centro de masa."},
+                {"sintoma": "Cuerda con tensión, traste o armónico n", "celdas": ["P1-F9C4", "P1-F10C1", "P1-F10C2", "P1-F10C3", "P1-F10C4"], "clave": "Primero μ = m/L, luego v = √(F/μ), luego λ_n = 2L/n."},
+                {"sintoma": "Fuente sonora puntual (dron) a dos distancias", "celdas": ["P1-F6C1", "P1-F6C2"], "clave": "Usa I₁/I₂ = r₂²/r₁² (casilla nueva II-2026)."},
+            ]
+            if p == 1 else
+            [
+                {"sintoma": "Pared, compuerta o represa con agua (rectángulo, trapecio, parábola)", "celdas": ["P2-F5C1", "P2-F2C3", "P2-F4C1"], "clave": "Franja horizontal dA = L(h)dh, presión p = ρgh, suma F = ∫ ρgh L(h) dh."},
+                {"sintoma": "Tanque con orificio o tubo Venturi (fluido ideal)", "celdas": ["P2-F5C3", "P2-F6C1", "P2-F6C2"], "clave": "Pasa diámetros a radios en m, aplica A₁v₁ = A₂v₂ y Bernoulli."},
+                {"sintoma": "Aceite viscoso en tubo o esfera cayendo", "celdas": ["P2-F8C2", "P2-F8C1", "P2-F7C1", "P2-F7C3"], "clave": "Con viscosidad η NO aplica Bernoulli: usa Poiseuille (R⁴) y Reynolds."},
+                {"sintoma": "Manómetro con varios líquidos en capas", "celdas": ["P2-F5C1", "P2-F5C2", "P2-F4C3"], "clave": "Bajar suma +ρgΔh, subir resta −ρgΔh; misma altura en el mismo líquido = misma presión."},
+            ]
+        )
+
+        entrenador = [
+            {
+                "id": f"ENT-P{p}-{idx}",
+                "categoria": "nuevas" if c["id"] in nuevas_set else "todas",
+                "enunciado": f"¿Qué casilla de la hoja del Parcial {p} corresponde a: {c['nombre']}?",
+                "validas": [c["id"]],
+                "explica": f"{c['nombre']}: {c['unidades']}.",
+            }
+            for idx, c in enumerate([x for x in celdas_out if not x.get("es_constante")][:16], 1)
+        ]
+
+        res = {
+            "parcial": p,
+            "titulo": f"Estudio del formulario oficial · Parcial {p} FI2103 II-2026",
+            "hoja_url": cat["hoja_url"],
+            "aspecto": cat["aspecto"],
+            "total": len(celdas_out),
+            "bloques": list(bloques),
+            "celdas": celdas_out,
+            "decisiones": decisiones,
+            "fuera_de_hoja": [],
+            "entrenador": entrenador,
+        }
+        _CACHE_GUIA_PARCIAL[p] = res
+        return res

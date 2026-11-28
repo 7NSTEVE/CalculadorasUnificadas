@@ -188,8 +188,12 @@ class TutorRuntimeContext:
         self.live_audio_model = str(bootstrap.get("live_audio_model") or "gemini-3.8-live")
         self.tts = AlignedSpanishTts(api_key=audio_key, voice=str(bootstrap.get("tts_voice") or "Kore"))
         self.pdf_store = LocalPdfRagStore(db_path=":memory:")
-        mem_path = self.repo_root / "private_local" / "tutor_memory.sqlite"
-        self.memory = PedagogyMemoryStore(db_path=mem_path if mem_path.parent.exists() else ":memory:")
+        mem_override = bootstrap.get("memory_db_path")
+        if mem_override is not None:
+            self.memory = PedagogyMemoryStore(db_path=str(mem_override))
+        else:
+            mem_path = self.repo_root / "private_local" / "tutor_memory.sqlite"
+            self.memory = PedagogyMemoryStore(db_path=mem_path if mem_path.parent.exists() else ":memory:")
         telem_dir_raw = bootstrap.get("telemetry_dir")
         telem_dir = pathlib.Path(telem_dir_raw) if telem_dir_raw else (self.repo_root / "private_local" / "telemetry")
         telem_enabled = bool(bootstrap.get("telemetry_enabled", True)) and (
@@ -199,7 +203,11 @@ class TutorRuntimeContext:
         privada = self.repo_root / "private_local"
         hay_privada = privada.exists()
         self.voz = ServicioVoz(audio_key, (privada / "voz_cache") if hay_privada else None, voz=str(bootstrap.get("tts_voice") or "es-MX-DaliaNeural"))
-        self.progreso = Progreso((privada / "tutor_progreso.json") if hay_privada else None)
+        if "progreso_path" in bootstrap:
+            p_raw = bootstrap.get("progreso_path")
+            self.progreso = Progreso(pathlib.Path(p_raw) if p_raw else None)
+        else:
+            self.progreso = Progreso((privada / "tutor_progreso.json") if hay_privada else None)
         self.documentos = Documentos(self.repo_root, cache=(privada / "tutor_recortes") if hay_privada else None)
         self.sessions: Dict[str, Dict[str, Any]] = {}
 
@@ -267,7 +275,7 @@ def create_app(bootstrap: Optional[Dict[str, Any]] = None) -> FastAPI:
     def _revisa_token(req: Request) -> None:
         _check_token(req.query_params.get("token"), req)
 
-    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token, ctx.documentos, ctx.visual_director))
+    app.include_router(crear_router(ctx.voz, ctx.progreso, _revisa_token, ctx.documentos, ctx.visual_director, ctx.memory))
 
     @app.get("/api/health")
     async def api_health(request: Request, token: Optional[str] = Query(default=None)) -> Dict[str, Any]:

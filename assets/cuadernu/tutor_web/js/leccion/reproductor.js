@@ -67,10 +67,15 @@ class Obra {
       return;
     }
     if (acc.a === 'dato') {
-      const m = rep.enun ? rep.enun.marcarDato(acc.frase, acc.color || 'naranja') : null;
+      const m = rep.enun ? rep.enun.marcarDato(acc, acc.color || 'naranja') : null;
       if (!m) { this.terminar(); return; }
       this.cosa = m;
       this.dur = 700;
+      return;
+    }
+    if (acc.a === 'fuente') {
+      rep.senalarOrigen(acc.fuente);
+      this.terminar();
       return;
     }
     if (acc.a === 'marca') {
@@ -89,7 +94,7 @@ class Obra {
     }
     this.cosa = t;
     this.dur = t.duracionNatural;
-    rep.tablero.seguir(t.el);
+    if (!this.vista.el.classList.contains('ayuda-origen')) rep.tablero.seguir(t.el);
   }
 
   avanzar(pos, dt) {
@@ -182,6 +187,12 @@ export class Reproductor {
     this.soltar();
     const gen = (this.gen += 1);
     this.lec = lec;
+    this.accionesLeccion = new Map();
+    for (const paso of lec.pasos) {
+      for (const tramo of paso.tramos) {
+        for (const acc of tramo.acc) this.accionesLeccion.set(acc.id, { paso, acc });
+      }
+    }
     this.i = -1;
     this.motorLec = null;
     this.vistas = [];
@@ -215,6 +226,7 @@ export class Reproductor {
     this.lec = null;
     this.i = -1;
     this.enun = null;
+    this.accionesLeccion = null;
     this.vistas = [];
     this._estado('vacio');
   }
@@ -226,7 +238,7 @@ export class Reproductor {
     for (const [k, tr] of paso.tramos.entries()) {
       const acc = tr.acc || [];
       const costes = acc.map((a) => {
-        if (a.a === 'visual' || a.a === 'opcion') return 0;
+        if (a.a === 'visual' || a.a === 'opcion' || a.a === 'fuente') return 0;
         if (a.a === 'marca' || a.a === 'dato') return 6;
         const largo = a.tex ? a.tex.replace(/\\[A-Za-z]+|[{}]/g, '').length : JSON.stringify(a.items || a.filas || a.txt || '').length;
         return Math.max(6, largo);
@@ -297,7 +309,7 @@ export class Reproductor {
       else if (p.el.classList.contains('aclaracion') && Number(p.el.dataset.de || 0) > i) this.tablero.quitarPaso(p);
     }
     this.vistas.length = Math.min(this.vistas.length, i);
-    if (i === 0 && this.enun) { this.enun.reiniciarOpciones(); this.lateral.quitarDatos(); }
+    if (i === 0 && this.enun) { this.enun.reiniciarOpciones(); this.enun.reiniciarDatos(); this.lateral.quitarDatos(); }
     // El enunciado ya está en la pizarra: el panel no se cambia solo a «Enunciado» (se vería dos veces)
     if (i === 1 && this.lateral.visual) this.lateral.ver('visual');
     for (let k = this.vistas.length; k < i; k += 1) this._pintarCompleto(k);
@@ -495,6 +507,48 @@ export class Reproductor {
 
   /* ---------------------------------------------------------------- aclaraciones */
 
+  origenDeAccion(id) { return this.accionesLeccion?.get(id); }
+
+  senalarOrigen(fuente) {
+    this._quitarOrigen?.();
+    this._quitarOrigen = null;
+    if (!fuente) return;
+    if (fuente.tipo === 'formulario') {
+      this._quitarOrigen = this.lateral.senalarCelda(fuente.celda_id);
+      if (!this._quitarOrigen) bus.emit('aviso', { texto: 'La casilla indicada no está visible en esta lección.' });
+      return;
+    }
+    let marca, objetivo, volverAPlegar;
+    if (fuente.tipo === 'enunciado') {
+      const dato = this.origenDeAccion(fuente.dato_id)?.acc;
+      marca = this.enun?.marcarDato(dato, 'azul', { temporal: true });
+      objetivo = marca?.objetivo;
+    } else if (fuente.tipo === 'renglon') {
+      const t = this.tablero.tinta(fuente.accion_id);
+      if (t) {
+        const vista = this.vistas.find((v) => v?.el.contains(t.el));
+        if (vista?.el.classList.contains('plegado')) {
+          vista.desplegar();
+          volverAPlegar = () => { if (vista.el.dataset.abierto !== 'si') vista.plegar(); };
+        }
+        marca = this.tablero.marcas.crear({ tipo: 'subraya', en: fuente.accion_id, color: 'azul' });
+        objetivo = t.el;
+      }
+    }
+    if (!marca) {
+      bus.emit('aviso', { texto: 'No pude señalar esta referencia en la pizarra.' });
+      return;
+    }
+    marca.g.classList.add('origen-temporal');
+    marca.g.dataset.fuente = fuente.dato_id || fuente.accion_id;
+    marca.completar();
+    if (objetivo?.isConnected) {
+      this.tablero.seguir(objetivo);
+      this.tablero.volverAlActual();
+    }
+    this._quitarOrigen = () => { marca.quitar(); volverAPlegar?.(); };
+  }
+
   /** Bloque extra debajo del paso actual (por qué, de dónde salió, más despacio, respuesta de la IA). */
   aclaracion(titulo, clase = '') {
     const despues = (() => {
@@ -511,13 +565,27 @@ export class Reproductor {
   async contar(mini, titulo, clase = '', vistaYa = null) {
     const estabaHablando = this.estado === 'hablando';
     if (estabaHablando) this.pausar();
-    if (this._mini) this._mini.cortar();
+    this.cortarMini();
     const vista = vistaYa && vistaYa.el.isConnected ? vistaYa : this.aclaracion(titulo, clase);
+    if (mini.soloLocal) {
+      const cerrar = document.createElement('button');
+      cerrar.type = 'button';
+      cerrar.className = 'btn btn-suave cerrar-ayuda';
+      cerrar.textContent = 'Cerrar';
+      cerrar.setAttribute('aria-label', 'Cerrar aclaración');
+      cerrar.addEventListener('click', () => {
+        if (this._vistaAyuda === vista) this.cortarMini();
+        this.tablero.quitarPaso(vista);
+        if (this.vista) this.tablero.seguir(this.vista.el);
+      });
+      vista.cuerpo.prepend(cerrar);
+      this._vistaAyuda = vista;
+    }
     this.tablero.seguir(vista.el);
     const ctrl = { vivo: true, cortar() { this.vivo = false; if (this.voz) this.voz.soltar(); } };
     this._mini = ctrl;
     const obras = this._armarObras(mini, vista);
-    const voz = await crearVoz(mini, this._vozDeLeccion());
+    const voz = await crearVoz(mini, { ...this._vozDeLeccion(), soloLocal: mini.soloLocal });
     ctrl.voz = voz;
     if (!ctrl.vivo) { voz.soltar(); return vista; }
     try { await voz.iniciar(); } catch { /* sin sonido: se escribe igual */ }
@@ -525,7 +593,11 @@ export class Reproductor {
     await new Promise((res) => {
       let antes = performance.now();
       const paso = (t) => {
-        if (!ctrl.vivo) { for (const o of obras) o.completar(); res(); return; }
+        if (!ctrl.vivo) {
+          if (vista.el.isConnected) for (const o of obras) if (o.acc.a !== 'fuente') o.completar();
+          res();
+          return;
+        }
         const dt = Math.min(120, t - antes);
         antes = t;
         const pos = voz.posicion();
@@ -536,7 +608,11 @@ export class Reproductor {
         let w = -1;
         pal.forEach((q, j) => { if (pos >= q[1] - 0.5) w = j; });
         bus.emit('subtitulo', { palabras: pal, actual: w, clave: `mini:${titulo}:${k}` });
-        if (voz.terminada && todo) { res(); return; }
+        if (voz.terminada) {
+          if (!todo) for (const o of obras) if (!o.terminada) o.completar();
+          res();
+          return;
+        }
         requestAnimationFrame(paso);
       };
       requestAnimationFrame(paso);
@@ -546,7 +622,12 @@ export class Reproductor {
     return vista;
   }
 
-  cortarMini() { if (this._mini) this._mini.cortar(); }
+  cortarMini() {
+    if (this._mini) this._mini.cortar();
+    this._quitarOrigen?.();
+    this._quitarOrigen = null;
+    this._vistaAyuda = null;
+  }
 }
 
 /** Convierte un texto suelto (o renglones) en un mini paso reproducible. */

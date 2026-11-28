@@ -92,8 +92,8 @@ if ('speechSynthesis' in window) {
   vocesLocales();
 }
 
-function mejorVoz() {
-  const vs = vocesLocales();
+function mejorVoz(soloLocal = false) {
+  const vs = vocesLocales().filter((v) => !soloLocal || v.localService);
   if (!vs.length) return null;
   if (ajustes.vozLocal) {
     const e = vs.find((v) => v.name === ajustes.vozLocal);
@@ -117,7 +117,7 @@ export function hayVozLocal() {
 
 class VozLocal {
   /** tramos: [{c0, c1}] sobre `texto`. Se habla tramo por tramo para poder pausar de verdad. */
-  constructor(texto, tramos) {
+  constructor(texto, tramos, voz = mejorVoz(), ritmo = 1) {
     this.tipo = 'local';
     this.texto = texto;
     this.tramos = tramos.length ? tramos : [{ c0: 0, c1: texto.length }];
@@ -128,7 +128,8 @@ class VozLocal {
     this.pausada = true;
     this.generacion = 0;
     this.ancla = { pos: 0, t: performance.now(), cps: CPS };
-    this.voz = mejorVoz();
+    this.voz = voz;
+    this.ritmo = ritmo;
     this.alTerminar = null;
   }
 
@@ -144,8 +145,8 @@ class VozLocal {
     const ini = tr.c0 + desde;
     const u = new SpeechSynthesisUtterance(this.texto.slice(ini, tr.c1));
     if (this.voz) { u.voice = this.voz; u.lang = this.voz.lang; } else u.lang = 'es-MX';
-    u.rate = Math.max(0.6, Math.min(1.8, ajustes.vel * 1.02));
-    this.ancla = { pos: ini, t: performance.now() + 120, cps: CPS * ajustes.vel };
+    u.rate = Math.max(0.6, Math.min(1.8, ajustes.vel * 1.02 * this.ritmo));
+    this.ancla = { pos: ini, t: performance.now() + 120, cps: CPS * ajustes.vel * this.ritmo };
     this.tope = tr.c1;
     let vivo = false;
     const guardia = setTimeout(() => {
@@ -183,8 +184,9 @@ class VozLocal {
   }
 
   _sinEventos(gen, ini, fin) {
-    const ms = ((fin - ini) / (CPS * ajustes.vel)) * 1000;
-    this.ancla = { pos: ini, t: performance.now(), cps: CPS * ajustes.vel };
+    const cps = CPS * ajustes.vel * this.ritmo;
+    const ms = ((fin - ini) / cps) * 1000;
+    this.ancla = { pos: ini, t: performance.now(), cps };
     setTimeout(() => {
       if (gen !== this.generacion || this.pausada) return;
       this.i += 1;
@@ -376,9 +378,15 @@ export async function probarVoz(vozId) {
  * Crea la voz de un paso. Si la voz neural no responde en `paciencia` ms se usa la voz del sistema:
  * nadie se queda viendo una pizarra vacía.
  */
-export async function crearVoz(paso, { paciencia = 9000, motor = 'auto' } = {}) {
+export async function crearVoz(paso, { paciencia = 9000, motor = 'auto', soloLocal = false } = {}) {
   const texto = paso.habla || '';
-  if (!texto || !ajustes.narracion) return new VozMuda(texto || ' '.repeat(40), 1.15);
+  const ritmo = paso.estilo === 'despacio' ? 0.8 : 1;
+  if (!texto || !ajustes.narracion) return new VozMuda(texto || ' '.repeat(40), 1.15 * ritmo);
+  const tramos = paso.tramos.map((t) => ({ c0: t.c0, c1: t.c1 }));
+  if (soloLocal) {
+    const voz = mejorVoz(true);
+    return voz ? new VozLocal(texto, tramos, voz, ritmo) : new VozMuda(texto, ritmo);
+  }
   const localOk = hayVozLocal();
   const esLocalPesado = ajustes.motorVoz === 'kokoro' || ajustes.motorVoz === 'local_http';
   const pac = esLocalPesado ? Math.max(paciencia, 28000) : paciencia;
@@ -389,7 +397,7 @@ export async function crearVoz(paso, { paciencia = 9000, motor = 'auto' } = {}) 
     ]);
     if (meta && meta.clave) return new VozNube(meta);
   }
-  if (localOk) return new VozLocal(texto, paso.tramos.map((t) => ({ c0: t.c0, c1: t.c1 })));
+  if (localOk) return new VozLocal(texto, tramos);
   return new VozMuda(texto);
 }
 

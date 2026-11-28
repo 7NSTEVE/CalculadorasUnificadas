@@ -262,7 +262,7 @@ export class TintaTexto extends Tinta {
         sp.style.verticalAlign = `${(-m.baja).toFixed(1)}px`;
         sp.appendChild(m.svg);
         this.el.appendChild(sp);
-        this.unidades.push({ el: sp, coste: Math.max(1.2, m.piezas.reduce((a, b) => a + b.coste, 0) * 0.7), m });
+        this.unidades.push({ el: sp, coste: Math.max(1.2, m.piezas.reduce((a, b) => a + b.coste, 0) * 0.7), m, tex: tr.v });
         if (m.desconocidos.length) this.el.dataset.desconocidos = m.desconocidos.join(' ');
         continue;
       }

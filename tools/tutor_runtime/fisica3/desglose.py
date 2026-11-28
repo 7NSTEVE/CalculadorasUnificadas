@@ -991,17 +991,22 @@ _SEPARADORES = re.compile(r"\\approx|≈|=")
 def _trozos_nivel0(tex: str) -> List[Tuple[str, str]]:
     """Parte en '=' / '\\approx' de nivel 0. Devuelve [(operador_previo, trozo)]."""
     out: List[Tuple[str, str]] = []
-    prof = 0
+    llaves = 0
+    parentesis = 0
     ini = 0
     op = ""
     k = 0
     while k < len(tex):
         c = tex[k]
         if c == "{":
-            prof += 1
+            llaves += 1
         elif c == "}":
-            prof -= 1
-        if prof == 0:
+            llaves -= 1
+        elif llaves == 0 and c == "(":
+            parentesis += 1
+        elif llaves == 0 and c == ")" and parentesis:
+            parentesis -= 1
+        if llaves == 0 and parentesis == 0:
             m = _SEPARADORES.match(tex, k)
             if m and not (c == "=" and k > 0 and tex[k - 1] in "<>!\\"):
                 out.append((op, tex[ini:k]))

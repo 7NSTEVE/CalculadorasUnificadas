@@ -8,6 +8,7 @@ import { ajustes, bus, conectado, enviar } from '../nucleo/api.js';
 import { planAMini, limpiarHabla } from './plan_ia.js';
 import { VozViva } from './voz_viva.js';
 import { aviso } from './avisos.js';
+import { normalizaDato } from '../leccion/enunciado.js';
 
 /** Quita la matemática de un texto para poder narrarlo. */
 function hablable(txt) {
@@ -38,42 +39,74 @@ export class Asistente {
     this.rep.contar(this.miniPaso([{ habla: hablable(p.porque), acc: [{ a: 'texto', txt: p.porque, id: `pq${this.rep.i}_${Date.now()}` }] }]), '¿Por qué?');
   }
 
-  origen() {
-    const p = this.rep.paso;
+  origen(seleccion = null) {
+    const p = (seleccion && this.rep.origenDeAccion(seleccion.tid)?.paso) || this.rep.paso;
     if (!p) return;
-    const filas = (p.origen && p.origen.length) ? p.origen : (this.rep.lec.formulas || []).map((f) => ({ que: `$${f}$`, de: 'formulario oficial' }));
-    if (!filas.length) { this.preguntar('¿De dónde sale lo que acabas de escribir?'); return; }
-    const t = Date.now();
-    const tramos = filas.map((f, k) => ({
-      habla: hablable(`${f.voz || f.que}: ${f.de}`) || f.de,
-      acc: [{ a: 'texto', txt: `${f.que} · ${f.de}`, id: `or${t}_${k}` }],
+    let filas = (p.origen || []).filter((o) => o.fuente);
+    if (seleccion) {
+      const termino = normalizaDato(seleccion.texto);
+      const delRenglon = filas.filter((o) => o.destino_id === seleccion.tid);
+      filas = delRenglon.filter((o) => o.terminos?.some((v) => normalizaDato(v) === termino));
+      // Al tocar los dígitos, el puntero puede devolver el número sin el signo que lo precede.
+      if (!filas.length && /^\d/.test(termino)) {
+        const conSigno = delRenglon.filter((o) => o.terminos?.some((v) => normalizaDato(v) === '-' + termino));
+        if (conSigno.length === 1) filas = conSigno;
+      }
+    }
+    const vistas = new Set();
+    filas = filas.filter(({ fuente }) => {
+      const propia = JSON.stringify(fuente);
+      if (vistas.has(propia)) return false;
+      vistas.add(propia);
+      return true;
+    });
+
+    const explicacion = 'Todavía no hay una fuente marcada para este renglón.';
+    const tramos = filas.map((f) => ({
+      habla: f.voz || hablable(f.que + '. ' + f.de) || f.de,
+      acc: [{ a: 'fuente', fuente: f.fuente }, { a: 'texto', txt: f.que + ' · ' + f.de }],
     }));
-    this.rep.contar(this.miniPaso(tramos), '¿De dónde salió?');
+    if (!tramos.length) {
+      tramos.push({ habla: explicacion, acc: [{ a: 'texto', txt: explicacion, clase: 'nota' }] });
+      if (!seleccion) for (const f of (p.origen || []).filter((o) => !o.fuente)) {
+        tramos.push({ habla: hablable(f.voz || f.de), acc: [{ a: 'texto', txt: f.que + ' · ' + f.de }] });
+      }
+    }
+    return this.rep.contar({ ...this.miniPaso(tramos), soloLocal: true }, '¿De dónde salió?', 'ayuda-origen');
   }
 
-  despacio() {
-    const p = this.rep.paso;
+  despacio(seleccion = null) {
+    const p = (seleccion && this.rep.origenDeAccion(seleccion.tid)?.paso) || this.rep.paso;
     if (!p) return;
-    if (p.lento && p.lento.length) {
-      const t = Date.now();
-      const tramos = p.lento.map((r, k) => ({
-        habla: hablable(r.voz || r.nota || 'Seguimos.') || 'Seguimos.',
+    const filas = (p.lento || []).filter((r) => !seleccion || !r.destino_id || r.destino_id === seleccion.tid);
+    const tramos = [];
+    let anterior = null;
+    for (const r of filas) {
+      const nuevoRenglon = anterior !== r.destino_id;
+      const origen = nuevoRenglon && (p.origen || []).find((o) => o.fuente && o.destino_id === r.destino_id);
+      anterior = r.destino_id;
+      if (nuevoRenglon) tramos.push({
+        habla: origen ? origen.de : 'Miramos el cálculo.',
+        acc: [{ a: 'fuente', fuente: origen?.fuente }],
+      });
+      const nota = r.voz || r.nota || (r.tex ? '$' + r.tex + '$' : '');
+      tramos.push({
+        habla: hablable(nota) || 'Seguimos con el renglón.',
         acc: [
-          ...(r.nota ? [{ a: 'texto', txt: r.nota, clase: 'nota', id: `ln${t}_${k}` }] : []),
-          ...(r.tex ? [{ a: 'mate', tex: r.tex, id: `lm${t}_${k}` }] : []),
+          ...(r.nota ? [{ a: 'texto', txt: r.nota, clase: 'nota' }] : []),
+          ...(r.tex ? [{ a: 'mate', tex: r.tex }] : []),
         ],
-      }));
-      const mini = this.miniPaso(tramos);
-      mini.estilo = 'despacio';
-      this.rep.contar(mini, 'Más despacio');
-      return;
+      });
     }
-    // Sin renglones extra: se repite el paso a ritmo lento
-    const antes = ajustes.vel;
-    ajustes.vel = Math.max(0.6, antes * 0.8);
-    this.rep.repetir();
-    const quita = bus.on('leccion:finpaso', () => { ajustes.vel = antes; quita(); });
-    aviso('Repito este paso más lento.');
+    if (!tramos.length) {
+      const repito = 'Repito la explicación de este paso más despacio.';
+      tramos.push({ habla: repito, acc: [{ a: 'texto', txt: repito, clase: 'nota' }] });
+      for (const t of p.tramos) {
+        const acc = t.acc.filter((a) => a.a === 'mate' || a.a === 'texto').map(({ id, ...a }) => a);
+        tramos.push({ habla: p.habla.slice(t.c0, t.c1), acc });
+      }
+    }
+    return this.rep.contar({ ...this.miniPaso(tramos), estilo: 'despacio', soloLocal: true }, 'Más despacio');
   }
 
   /* -------------------------------------------------------- preguntas libres */

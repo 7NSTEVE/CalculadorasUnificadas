@@ -213,7 +213,7 @@ export class AyudaLeccion {
     const lec = this.rep.lec;
     const paso = this.rep.paso;
     if (!lec) return false;
-    if (op === 'origen') return Boolean((paso && paso.origen && paso.origen.length) || (lec.formulas && lec.formulas.length));
+    if (op === 'origen' || op === 'despacio') return Boolean(paso);
     if (op === 'porque') return Boolean(paso && paso.porque);
     if (op === 'preguntar') {
       // Solo cuando la barra de preguntas está oculta (modo enfoque): si se ve, sería un control repetido

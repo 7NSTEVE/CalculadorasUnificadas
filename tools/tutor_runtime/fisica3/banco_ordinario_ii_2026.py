@@ -387,12 +387,21 @@ def o26_7() -> Leccion:
         claves=["ciclo Otto", "razón de compresión", "gamma", "eficiencia", "monoatómico", "diatómico"],
     )
     L.paso("La casilla del ciclo Otto")\
-        .di("La hoja trae la eficiencia del ciclo Otto: solo depende de la razón de compresión y de gama.",
+        .di("La hoja trae la eficiencia del ciclo Otto y la razón de compresión. Los dos motores tienen la misma razón.",
             DATO("misma razón de compresión"),
-            F(r"e_{\text{otto}} = 1 - \frac{1}{r^{\gamma - 1}}"))\
-        .di("La razón de compresión es la misma en los dos motores. Lo único que cambia es el exponente: gama menos uno.",
-            M(r"\gamma_A - 1 = 1{,}4 - 1 = 0{,}4"),
-            M(r"\gamma_B - 1 = 1{,}67 - 1 = 0{,}67"))
+            F(r"e_{\text{otto}} = 1 - \frac{1}{r^{\gamma - 1}}"),
+            F(r"r = \frac{V_{\text{máx}}}{V_{\text{mín}}}", "razon-otto"))\
+        .di("Gama es ce pe entre ce ve. Para sacar ce pe sumamos erre a ce ve.",
+            F(r"\gamma = \frac{C_P}{C_V}"),
+            F(r"C_P = C_V + R"))\
+        .di("Para el diatómico, ce ve es cinco medios de erre. Cancelamos erre y queda siete quintos.",
+            F(r"C_{V\text{dia}} = \frac{5}{2}R"),
+            M(r"\gamma_A=\frac{\tfrac{5}{2}R+R}{\tfrac{5}{2}R}=\frac{\tfrac{7}{2}}{\tfrac{5}{2}}=\frac{7}{5}=1{,}4"),
+            M(r"\gamma_A - 1 = 1{,}4 - 1 = 0{,}4"))\
+        .di("Para el monoatómico, ce ve es tres medios de erre. Cancelamos erre y queda cinco tercios.",
+            F(r"C_{V\text{mono}} = \frac{3}{2}R"),
+            M(r"\gamma_B=\frac{\tfrac{3}{2}R+R}{\tfrac{3}{2}R}=\frac{\tfrac{5}{2}}{\tfrac{3}{2}}=\frac{5}{3}\approx 1{,}67"),
+            M(r"\gamma_B - 1 \approx 1{,}67 - 1 = 0{,}67"))
     L.paso("Probar con un número")\
         .di("Con cualquier número mayor que uno se ve quién gana. Probamos con una razón de compresión de ocho.",
             M(rf"8^{{0{{,}}4}} = {tex(r ** 0.4, 4)}"),
@@ -608,7 +617,7 @@ def o26_9() -> Leccion:
             M(r"\frac{Q_{DA}}{\Delta U_{DA}} = \frac{nC_P\,\Delta T_{DA}}{nC_V\,\Delta T_{DA}} = \frac{C_P}{C_V} = \gamma", "gam", "azul"))
     L.paso("b) Sustitución y verificación con los 10,0 moles")\
         .di("Sustituimos los dos valores del tramo D a A.",
-            M(rf"\gamma = \frac{{-354\,600}}{{-253\,275}} = {tex(gamma_da, 5)}"),
+            M(rf"\gamma = \frac{{-354\,600}}{{-253\,275}} = {tex(gamma_da, 5)}", "gamma-sustitucion"),
             R(r"\gamma = 1{,}40", "rb"))\
         .di("Comprobación usando los diez moles y la relación de Mayer: las temperaturas de A y D llevan al mismo ce pe de gas diatómico.".replace("ce pe", dice("C_P", "ce pe")),
             F(r"pV = nRT"), F(r"C_P = C_V + R"),

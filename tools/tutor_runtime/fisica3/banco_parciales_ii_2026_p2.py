@@ -374,12 +374,15 @@ def p2o26_8() -> Leccion:
         .di("Desde A bajamos en el agua de dos coma cuarenta a cero coma ochocientos cincuenta metros. La diferencia de alturas es uno coma cincuenta y cinco.",
             M(r"p_{\text{agua/Hg}}=p_A+\rho_{\text{agua}}\,g\,(y_A-y_{\text{agua/Hg}})"),
             M(r"y_A-y_{\text{agua/Hg}}=2{,}40-0{,}850=1{,}55\ \text{m}"),
-            M(rf"\rho_{{\text{{agua}}}}\,g\,(1{{,}}55)=(1000)(9{{,}}80)(1{{,}}55)={tex(d1, 5)}\ \text{{Pa}}"),
+            M(rf"\rho_{{\text{{agua}}}}\,g\,(1{{,}}55)=(1000)(9{{,}}80)(1{{,}}55)={tex(d1, 5)}\ \text{{Pa}}"))\
+        .di("Multiplicamos los kilopascales por mil para sumar ambas presiones en pascales.",
+            M(r"p_A=64{,}0\ \text{kPa}\frac{1000\ \text{Pa}}{1\ \text{kPa}}=64\,000\ \text{Pa}", "presion-a-pascales"),
             M(rf"p_{{\text{{agua/Hg}}}}=64\,000+{tex(d1, 5)}={tex(p1, 5)}\ \text{{Pa}}"),
             R(rf"p_{{\text{{agua/Hg}}}}={tex(p1, 5)}\ \text{{Pa}}"))
     L.paso("a) Interfaz mercurio-glicerina: subir 0,50 m en mercurio")\
-        .di("En el mercurio subimos de cero coma ochocientos cincuenta a uno coma treinta y cinco metros. Subir resta presión.",
+        .di("En el mercurio subimos de cero coma ochocientos cincuenta a uno coma treinta y cinco metros. La altura final menos la inicial da cero coma quinientos metros. Subir resta presión.",
             M(r"p_{\text{Hg/gli}}=p_{\text{agua/Hg}}-\rho_{\text{Hg}}\,g\,(y_{\text{Hg/gli}}-y_{\text{agua/Hg}})"),
+            M(r"\Delta h_{\text{Hg}}=y_{\text{Hg/gli}}-y_{\text{agua/Hg}}=1{,}35\ \text{m}-0{,}850\ \text{m}=0{,}500\ \text{m}", "subida-mercurio"),
             M(rf"\rho_{{\text{{Hg}}}}\,g\,(1{{,}}35-0{{,}}850)=(13\,600)(9{{,}}80)(0{{,}}50)={tex(d2, 5)}\ \text{{Pa}}"),
             M(rf"p_{{\text{{Hg/gli}}}}={tex(p1, 5)}-{tex(d2, 5)}={tex(p2, 5)}\ \text{{Pa}}"),
             R(rf"p_{{\text{{Hg/gli}}}}={tex(p2, 5)}\ \text{{Pa}}"))

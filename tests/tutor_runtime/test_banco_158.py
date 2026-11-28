@@ -93,8 +93,8 @@ class TestBanco158YTeoria(unittest.TestCase):
             | {f"E2-{i}" for i in range(1, 15)}
         )
         self.assertTrue(esperados_olas12.issubset(ids), f"Faltan Olas 1+2: {sorted(esperados_olas12 - ids)}")
-        # + T-PLANTEO (plantear una integral) y O26-7 (pregunta 7 del III parcial, del PDF oficial)
-        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7 + 18 + 16 + 14 + 2)  # 328 lecciones totales
+        # + T-PLANTEO, O26-7 y +12 lecciones Teoría desde Cero (T-BASE1..4, T-MAS..T-VISC)
+        self.assertEqual(len(ids), 166 + 32 + 5 + 4 + 14 + 10 + 36 + 4 + 7 + 18 + 16 + 14 + 2 + 12)  # 340 lecciones totales
 
         faltas = {}
         for lid in sorted(ids):
@@ -480,7 +480,7 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
         self.assertTrue(any("Formulario II-2026" in a for a in aud_cp["alertas"]), aud_cp["alertas"])
 
     def test_variantes_parametricas_los_8_arquetipos_y_api(self) -> None:
-        self.assertEqual(len(variantes.ARQUETIPOS), 15)
+        self.assertEqual(len(variantes.ARQUETIPOS), 24)
         exprs = []
         for arq in variantes.ARQUETIPOS:
             for sem in (1, 7, 42):
@@ -784,14 +784,16 @@ class TestAuditoriaFisicaVariantesY21PDFs(unittest.TestCase):
         for cid_nuevo in ("F1C3", "F12C2", "F5C3", "F14C2"):
             self.assertGreaterEqual(len(cobertura_des[cid_nuevo]), 1, f"Casilla {cid_nuevo} sin desarrollo")
 
-        # 3. Los 15 arquetipos paramétricos × 3 semillas = 45 variantes limpias
+        # 3. Los 24 arquetipos paramétricos (P1 + P2 + P3) × 3 semillas = 72 variantes limpias
         for arq in variantes.ARQUETIPOS:
             for sem in (101, 202, 303):
                 j = variantes.generar_variante(arq, semilla=sem).a_json()
-                self.assertEqual(verificar_origen_formulario(j), [], f"Variante {arq}/{sem}")
+                parcial = int(j.get("parcial") or 3)
+                if parcial == 3:
+                    self.assertEqual(verificar_origen_formulario(j), [], f"Variante {arq}/{sem}")
                 aud = auditar_leccion(j)
                 self.assertEqual(aud["alertas"], [], f"Variante {arq}/{sem}: {aud['alertas']}")
-                mapa = mapear_formulario_leccion(j)
+                mapa = mapear_formulario_por_parcial(j)
                 self.assertGreaterEqual(len(mapa["celdas"]), 1, f"Variante {arq}/{sem} sin celdas")
 
         # 4. Prueba negativa: rechaza atajos sin ecuación base

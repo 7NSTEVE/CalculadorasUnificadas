@@ -154,6 +154,9 @@ const POR_DEFECTO = {
   enfoque: true,
   // Panel de apoyo (visual, enunciado, fórmulas) junto a la pizarra en ventanas anchas
   apoyo: true,
+  // Tarjeta de Memoria Viva y checkpoints activos
+  memoriaViva: true,
+  aprenderDeVerdad: true,
 };
 // Los despejes intermedios se muestran siempre por defecto. Antes venían apagados y se guardaban
 // apagados junto con cualquier otro ajuste; esta marca los enciende una sola vez (luego se respeta lo que elija).

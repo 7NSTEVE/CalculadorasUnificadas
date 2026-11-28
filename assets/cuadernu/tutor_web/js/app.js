@@ -23,6 +23,8 @@ import { Material } from './ui/material.js';
 import { Simulacro } from './ui/simulacro.js';
 import { guardarEnCuaderno } from './ui/cuaderno.js';
 import { AyudaLeccion } from './ui/ayuda.js';
+import { MemoriaViva } from './pizarra/memoria_viva.js';
+import { PracticaCiega } from './ui/practica_ciega.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -173,6 +175,7 @@ const acciones = {
   abrir: abrirLeccion,
   abrirSuelta: abrirLeccionSuelta,
   variante: abrirVariante,
+  practicaCiega: (id) => practicaCiega.abrir(id),
   siguiente: siguienteTras,
   abrirProblemaDoc: (doc, pr) => material.abrirProblema(doc, pr),
   inicio: aInicio,
@@ -186,11 +189,11 @@ const acciones = {
     verVista('inicio');
     return simulacro.abrir();
   },
-  estudiarFormulario: (celdaId = null, modo = null) => {
+  estudiarFormulario: (celdaId = null, modo = null, parcial = null) => {
     if (rep.estado === 'hablando') rep.pausar();
     asistente.callar();
     verVista('formulario');
-    return estudioFormulario.abrir({ celda: celdaId, modo });
+    return estudioFormulario.abrir({ celda: celdaId, modo, parcial });
   },
   preparacion: (tab = null) => {
     if (rep.estado === 'hablando') rep.pausar();
@@ -245,8 +248,10 @@ const preparacion = new PreparacionExamenes({ el: $('vista-preparacion'), accion
 const inicio = new Inicio($('vista-inicio'), acciones, preparacion);
 const biblioteca = new Biblioteca($('vista-biblioteca'), acciones);
 const estudioFormulario = new EstudioFormulario({ el: $('vista-formulario'), acciones });
+const practicaCiega = new PracticaCiega({ acciones });
+const memoriaViva = new MemoriaViva({ contenedor: $('tablero'), acciones, lateral });
 armarAjustes($('ajustes'), acciones);
-bus.on('formulario:estudiar', ({ celdaId = null, modo = null } = {}) => acciones.estudiarFormulario(celdaId, modo));
+bus.on('formulario:estudiar', ({ celdaId = null, modo = null, parcial = null } = {}) => acciones.estudiarFormulario(celdaId, modo, parcial));
 
 /* ------------------------------------------------------------------ estado de la lección */
 
@@ -490,4 +495,4 @@ const pedida = new URLSearchParams(window.location.search).get('leccion');
 })();
 
 /* Gancho de pruebas: no se usa en la aplicación */
-window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario, preparacion, ayuda };
+window.__tutor = { rep, tablero, lateral, lapiz, material, asistente, banco, acciones, ajustes, bus, aplicarTema, estudioFormulario, preparacion, ayuda, memoriaViva, practicaCiega };

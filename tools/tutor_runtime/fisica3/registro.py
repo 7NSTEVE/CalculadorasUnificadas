@@ -41,6 +41,7 @@ MODULOS = [
     "banco_recomendados_p2",
     "teoria",
     "teoria_integrales",
+    "teoria_cero_completa",
 ]
 
 

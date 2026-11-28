@@ -103,6 +103,7 @@ class Marca {
   }
 
   _rects(en, que, todas = false) {
+    if (this.spec.cajas) return this.spec.cajas();
     if (this.spec.caja) return [this.spec.caja()].filter(Boolean);
     const t = this._tintaDe(en, que);
     if (!t || !t.el.isConnected || t.el.offsetParent === null) return [];

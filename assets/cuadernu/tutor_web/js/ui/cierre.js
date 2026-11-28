@@ -23,34 +23,66 @@ function texto(txt, opt = {}) {
   return t.el;
 }
 
-/** Pregunta rápida al terminar un paso. Responder bien no es requisito para seguir. */
+/** Pregunta rápida al terminar un paso (micro-checkpoint activo conectado a FSRS-5). */
 export function ponerPregunta(rep, paso) {
   const q = paso.pregunta;
   if (!q) return null;
-  const v = rep.aclaracion('Piensa un segundo', 'pregunta');
+  const v = rep.aclaracion('Piensa 10 segundos', 'pregunta');
   const tab = rep.tablero;
   v.cuerpo.appendChild(texto(q.texto, { px: tab.px * 0.62 }));
   const fila = document.createElement('div');
   fila.className = 'quiz';
   const exp = document.createElement('div');
   exp.hidden = true;
-  q.opciones.forEach((o, i) => {
+  // Permuta deterministamente para que la correcta no sea siempre la primera
+  const seed = (paso.titulo || '').length + (rep.lec?.id || '').length;
+  const orden = q.opciones.map((txt, idx) => ({ txt, orig: idx }));
+  if (orden.length > 1) {
+    const shift = seed % orden.length;
+    orden.push(...orden.splice(0, shift));
+  }
+  let registrado = false;
+  orden.forEach(({ txt, orig }) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.appendChild(texto(o, { px: tab.px * 0.54, etiqueta: 'span' }));
+    b.appendChild(texto(txt, { px: tab.px * 0.54, etiqueta: 'span' }));
     b.addEventListener('click', () => {
-      const bien = i === q.correcta;
+      const bien = orig === q.correcta;
       b.classList.add(bien ? 'bien' : 'mal');
       if (bien) fila.querySelectorAll('button').forEach((x) => { x.disabled = true; });
       else b.disabled = true;
       exp.replaceChildren(texto(`${bien ? '**Sí.** ' : '**Casi.** '}${bien ? q.explica : 'Inténtalo otra vez: piensa en lo que acabamos de escribir.'}`, { px: tab.px * 0.58 }));
       exp.hidden = false;
       tab.programarRecolocar();
+      if (!registrado && rep.lec) {
+        registrado = true;
+        pedir('/api/progreso', {
+          metodo: 'POST',
+          cuerpo: {
+            tipo: 'checkpoint',
+            id: rep.lec.id,
+            titulo: rep.lec.titulo,
+            bien,
+            categoria: bien ? '' : 'ConceptCheckpoint',
+            nota: bien ? '' : q.explica,
+          },
+        }).catch(() => {});
+      }
       if (bien) bus.emit('pregunta:bien', paso);
     });
     fila.appendChild(b);
   });
-  v.cuerpo.append(fila, exp);
+  const saltar = document.createElement('button');
+  saltar.type = 'button';
+  saltar.className = 'btn btn-suave quiz-saltar';
+  saltar.textContent = 'Ver explicación';
+  saltar.addEventListener('click', () => {
+    exp.replaceChildren(texto(q.explica || 'Revisa el paso anterior y continúa cuando estés listo.', { px: tab.px * 0.58 }));
+    exp.hidden = false;
+    saltar.hidden = true;
+    tab.programarRecolocar();
+  });
+  v.cuerpo.append(fila, saltar, exp);
   tab.seguir(v.el);
   return v;
 }
@@ -111,11 +143,19 @@ export function ponerCierre(rep, lec, acciones) {
     b.addEventListener('click', sig.abrir);
     fila.appendChild(b);
   }
+  if (acciones.practicaCiega && lec.tipo !== 'teoria') {
+    const cbtn = document.createElement('button');
+    cbtn.type = 'button';
+    cbtn.className = 'btn btn-fuerte';
+    cbtn.textContent = 'Hazlo tú sin ver (otros números)';
+    cbtn.addEventListener('click', () => acciones.practicaCiega(lec.origenVariante || lec.id));
+    fila.appendChild(cbtn);
+  }
   if (acciones.variante && lec.tipo !== 'teoria') {
     const vbtn = document.createElement('button');
     vbtn.type = 'button';
     vbtn.className = 'btn btn-suave';
-    vbtn.textContent = 'Practicar con otros números';
+    vbtn.textContent = 'Ver variante resuelta';
     vbtn.addEventListener('click', () => acciones.variante(lec.origenVariante || lec.id));
     fila.appendChild(vbtn);
   }

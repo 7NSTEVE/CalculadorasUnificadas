@@ -8,7 +8,7 @@
  */
 
 import { TintaMate, TintaTexto } from '../mate/tinta.js';
-import { ajustes, bus, guardarAjuste, urlApi } from '../nucleo/api.js';
+import { ajustes, bus, guardarAjuste, menosMovimiento, urlApi } from '../nucleo/api.js';
 import { crearVisual } from '../visuales/index.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -69,7 +69,7 @@ function construirHojaSvg(mapa, { interactivo = true, alClic = null } = {}) {
   const img = document.createElement('img');
   img.className = 'hoja-formulario-img';
   img.alt = mapa.titulo || 'Formulario oficial del III Parcial II-2026';
-  img.src = urlApi(mapa.hoja_url || '/api/formulario/hoja.png');
+  img.src = urlApi(mapa.hoja_url_versionada || mapa.hoja_url || '/api/formulario/hoja.png');
   marco.appendChild(img);
 
   const svg = svgEl('svg', {
@@ -140,6 +140,8 @@ function construirHojaSvg(mapa, { interactivo = true, alClic = null } = {}) {
   return marco;
 }
 
+import { ApoyoVisual } from './apoyo_visual.js';
+
 export class Lateral {
   constructor(el) {
     this.el = el;
@@ -190,8 +192,10 @@ export class Lateral {
       }
     });
     bus.on('leccion:paso', ({ i }) => {
+      this._celdaEnfocada = null;
       this.pasoActual = i;
       this.resaltarPasoFormulario(i);
+      this.visual?.actualizarPaso?.(i);
     });
     bus.on('formulario:enfocar', ({ celdaId }) => {
       if (celdaId) this.enfocarFormulario(celdaId);
@@ -199,6 +203,7 @@ export class Lateral {
   }
 
   ver(tab) {
+    if (this.tab === 'visual' && tab !== 'visual' && this.visual instanceof ApoyoVisual) this.visual.pausar();
     this.tab = tab;
     for (const [k, p] of Object.entries(this.paneles)) p.hidden = k !== tab;
     this.barra.querySelectorAll('[data-tab]').forEach((b) => {
@@ -230,6 +235,7 @@ export class Lateral {
    */
   abrir(si = true, { recordar = false, foco = false, devolverFoco = false } = {}) {
     this.abierto = Boolean(si);
+    if (!this.abierto && this.visual instanceof ApoyoVisual) this.visual.pausar();
     if (recordar && ANCHA.matches) guardarAjuste('apoyo', this.abierto);
     this._aplicar();
     if (this.abierto && foco) (this.barra.querySelector('[aria-selected="true"]:not([hidden])') || this.el).focus?.();
@@ -284,9 +290,13 @@ export class Lateral {
     if (b) b.textContent = texto;
   }
 
-  ponerVisual(spec) {
+  ponerVisual(spec, lec = null) {
+    if (!lec && this.lec && this.visual instanceof ApoyoVisual) {
+      this.visual.ponerGrafica(spec);
+      return;
+    }
     if (this.visual) { this.visual.destruir(); this.visual = null; }
-    const v = crearVisual(spec);
+    const v = lec?.apoyo_visual ? new ApoyoVisual(lec.id, lec.apoyo_visual, spec) : crearVisual(spec);
     this.paneles.visual.replaceChildren();
     this._boton('visual', Boolean(v));
     if (!v) {
@@ -311,6 +321,16 @@ export class Lateral {
 
   /** El dibujo se toca (o Enter) para verlo en grande; un icono discreto en su esquina lo dice. */
   _prepararAmpliar(v) {
+    if (v instanceof ApoyoVisual) {
+      const ampliar = document.createElement('button');
+      ampliar.type = 'button';
+      ampliar.className = 'btn btn-suave btn-ampliar';
+      ampliar.setAttribute('aria-label', 'Ver el visual en grande');
+      ampliar.textContent = 'Ampliar';
+      ampliar.addEventListener('click', () => this.ampliarVisual());
+      v.tira.appendChild(ampliar);
+      return;
+    }
     if (!v.canvas || !v.marco) return;
     const lienzo = document.createElement('span');
     lienzo.className = 'visual-lienzo';
@@ -388,6 +408,7 @@ export class Lateral {
       const q = this.paneles.enunciado.getBoundingClientRect();
       if (r.top > q.bottom - 30 || r.top < q.top + 20) m.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
+    return m;
   }
 
   quitarDatos() {
@@ -396,9 +417,10 @@ export class Lateral {
 
   abrirLeccion(lec) {
     this.lec = null; // mientras se arma, ponerVisual no decide si abrir o plegar
+    this._celdaEnfocada = null;
     this.pasoActual = 0;
     this._aMano = false;
-    this.ponerVisual(lec.visual);
+    this.ponerVisual(lec.visual, lec);
     this.lec = lec;
     // Abierto solo si hay un visual que acompañe (en ventana ancha y si la persona no lo plegó antes)
     this.abierto = this._abiertoPorDefecto();
@@ -453,7 +475,8 @@ export class Lateral {
       const tit = document.createElement('strong');
       tit.textContent = mapa.titulo || 'Formulario oficial II-2026';
       const sub = document.createElement('span');
-      sub.textContent = n === 0
+      const hayHoja = mapa.hoja_real !== false;
+      sub.textContent = !hayHoja ? 'Ecuaciones del catálogo' : n === 0
         ? 'Hoja de referencia del examen'
         : n === 1
           ? '1 celda marcada en la hoja'
@@ -463,36 +486,37 @@ export class Lateral {
       const accCab = document.createElement('div');
       accCab.className = 'form-cab-acc';
 
-      if (!mapa.parcial || mapa.parcial === 3) {
-        const btnEst = document.createElement('button');
-        btnEst.type = 'button';
-        btnEst.className = 'btn btn-suave form-btn-zoom';
-        btnEst.textContent = 'Estudiar';
-        btnEst.title = 'Abrir la guía interactiva de esta fórmula';
-        btnEst.addEventListener('click', () => {
-          const pasoIds = (mapa.por_paso && mapa.por_paso[this.pasoActual]) || [];
-          const celdaId = pasoIds[0] || (mapa.celdas[0] && mapa.celdas[0].id) || null;
-          bus.emit('formulario:estudiar', { celdaId });
-        });
-        accCab.append(btnEst);
+      const btnEst = document.createElement('button');
+      btnEst.type = 'button';
+      btnEst.className = 'btn btn-suave form-btn-zoom';
+      btnEst.textContent = 'Estudiar';
+      btnEst.title = 'Abrir la guía interactiva de esta fórmula';
+      btnEst.addEventListener('click', () => {
+        const pasoIds = (mapa.por_paso && mapa.por_paso[this.pasoActual]) || [];
+        const celdaId = pasoIds[0] || (mapa.celdas[0] && mapa.celdas[0].id) || null;
+        bus.emit('formulario:estudiar', { celdaId, parcial: mapa.parcial || 3 });
+      });
+      accCab.append(btnEst);
+
+      if (hayHoja) {
+        const btnZoom = document.createElement('button');
+        btnZoom.type = 'button';
+        btnZoom.className = 'btn btn-suave form-btn-zoom';
+        btnZoom.textContent = 'Ampliar';
+        btnZoom.addEventListener('click', () => this._abrirHojaGrande(mapa));
+        accCab.append(btnZoom);
       }
-
-      const btnZoom = document.createElement('button');
-      btnZoom.type = 'button';
-      btnZoom.className = 'btn btn-suave form-btn-zoom';
-      btnZoom.textContent = 'Ampliar';
-      btnZoom.addEventListener('click', () => this._abrirHojaGrande(mapa));
-
-      accCab.append(btnZoom);
       cab.append(info, accCab);
       p.appendChild(cab);
 
-      const hoja = construirHojaSvg(mapa, {
-        interactivo: true,
-        alClic: (cid) => this._enfocarLeyenda(cid),
-      });
-      this._hojaEl = hoja;
-      p.appendChild(hoja);
+      if (hayHoja) {
+        const hoja = construirHojaSvg(mapa, {
+          interactivo: true,
+          alClic: (cid) => this._enfocarLeyenda(cid),
+        });
+        this._hojaEl = hoja;
+        p.appendChild(hoja);
+      }
 
       if (n > 0) {
         const lista = document.createElement('div');
@@ -593,19 +617,21 @@ export class Lateral {
   /** Sincroniza los círculos del formulario con el paso actual de la pizarra. */
   resaltarPasoFormulario(pasoIdx) {
     const mapa = this.lec && this.lec.formulario_mapa;
-    if (!mapa || !this._hojaEl) return;
-    const ids = (mapa.por_paso && mapa.por_paso[pasoIdx]) || [];
+    if (!mapa) return;
+    const ids = this._celdaEnfocada ? [this._celdaEnfocada] : mapa.por_paso?.[pasoIdx] || [];
     const activas = new Set(ids);
     const hayActivas = activas.size > 0;
 
-    this._hojaEl.querySelectorAll('.form-celda').forEach((g) => {
+    this._hojaEl?.querySelectorAll('.form-celda').forEach((g) => {
       const act = activas.has(g.dataset.celda);
+      g.classList.toggle('enfocada', g.dataset.celda === this._celdaEnfocada);
       g.classList.toggle('activa', act);
       g.classList.toggle('atenuada', hayActivas && !act);
     });
     if (this._leyendaEl) {
       this._leyendaEl.querySelectorAll('.form-item').forEach((it) => {
         const act = activas.has(it.dataset.celda);
+        it.classList.toggle('enfocada', it.dataset.celda === this._celdaEnfocada);
         it.classList.toggle('activa', act);
         it.classList.toggle('atenuada', hayActivas && !act);
       });
@@ -614,28 +640,32 @@ export class Lateral {
 
   /** Abre la pestaña Fórmulas, enfoca la celda circulada y la desplaza al centro. */
   enfocarFormulario(celdaId) {
-    if (!this._hojaEl) return;
+    const selector = '[data-celda="' + CSS.escape(celdaId) + '"]';
+    const target = this._hojaEl?.querySelector('.form-celda' + selector)
+      || this._leyendaEl?.querySelector('.form-item' + selector);
+    if (!target) return false;
+    this._celdaEnfocada = celdaId;
     if (this.el.hidden) this.mostrar(true);
     if (!this.abierto) this.abrir(true); // lo pidió la persona: se abre (sin cambiar su preferencia)
     if (this.tab !== 'formulas') this.ver('formulas');
-    this._hojaEl.querySelectorAll('.form-celda').forEach((g) => {
-      const es = g.dataset.celda === celdaId;
-      g.classList.toggle('enfocada', es);
-      g.classList.toggle('activa', es);
-      g.classList.toggle('atenuada', !es);
-    });
-    if (this._leyendaEl) {
-      this._leyendaEl.querySelectorAll('.form-item').forEach((it) => {
-        const es = it.dataset.celda === celdaId;
-        it.classList.toggle('enfocada', es);
-        it.classList.toggle('activa', es);
-        it.classList.toggle('atenuada', !es);
-      });
-    }
-    const target = this._hojaEl.querySelector(`.form-celda[data-celda="${CSS.escape(celdaId)}"]`);
-    if (target) {
-      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
+    this.resaltarPasoFormulario(this.pasoActual);
+    target.scrollIntoView({ block: 'center', behavior: menosMovimiento() ? 'instant' : 'smooth' });
+    return true;
+  }
+
+  senalarCelda(celdaId) {
+    const { tab, abierto } = this;
+    const previa = this._celdaEnfocada;
+    if (!this.enfocarFormulario(celdaId)) return null;
+    return () => {
+      if (this._celdaEnfocada !== celdaId) return;
+      this._celdaEnfocada = previa;
+      this.resaltarPasoFormulario(this.pasoActual);
+      if (this.tab === 'formulas') {
+        this.ver(tab);
+        if (!abierto) this.abrir(false);
+      }
+    };
   }
 
   _enfocarLeyenda(celdaId) {

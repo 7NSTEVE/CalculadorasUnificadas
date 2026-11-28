@@ -183,9 +183,10 @@ export class Biblioteca {
         b.type = 'button';
         b.className = 'ej';
         b.dataset.id = l.id;
+        b.title = `${l.id} · ${l.titulo}`;
         const c = document.createElement('span');
         c.className = 'cod';
-        c.textContent = /^([EQ]\d|PR\d|P26-|T[34]-|P[12][OE]26-|SUF26-|RP-|O26-|C26-)/.test(l.id) ? l.id : '·';
+        c.textContent = l.parcial ? `P${l.parcial}` : '·';
         const m = document.createElement('span');
         const s = document.createElement('strong');
         const tt = new TintaTexto(l.titulo, { etiqueta: 'span', px: 16, clase: 'sin-mano' });

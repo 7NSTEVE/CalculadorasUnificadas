@@ -6,33 +6,67 @@
 import { TintaTexto } from '../mate/tinta.js';
 import { bus, urlApi } from '../nucleo/api.js';
 
-function norma(s) {
-  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-    .replace(/[‐-―−]/g, '-').replace(/\s+/g, ' ').trim();
+export function normalizaDato(texto) {
+  const literal = String(texto || '').trim();
+  return literal.replace(/(^|\s)[“„](?=\s|$)/g, '$1=')
+    .replace(/´/g, '').replace(/ı/g, 'i').replace(/[º˝˚◦](?=\s*[CF]\b)/g, '°').normalize('NFKD')
+    .replace(/\b([A-Za-z])\{(\d+)(?![\d}])/g, '$1/$2')
+    .replace(/\\?\^\{?\\circ\}?(?=\s*(?:\\text\{)?[CF])/g, '°')
+    .replace(/\p{M}/gu, '').replace(/[‐-―−]/g, '-')
+    .replace(/\\(?:d|t)?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '$1/$2')
+    .replace(/\\(?:text|mathrm|mathit|operatorname|left|right)\b/g, '')
+    .replace(/\\(?:cdot|times)\b/g, '×').replace(/[·⋅]/g, '×')
+    .replace(/\\(?:circ|degree)\b/g, '°').replace(/\\[,;:! ]/g, '').replace(/\\(%)/g, '$1')
+    .replace(/[{}$^]/g, '').replace(/(?<=\d)[,.]\s*(?=\d)/g, '.').toLowerCase()
+    .replace(/^[\s([«“"¿¡]+|[\s)\]»”".,;:?!]+$/g, '').replace(/\s+/g, '');
 }
 
-/** Busca una frase en las palabras del recorte y devuelve su caja normalizada. */
-export function cajaDeFrase(frase, palabras) {
-  if (!frase || !palabras || !palabras.length) return null;
-  const limpia = (t) => norma(t).replace(/^[([{"'¿¡]+|[)\]}"'.,;:!?]+$/g, '');
-  const q = norma(frase).split(' ').map(limpia).filter(Boolean);
-  const ws = palabras.map((w) => limpia(w.t));
-  for (let i = 0; i + q.length <= ws.length; i += 1) {
-    let ok = true;
-    for (let k = 0; k < q.length; k += 1) {
-      const a = ws[i + k];
-      if (a !== q[k] && !(q[k].length > 3 && a.startsWith(q[k]))) { ok = false; break; }
+/** Busca un tramo completo, aun cuando el PDF separa un número de la unidad. */
+function buscaDato(frase, palabras, { ocurrencia, contexto } = {}) {
+  const buscado = normalizaDato(frase);
+  if (!buscado) return [];
+  const tokens = palabras.map((p) => normalizaDato(p.t));
+  const ancla = normalizaDato(contexto);
+  const candidatas = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    if (!tokens[i]) continue;
+    let texto = '';
+    for (let k = i; k < tokens.length; k += 1) {
+      texto += ' ' + palabras[k].t;
+      const junto = normalizaDato(texto);
+      if (!buscado.startsWith(junto)) break;
+      if (junto !== buscado) continue;
+      if (!ancla || tokens.slice(Math.max(0, i - 8), k + 9).join('').includes(ancla)) {
+        candidatas.push(palabras.slice(i, k + 1));
+      }
+      break;
     }
-    if (!ok) continue;
-    const g = palabras.slice(i, i + q.length);
-    // Solo se marca la parte que quede en un mismo renglón
-    const y0 = g[0].y;
-    const mismo = g.filter((w) => Math.abs(w.y - y0) < Math.max(0.012, g[0].h * 0.7));
-    const x = Math.min(...mismo.map((w) => w.x));
-    const y = Math.min(...mismo.map((w) => w.y));
-    return { x, y, w: Math.max(...mismo.map((w) => w.x + w.w)) - x, h: Math.max(...mismo.map((w) => w.y + w.h)) - y };
   }
-  return null;
+  if (Number.isInteger(ocurrencia) && ocurrencia > 0) return candidatas[ocurrencia - 1] || [];
+  return candidatas.length === 1 ? candidatas[0] : [];
+}
+
+function cajasPorLinea(rectangulos) {
+  const lineas = [];
+  for (const r of rectangulos) {
+    const centro = r.y + r.h / 2;
+    const linea = lineas.find((x) => Math.abs(centro - x.centro) < Math.max(r.h, x.h) * 0.7);
+    if (!linea) {
+      lineas.push({ ...r, centro });
+      continue;
+    }
+    const derecha = Math.max(linea.x + linea.w, r.x + r.w);
+    const abajo = Math.max(linea.y + linea.h, r.y + r.h);
+    linea.x = Math.min(linea.x, r.x);
+    linea.y = Math.min(linea.y, r.y);
+    linea.w = derecha - linea.x;
+    linea.h = abajo - linea.y;
+  }
+  return lineas;
+}
+
+export function cajasDeFrase(frase, palabras, contexto) {
+  return cajasPorLinea(buscaDato(frase, palabras || [], contexto));
 }
 
 export class Enunciado {
@@ -42,6 +76,8 @@ export class Enunciado {
     this.paso = tablero.nuevoPaso({ n: 0, titulo: lec.recorte ? `${lec.recorte.etiqueta || 'Enunciado'}` : 'Enunciado', clase: 'enunciado' });
     this.paso.cab.classList.add('cab-enunciado');
     this.palabras = [];
+    this.marcasDato = new Map();
+    this.datosSinMarca = new Map();
     this.lista = Promise.resolve();
     if (lec.recorte && lec.recorte.url) this._recorte(lec.recorte);
     else this._texto();
@@ -82,7 +118,7 @@ export class Enunciado {
   }
 
   _texto() {
-    if (!this.lec.enunciado) return;
+    if (!this.lec.enunciado || this.tablero.tinta('enunciado')) return;
     const t = new TintaTexto(this.lec.enunciado, { clase: 'enunciado-texto', px: this.tablero.px * 0.6 });
     this.tablero.agregar(t, { paso: this.paso, id: 'enunciado' });
     t.progreso(1);
@@ -146,45 +182,59 @@ export class Enunciado {
     for (const { mapa } of this.listas) for (const { li, m } of mapa.values()) { li.classList.remove('correcta', 'descartada'); m.hidden = true; }
   }
 
-  /** Marca de un dato sobre el recorte (o sobre el texto si no hay imagen). */
-  marcarDato(frase, color) {
+  /** La transcripción se usa también cuando el PDF no permite localizar una frase. */
+  marcarDato(dato, color, { temporal = false } = {}) {
+    const ref = typeof dato === 'string' ? { frase: dato } : dato;
+    if (!ref?.frase) return null;
+    const { id, frase } = ref;
+    if (!temporal && id && this.marcasDato.has(id)) return this.marcasDato.get(id);
     const marcas = this.tablero.marcas;
-    if (this.img && this.img.isConnected) {
-      const cj = cajaDeFrase(frase, this.palabras);
-      if (!cj) return null;
-      if (this.alDato) this.alDato(cj, color);
-      return marcas.crear({
-        tipo: 'subraya', que: frase, en: 'recorte', color, dy: 1,
-        caja: () => {
-          if (!this.img.isConnected || this.img.offsetParent === null) return null;
-          const r = this.tablero.rectEnHoja(this.img);
-          return { x: r.x + cj.x * r.w, y: r.y + cj.y * r.h, w: cj.w * r.w, h: cj.h * r.h };
-        },
-      });
-    }
-    const t = this.tablero.tinta('enunciado');
-    if (!t) return null;
-    const q = norma(frase).split(' ');
-    const us = t.unidades;
-    for (let i = 0; i + q.length <= us.length; i += 1) {
-      let ok = true;
-      for (let k = 0; k < q.length; k += 1) {
-        const a = norma(us[i + k].el.textContent).replace(/[.,;:()]+$/g, '');
-        if (a !== q[k].replace(/[.,;:()]+$/g, '')) { ok = false; break; }
+    const cajasPdf = this.img?.isConnected ? cajasDeFrase(frase, this.palabras, ref) : [];
+    let grupo = [];
+    let tinta = null;
+    if (!cajasPdf.length) {
+      this._texto();
+      tinta = this.tablero.tinta('enunciado');
+      const unidades = tinta?.unidades.map((u) => ({ t: u.tex || u.el.textContent, el: u.el })) || [];
+      grupo = buscaDato(ref.frase_texto || ref.frase_original || frase, unidades, ref.frase_texto ? {} : ref);
+      if (!grupo.length) {
+        if (!temporal && !this.datosSinMarca.has(id || frase)) {
+          const aviso = document.createElement('p');
+          aviso.className = 'aviso-fuente';
+          aviso.textContent = 'No pude ubicar este dato en el enunciado. Revisalo en el renglón del paso.';
+          this.paso.cuerpo.appendChild(aviso);
+          this.datosSinMarca.set(id || frase, aviso);
+        }
+        return null;
       }
-      if (!ok) continue;
-      const grupo = us.slice(i, i + q.length).map((u) => u.el);
-      return marcas.crear({
-        tipo: 'subraya', que: frase, en: 'enunciado', color, dy: 0,
-        caja: () => {
-          const rs = grupo.map((e) => this.tablero.rectEnHoja(e));
-          const y0 = rs[0].y;
-          const m = rs.filter((r) => Math.abs(r.y - y0) < 6);
-          const x = Math.min(...m.map((r) => r.x));
-          return { x, y: y0, w: Math.max(...m.map((r) => r.x + r.w)) - x, h: Math.max(...m.map((r) => r.h)) };
-        },
-      });
     }
-    return null;
+    const origen = cajasPdf.length ? this.img : tinta.el;
+    const lado = this.alDato && cajasPdf.map((c) => this.alDato(c, color));
+    const marca = marcas.crear({
+      tipo: 'subraya', que: frase, color, dy: 1,
+      cajas: () => {
+        if (!origen.isConnected || origen.offsetParent === null) return [];
+        if (!cajasPdf.length) return cajasPorLinea(grupo.map(({ el }) => this.tablero.rectEnHoja(el)));
+        const r = this.tablero.rectEnHoja(origen);
+        return cajasPdf.map((c) => ({ x: r.x + c.x * r.w, y: r.y + c.y * r.h, w: c.w * r.w, h: c.h * r.h }));
+      },
+    });
+    marca.g.dataset.dato = frase;
+    marca.g.classList.toggle('origen-temporal', temporal);
+    marca.objetivo = grupo[0]?.el || origen;
+    const quitar = marca.quitar.bind(marca);
+    marca.quitar = () => {
+      lado?.forEach((m) => m?.remove());
+      if (this.marcasDato.get(id) === marca) this.marcasDato.delete(id);
+      quitar();
+    };
+    if (!temporal && id) this.marcasDato.set(id, marca);
+    return marca;
+  }
+
+  reiniciarDatos() {
+    for (const marca of this.marcasDato.values()) marca.quitar();
+    for (const aviso of this.datosSinMarca.values()) aviso.remove();
+    this.datosSinMarca.clear();
   }
 }

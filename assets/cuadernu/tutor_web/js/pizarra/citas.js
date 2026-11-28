@@ -8,6 +8,7 @@
  */
 
 import { bus, menosMovimiento, urlApi } from '../nucleo/api.js';
+import { TintaMate } from '../mate/tinta.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -71,7 +72,8 @@ export class Citas {
     caja.className = 'cita-recorte';
     caja.style.width = `${W}px`;
     caja.style.height = `${H}px`;
-    caja.style.backgroundImage = `url("${urlApi((this.mapa && this.mapa.hoja_url) || '/api/formulario/hoja.png')}")`;
+    const hoja = this.mapa?.hoja_url_versionada || this.mapa?.hoja_url || '/api/formulario/hoja.png';
+    caja.style.backgroundImage = `url("${urlApi(hoja)}")`;
     caja.style.backgroundSize = `${total.toFixed(1)}px ${(total * (ah / aw)).toFixed(1)}px`;
     caja.style.backgroundPosition = `${(-x0 * total).toFixed(1)}px ${(-y0 * total * (ah / aw)).toFixed(1)}px`;
     caja.setAttribute('role', 'img');
@@ -96,14 +98,25 @@ export class Citas {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = `cita-item form-c-${c.color}`;
-      b.title = `Formulario oficial, ${c.etiqueta}: ${c.nombre}. Toca para verlo en la hoja.`;
       const num = document.createElement('span');
       num.className = 'cita-num';
       num.textContent = String(c.num);
       const txt = document.createElement('span');
       txt.className = 'cita-txt';
-      txt.textContent = `Del formulario · ${c.nombre}`;
-      b.append(num, this.recorte(c, Math.max(170, Math.min(330, px * 6.4))), txt);
+      const hayHoja = this.mapa?.hoja_real !== false;
+      txt.textContent = (hayHoja ? 'Del formulario · ' : 'Del catálogo · ') + c.nombre;
+      const ancho = Math.max(170, Math.min(330, px * 6.4));
+      let detalle;
+      if (hayHoja) {
+        detalle = this.recorte(c, ancho);
+      } else {
+        const formula = new TintaMate(c.tex, { px: px * 0.72, maxAncho: ancho });
+        formula.progreso(1);
+        detalle = formula.el;
+        detalle.classList.add('cita-ecuacion');
+      }
+      b.title = (hayHoja ? 'Casilla del formulario. ' : 'Ecuación del catálogo. ') + c.nombre;
+      b.append(num, detalle, txt);
       b.addEventListener('click', () => bus.emit('formulario:enfocar', { celdaId: c.id }));
       fila.appendChild(b);
     }

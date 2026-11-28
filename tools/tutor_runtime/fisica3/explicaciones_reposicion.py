@@ -1651,6 +1651,28 @@ def base_del_titulo(titulo: str) -> str:
         t = u
 
 
+# Se distingue la introducción de las opciones, la figura y su pie de imagen.
+_ANCLAS_DATOS = {
+    "O26-2": {"máquina térmica": {"ocurrencia": 1}},
+    "RP-26I-3": {"40 %": {"ocurrencia": 1}, "60 %": {"ocurrencia": 1}},
+    "RP-25II-2": {"50,0 m": {"ocurrencia": 1, "frase_texto": "H = 50,0 m"}},
+    "P1O26-8": {"Energía mecánica E": {"ocurrencia": 1}, "0,141": {"ocurrencia": 2}},
+    "P2O26-9": {
+        "0,860 cm": {"ocurrencia": 1, "frase_texto": "d_1 = 0,860 cm"},
+        "6,00 m": {"ocurrencia": 1, "frase_texto": "L_1 = 6,00 m"},
+        "0,890 cm": {"ocurrencia": 1, "frase_texto": "d_2 = 0,890 cm"},
+        "10,00 m": {"ocurrencia": 1, "frase_texto": "L_2 = 10,00 m"},
+        "misma altura": {"ocurrencia": 1, "frase_texto": "tuberías horizontales"},
+    },
+    "Q045": {"flujo radial de calor": {"ocurrencia": 1}},
+    "P1E26-8": {
+        "2,00 m": {"ocurrencia": 1, "frase_texto": "L = 2,00 m"},
+        "1,50 m": {"ocurrencia": 1, "frase_texto": "d = 1,50 m"},
+    },
+    "RP-24I-2": {"forma parabólica": {"ocurrencia": 1, "frase_texto": "sigue la parábola"}},
+}
+
+
 def pasos_de_datos(datos: Sequence[_Dato]) -> List[Paso]:
     """El paso «Datos» (partido en «(sigue)» si se pasa de largo)."""
     tramos = [Tramo(_INTRO, [])]
@@ -1696,9 +1718,15 @@ def aplicar(lec: Leccion) -> None:
         lec.pasos[0:0] = pasos_de_datos(datos)
     if lec.id not in DATOS and lec.id not in PORQUE:
         return
+    anclas = _ANCLAS_DATOS.get(lec.id)
     for p in lec.pasos:
         if not p.porque:
             p.porque = porque_de(lec.id, p.titulo)
+        if anclas:
+            for tramo in p.tramos:
+                for a in tramo.acciones:
+                    if a["a"] == "dato" and a.get("frase") in anclas:
+                        a.update(anclas[a["frase"]])
 
 
 def lecciones_con_explicaciones() -> List[str]:
