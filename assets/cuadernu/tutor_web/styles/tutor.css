@@ -1058,6 +1058,77 @@ body[data-vista="preparacion"] .consola { display: none; }
 .v3d-tag[data-color="azul"] { color: var(--azul); }
 .v3d-tag[data-color="morado"] { color: var(--morado); }
 
+/* R7: dato del enunciado (naranja, con su valor) y lo que piden (morado), en la misma escena */
+.v3d-tag.dato {
+  color: var(--naranja);
+  border: 1.5px solid var(--naranja);
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+.v3d-tag.pide {
+  color: var(--morado);
+  border: 1.5px dashed var(--morado);
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+/* Columnas fijas sobre la escena: datos a la izquierda, lo que piden a la derecha */
+.v3d-tag.col-izq,
+.v3d-tag.col-der {
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  max-width: 48%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3d-tag.col-izq { left: 6px; right: auto; }
+.v3d-tag.col-der { left: auto; right: 6px; }
+
+/* En el paso «Datos», las etiquetas propias de la escena pasan a segundo plano */
+.visual-3d[data-modo-datos="si"] .v3d-tag:not(.dato):not(.pide) {
+  opacity: 0.45;
+}
+
+/* R8: suma de pedacitos que crece hasta el resultado */
+.v3d-integral {
+  display: grid;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+}
+
+.v3d-integral-txt {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.v3d-integral-barra {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--elevada);
+  border: 1px solid var(--borde);
+  overflow: hidden;
+}
+
+.v3d-integral-barra > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--naranja);
+}
+
+@media (forced-colors: active) {
+  .v3d-integral-barra > span { background: Highlight; }
+  .v3d-tag.dato, .v3d-tag.pide { border-color: CanvasText; }
+}
+
 .v3d-ficha {
   position: absolute;
   left: 10px;

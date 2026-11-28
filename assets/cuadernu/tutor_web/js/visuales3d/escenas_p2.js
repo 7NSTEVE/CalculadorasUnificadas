@@ -16,8 +16,7 @@ import {
   crearMaterial,
   crearPisoSutil,
 } from './motor_3d.js';
-
-const G = 9.8;
+import { G, modeloPared } from './geometria_pared.js';
 
 function alturaSumergidaEsfera(fraccion) {
   let a = 0;
@@ -30,150 +29,189 @@ function alturaSumergidaEsfera(fraccion) {
   return (a + b) / 2;
 }
 
-/** 5. Represa / compuerta 3D con prisma de presión y franja diferencial dA = L(h)·dh. */
+/** Fuerza con su unidad cómoda (N, kN o MN). */
+function fuerzaTxt(F) {
+  const a = Math.abs(F);
+  if (a >= 1e6) return `${num(F / 1e6, 4)} MN`;
+  if (a >= 1e3) return `${num(F / 1e3, 4)} kN`;
+  return `${num(F, 4)} N`;
+}
+
+/**
+ * 5. Represa / compuerta 3D con la forma y las medidas del enunciado (geometria_pared.js):
+ * prisma de presión, franja dA = L(h)·dh que barre entre el borde de arriba y el de abajo de la
+ * compuerta, y la suma de franjas que crece hasta la fuerza total (R8). Con «Sumar N franjas»,
+ * la suma de N franjas (presión del borde de arriba, como el dibujo 2D) contra la integral exacta.
+ */
 export function construirCompuerta3D(motor, p, t, foco, extra = {}) {
   const g = motor.raiz;
   const tags = [];
   const corte = motor.planosCorte();
-  const forma = p.forma || 'rectangulo';
-  const rho = Number(p.rho || 1000);
-  const Hagua = Math.max(0.1, Number(p.H || p.alto || 4));
-  const nFranjas = Math.round(extra.franjas || 0); // >0 activa modo suma de N franjas
+  const m = modeloPared(p);
+  const nFranjas = Math.round(extra.franjas || 0); // >1 activa la suma de N franjas
 
   g.add(crearPisoSutil(-1.68));
 
-  // Volumen de agua 3D translúcido detrás de la pared (z negativo hacia z=0.18)
-  const agua = new THREE.Mesh(
-    new THREE.BoxGeometry(3.8, 2.6, 1.55),
-    crearMaterial('azul', { opacidad: 0.22, dobleCara: true, corte }),
-  );
-  agua.position.set(0, -0.22, -0.62);
-  agua.userData.info = { titulo: 'Columna de agua', detalle: 'La presión aumenta linealmente con la profundidad h.', formula: 'p = ρgh' };
-  g.add(agua);
+  // Una sola escala para alto y ancho: la figura no se deforma.
+  const ySup = 1.08;
+  const anchoReal = Math.max(1e-6, m.der - m.izq);
+  const esc = Math.min(2.5 / m.H, 3.3 / anchoReal);
+  const yDe = (h) => ySup - h * esc;
+  const xCentro = (m.izq + m.der) / 2;
+  const xDe = (x) => (x - xCentro) * esc;
+  const yFondo = yDe(m.H);
 
-  // Superficie libre brillante
+  // Líquido (o capas de líquidos) detrás de la pared
+  const capas = m.capas || [{ n: p.liquido || 'agua', rho: m.rho, e: m.H }];
+  let hArriba = 0;
+  capas.forEach((c, i) => {
+    const alto = Math.max(0.02, c.e * esc);
+    const caja = new THREE.Mesh(
+      new THREE.BoxGeometry(3.8, alto, 1.55),
+      crearMaterial(capas.length > 1 && i === 0 ? 'amarillo' : 'azul', { opacidad: 0.22, dobleCara: true, corte }),
+    );
+    caja.position.set(0, yDe(hArriba) - alto / 2, -0.62);
+    caja.userData.info = {
+      titulo: c.n ? `Capa de ${c.n}` : 'Líquido',
+      detalle: 'La presión crece hacia abajo; al pasar a otra capa sigue creciendo con la densidad de esa capa.',
+      formula: 'p = ρgh',
+    };
+    g.add(caja);
+    if (capas.length > 1) {
+      tags.push({ id: `capa${i}`, pos: [-1.7, yDe(hArriba + c.e / 2), -0.4], texto: c.n || `Capa ${i + 1}`, color: i === 0 ? 'naranja' : 'azul' });
+    }
+    hArriba += c.e;
+  });
+
+  // Superficie libre
   const sup = new THREE.Mesh(
     new THREE.PlaneGeometry(3.82, 1.56),
     crearMaterial('turquesa', { opacidad: 0.42, dobleCara: true }),
   );
   sup.rotation.x = -Math.PI / 2;
-  sup.position.set(0, 1.08, -0.62);
+  sup.position.set(0, ySup, -0.62);
   g.add(sup);
 
-  // Muro contenedor semitransparente
+  // Muro contenedor
+  const altoMuro = ySup - yFondo + 0.45;
   const muro = new THREE.Mesh(
-    new THREE.BoxGeometry(3.84, 2.95, 0.26),
+    new THREE.BoxGeometry(3.84, altoMuro, 0.26),
     crearMaterial('gris', { opacidad: 0.28, corte }),
   );
-  muro.position.set(0, -0.1, 0.28);
+  muro.position.set(0, yFondo + altoMuro / 2 - 0.05, 0.28);
   g.add(muro);
 
-  // Perfil normalizado u in [0,1] (0 = fondo, 1 = borde superior de la compuerta)
-  const yBot = -1.25;
-  const yTop = forma === 'ventana' ? 0.25 : 0.95;
-  const anchoMitad = (u) => {
-    if (forma === 'trapecio') return 0.58 + 0.54 * u;
-    if (forma === 'semicirculo') return 1.08 * Math.sqrt(Math.max(0, 1 - (1 - u) ** 2));
-    if (forma === 'parabola') return 0.25 + 0.85 * Math.sqrt(Math.max(0, u));
-    if (forma === 'mixta') return 0.95; // manejado asimétrico abajo
-    return 0.84;
-  };
-  const bordes = (u) => {
-    if (forma === 'mixta') return [-0.72, 0.86 * Math.sqrt(Math.max(0, u))];
-    const w = anchoMitad(u);
-    return [-w, w];
-  };
-
-  // Malla 2D extruida de la compuerta
+  // Compuerta con su forma real
   const shape = new THREE.Shape();
-  const N = 32;
+  const N = 48;
   for (let i = 0; i <= N; i += 1) {
-    const u = i / N;
-    const [, xR] = bordes(u);
-    const y = yBot + u * (yTop - yBot);
-    if (i === 0) shape.moveTo(xR, y);
-    else shape.lineTo(xR, y);
+    const h = m.h0 + ((m.h1 - m.h0) * i) / N;
+    const [, x1] = m.medio(h);
+    if (i === 0) shape.moveTo(xDe(x1), yDe(h));
+    else shape.lineTo(xDe(x1), yDe(h));
   }
   for (let i = N; i >= 0; i -= 1) {
-    const u = i / N;
-    const [xL] = bordes(u);
-    const y = yBot + u * (yTop - yBot);
-    shape.lineTo(xL, y);
+    const h = m.h0 + ((m.h1 - m.h0) * i) / N;
+    const [x0] = m.medio(h);
+    shape.lineTo(xDe(x0), yDe(h));
   }
   shape.closePath();
   const compMesh = new THREE.Mesh(
     new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false }),
-    crearMaterial('azul', { opacidad: 0.52, rugosidad: 0.45 }),
+    crearMaterial('azul', { opacidad: 0.55, rugosidad: 0.45 }),
   );
   compMesh.position.set(0, 0, 0.41);
   compMesh.userData.info = {
-    titulo: `Compuerta (${forma})`,
-    detalle: 'Como la presión cambia con h, cortamos en franjas horizontales donde h es casi constante.',
-    formula: 'F = ∫ p dA = ∫ ρg h L(h) dh',
+    titulo: `Compuerta (${m.forma})`,
+    detalle: 'Como la presión cambia con h, se corta en franjas horizontales: en cada una h es casi la misma.',
+    formula: 'F = ∫ p(h) L(h) dh',
   };
   g.add(compMesh);
 
-  // Prisma 3D de flechas de presión hidrostática creciendo con la profundidad
-  for (const frac of [0.15, 0.42, 0.68, 0.92]) {
-    const y = 1.08 - frac * (1.08 - yBot);
-    const largo = 0.26 + frac * 1.05;
-    g.add(crearFlecha3D([-1.45 - largo, y, -0.35], [-1.45, y, -0.35], 'azul', {
+  // Prisma de presión: cada flecha mide lo que vale p(h) a esa profundidad
+  const pFondo = m.presion(m.H) || 1;
+  for (const frac of [0.12, 0.38, 0.64, 0.9]) {
+    const h = frac * m.H;
+    const largo = 0.2 + 1.0 * (m.presion(h) / pFondo);
+    g.add(crearFlecha3D([-1.45 - largo, yDe(h), -0.35], [-1.45, yDe(h), -0.35], 'azul', {
       radio: 0.028, punta: 0.14,
-      info: { titulo: 'Presión hidrostática p(h)', detalle: 'Crece linealmente hacia abajo.', formula: 'p = ρgh' },
+      info: { titulo: 'Presión p(h)', detalle: 'Crece hacia abajo: la flecha es más larga donde la presión es mayor.', formula: 'p = ρgh' },
     }));
   }
 
-  // Franja única brillante o suma de N franjas
-  const hAct = (1 - t) * Hagua;
+  const hAct = m.h0 + Math.max(0, Math.min(1, t)) * (m.h1 - m.h0);
+  let integral;
+  let medida;
   if (nFranjas > 1) {
+    const dh = (m.h1 - m.h0) / nFranjas;
+    let suma = 0;
     for (let i = 0; i < nFranjas; i += 1) {
-      const u0 = i / nFranjas;
-      const u1 = (i + 1) / nFranjas;
-      const um = (u0 + u1) / 2;
-      const [xL, xR] = bordes(um);
-      const y0 = yBot + u0 * (yTop - yBot);
-      const dy = (yTop - yBot) / nFranjas;
+      const hTop = m.h0 + i * dh;
+      const hMid = hTop + dh / 2;
+      const [x0, x1] = m.medio(hMid);
+      suma += m.presion(hTop) * m.L(hMid) * dh;
       const fr = new THREE.Mesh(
-        new THREE.BoxGeometry(Math.max(0.05, xR - xL), Math.max(0.03, dy * 0.88), 0.10),
-        crearMaterial('naranja', { opacidad: 0.28 + 0.55 * (1 - um) }),
+        new THREE.BoxGeometry(Math.max(0.02, (x1 - x0) * esc), Math.max(0.01, dh * esc * 0.88), 0.10),
+        crearMaterial('naranja', { opacidad: 0.25 + 0.6 * ((i + 0.5) / nFranjas) }),
       );
-      fr.position.set((xL + xR) / 2, y0 + dy / 2, 0.49);
+      fr.position.set(xDe((x0 + x1) / 2), yDe(hMid), 0.49);
       g.add(fr);
     }
+    integral = {
+      actual: suma,
+      total: m.total,
+      texto: `${nFranjas} franjas: F ≈ Σ p·L·Δh = ${fuerzaTxt(suma)} · integral exacta F = ${fuerzaTxt(m.total)}`,
+    };
+    medida = `Más franjas → la suma se acerca a F = ∫ p(h) L(h) dh = ${fuerzaTxt(m.total)}`;
   } else {
-    const u = Math.max(0.03, Math.min(0.97, 1 - t));
-    const [xL, xR] = bordes(u);
-    const yF = yBot + u * (yTop - yBot);
+    const [x0, x1] = m.medio(hAct);
+    const altoFranja = Math.max(0.05, Math.min(0.16, ((m.h1 - m.h0) * esc) / 18));
     const franja = new THREE.Mesh(
-      new THREE.BoxGeometry(Math.max(0.08, xR - xL), 0.13, 0.12),
+      new THREE.BoxGeometry(Math.max(0.05, (x1 - x0) * esc), altoFranja, 0.12),
       crearMaterial(foco === 'franja' ? 'naranja' : 'morado', { emisivo: 'naranja', intensidadEmisiva: 0.3 }),
     );
-    franja.position.set((xL + xR) / 2, yF, 0.51);
+    const xF = xDe((x0 + x1) / 2);
+    // La franja se dibuja siempre dentro de la compuerta (en los bordes no sobresale); el número es el real.
+    const mitad = altoFranja / (2 * esc);
+    const yF = yDe(Math.min(Math.max(hAct, m.h0 + mitad), Math.max(m.h0 + mitad, m.h1 - mitad)));
+    franja.position.set(xF, yF, 0.51);
     franja.userData.info = {
       titulo: 'Franja horizontal dA = L(h)·dh',
-      detalle: 'Toda esta franja está a la misma profundidad h, por eso tiene una sola presión p = ρgh.',
-      formula: 'dF = ρg h · L(h) · dh',
+      detalle: 'Toda la franja está a la misma profundidad h: tiene una sola presión p(h).',
+      formula: 'dF = p(h) · L(h) · dh',
     };
     g.add(franja);
 
-    // Cota vertical de profundidad h desde la superficie
-    g.add(crearFlecha3D([1.55, 1.08, 0.5], [1.55, yF, 0.5], 'naranja', { radio: 0.025, punta: 0.13 }));
+    // Cota de profundidad h desde la superficie
+    g.add(crearFlecha3D([1.75, ySup, 0.5], [1.75, yF, 0.5], 'naranja', { radio: 0.025, punta: 0.13 }));
+    const pAct = m.presion(hAct);
     tags.push(
-      { id: 'fr', pos: [(xL + xR) / 2 + 0.42, yF + 0.34, 0.68], texto: 'Franja dA = L(h)dh', activo: foco === 'franja', color: 'naranja' },
-      { id: 'ch', pos: [2.05, (1.08 + yF) / 2, 0.5], texto: `h = ${num(hAct, 3)} m`, color: 'naranja' },
+      { id: 'fr', pos: [xF, yF + 0.3, 0.68], texto: `dA = L(h)·dh, L = ${num(m.L(hAct), 3)} m`, activo: foco === 'franja', color: 'naranja' },
+      { id: 'ch', pos: [2.2, (ySup + yF) / 2, 0.5], texto: `h = ${num(hAct, 3)} m`, color: 'naranja' },
     );
+    const hecho = m.hasta(hAct);
+    integral = {
+      actual: hecho,
+      total: m.total,
+      texto: `Suma de franjas de h = ${num(m.h0, 3)} m a h = ${num(hAct, 3)} m: F = ${fuerzaTxt(hecho)} de ${fuerzaTxt(m.total)}`,
+    };
+    medida = `h = ${num(hAct, 3)} m · p(h) = ${num(pAct / 1000, 3)} kPa · L(h) = ${num(m.L(hAct), 3)} m`;
   }
 
   tags.push(
-    { id: 'sup', pos: [0, 1.38, -0.35], texto: 'Superficie (h = 0)', activo: foco === 'superficie', color: 'turquesa' },
-    { id: 'p', pos: [-2.45, -1.02, 0.15], texto: 'p = ρgh', color: 'azul' },
+    { id: 'sup', pos: [0, ySup + 0.3, -0.35], texto: 'Superficie (h = 0)', activo: foco === 'superficie', color: 'turquesa' },
+    { id: 'p', pos: [-2.45, yDe(m.H * 0.85), 0.15], texto: 'p = ρgh', color: 'azul' },
   );
-  const pPa = rho * G * hAct;
   return {
     tags,
-    medida: nFranjas > 1
-      ? `Suma de ${nFranjas} franjas → al crecer N se vuelve F = ∫ ρg h L(h) dh`
-      : `Profundidad h = ${num(hAct, 3)} m · p = ${num(pPa / 1000, 3)} kPa`,
+    medida,
+    integral,
+    anclas: {
+      superficie: [0, ySup + 0.3, -0.35],
+      franja: [xDe(m.der) + 0.55, yDe(hAct), 0.6],
+      _datos: [-2.35, ySup + 0.55, 0.3],
+      _: [xDe(m.der) + 0.7, yDe((m.h0 + m.h1) / 2), 0.55],
+    },
   };
 }
 

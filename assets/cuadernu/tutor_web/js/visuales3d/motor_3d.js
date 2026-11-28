@@ -24,7 +24,16 @@ export const VISTAS_3D = {
   corte:       { azimut: 0.34, elevacion: 0.22, distancia: 5.5, corte: true,  nombre: 'Corte' },
 };
 
+// Tope de inclinación (R1): de casi cenital a un poco bajo el horizonte; la escena nunca se da vuelta.
 const LIM_ELEV = 1.48;
+const LIM_ELEV_MIN = -0.42;
+const DIST_MIN = 2.2;
+const DIST_MAX = 13.5;
+// Doble toque (R1): dos toques cortos en menos de este tiempo y a menos de esta distancia.
+const DOBLE_MS = 340;
+const DOBLE_PX = 28;
+
+const acotar = (x, a, b) => Math.max(a, Math.min(b, x));
 
 export function hexColor(nombre, porDefecto = 'tinta') {
   return new THREE.Color(color(nombre, porDefecto));
@@ -175,10 +184,19 @@ export function disponerObjeto(obj) {
 }
 
 export class Motor3D {
-  constructor(canvas, { alCambiarVista = null, alTocarPieza = null } = {}) {
+  /**
+   * alInteractuar: se llama en cada giro, zoom o tecla, para que el visor vuelva a dibujar
+   *   (con la escena en pausa no hay bucle de animación que lo haga).
+   * alDobleToque: doble toque, doble clic o tecla Inicio → volver a la vista del enunciado.
+   */
+  constructor(canvas, {
+    alCambiarVista = null, alTocarPieza = null, alInteractuar = null, alDobleToque = null,
+  } = {}) {
     this.canvas = canvas;
     this.alCambiarVista = alCambiarVista;
     this.alTocarPieza = alTocarPieza;
+    this.alInteractuar = alInteractuar;
+    this.alDobleToque = alDobleToque;
     this.fallback2d = false;
     this.renderer = null;
     this.escena = new THREE.Scene();
@@ -303,8 +321,8 @@ export class Motor3D {
 
   enfocar({ azimut, elevacion, distancia, objetivo, corte } = {}) {
     if (typeof azimut === 'number') this.metaCam.azimut = azimut;
-    if (typeof elevacion === 'number') this.metaCam.elevacion = Math.max(-LIM_ELEV, Math.min(LIM_ELEV, elevacion));
-    if (typeof distancia === 'number') this.metaCam.distancia = Math.max(2.2, Math.min(13, distancia));
+    if (typeof elevacion === 'number') this.metaCam.elevacion = acotar(elevacion, LIM_ELEV_MIN, LIM_ELEV);
+    if (typeof distancia === 'number') this.metaCam.distancia = acotar(distancia, DIST_MIN, DIST_MAX);
     if (Array.isArray(objetivo) && objetivo.length === 3) this.metaObjetivo.set(...objetivo);
     if (typeof corte === 'boolean') this.establecerCorte(corte);
     if (menosMovimiento()) this._actualizarCamara(1);
@@ -359,6 +377,9 @@ export class Motor3D {
   renderizar() {
     if (!this._vivo) return;
     this._actualizarCamara(menosMovimiento() ? 1 : 0.18);
+    // Estado de la cámara a la vista (azimut, elevación, distancia): lo leen las pruebas de R1–R3.
+    const { azimut, elevacion, distancia } = this.estadoCam;
+    this.canvas.dataset.cam = `${azimut.toFixed(3)},${elevacion.toFixed(3)},${distancia.toFixed(3)}`;
     if (this.renderer) {
       this.renderer.render(this.escena, this.camara);
     } else if (this.fallback2d) {
@@ -372,58 +393,125 @@ export class Motor3D {
         ctx.fillStyle = pal.tinta2;
         ctx.font = '600 15px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Vista 3D interactiva (WebGL2 no activo en este entorno)', this.canvas.width / 2, this.canvas.height / 2);
+        ctx.fillText('Este equipo no puede mostrar 3D: mirá el dibujo 2D o el enunciado', this.canvas.width / 2, this.canvas.height / 2);
         ctx.restore();
       }
     }
   }
 
+  _avisar() {
+    if (this.alInteractuar) this.alInteractuar();
+  }
+
+  _marcarLibre() {
+    if (this.vistaActual === 'libre') return;
+    this.vistaActual = 'libre';
+    this.canvas.dataset.vista = 'libre';
+    if (this.alCambiarVista) this.alCambiarVista('libre');
+  }
+
+  /**
+   * Gestos (R1, R3, R9): arrastrar gira (mouse, lápiz o dedo), dos dedos pellizcan para el zoom,
+   * la rueda acerca, las flechas orbitan, + y − acercan, Inicio o doble toque vuelven a la vista
+   * del enunciado. Cada gesto avisa al visor para que dibuje aunque la escena esté en pausa.
+   */
   _conectarGestos() {
     const c = this.canvas;
+    const punteros = new Map();
     let arrastre = null;
-    this._onDown = (ev) => {
-      if (ev.button !== 0 || !ev.isPrimary) return;
-      c.setPointerCapture?.(ev.pointerId);
-      arrastre = {
-        id: ev.pointerId,
-        x0: ev.clientX,
-        y0: ev.clientY,
-        movido: 0,
-        az: this.metaCam.azimut,
-        el: this.metaCam.elevacion,
-      };
+    let pellizco = null;
+    let ultimoToque = { t: -1e9, x: 0, y: 0 };
+
+    const empezarArrastre = (id, x, y) => {
+      arrastre = { id, x0: x, y0: y, movido: 0, az: this.metaCam.azimut, el: this.metaCam.elevacion };
     };
+
+    this._onDown = (ev) => {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      // Si el puntero no se puede capturar (algunos lápices, eventos sintéticos), el gesto sigue igual.
+      try { c.setPointerCapture?.(ev.pointerId); } catch { /* sin captura */ }
+      punteros.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (punteros.size === 2) {
+        const [a, b] = [...punteros.values()];
+        pellizco = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, dist0: this.metaCam.distancia };
+        arrastre = null;
+        return;
+      }
+      if (punteros.size === 1) empezarArrastre(ev.pointerId, ev.clientX, ev.clientY);
+    };
+
     this._onMove = (ev) => {
+      if (!punteros.has(ev.pointerId)) return;
+      punteros.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pellizco && punteros.size >= 2) {
+        const [a, b] = [...punteros.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        this.metaCam.distancia = acotar(pellizco.dist0 * (pellizco.d0 / d), DIST_MIN, DIST_MAX);
+        this.estadoCam.distancia = this.metaCam.distancia;
+        this._avisar();
+        return;
+      }
       if (!arrastre || ev.pointerId !== arrastre.id) return;
       const dx = ev.clientX - arrastre.x0;
       const dy = ev.clientY - arrastre.y0;
       arrastre.movido = Math.max(arrastre.movido, Math.hypot(dx, dy));
       if (arrastre.movido > 3) {
         this.metaCam.azimut = arrastre.az - dx * 0.010;
-        this.metaCam.elevacion = Math.max(-LIM_ELEV, Math.min(LIM_ELEV, arrastre.el + dy * 0.0085));
+        this.metaCam.elevacion = acotar(arrastre.el + dy * 0.0085, LIM_ELEV_MIN, LIM_ELEV);
         this.estadoCam.azimut = this.metaCam.azimut;
         this.estadoCam.elevacion = this.metaCam.elevacion;
-        if (this.vistaActual !== 'libre') {
-          this.vistaActual = 'libre';
-          c.dataset.vista = 'libre';
-          if (this.alCambiarVista) this.alCambiarVista('libre');
+        this._marcarLibre();
+        this._avisar();
+      }
+    };
+
+    const soltar = (ev, cancelado) => {
+      if (!punteros.has(ev.pointerId)) return;
+      punteros.delete(ev.pointerId);
+      if (pellizco) {
+        // Al levantar un dedo del pellizco no se toma como toque ni se gira de golpe.
+        if (punteros.size < 2) pellizco = null;
+        arrastre = null;
+        if (punteros.size === 1) {
+          const [[id, p]] = [...punteros.entries()];
+          empezarArrastre(id, p.x, p.y);
+          arrastre.movido = 99;
         }
+        return;
       }
-    };
-    this._onUp = (ev) => {
       if (!arrastre || ev.pointerId !== arrastre.id) return;
-      const fueClic = arrastre.movido < 5;
+      const fueClic = !cancelado && arrastre.movido < 5;
       arrastre = null;
-      if (fueClic && this.renderer && this.alTocarPieza) {
-        this._inspeccionarEn(ev.clientX, ev.clientY);
+      if (!fueClic) return;
+      const ahora = performance.now();
+      const esDoble = ahora - ultimoToque.t < DOBLE_MS
+        && Math.hypot(ev.clientX - ultimoToque.x, ev.clientY - ultimoToque.y) < DOBLE_PX;
+      ultimoToque = esDoble ? { t: -1e9, x: 0, y: 0 } : { t: ahora, x: ev.clientX, y: ev.clientY };
+      if (esDoble) {
+        if (this.alDobleToque) this.alDobleToque();
+        this._avisar();
+        return;
       }
+      if (this.renderer && this.alTocarPieza) this._inspeccionarEn(ev.clientX, ev.clientY);
     };
+    this._onUp = (ev) => soltar(ev, false);
+    this._onCancel = (ev) => soltar(ev, true);
+
     this._onWheel = (ev) => {
       ev.preventDefault();
       const factor = ev.deltaY > 0 ? 1.09 : 0.92;
-      this.metaCam.distancia = Math.max(2.2, Math.min(13.5, this.metaCam.distancia * factor));
+      this.metaCam.distancia = acotar(this.metaCam.distancia * factor, DIST_MIN, DIST_MAX);
+      this._avisar();
     };
+
     this._onKey = (ev) => {
+      if (ev.key === 'Home') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (this.alDobleToque) this.alDobleToque();
+        this._avisar();
+        return;
+      }
       const mapa = {
         ArrowLeft: [-0.14, 0, 0],
         ArrowRight: [0.14, 0, 0],
@@ -438,14 +526,16 @@ export class Motor3D {
       ev.preventDefault();
       ev.stopPropagation();
       this.metaCam.azimut += d[0];
-      this.metaCam.elevacion = Math.max(-LIM_ELEV, Math.min(LIM_ELEV, this.metaCam.elevacion + d[1]));
-      this.metaCam.distancia = Math.max(2.2, Math.min(13.5, this.metaCam.distancia + d[2]));
+      this.metaCam.elevacion = acotar(this.metaCam.elevacion + d[1], LIM_ELEV_MIN, LIM_ELEV);
+      this.metaCam.distancia = acotar(this.metaCam.distancia + d[2], DIST_MIN, DIST_MAX);
+      if (d[0] || d[1]) this._marcarLibre();
+      this._avisar();
     };
 
     c.addEventListener('pointerdown', this._onDown);
     c.addEventListener('pointermove', this._onMove);
     c.addEventListener('pointerup', this._onUp);
-    c.addEventListener('pointercancel', this._onUp);
+    c.addEventListener('pointercancel', this._onCancel);
     c.addEventListener('wheel', this._onWheel, { passive: false });
     c.addEventListener('keydown', this._onKey);
   }
@@ -477,7 +567,7 @@ export class Motor3D {
     c.removeEventListener('pointerdown', this._onDown);
     c.removeEventListener('pointermove', this._onMove);
     c.removeEventListener('pointerup', this._onUp);
-    c.removeEventListener('pointercancel', this._onUp);
+    c.removeEventListener('pointercancel', this._onCancel);
     c.removeEventListener('wheel', this._onWheel);
     c.removeEventListener('keydown', this._onKey);
     this.limpiarEscena();

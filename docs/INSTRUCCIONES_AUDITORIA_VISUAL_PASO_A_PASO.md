@@ -162,6 +162,16 @@ Probá también **la ayuda con voz y pizarra**, que es lo que el estudiante usa 
 
 - **H1.** Corresponde al problema y a sus números, cambia en el paso correcto, tiene etiquetas legibles y no queda en blanco.
 
+Si el panel muestra la **escena 3D** (con los botones 3D, Frontal, Lateral, Superior y Corte), además:
+
+- **H2. Números del enunciado.** Cada número que escribe la escena (alturas, radios, temperaturas, masas, presiones) es el del enunciado o sale de él con una cuenta. Si el enunciado es con letras o la lección es de teoría, la línea de abajo de la escena empieza con «Valores de ejemplo». La prueba `tests/tutor_runtime/test_tutor_3d_plan_escenas.py` revisa los números escritos a mano; esta revisión es para lo que se ve.
+- **H3. Girar y volver.** Arrastrar con el mouse, el lápiz o un dedo gira la escena **aunque esté en pausa**; no se da vuelta (la inclinación tiene tope). Doble toque, doble clic o la tecla Inicio vuelve a la vista inicial, que es la del dibujo del enunciado.
+- **H4. Vistas y zoom.** Frontal, Lateral, Superior y Corte cambian de verdad la imagen. La rueda, las teclas + y − y el pellizco con dos dedos acercan y alejan.
+- **H5. Profundidad.** Se entiende qué está delante y qué está detrás. Nada se ve a través de una pieza que debería taparlo, salvo en «Corte».
+- **H6. Paso «Datos».** En ese paso la escena muestra, a la izquierda y en naranja, cada dato con su símbolo y su valor (n = 1 mol, V_C = 0,0045 m³), y a la derecha, en morado, lo que piden por inciso. Sin LaTeX crudo (nada de `$`, `\frac`, `\text`). Al pasar al primer paso que no es «Datos», esas etiquetas desaparecen.
+- **H7. Integrales.** En paredes, compuertas y conducción, el pedacito (franja dh, disco dy, cascarón dr) barre de un límite del dibujo al otro con su medida escrita, y la barra «Suma de…» crece hasta llegar al resultado de la lección (por ejemplo, T-INT0: F = 156,8 kN de 156,8 kN).
+- **H8. Movimiento, temas y tamaño.** «Animar» mueve y «Pausar» detiene; con «menos movimiento» de Windows no hay animación y el botón dice «Avanzar paso». La escena se ve bien en Claro, Oscuro y Contraste, al 200 % de zoom y en «Ampliar». Sin WebGL aparece el dibujo 2D de la lección.
+
 ### I. Selección única
 
 - **I1.** Cada opción se descarta con un motivo concreto, y la correcta queda marcada.

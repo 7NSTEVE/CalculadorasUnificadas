@@ -39,12 +39,54 @@ export function estadoCiclo(estados, procesos, gamma = 1.4, t = 0) {
   return { v, p, a, b, i, u, tipo };
 }
 
-/** 9. Sólidos en conducción 3D con plano de corte y elemento diferencial dA / dr / dy. */
+/** Integral de Simpson (n par). */
+function simpson(f, a, b, n = 200) {
+  if (!(Math.abs(b - a) > 0)) return 0;
+  const m = n % 2 ? n + 1 : n;
+  const d = (b - a) / m;
+  let s = f(a) + f(b);
+  for (let i = 1; i < m; i += 1) s += f(a + i * d) * (i % 2 ? 4 : 2);
+  return (s * d) / 3;
+}
+
+/**
+ * R8 en conducción: el pedacito barre de un límite al otro y se van sumando las resistencias
+ * dx/(k·A(x)); al final, H = ΔT / R. Sin k (lecciones de teoría) se suma dx/A(x).
+ */
+function integralConduccion(p, var_, desde, hasta, actual, A, kDe) {
+  const conK = typeof kDe === 'function';
+  const f = conK ? (x) => 1 / (kDe(x) * A(x)) : (x) => 1 / A(x);
+  const parcial = simpson(f, desde, actual);
+  const total = simpson(f, desde, hasta);
+  if (!(total > 0)) return null;
+  const unidad = conK ? 'K/W' : 'm⁻¹';
+  const nombre = conK ? `d${var_}/(kA)` : `d${var_}/A`;
+  let texto = `Suma de ${nombre} de ${var_} = ${num(desde, 3)} m a ${var_} = ${num(actual, 3)} m: ${num(parcial, 4)} ${unidad} de ${num(total, 4)} ${unidad}`;
+  const dT = Number(p.T1) - Number(p.T2);
+  if (conK && Number.isFinite(dT) && Math.abs(actual - hasta) < Math.abs(hasta - desde) * 1e-3) {
+    texto += ` ⇒ H = ΔT/R = ${num(Math.abs(dT) / total, 4)} W`;
+  }
+  return { actual: parcial, total, texto };
+}
+
+/** Conductividad: constante (k) o lineal en la posición (k0 + k1·x), si el enunciado la da. */
+function conductividad(p) {
+  if (Number.isFinite(Number(p.k0)) && Number.isFinite(Number(p.k1))) {
+    const k0 = Number(p.k0); const k1 = Number(p.k1);
+    return (x) => k0 + k1 * x;
+  }
+  const k = Number(p.k);
+  return Number.isFinite(k) && k > 0 ? () => k : null;
+}
+
+/** 9. Sólidos en conducción 3D con plano de corte y el pedacito dy / dx / dr que barre entre los límites. */
 export function construirSolido3D(motor, p, t, foco) {
   const g = motor.raiz;
   const tags = [];
   const corte = motor.planosCorte();
   const geo = p.geo || 'pared';
+  const kDe = conductividad(p);
+  const u = Math.max(0, Math.min(1, t));
 
   g.add(crearPisoSutil(-1.68));
 
@@ -52,7 +94,7 @@ export function construirSolido3D(motor, p, t, foco) {
     return construirDilatacion3D(motor, p, t, foco);
   }
 
-  // Esfera seccionada (O26-8): sólido de revolución LatheGeometry + disco horizontal brillante + Pitágoras 3D
+  // Esfera cortada por dos planos (O26-8): disco de radio r(y) = √(R² − y²) y grosor dy
   if (geo === 'esfera_seccionada') {
     const R = Number(p.R || 0.1);
     const L = Math.min(R * 0.96, Number(p.L || 0.08));
@@ -64,8 +106,7 @@ export function construirSolido3D(motor, p, t, foco) {
     const M = 28;
     for (let i = 0; i <= M; i += 1) {
       const y = -Lvis + (2 * Lvis * i) / M;
-      const r = Math.sqrt(Math.max(0.001, Rvis * Rvis - y * y));
-      pts.push(new THREE.Vector2(r, y));
+      pts.push(new THREE.Vector2(Math.sqrt(Math.max(0.001, Rvis * Rvis - y * y)), y));
     }
     const cuerpo = new THREE.Mesh(
       new THREE.LatheGeometry(pts, 36),
@@ -73,12 +114,11 @@ export function construirSolido3D(motor, p, t, foco) {
     );
     cuerpo.userData.info = {
       titulo: 'Esfera cortada (−L ≤ y ≤ L)',
-      detalle: 'El calor viaja de la cara plana caliente a la fría; el área del disco varía con y.',
+      detalle: 'El calor va de una cara plana a la otra; el área del disco cambia con y.',
       formula: 'A(y) = πr² = π(R² − y²)',
     };
     g.add(cuerpo);
 
-    // Tapas caliente (arriba o abajo) y fría
     const rTapa = Math.sqrt(Math.max(0.01, Rvis * Rvis - Lvis * Lvis));
     const tapa1 = new THREE.Mesh(new THREE.CylinderGeometry(rTapa, rTapa, 0.05, 32), crearMaterial('rojo', { opacidad: 0.82, corte }));
     tapa1.position.y = -Lvis;
@@ -86,8 +126,7 @@ export function construirSolido3D(motor, p, t, foco) {
     tapa2.position.y = Lvis;
     g.add(tapa1, tapa2);
 
-    // Disco diferencial brillante a altura y
-    const yDatos = -L + 2 * L * t;
+    const yDatos = -L + 2 * L * u;
     const yVis = yDatos * esc;
     const rDisco = Math.sqrt(Math.max(0.01, Rvis * Rvis - yVis * yVis));
     const disco = new THREE.Mesh(
@@ -97,12 +136,12 @@ export function construirSolido3D(motor, p, t, foco) {
     disco.position.y = yVis;
     disco.userData.info = {
       titulo: `Disco de grosor dy en y = ${num(yDatos, 3)} m`,
-      detalle: 'Por Pitágoras desde el centro O: r² + y² = R² ⇒ A(y) = π(R² − y²).',
+      detalle: 'Por Pitágoras desde el centro O: r² + y² = R², entonces A(y) = π(R² − y²).',
       formula: 'H = −k π(R² − y²) dT/dy',
     };
     g.add(disco);
 
-    // Triángulo rectángulo de Pitágoras 3D (centro O -> eje y -> borde del disco)
+    // Triángulo de Pitágoras (centro O → eje y → borde del disco)
     g.add(
       crearLinea3D([[0, 0, 0.06], [0, yVis, 0.06]], 'verde'),
       crearLinea3D([[0, yVis, 0.06], [rDisco, yVis, 0.06]], 'naranja'),
@@ -110,18 +149,28 @@ export function construirSolido3D(motor, p, t, foco) {
     );
     g.add(crearFlecha3D([Rvis + 0.45, -Lvis, 0], [Rvis + 0.45, Lvis, 0], 'rojo'));
 
-    const areaReal = Math.PI * Math.max(0, R * R - yDatos * yDatos);
+    const rReal = Math.sqrt(Math.max(0, R * R - yDatos * yDatos));
     tags.push(
-      { id: 'disc', pos: [rDisco * 0.6, yVis + 0.24, 0.12], texto: 'r = √(R²−y²)', activo: foco === 'corte', color: 'naranja' },
+      { id: 'disc', pos: [rDisco * 0.6, yVis + 0.24, 0.12], texto: `r(y) = √(R²−y²) = ${num(rReal, 3)} m`, activo: foco === 'corte', color: 'naranja' },
+      { id: 'dy', pos: [-rDisco - 0.3, yVis, 0.12], texto: 'dy', color: 'naranja' },
       { id: 'hip', pos: [rDisco * 0.45, yVis * 0.42, 0.12], texto: 'R', color: 'morado' },
       { id: 't1', pos: [-rTapa - 0.35, -Lvis, 0], texto: `T₁ = ${num(p.T1 ?? 100, 3)} °C`, activo: foco === 'limites', color: 'rojo' },
       { id: 't2', pos: [-rTapa - 0.35, Lvis, 0], texto: `T₂ = ${num(p.T2 ?? 20, 3)} °C`, activo: foco === 'limites', color: 'azul' },
       { id: 'fl', pos: [Rvis + 0.8, 0, 0], texto: 'Flujo H', activo: foco === 'calor', color: 'rojo' },
     );
-    return { tags, medida: `y = ${num(yDatos, 4)} m · A(y) = π(R²−y²) = ${num(areaReal, 4)} m²` };
+    const A = (y) => Math.PI * Math.max(1e-12, R * R - y * y);
+    return {
+      tags,
+      medida: `y = ${num(yDatos, 3)} m · A(y) = π(R²−y²) = ${num(A(yDatos), 4)} m²`,
+      integral: integralConduccion(p, 'y', -L, L, yDatos, A, kDe),
+      anclas: {
+        limites: [-rTapa - 0.35, -Lvis - 0.35, 0], corte: [rDisco * 0.6, yVis + 0.55, 0.12],
+        calor: [Rvis + 0.8, 0.35, 0], _datos: [-2.45, 1.45, 0], _: [Rvis + 0.85, -0.45, 0],
+      },
+    };
   }
 
-  // Tronco de cono (T-CONO)
+  // Tronco de cono (T-CONO): disco de radio r(x) = r₁ + (r₂ − r₁)·x/L y grosor dx
   if (geo === 'cono') {
     const r1 = Number(p.r1 || 0.01);
     const r2 = Number(p.r2 || 0.03);
@@ -136,11 +185,11 @@ export function construirSolido3D(motor, p, t, foco) {
       crearMaterial('gris', { opacidad: 0.32, dobleCara: true, corte }),
     );
     cono.rotation.z = -Math.PI / 2;
-    cono.userData.info = { titulo: 'Tronco de cono', detalle: 'El radio crece linealmente: r(x) = r₁ + (r₂−r₁)·x/L.', formula: 'A(x) = π r(x)²' };
+    cono.userData.info = { titulo: 'Tronco de cono', detalle: 'El radio crece en línea recta: r(x) = r₁ + (r₂−r₁)·x/L.', formula: 'A(x) = π r(x)²' };
     g.add(cono);
 
-    const xVis = -Lvis / 2 + t * Lvis;
-    const rVis = r1v + (r2v - r1v) * t;
+    const xVis = -Lvis / 2 + u * Lvis;
+    const rVis = r1v + (r2v - r1v) * u;
     const disco = new THREE.Mesh(
       new THREE.CylinderGeometry(rVis, rVis, 0.09, 32),
       crearMaterial('naranja', { opacidad: 0.9, emisivo: 'naranja', intensidadEmisiva: 0.25 }),
@@ -150,22 +199,34 @@ export function construirSolido3D(motor, p, t, foco) {
     g.add(disco);
     g.add(crearFlecha3D([-Lvis / 2, -1.28, 0], [Lvis / 2, -1.28, 0], 'rojo'));
 
-    const rReal = r1 + (r2 - r1) * t;
+    const xReal = u * L;
+    const rDe = (x) => r1 + ((r2 - r1) * x) / L;
     tags.push(
-      { id: 'c', pos: [xVis, rVis + 0.28, 0], texto: `Disco A(x) = πr²`, activo: foco === 'corte', color: 'naranja' },
-      { id: 't1', pos: [-Lvis / 2, -r1v - 0.32, 0], texto: `r₁ (${num(p.T1 ?? 100, 3)} °C)`, color: 'rojo' },
-      { id: 't2', pos: [Lvis / 2, -r2v - 0.32, 0], texto: `r₂ (${num(p.T2 ?? 20, 3)} °C)`, color: 'azul' },
+      { id: 'c', pos: [xVis, rVis + 0.28, 0], texto: `r(x) = ${num(rDe(xReal), 3)} m · A = πr²`, activo: foco === 'corte', color: 'naranja' },
+      { id: 'dx', pos: [xVis, -rVis - 0.28, 0], texto: 'dx', color: 'naranja' },
+      { id: 't1', pos: [-Lvis / 2, -r1v - 0.32, 0], texto: `r₁: ${num(p.T1 ?? 100, 3)} °C`, color: 'rojo' },
+      { id: 't2', pos: [Lvis / 2, -r2v - 0.32, 0], texto: `r₂: ${num(p.T2 ?? 0, 3)} °C`, color: 'azul' },
     );
-    return { tags, medida: `x = ${num(t * L, 3)} m · r(x) = ${num(rReal, 4)} m · A(x) = ${num(Math.PI * rReal * rReal, 4)} m²` };
+    const A = (x) => Math.PI * rDe(x) ** 2;
+    return {
+      tags,
+      medida: `x = ${num(xReal, 3)} m · r(x) = ${num(rDe(xReal), 4)} m · A(x) = ${num(A(xReal), 4)} m²`,
+      integral: integralConduccion(p, 'x', 0, L, xReal, A, kDe),
+      anclas: {
+        limites: [-Lvis / 2, r1v + 0.35, 0], corte: [xVis, rVis + 0.6, 0], calor: [0, -1.55, 0],
+        _datos: [-2.45, 1.5, 0], _: [Lvis / 2 + 0.2, r2v + 0.45, 0],
+      },
+    };
   }
 
-  // Cascarón cilíndrico radial (Q045 / tubo)
+  // Cascarón cilíndrico (Q045): área lateral 2πrL y grosor dr, de r₁ a r₂
   if (geo === 'cilindro' || geo === 'cilindro2') {
     const r1 = Number(p.r1 || 0.04);
     const r2 = Number(p.r2 || 0.08);
+    const Lc = Number(p.L || 1);
     const rVis1 = 0.46;
     const rVis2 = 1.18;
-    const rActVis = rVis1 + t * (rVis2 - rVis1);
+    const rActVis = rVis1 + u * (rVis2 - rVis1);
 
     const ext = new THREE.Mesh(
       new THREE.CylinderGeometry(rVis2, rVis2, 3.1, 32, 1, true),
@@ -183,19 +244,29 @@ export function construirSolido3D(motor, p, t, foco) {
     );
     cascaron.rotation.z = Math.PI / 2;
     cascaron.userData.info = {
-      titulo: 'Cascarón cilíndrico (dr)',
-      detalle: 'El calor fluye radialmente hacia afuera atravesando el área lateral 2πrL.',
-      formula: 'H = −k (2πrL) dT/dr ⇒ ln(r₂/r₁)',
+      titulo: 'Cascarón cilíndrico (grosor dr)',
+      detalle: 'El calor sale en dirección radial y atraviesa el área lateral 2πrL.',
+      formula: 'H = −k (2πrL) dT/dr',
     };
     g.add(ext, intC, cascaron);
 
     g.add(crearFlecha3D([0, rVis1, 0], [0, rVis2 + 0.35, 0], 'rojo'));
-    const rReal = r1 + t * (r2 - r1);
+    const rReal = r1 + u * (r2 - r1);
     tags.push(
-      { id: 'cas', pos: [0, rActVis + 0.28, 0.2], texto: `Cascarón A(r) = 2πrL`, activo: foco === 'corte', color: 'naranja' },
+      { id: 'cas', pos: [0, rActVis + 0.28, 0.2], texto: `r = ${num(rReal, 3)} m · A(r) = 2πrL`, activo: foco === 'corte', color: 'naranja' },
+      { id: 'dr', pos: [0.75, rActVis, 0.2], texto: 'dr', color: 'naranja' },
       { id: 'fl', pos: [0.4, rVis2 + 0.38, 0], texto: 'H radial', activo: foco === 'calor', color: 'rojo' },
     );
-    return { tags, medida: `Radio r = ${num(rReal, 4)} m · Al integrar dr/r sale ln(r₂/r₁).` };
+    const A = (r) => 2 * Math.PI * r * Lc;
+    return {
+      tags,
+      medida: `r = ${num(rReal, 4)} m · A(r) = 2πrL = ${num(A(rReal), 4)} m² · al integrar dr/r sale ln(r₂/r₁)`,
+      integral: integralConduccion(p, 'r', r1, r2, rReal, A, kDe),
+      anclas: {
+        limites: [-1.9, rVis1 + 0.2, 0], corte: [0, rActVis + 0.6, 0.2], calor: [0.4, rVis2 + 0.7, 0],
+        _datos: [-2.45, 1.6, 0], _: [1.9, rVis2 + 0.2, 0],
+      },
+    };
   }
 
   // Pared plana, capas en serie o lámina con k(y) variable (Q050, Q051, O26-5)
@@ -227,22 +298,42 @@ export function construirSolido3D(motor, p, t, foco) {
       new THREE.BoxGeometry(0.11, 1.78, 1.34),
       crearMaterial('naranja', { opacidad: 0.82, emisivo: 'naranja', intensidadEmisiva: 0.2 }),
     );
-    lamina.position.x = -Lvis / 2 + t * Lvis;
+    lamina.position.x = -Lvis / 2 + u * Lvis;
     lamina.userData.info = {
-      titulo: 'Sección transversal (dx o dy)',
-      detalle: 'Si k o A cambian con la posición, separa variables e integra la ley de Fourier.',
-      formula: 'H = −k(y) A dT/dy',
+      titulo: 'Sección transversal (grosor dx o dy)',
+      detalle: 'Si k o A cambian con la posición, se separan variables y se integra la ley de Fourier.',
+      formula: 'H = −k A dT/dx',
     };
     g.add(bloque, caraCal, caraFri, lamina);
-    tags.push({ id: 'sec', pos: [lamina.position.x, 1.12, 0], texto: 'Corte dx / dy', activo: foco === 'corte', color: 'naranja' });
+    tags.push({ id: 'sec', pos: [lamina.position.x, 1.12, 0], texto: 'Corte de grosor dx', activo: foco === 'corte', color: 'naranja' });
   }
   g.add(crearFlecha3D([-Lvis / 2, -1.25, 0], [Lvis / 2, -1.25, 0], 'rojo'));
   tags.push(
     { id: 't1', pos: [-Lvis / 2, -1.52, 0], texto: p.T1 !== undefined ? `${num(p.T1, 3)} °C` : 'T_H (caliente)', color: 'rojo' },
     { id: 't2', pos: [Lvis / 2, -1.52, 0], texto: p.T2 !== undefined ? `${num(p.T2, 3)} °C` : 'T_C (fría)', color: 'azul' },
   );
-  return { tags, medida: 'El calor H fluye siempre de la cara caliente a la fría (H constante en estado estacionario).' };
+  const Lreal = Number(p.L);
+  const Area = Number(p.A);
+  const integral = Number.isFinite(Lreal) && Lreal > 0 && Number.isFinite(Area) && Area > 0
+    ? integralConduccion(p, p.eje === 'y' ? 'y' : 'x', 0, Lreal, u * Lreal, () => Area, kDe)
+    : null;
+  return {
+    tags,
+    medida: 'El calor H va siempre de la cara caliente a la fría (en estado estacionario, H es el mismo en todo corte).',
+    integral,
+    anclas: {
+      limites: [-Lvis / 2, 1.3, 0], corte: [-Lvis / 2 + u * Lvis, 1.45, 0], calor: [0, -1.55, 0],
+      _datos: [-2.5, 1.75, 0], _: [Lvis / 2 + 0.3, 0.6, 0],
+    },
+  };
 }
+
+// Dónde se marcan los datos y lo que piden en el pistón (R7): trabajo junto al émbolo,
+// estados arriba del cilindro, calor y eficiencia junto al gas.
+const ANCLAS_PISTON = {
+  volumen: [1.55, 1.4, 0], presion: [0, 1.95, 0], energia: [-1.55, -0.35, 0.5],
+  _datos: [-2.45, 1.5, 0], _: [1.95, 0.55, 0],
+};
 
 /** 10. Cilindro-Pistón 3D acoplado al ciclo p-V, modo Otto o vibración diatómica. */
 export function construirPiston3D(motor, p, t, foco) {
@@ -262,7 +353,11 @@ export function construirPiston3D(motor, p, t, foco) {
     enlace.rotation.z = Math.PI / 2;
     g.add(a1, a2, enlace);
     tags.push({ id: 'mol', pos: [0, -0.78, 0], texto: t > 0.45 ? 'Vibración activa (C_V sube)' : 'Traslación + Rotación (5/2 R)' });
-    return { tags, medida: 'A mayor temperatura se activan los modos de vibración y C_V del diatómico aumenta.' };
+    return {
+      tags,
+      medida: 'A mayor temperatura se activan los modos de vibración y C_V del diatómico aumenta.',
+      anclas: { _datos: [-2.3, 1.35, 0], _: [0, 1.15, 0] },
+    };
   }
 
   const armarCilindro = (x0, fracVol, calT, etiqueta, sub = '', colGas = 'azul') => {
@@ -322,7 +417,11 @@ export function construirPiston3D(motor, p, t, foco) {
     const f = 0.5 + 0.45 * Math.cos(TAU * t);
     armarCilindro(-1.28, f, 1 - f, 'Motor A (aire)', 'γ = 1,40', 'azul');
     armarCilindro(1.28, f, 1 - f, 'Motor B (mono)', 'γ = 1,67', 'turquesa');
-    return { tags, medida: 'Ciclo Otto: e = 1 − 1 / r^(γ−1). A igual compresión r, mayor γ da mayor eficiencia.' };
+    return {
+      tags,
+      medida: 'Ciclo Otto: e = 1 − 1 / r^(γ−1). A igual compresión r, mayor γ da mayor eficiencia.',
+      anclas: { energia: [0, 1.85, 0], _datos: [-2.55, 1.7, 0], _: [0, 1.85, 0] },
+    };
   }
 
   // Si tiene estados/procesos p-V, el pistón se sincroniza con el volumen real del ciclo
@@ -358,13 +457,18 @@ export function construirPiston3D(motor, p, t, foco) {
       tags,
       ciclo: e,
       medida: `${e.a} → ${e.b} (${tipoTxt}) · V = ${num(e.v, 4)} ${p.uV || 'm³'} · p = ${num(e.p, 4)} ${p.up || 'Pa'}`,
+      anclas: ANCLAS_PISTON,
     };
   }
 
   // Gas isocórico o libre
   const fracV = p.modo === 'isocorico' ? 0.55 : 0.28 + 0.65 * t;
   armarCilindro(0, fracV, t, p.modo === 'isocorico' ? 'Volumen constante (W = 0)' : 'Gas ideal en pistón', 'pV = nRT', t > 0.5 ? 'rojo' : 'azul');
-  return { tags, medida: 'Al aumentar T, las moléculas chocan más rápido y sube la presión o se expande el pistón.' };
+  return {
+    tags,
+    medida: 'Al aumentar T, las moléculas chocan más rápido y sube la presión o se expande el pistón.',
+    anclas: ANCLAS_PISTON,
+  };
 }
 
 /** 11. Dilatación térmica 3D (barra, placa con hueco que crece, derrame líquido). */
@@ -411,61 +515,126 @@ export function construirDilatacion3D(motor, p, t, foco) {
   return { tags, medida: 'ΔL = α L₀ ΔT · Crece proporcional a α, al largo inicial L₀ y al cambio ΔT.' };
 }
 
-/** 12. Calorimetría (mezcla térmica) y Radiación térmica 3D (Stefan-Boltzmann T⁴). */
+/**
+ * 12. Calorimetría (los cuerpos reales del enunciado: agua, metal, hielo, con su masa) y
+ * radiación térmica (Stefan-Boltzmann T⁴). El deslizador va del estado inicial (0 %) al
+ * equilibrio (100 %): lo caliente se enfría, lo frío se calienta y el hielo se derrite si alcanza.
+ */
 export function construirCalor3D(motor, p, t, foco) {
   const g = motor.raiz;
   const tags = [];
   const corte = motor.planosCorte();
+  const u = Math.max(0, Math.min(1, t));
   g.add(crearPisoSutil(-1.58));
 
   if (p.tipo === 'radiacion' || p.modo === 'radiacion') {
-    const T = 300 + t * 500;
+    const T = 300 + u * 500;
     const radEsc = 0.65 + 0.95 * ((T / 800) ** 2);
     const cuerpo = new THREE.Mesh(
       new THREE.SphereGeometry(0.62, 26, 20),
-      crearMaterial(t > 0.5 ? 'rojo' : 'naranja', { emisivo: 'rojo', intensidadEmisiva: 0.15 + t * 0.55 }),
+      crearMaterial(u > 0.5 ? 'rojo' : 'naranja', { emisivo: 'rojo', intensidadEmisiva: 0.15 + u * 0.55 }),
     );
-    cuerpo.userData.info = { titulo: 'Cuerpo radiante', detalle: 'Emite energía electromagnética aunque esté en el vacío.', formula: 'H = A e σ T⁴ (T en Kelvin)' };
+    cuerpo.userData.info = { titulo: 'Cuerpo radiante', detalle: 'Emite energía electromagnética aunque esté en el vacío.', formula: 'H = A e σ T⁴ (T en kelvin)' };
     const halo1 = new THREE.Mesh(
       new THREE.SphereGeometry(0.82 + 0.72 * radEsc, 24, 18),
       crearMaterial('naranja', { opacidad: 0.16, dobleCara: true, corte }),
     );
     g.add(cuerpo, halo1);
-    tags.push({ id: 'rad', pos: [0, 1.42, 0], texto: `T = ${num(T, 3)} K → T⁴ crece rapidísimo`, color: 'rojo' });
-    return { tags, medida: `Stefan-Boltzmann: H = AeσT⁴ · Si T se duplica (en K), H se multiplica por 16.` };
+    tags.push({ id: 'rad', pos: [0, 1.42, 0], texto: `T = ${num(T, 3)} K → T⁴ crece muy rápido`, color: 'rojo' });
+    return {
+      tags,
+      medida: 'Stefan-Boltzmann: H = AeσT⁴ · si T (en kelvin) se duplica, H se multiplica por 16.',
+      anclas: { calentar: [0, 1.75, 0], _datos: [-2.3, 1.5, 0], _: [1.6, 1.1, 0] },
+    };
   }
 
-  // Mezcla en calorímetro aislado (cuerpo caliente cede Q < 0, cuerpo frío gana Q > 0)
-  const vaso = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.45, 1.45, 2.0, 28, 1, true),
-    crearMaterial('borde', { opacidad: 0.25, dobleCara: true, corte }),
-  );
-  vaso.position.y = -0.2;
-  const agua = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.38, 1.38, 1.45, 26),
-    crearMaterial(t > 0.6 ? 'turquesa' : 'azul', { opacidad: 0.28, corte }),
-  );
-  agua.position.y = -0.45;
-  const bloque = new THREE.Mesh(
-    new THREE.BoxGeometry(0.76, 0.72, 0.76),
-    crearMaterial(t > 0.7 ? 'turquesa' : 'rojo', { metal: 0.35 }),
-  );
-  bloque.position.set(-0.25, -0.58, 0);
-  bloque.userData.info = { titulo: 'Cuerpo caliente', detalle: 'Cede calor (Q < 0) hasta igualar T_f con el resto.', formula: 'Σ Q = 0' };
-  const hielo = new THREE.Mesh(
-    new THREE.BoxGeometry(0.55 * (1 - 0.55 * t), 0.55 * (1 - 0.55 * t), 0.55 * (1 - 0.55 * t)),
-    crearMaterial('azul', { opacidad: 0.62 }),
-  );
-  hielo.position.set(0.62, 0.12, 0);
-  g.add(vaso, agua, bloque, hielo);
+  const comps = Array.isArray(p.componentes) && p.componentes.length
+    ? p.componentes
+    : [{ n: 'cuerpo caliente', m: 300, T: 80, fase: 'solido' }, { n: 'agua', m: 500, T: 20, fase: 'liquido' }];
+  const liquidos = comps.filter((c) => c.fase === 'liquido');
+  const solidos = comps.filter((c) => c.fase === 'solido');
+  const hielos = comps.filter((c) => c.fase === 'hielo');
+  const necesita = (p.necesita || []).reduce((s, x) => s + Number(x.Q || 0), 0);
+  const disponible = (p.disponible || []).reduce((s, x) => s + Number(x.Q || 0), 0);
+  // ¿Alcanza el calor disponible para derretir todo el hielo? Si no hay datos, se supone que sí.
+  const seDerrite = !(disponible > 0 && necesita > 0) || disponible >= necesita;
+  const anclas = { _datos: [-2.45, 1.55, 0], _: [1.95, 1.15, 0] };
 
-  if (t < 0.85) {
+  if (liquidos.length) {
+    const mLiq = liquidos.reduce((s, c) => s + Number(c.m || 0), 0);
+    const nivel = Math.max(0.6, Math.min(1.7, 0.6 + mLiq / 600));
+    const vaso = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.45, 1.45, 2.1, 28, 1, true),
+      crearMaterial('borde', { opacidad: 0.25, dobleCara: true, corte }),
+    );
+    vaso.position.y = -0.35;
+    vaso.userData.info = { titulo: 'Recipiente aislado', detalle: 'No entra ni sale calor: todo lo que cede uno lo gana otro.', formula: 'ΣQ = 0' };
+    const agua = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.38, 1.38, nivel, 26),
+      crearMaterial(u > 0.6 ? 'turquesa' : 'azul', { opacidad: 0.28, corte }),
+    );
+    agua.position.y = -1.4 + nivel / 2;
+    g.add(vaso, agua);
+    const c0 = liquidos[0];
+    tags.push({ id: 'liq', pos: [-1.05, -1.4 + nivel + 0.18, 0.9], texto: `${c0.n || 'agua'}${liquidos.length > 1 ? ' (+)' : ''}`, color: 'azul' });
+    anclas.equilibrio = [0, -1.4 + nivel + 0.55, 0];
+  }
+
+  solidos.forEach((c, i) => {
+    const lado = 0.42 + 0.32 * Math.cbrt(Math.max(1, Number(c.m || 300)) / 300);
+    const bloque = new THREE.Mesh(
+      new THREE.BoxGeometry(lado, lado, lado),
+      crearMaterial(u > 0.7 ? 'turquesa' : (Number(c.T) > 30 ? 'rojo' : 'gris'), { metal: 0.35 }),
+    );
+    const x = liquidos.length ? -0.45 + i * 0.55 : 0;
+    bloque.position.set(x, liquidos.length ? -1.4 + lado / 2 + 0.02 : -0.85 + lado / 2, 0);
+    bloque.userData.info = {
+      titulo: c.n ? `Bloque de ${c.n}` : 'Bloque',
+      detalle: 'Cambia de temperatura hasta igualar a los demás: Q = m c ΔT.',
+      formula: 'Q = m c (T_f − T_i)',
+    };
+    g.add(bloque);
+    tags.push({ id: `sol${i}`, pos: [x, bloque.position.y + lado / 2 + 0.22, 0.4], texto: c.n || 'bloque', color: 'rojo' });
+  });
+
+  if (!liquidos.length) {
+    // Un solo cuerpo que recibe calor (como Q020): placa caliente y flecha de calor que entra.
+    const placa = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 1.2), crearMaterial('rojo', { emisivo: 'rojo', intensidadEmisiva: 0.2 }));
+    placa.position.y = -0.92;
+    g.add(placa);
+    g.add(crearFlecha3D([0.95, -1.05, 0.4], [0.35, -0.55, 0.4], 'rojo'));
+    tags.push({ id: 'q', pos: [1.3, -1.1, 0.4], texto: 'Q entra', color: 'rojo' });
+    anclas.equilibrio = [0, 0.35, 0];
+  }
+
+  hielos.forEach((c, i) => {
+    const queda = seDerrite ? Math.max(0.06, 1 - u) : Math.max(0.45, 1 - 0.55 * u);
+    const lado = (0.38 + 0.25 * Math.cbrt(Math.max(1, Number(c.m || 150)) / 150)) * Math.cbrt(queda);
+    const hielo = new THREE.Mesh(new THREE.BoxGeometry(lado, lado, lado), crearMaterial('azul', { opacidad: 0.62 }));
+    hielo.position.set(0.62 + i * 0.4, 0.15, 0);
+    hielo.userData.info = {
+      titulo: 'Hielo',
+      detalle: 'Primero se calienta hasta 0 °C, después se derrite (L_f) y recién entonces el agua que forma se calienta.',
+      formula: 'Q = m c_h ΔT + m L_f + m c_a ΔT',
+    };
+    g.add(hielo);
+    tags.push({ id: `hie${i}`, pos: [0.62 + i * 0.4, 0.15 + lado / 2 + 0.22, 0.3], texto: u > 0.9 && seDerrite ? 'hielo derretido' : (c.n || 'hielo'), color: 'azul' });
+  });
+
+  if (u < 0.85 && (liquidos.length || hielos.length) && (solidos.length || hielos.length)) {
     g.add(crearFlecha3D([-0.15, -0.1, 0.3], [0.45, 0.05, 0.3], 'rojo'));
   }
-  tags.push(
-    { id: 'c1', pos: [-0.35, -1.25, 0], texto: 'Cede calor (Q < 0)', color: 'rojo' },
-    { id: 'c2', pos: [0.68, 0.62, 0], texto: 'Absorbe calor (Q > 0)', color: 'azul' },
-    { id: 'eq', pos: [0, 1.05, 0], texto: t > 0.8 ? 'Equilibrio térmico (T_f)' : 'Recipiente aislado (ΣQ = 0)', activo: foco === 'equilibrio' },
-  );
-  return { tags, medida: 'Calorimetría: lo que cede el cuerpo caliente lo absorbe el frío (ΣQ = 0).' };
+  tags.push({
+    id: 'eq',
+    pos: [0, 1.15, 0],
+    texto: u > 0.8 ? 'Equilibrio: todos a la misma T_f' : (liquidos.length ? 'Recipiente aislado: ΣQ = 0' : 'El bloque se calienta: Q = mcΔT'),
+    activo: foco === 'equilibrio',
+  });
+  return {
+    tags,
+    medida: liquidos.length
+      ? 'Lo que cede lo caliente lo gana lo frío (ΣQ = 0); el hielo primero llega a 0 °C y después se derrite.'
+      : 'El calor que entra sube la temperatura: Q = m c ΔT.',
+    anclas,
+  };
 }

@@ -13,7 +13,7 @@
 import { menosMovimiento } from '../nucleo/api.js';
 import { alCambiarTema, color, paleta } from '../nucleo/paleta.js';
 import { num } from '../visuales/base.js';
-import { CapaEtiquetas3D } from './etiquetas_3d.js';
+import { CapaEtiquetas3D, textoEtiqueta } from './etiquetas_3d.js';
 import { Motor3D, VISTAS_3D } from './motor_3d.js';
 import {
   construirCuerda3D,
@@ -105,6 +105,11 @@ export class VisorEscena3D {
     this.vivo = true;
     this.visible = true;
     this.sucio = true;
+    // R7: en el paso «Datos» (o al elegir «Datos» / «Qué piden») la escena marca cada dato con su
+    // valor en naranja y lo que piden en morado.
+    this.modoDatos = false;
+    this.modoPiden = false;
+    this.vistaInicial = VISTAS_3D[this.apoyo.camara_inicial] ? this.apoyo.camara_inicial : 'perspectiva';
     this._t = 0;
     this._antes = performance.now();
     this._raf = 0;
@@ -169,7 +174,7 @@ export class VisorEscena3D {
     this.canvas.className = 'v3d-canvas';
     this.canvas.tabIndex = 0;
     this.canvas.setAttribute('role', 'img');
-    this.canvas.setAttribute('aria-label', `${this.apoyo.titulo || 'Escena 3D'}. Arrastra para girar, rueda para acercar, flechas del teclado para orbitar.`);
+    this.canvas.setAttribute('aria-label', `${this.apoyo.titulo || 'Escena 3D'}. Arrastrá para girar; rueda, dos dedos o las teclas + y − para acercar; flechas para orbitar; Inicio o doble toque para volver a la vista del enunciado.`);
     this.marco.appendChild(this.canvas);
     this.etiquetas = new CapaEtiquetas3D(this.marco);
     this.el.appendChild(this.marco);
@@ -184,10 +189,28 @@ export class VisorEscena3D {
       this.el.appendChild(this.miniCanvas);
     }
 
-    // Lectura numérica viva en 1 línea
+    // Lectura numérica viva en 1 línea (también es la descripción de la escena para el lector de pantalla)
     this.medidas = document.createElement('p');
     this.medidas.className = 'v3d-medidas';
+    this.medidas.id = `v3d-med-${Math.random().toString(36).slice(2, 9)}`;
+    this.canvas.setAttribute('aria-describedby', this.medidas.id);
     this.el.appendChild(this.medidas);
+
+    // R8: la suma de los pedacitos, que crece mientras el pedacito barre entre los límites del dibujo
+    this.integralEl = document.createElement('div');
+    this.integralEl.className = 'v3d-integral';
+    this.integralEl.hidden = true;
+    this.integralTxt = document.createElement('p');
+    this.integralTxt.className = 'v3d-integral-txt';
+    this.integralBarra = document.createElement('div');
+    this.integralBarra.className = 'v3d-integral-barra';
+    this.integralBarra.setAttribute('role', 'progressbar');
+    this.integralBarra.setAttribute('aria-valuemin', '0');
+    this.integralBarra.setAttribute('aria-valuemax', '100');
+    this.integralRelleno = document.createElement('span');
+    this.integralBarra.appendChild(this.integralRelleno);
+    this.integralEl.append(this.integralTxt, this.integralBarra);
+    this.el.appendChild(this.integralEl);
 
     // Chips «Ver en 3D» conectados a incisos del problema
     const piden = Array.isArray(this.apoyo.piden) ? this.apoyo.piden : [];
@@ -231,7 +254,7 @@ export class VisorEscena3D {
 
     const hint = document.createElement('span');
     hint.className = 'v3d-hint';
-    hint.textContent = 'Arrastra para girar · Toca una pieza';
+    hint.textContent = 'Arrastrá para girar · dos dedos o rueda: zoom · doble toque: volver';
     filaAcc.appendChild(hint);
     this.mandos.appendChild(filaAcc);
 
@@ -273,11 +296,14 @@ export class VisorEscena3D {
     // Arrancar motor WebGL2
     this.motor = new Motor3D(this.canvas, {
       alCambiarVista: (id) => this._marcarVista(id),
-      alTocarPieza: (info) => this.etiquetas.mostrarPieza(info),
+      alTocarPieza: (info) => { this.etiquetas.mostrarPieza(info); this._pedir(); },
+      alInteractuar: () => this._pedir(),
+      alDobleToque: () => this.volverVistaInicial(),
     });
-    if (this.apoyo.camara_inicial && VISTAS_3D[this.apoyo.camara_inicial]) {
-      this.motor.irAVista(this.apoyo.camara_inicial, { inmediato: true });
-    }
+    // R10: sin WebGL el panel muestra el dibujo 2D (ApoyoVisual lo cambia solo).
+    this.sinWebGL = Boolean(this.motor.fallback2d);
+    this.el.dataset.webgl = this.sinWebGL ? 'no' : 'si';
+    this.motor.irAVista(this.vistaInicial, { inmediato: true });
 
     this._actualizarBotonAnim();
     this._quitaTema = alCambiarTema(() => { this.sucio = true; this._pedir(); });
@@ -326,6 +352,13 @@ export class VisorEscena3D {
     this._pedir();
   }
 
+  /** R1: doble toque, doble clic o Inicio → la vista del dibujo del enunciado, a la distancia de fábrica. */
+  volverVistaInicial() {
+    this.motor.irAVista(this.vistaInicial);
+    this.sucio = true;
+    this._pedir();
+  }
+
   _alternarAnimacion() {
     if (this.enMarcha) {
       this.pausar();
@@ -364,6 +397,8 @@ export class VisorEscena3D {
   cambiar(cambio = {}) {
     if (!cambio) return;
     if ('foco' in cambio) this.foco = cambio.foco;
+    if ('datos' in cambio) this.modoDatos = Boolean(cambio.datos);
+    if ('piden' in cambio) this.modoPiden = Boolean(cambio.piden);
     if (cambio.camara && VISTAS_3D[cambio.camara]) {
       this.motor.irAVista(cambio.camara);
     } else if (cambio.foco && CAMARA_POR_FOCO[cambio.foco]) {
@@ -469,6 +504,65 @@ export class VisorEscena3D {
     ctx.stroke();
   }
 
+  /**
+   * R7: las escenas devuelven `datos` (lo que da el enunciado, con su valor) y `piden` (lo que hay
+   * que hallar). Se muestran solo en el paso «Datos» o al elegir esas secciones, para no tapar la escena.
+   */
+  _conDatosYPiden(res) {
+    const tags = [...(res.tags || [])];
+    const enDatos = this.modoDatos || this.modoPiden;
+    this.el.dataset.modoDatos = enDatos ? 'si' : 'no';
+    if (!enDatos) return tags;
+    const anclas = res.anclas || {};
+    if (this.modoDatos) {
+      // Los datos son los del paso «Datos» de la lección (lo que da el enunciado, nada calculado):
+      // con su símbolo y valor (n = 1 mol, V_C = 0,0045 m³…) junto a la pieza de su foco, o en
+      // una columna al costado de la escena.
+      // Todos en la columna izquierda: pegados a las piezas se tapaban entre sí en el panel chico.
+      const lista = Array.isArray(this.apoyo.datos) ? this.apoyo.datos : [];
+      let n = 0;
+      lista.forEach((d, i) => {
+        // Un dato con varias partes ($m_h = …\qquad T_h = …$) se muestra en renglones separados.
+        const partes = d.tex ? String(d.tex).split(/\\q?quad/).map((x) => x.trim()).filter(Boolean) : [null];
+        partes.forEach((tx, j) => {
+          if (n >= 9) return;
+          const txt = tx ? textoEtiqueta(`$${tx}$`, 40) : textoEtiqueta(d.texto, 34);
+          if (!txt) return;
+          n += 1;
+          tags.push({ id: `dato_${d.id || i}_${j}`, columna: 'izq', texto: txt, color: 'naranja', activo: true, clase: 'dato' });
+        });
+      });
+    }
+    // Lo que piden: cada inciso del enunciado (el inciso omitido por el corte no aparece).
+    const piden = Array.isArray(res.piden) && res.piden.length
+      ? res.piden
+      : (Array.isArray(this.apoyo.piden) ? this.apoyo.piden : []).slice(0, 5).map((it) => {
+        const letra = /^Inciso\s+([A-H])$/i.exec(it.titulo || '');
+        const cab = letra ? `${letra[1].toUpperCase()})` : `${it.titulo}:`;
+        const cuerpo = textoEtiqueta(it.texto, 38);
+        return cuerpo && cuerpo !== '.' ? { id: it.id, texto: `${cab} ${cuerpo}` } : null;
+      }).filter(Boolean);
+    // En la columna derecha, uno debajo del otro (la pieza que corresponde se resalta con el foco).
+    for (const q of piden) {
+      tags.push({ id: `pide_${q.id}`, columna: 'der', texto: textoEtiqueta(q.texto), color: 'morado', activo: true, clase: 'pide' });
+    }
+    return tags;
+  }
+
+  /** R8: «suma de pedacitos hasta aquí» y barra que llega al 100 % en el límite final del dibujo. */
+  _pintarIntegral(integral) {
+    if (!integral || !Number.isFinite(integral.total) || !integral.total) {
+      this.integralEl.hidden = true;
+      return;
+    }
+    const frac = Math.max(0, Math.min(1, integral.actual / integral.total));
+    this.integralEl.hidden = false;
+    this.integralTxt.textContent = integral.texto;
+    this.integralRelleno.style.width = `${(frac * 100).toFixed(1)}%`;
+    this.integralBarra.setAttribute('aria-valuenow', String(Math.round(frac * 100)));
+    this.integralBarra.setAttribute('aria-label', integral.texto);
+  }
+
   _bucle(ahora) {
     this._raf = 0;
     if (!this.vivo) return;
@@ -489,11 +583,15 @@ export class VisorEscena3D {
       const fn = CONSTRUCTORES[this.modelo] || construirResorte3D;
       try {
         const res = fn(this.motor, this.params, this.porcion, this.foco, this.extra) || {};
-        this._ultTags = res.tags || [];
-        if (res.medida && this.medidas.textContent !== res.medida) {
-          this.medidas.textContent = res.medida;
+        this._ultTags = this._conDatosYPiden(res);
+        // Enunciados con letras o lecciones de teoría: los números de la escena son de ejemplo y se dice.
+        const pref = this.params.ejemplo ? 'Valores de ejemplo · ' : '';
+        const medida = res.medida ? pref + res.medida : '';
+        if (medida && this.medidas.textContent !== medida) {
+          this.medidas.textContent = medida;
         }
         if (res.ciclo) this._dibujarMiniPV(res.ciclo);
+        this._pintarIntegral(res.integral && pref ? { ...res.integral, texto: pref + res.integral.texto } : res.integral);
       } catch (err) {
         console.error('escena3d', this.modelo, err);
       }

@@ -77,18 +77,24 @@ class TestTeoriaDesdeCeroY3D(unittest.TestCase):
 
     def test_cobertura_3d_total_76_reposicion_y_todas_las_lecciones(self) -> None:
         modelos_validos = set(apoyos_reposicion._ESCENAS)
-        # 76/76 del calendario Reposición + 4 casos dorados
+        # 76/76 del calendario Reposición + 4 casos dorados (salvo las excepciones escritas:
+        # lecciones de matemática pura que se ven mejor con su dibujo 2D, ver SIN_ESCENA_3D)
         for lid in ids_del_calendario() + CASOS_DORADOS:
             lec = registro.obtener(lid).a_json()
             ap = apoyos_reposicion.apoyo_leccion(lec)
+            if lid in apoyos_reposicion.SIN_ESCENA_3D:
+                self.assertIsNone(ap, lid)
+                continue
             self.assertIsNotNone(ap, f"{lid} sin apoyo 3D")
             self.assertEqual(ap["motor"], "webgl2", lid)
             self.assertIn(ap["modelo"], modelos_validos, lid)
             self.assertTrue(ap["piden"], f"{lid} sin incisos/pregunta")
             self.assertEqual(len(ap["pasos"]), len(lec["pasos"]), lid)
 
-        # Todas las lecciones del banco (~340) tienen escena 3D válida
+        # Todas las lecciones del banco (~340) tienen escena 3D válida (o excepción escrita)
         for lid in registro.ids():
+            if lid in apoyos_reposicion.SIN_ESCENA_3D:
+                continue
             lec = registro.obtener(lid).a_json()
             ap = apoyos_reposicion.apoyo_leccion(lec)
             self.assertIsNotNone(ap, lid)

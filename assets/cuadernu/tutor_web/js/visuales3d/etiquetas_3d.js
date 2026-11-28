@@ -3,6 +3,25 @@
  * Mantiene tipografía matemática nítida a cualquier DPI (incluido 4K) sin borrosidad de texturas.
  */
 
+import { textoPlano } from '../mate/tex.js';
+
+/**
+ * R7: texto corto para una etiqueta 3D, sin LaTeX crudo: cada tramo $…$ pasa a texto plano
+ * (dF_⊥, Δh, ρ, …) y los subíndices o exponentes de un solo símbolo quedan agrupados para que
+ * `ponerMateCorto` los dibuje como <sub>/<sup>.
+ */
+export function textoEtiqueta(s, max = 0) {
+  let out = String(s || '').replace(/\$([^$]*)\$/g, (_, tex) => textoPlano(tex));
+  out = out.replace(/([_^])([^\s{A-Za-z0-9])/g, '$1{$2}');
+  // (3)/(2) → 3/2, y un espacio antes de la letra que sigue: «3/2 R»
+  out = out.replace(/\(([^()\s]{1,8})\)\/\(([^()\s]{1,8})\)/g, '$1/$2');
+  out = out.replace(/(\d\/\d+)([A-Za-zΑ-ω])/g, '$1 $2');
+  out = out.replace(/\s*=\s*/g, ' = ');
+  out = out.replace(/\s+/g, ' ').trim();
+  if (max && out.length > max) out = `${out.slice(0, max - 1).trimEnd()}…`;
+  return out;
+}
+
 function ponerMateCorto(el, txt) {
   el.replaceChildren();
   const s = String(txt || '');
@@ -40,9 +59,14 @@ export class CapaEtiquetas3D {
     this._nodos = new Map();
   }
 
-  /** items: [{ id, pos: [x,y,z], texto, activo, color }] */
+  /**
+   * items: [{ id, pos: [x,y,z], texto, activo, color, clase }]
+   * Con `columna: 'izq' | 'der'` (en vez de `pos`) la etiqueta va fija en esa columna sobre la
+   * escena, una debajo de la otra: así los datos y lo que piden no se tapan entre sí ni tapan la pieza.
+   */
   actualizar(motor, items = []) {
     const vivos = new Set();
+    const filas = { izq: 0, der: 0 };
     for (const it of items) {
       vivos.add(it.id);
       let nodo = this._nodos.get(it.id);
@@ -57,7 +81,18 @@ export class CapaEtiquetas3D {
         ponerMateCorto(nodo, it.texto);
       }
       nodo.classList.toggle('activo', Boolean(it.activo));
+      nodo.classList.toggle('dato', it.clase === 'dato');
+      nodo.classList.toggle('pide', it.clase === 'pide');
       nodo.dataset.color = it.color || '';
+      nodo.classList.toggle('col-izq', it.columna === 'izq');
+      nodo.classList.toggle('col-der', it.columna === 'der');
+      if (it.columna === 'izq' || it.columna === 'der') {
+        const k = filas[it.columna];
+        filas[it.columna] += 1;
+        nodo.hidden = false;
+        nodo.style.transform = `translateY(${6 + k * 23}px)`;
+        continue;
+      }
       const p = motor.proyectarPantalla(it.pos);
       if (!p.visible) {
         nodo.hidden = true;

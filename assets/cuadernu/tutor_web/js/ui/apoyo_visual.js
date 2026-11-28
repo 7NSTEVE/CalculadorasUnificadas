@@ -8,6 +8,16 @@ function texto(el, contenido) {
   el.replaceChildren(t.el);
 }
 
+// Dibujo 2D que la lección pone a mitad de camino → escena 3D que le corresponde.
+const MODELO_DE_2D = {
+  conduccion: 'solido', pared: 'compuerta', pv: 'piston', calor: 'calor', dilatacion: 'dilatacion', radiacion: 'radiacion',
+};
+
+/** El paso que presenta los datos del enunciado («Datos: qué nos dan…»). */
+function esPasoDatos(paso) {
+  return /^\s*(?:\d+\.\s*)?datos\b/i.test(String(paso?.titulo || ''));
+}
+
 function boton(rotulo, alPulsar, clase = 'btn btn-suave') {
   const b = document.createElement('button');
   b.type = 'button';
@@ -33,6 +43,8 @@ export class ApoyoVisual {
     this.modo = 'escena';
     this.cambio = {};
     this.escena = crearVisual3D(info);
+    this._specInicial = JSON.stringify(original || null);
+    this._clave3D = JSON.stringify([info.modelo, info.parametros]);
     this.grafica = null;
     this._graficaEnMarcha = false;
     this.el = document.createElement('section');
@@ -82,6 +94,8 @@ export class ApoyoVisual {
     this.figura = document.createElement('div');
     this.figura.className = 'apoyo-figura';
     this.el.append(this.lectura, this.tira, this.figura);
+    // R10: si este equipo no tiene WebGL, se queda el dibujo 2D de la lección (si existe).
+    if (this.escena?.sinWebGL && this.original) this.modo = 'grafica';
     this._montarFigura();
     this._mostrar();
   }
@@ -96,7 +110,7 @@ export class ApoyoVisual {
     this.activa?.pausar();
     this.activa = original ? this.grafica : this.escena;
     this._graficaEnMarcha = false;
-    this.alternar.hidden = !this.escena || !this.original;
+    this.alternar.hidden = !this.escena || !this.original || Boolean(this.escena.sinWebGL);
     this.alternar.textContent = original ? 'Ver modelo 3D' : 'Ver gráfica 2D';
     this.animarGrafica.hidden = !original || !this.grafica;
     this.animarGrafica.textContent = 'Animar';
@@ -137,8 +151,15 @@ export class ApoyoVisual {
       texto(this.texto, actual?.texto || 'Mirá los datos y las condiciones de este problema.');
     }
     const foco = this.tipo === 'paso' ? this.paso.foco : actual?.foco;
+    // R7: datos en naranja en el paso «Datos» o en la sección «Datos»; lo que piden, en morado.
+    const marcas = {
+      datos: this.tipo === 'datos' || (this.tipo === 'paso' && esPasoDatos(this.paso)),
+      piden: this.tipo === 'piden' || (this.tipo === 'paso' && esPasoDatos(this.paso)),
+    };
     if (foco || this.tipo !== 'paso' || !this.cambio.foco) {
-      this.escena?.cambiar({ foco: foco?.id || null });
+      this.escena?.cambiar({ foco: foco?.id || null, ...marcas });
+    } else {
+      this.escena?.cambiar(marcas);
     }
   }
 
@@ -153,7 +174,41 @@ export class ApoyoVisual {
     this.grafica?.destruir();
     this.grafica = null;
     this.original = spec;
+    this._seguir3D(spec);
     this._montarFigura();
+    this._mostrar();
+  }
+
+  /**
+   * La lección cambió de dibujo a mitad de camino (T-PLANTEO: pared → esfera cortada → tubo): la
+   * escena 3D pasa a la del dibujo nuevo con sus mismos números. Si vuelve al dibujo del comienzo,
+   * vuelve la escena de la lección (con sus parámetros revisados contra el enunciado).
+   */
+  _seguir3D(spec) {
+    if (!this.escena) return;
+    let apoyo;
+    if (!spec || JSON.stringify(spec) === this._specInicial) {
+      apoyo = this.info;
+    } else {
+      const modelo = MODELO_DE_2D[spec.tipo];
+      if (!modelo) return;
+      apoyo = {
+        ...this.info,
+        modelo,
+        parametros: { ...spec },
+        titulo: this.info.titulos?.[modelo] || this.info.titulo,
+        camara_inicial: this.info.camaras?.[modelo] || 'perspectiva',
+      };
+    }
+    const clave = JSON.stringify([apoyo.modelo, apoyo.parametros]);
+    if (clave === this._clave3D) return;
+    const nueva = crearVisual3D(apoyo);
+    if (!nueva) return;
+    this._clave3D = clave;
+    const eraActiva = this.activa === this.escena;
+    this.escena.destruir();
+    this.escena = nueva;
+    if (eraActiva) this.activa = null;
   }
 
   cambiar(cambio) {
