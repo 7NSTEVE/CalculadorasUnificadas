@@ -1,9 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
-project(CalculadoraUnificadaWindows LANGUAGES CXX RC)
+project(CalculadoraUnificadaWindows LANGUAGES C CXX RC)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../tools/cmake/C23Cpp23Standards.cmake")
 
 get_filename_component(MONOREPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 set(CORE_DIR "${MONOREPO_ROOT}/core")

@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CuadernU LANGUAGES CXX)
+project(CuadernU LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../tools/cmake/C23Cpp23Standards.cmake")
 
 find_package(ZLIB REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -43,7 +41,7 @@ add_library(tinta_nucleo STATIC
     tinta_core/transaccion_historial_api.cpp
     tinta_core/unidades.cpp
 )
-target_compile_features(tinta_nucleo PRIVATE cxx_std_20)
+target_compile_features(tinta_nucleo PRIVATE cxx_std_23)
 target_include_directories(tinta_nucleo PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/tinta_core")
 if(MSVC)
     target_compile_options(tinta_nucleo PRIVATE /utf-8 /EHsc /W2)
@@ -69,6 +67,7 @@ set(DOC_CORE_SOURCES
     core/study_assistant_tools.cpp
     math/engineering_cas.cpp
     math/reactive_math_chemistry.cpp
+    math/tex_svg_engine.cpp
     circuit/mna_solver.cpp
     bridge/calc_bridge.cpp
     pdf/pdf_parser.cpp
@@ -88,6 +87,7 @@ set(DOC_CORE_SOURCES
     tutor/tutor_whiteboard_protocol.cpp
     tutor/tutor_document_baker.cpp
     tutor/tutor_sidecar_bridge.cpp
+    c_api/cuadernu_sync_clock_c23.c
 )
 
 option(CUADERNU_ENABLE_GEMINI_NOTEBOOK "Enable optional decoupled Google Gemini Notebook REST/MCP integration" ON)
@@ -165,6 +165,8 @@ target_link_libraries(CuadernuTecIntegration PUBLIC
     DocumentCore
     academic_tec_digital
     academic_horarios_tec
+    academic_matricula_tec
+    academic_tec_mail_triage
 )
 
 add_library(CuadernuMcp STATIC
@@ -187,6 +189,8 @@ target_link_libraries(CuadernuMcp PUBLIC
     CuadernuTecIntegration
     academic_tec_digital
     academic_horarios_tec
+    academic_matricula_tec
+    academic_tec_mail_triage
     gdiplus
     dwmapi
     psapi
@@ -195,6 +199,7 @@ target_link_libraries(CuadernuMcp PUBLIC
 set(CUADERNU_APP_SOURCES
     app/main_studio.cpp
     app/studio_tec_digital_dialog.cpp
+    app/studio_matricula_tec_dialog.cpp
     app/studio_tutor_panel.cpp
 )
 if(WIN32 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../assets/cuadernu/cuadernu.rc")
@@ -212,6 +217,8 @@ target_link_libraries(CuadernU PRIVATE
     CuadernuMcp
     academic_tec_digital
     academic_horarios_tec
+    academic_matricula_tec
+    academic_tec_mail_triage
     comctl32
     gdiplus
     dwmapi
@@ -403,6 +410,20 @@ if(MSVC)
 endif()
 target_link_libraries(InkSafetyHonestyTest PRIVATE DocumentCore tinta_nucleo)
 add_test(NAME InkSafetyHonestyTest COMMAND InkSafetyHonestyTest)
+
+add_executable(TexSvgEngineTest tests/tex_svg_engine_test.cpp)
+target_compile_definitions(TexSvgEngineTest PRIVATE _UNICODE UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+if(MSVC)
+    target_compile_options(TexSvgEngineTest PRIVATE /W4 /utf-8 /EHsc)
+endif()
+target_link_libraries(TexSvgEngineTest PRIVATE DocumentCore)
+add_test(NAME TexSvgEngineTest COMMAND TexSvgEngineTest)
+
+add_executable(SyncClockC23Test tests/sync_clock_c23_test.c)
+target_include_directories(SyncClockC23Test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/c_api")
+target_link_libraries(SyncClockC23Test PRIVATE DocumentCore)
+cu_apply_c23_cpp23(SyncClockC23Test)
+add_test(NAME SyncClockC23Test COMMAND SyncClockC23Test)
 
 
 

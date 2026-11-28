@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(academic_tec_digital LANGUAGES CXX)
+project(academic_tec_digital LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../tools/cmake/C23Cpp23Standards.cmake")
 
 # nlohmann_json: x64-windows vcpkg, Linux /usr/share/cmake, or header-only fallback for Win32
 find_package(nlohmann_json CONFIG QUIET)
@@ -75,7 +73,7 @@ target_include_directories(academic_tec_digital
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
-target_compile_features(academic_tec_digital PUBLIC cxx_std_17)
+target_compile_features(academic_tec_digital PUBLIC cxx_std_23)
 
 if(MSVC)
     target_compile_definitions(academic_tec_digital PUBLIC _UNICODE UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)

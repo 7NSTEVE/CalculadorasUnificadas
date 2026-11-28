@@ -217,10 +217,11 @@ int main(int argc, char** argv) {
             R"({"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}})");
         const json listJ = json::parse(listOut);
         const auto& tools = listJ["result"]["tools"];
-        Check(tools.is_array() && tools.size() == 35u,
-              "tools/list exposes exact 35 tools (got " + std::to_string(tools.size()) + ")");
+        Check(tools.is_array() && tools.size() == 37u,
+              "tools/list exposes exact 37 tools (got " + std::to_string(tools.size()) + ")");
 
         bool hasCaps = false, hasCapture = false, hasGui = false, hasTest = false, hasLegacy = false, hasTecMut = false;
+        bool hasMatTec = false, hasMailTriage = false;
         for (const auto& t : tools) {
             const std::string n = t.value("name", "");
             if (n == "cuadernu_capabilities") hasCaps = true;
@@ -229,9 +230,27 @@ int main(int argc, char** argv) {
             if (n == "cuadernu_test") hasTest = true;
             if (n == "cuadernu_export_cudoc_to_markdown") hasLegacy = true;
             if (n == "cuadernu_tec_mutation") hasTecMut = true;
+            if (n == "cuadernu_matricula_tec") hasMatTec = true;
+            if (n == "cuadernu_tec_mail_triage") hasMailTriage = true;
         }
-        Check(hasCaps && hasCapture && hasGui && hasTest && hasLegacy && hasTecMut,
-              "tools/list contains core, capture, gui, test, tec_mutation, and legacy bridge tools");
+        Check(hasCaps && hasCapture && hasGui && hasTest && hasLegacy && hasTecMut && hasMatTec && hasMailTriage,
+              "tools/list contains core, capture, gui, test, tec_mutation, matricula_tec, tec_mail_triage, and legacy bridge tools");
+
+        // Functional smoke checks for Wave 1 (cuadernu_matricula_tec) & Wave 2 (cuadernu_tec_mail_triage)
+        auto matStatus = server.CallTool("cuadernu_matricula_tec", { { "action", "status" } });
+        Check(!matStatus.isError && matStatus.data.value("dry_run_default", false) &&
+              matStatus.data.value("standard", "") == "ISO C23 + ISO C++23",
+              "cuadernu_matricula_tec status reports safe dry_run_default and ISO C23 + ISO C++23");
+        auto triageRes = server.CallTool("cuadernu_tec_mail_triage", {
+            { "action", "classify_mail" },
+            { "subject", "Examen parcial EL-3307" },
+            { "body", "Entrega el 14 de agosto a las 7:00 pm" },
+            { "sender_smtp", "docente@itcr.ac.cr" }
+        });
+        Check(!triageRes.isError && triageRes.data.value("group", "") == "Con fecha" &&
+              triageRes.data.contains("courses") && !triageRes.data["courses"].empty() &&
+              triageRes.data["courses"][0] == "EL3307",
+              "cuadernu_tec_mail_triage classify_mail detects Con fecha and EL3307");
 
         const json resList = json::parse(server.HandleJsonRpcLine(
             R"({"jsonrpc":"2.0","id":3,"method":"resources/list","params":{}})"));
@@ -586,7 +605,7 @@ int main(int argc, char** argv) {
               "Real stdio server returned exact 4 JSON-RPC lines for 4 requests + 1 silent notification (got " + std::to_string(responses.size()) + ")");
         if (responses.size() == 4u) {
             Check(responses[0]["result"]["serverInfo"]["name"] == "cuadernu", "stdio initialize serverInfo.name == cuadernu");
-            Check(responses[2]["result"]["tools"].size() == 35u, "stdio tools/list exposes all 35 tools");
+            Check(responses[2]["result"]["tools"].size() == 37u, "stdio tools/list exposes all 37 tools");
         }
     }
 

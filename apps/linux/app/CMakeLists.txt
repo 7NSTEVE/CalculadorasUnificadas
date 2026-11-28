@@ -4,7 +4,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(CalculadoraUnificadaApp LANGUAGES C CXX)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -37,7 +40,7 @@ add_executable(calculadora-unificada
     exporter_gtk.cpp
 )
 
-target_compile_features(calculadora-unificada PRIVATE cxx_std_17)
+target_compile_features(calculadora-unificada PRIVATE cxx_std_23)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(calculadora-unificada PRIVATE

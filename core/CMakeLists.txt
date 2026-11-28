@@ -1,9 +1,7 @@
-cmake_minimum_required(VERSION 3.18.1)
-project(casio_unified_core LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.20)
+project(casio_unified_core LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../tools/cmake/C23Cpp23Standards.cmake")
 
 option(BUILD_CORE_TESTS "Build native C++ unit/smoke tests for all 4 calculators" OFF)
 option(BUILD_CG50_BATTERY "Build CG50 verification battery harness and apps probe" OFF)
@@ -141,6 +139,7 @@ if(CUADERNU_BUILD_STUDIO_FFI AND EXISTS "${STUDIO_ROOT}/c_api/cuadernu_studio_ff
             "${ACADEMIC_ROOT}/horarios_tec/src/solver.cpp"
             "${ACADEMIC_ROOT}/horarios_tec/src/exporter.cpp"
             "${STUDIO_ROOT}/c_api/cuadernu_studio_ffi.cpp"
+            "${STUDIO_ROOT}/c_api/cuadernu_sync_clock_c23.c"
         )
         target_include_directories(cuadernu_studio_portable
             PUBLIC  "${STUDIO_ROOT}/c_api"
@@ -245,6 +244,23 @@ if(BUILD_CORE_TESTS)
         endif()
         add_test(NAME cuadernu_studio_ffi_test COMMAND cuadernu_studio_ffi_test)
 
+        if(EXISTS "${CORE_TEST_DIR}/c23_abi_conformance_test.c")
+            add_executable(c23_abi_conformance_test "${CORE_TEST_DIR}/c23_abi_conformance_test.c")
+            target_link_libraries(c23_abi_conformance_test PRIVATE casio_native)
+            cu_apply_c23_cpp23(c23_abi_conformance_test)
+            add_test(NAME c23_abi_conformance_test COMMAND c23_abi_conformance_test)
+        endif()
+
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../tools/native_c23/casio_diag_c23_cli.c")
+            add_executable(casio_diag_c23_cli
+                "${CMAKE_CURRENT_SOURCE_DIR}/../tools/native_c23/sh4a_disasm_c23.c"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../tools/native_c23/casio_diag_c23_cli.c"
+            )
+            target_include_directories(casio_diag_c23_cli PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../tools/native_c23")
+            cu_apply_c23_cpp23(casio_diag_c23_cli)
+            add_test(NAME Sh4aDisasmC23Test COMMAND casio_diag_c23_cli --self-test)
+        endif()
+
         if(EXISTS "${STUDIO_ROOT}/tinta_core/api.cpp" AND EXISTS "${CORE_TEST_DIR}/ios_bridge_coexistence_test.cpp")
             file(GLOB TINTA_CORE_SOURCES "${STUDIO_ROOT}/tinta_core/*.cpp")
             add_executable(ios_bridge_coexistence_test
@@ -263,7 +279,7 @@ if(BUILD_CORE_TESTS)
             else()
                 target_link_libraries(ios_bridge_coexistence_test PRIVATE z)
             endif()
-            set_target_properties(ios_bridge_coexistence_test PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+            set_target_properties(ios_bridge_coexistence_test PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON)
             if(WIN32)
                 target_compile_definitions(ios_bridge_coexistence_test PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
             endif()

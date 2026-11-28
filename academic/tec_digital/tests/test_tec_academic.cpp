@@ -41,6 +41,12 @@
 #include <vector>
 
 namespace fs = std::filesystem;
+
+static inline std::string U8Str(const std::u8string& s) {
+    return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+}
+static inline std::string U8Str(const std::string& s) { return s; }
+
 using namespace academic::tec_digital;
 
 namespace {
@@ -748,7 +754,7 @@ void TestStorageWalkerAndDownloader() {
     // Also ensure file 206 collides in logical path if placed in same folder as 201, or test collision explicitly:
     std::map<std::string, DownloadResult> by_id;
     for (auto& fr : walked.value.files) {
-        by_id[fr.object_id] = dl.DownloadFile(fr, tmp.dir.u8string(), "/dotlrn/classes/E/EL2113/S1");
+        by_id[fr.object_id] = dl.DownloadFile(fr, U8Str(tmp.dir.u8string()), "/dotlrn/classes/E/EL2113/S1");
     }
 
     CHECK(!saw_range_zero.load());
@@ -791,7 +797,7 @@ void TestStorageWalkerAndDownloader() {
             std::ofstream ofs(tmp.dir / "downloads" / "_tmp" / "207.part", std::ios::binary);
             ofs << "GARBAGE_10";
         }
-        auto dr207 = dl.DownloadFile(col, tmp.dir.u8string());
+        auto dr207 = dl.DownloadFile(col, U8Str(tmp.dir.u8string()));
         CHECK(dr207.outcome == DownloadOutcome::Downloaded);
         CHECK(dr207.sha256 == Sha256Hex(pdf_bytes_3));
         CHECK(dr207.logical_rel_path.find("_" + dr207.sha256.substr(0, 8) + ".pdf") !=
@@ -804,7 +810,7 @@ void TestStorageWalkerAndDownloader() {
         f208.object_id = "208";
         f208.name = "secret.pdf";
         f208.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=208"};
-        auto dr208 = dl.DownloadFile(f208, tmp.dir.u8string());
+        auto dr208 = dl.DownloadFile(f208, U8Str(tmp.dir.u8string()));
         CHECK(dr208.outcome == DownloadOutcome::SessionExpired);
         CHECK(auth.IsSessionExpired());
         CHECK(!fs::exists(tmp.dir / "downloads" / "_tmp" / "208.part"));
@@ -812,9 +818,9 @@ void TestStorageWalkerAndDownloader() {
 
     // Manifest save & load
     MirrorManifestStore mstore;
-    CHECK(mstore.Save(tmp.dir.u8string(), walked.value.files, walked.value.folders, {},
+    CHECK(mstore.Save(U8Str(tmp.dir.u8string()), walked.value.files, walked.value.folders, {},
                       walked.value.url_links).ok);
-    auto loaded = mstore.LoadFilesManifest(tmp.dir.u8string());
+    auto loaded = mstore.LoadFilesManifest(U8Str(tmp.dir.u8string()));
     CHECK(loaded.ok && loaded.value.size() == walked.value.files.size());
 
     // Stall abort preserves .part and retries with configurable backoff
@@ -849,7 +855,7 @@ void TestStorageWalkerAndDownloader() {
         sf.object_id = "209_stall";
         sf.name = "stall.pdf";
         sf.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=209"};
-        auto sres = stall_dl.DownloadFile(sf, tmp.dir.u8string());
+        auto sres = stall_dl.DownloadFile(sf, U8Str(tmp.dir.u8string()));
         CHECK(sres.outcome == DownloadOutcome::Failed);
         CHECK(sres.error_message.find("stall") != std::string::npos);
         CHECK(fs::is_regular_file(tmp.dir / "downloads" / "_tmp" / "209_stall.part"));
@@ -943,7 +949,7 @@ void TestHeadlessCrawler() {
     copts.seed_urls = {srv.BaseUrl() + "/dotlrn/index"};
 
     HeadlessCrawler crawler(guarded, auth, copts);
-    auto res = crawler.Run(tmp.dir.u8string());
+    auto res = crawler.Run(U8Str(tmp.dir.u8string()));
     CHECK(res.ok);
     CHECK(!saw_mutating_hit.load());
     CHECK(res.value.pages_skipped_policy >= 2);
@@ -1174,7 +1180,7 @@ void TestMaterialIndexer() {
             ofs << man.dump(2);
         }
 
-        OfflineMaterialIndex idx(tmp.dir.u8string());
+        OfflineMaterialIndex idx(U8Str(tmp.dir.u8string()));
         auto st_res = idx.IndexDirectory();
         CHECK(st_res.ok);
         CHECK(st_res.value.total == 3);
@@ -1192,7 +1198,7 @@ void TestMaterialIndexer() {
 
         // Reload from disk into a fresh OfflineMaterialIndex instance
         OfflineMaterialIndex idx2;
-        CHECK(idx2.LoadFromDisk(tmp.dir.u8string()).ok);
+        CHECK(idx2.LoadFromDisk(U8Str(tmp.dir.u8string())).ok);
         CHECK(idx2.GetOfflineStats().total == 3);
         CHECK(idx2.SearchOfflineMaterials("laplace").size() == 2);
     }
@@ -1378,10 +1384,10 @@ void TestTdaTdsAndService() {
 
     ScopedTempDir tmp("svc");
     ServiceConfig cfg;
-    cfg.offline_root = tmp.dir.u8string();
+    cfg.offline_root = U8Str(tmp.dir.u8string());
     cfg.vault_config.mode = VaultPersistenceMode::EncryptedVault;
-    cfg.vault_config.vault_path = (tmp.dir / "vault.tdv").u8string();
-    cfg.vault_config.session_meta_path = (tmp.dir / "session_meta.json").u8string();
+    cfg.vault_config.vault_path = U8Str((tmp.dir / "vault.tdv").u8string());
+    cfg.vault_config.session_meta_path = U8Str((tmp.dir / "session_meta.json").u8string());
     cfg.vault_config.key_override = "unit-test-key";
 
     TecDigitalService svc(cfg, std::move(mock));
@@ -1443,7 +1449,7 @@ void TestTdaTdsAndService() {
     CHECK(cat.value.members_by_community.size() == 1);
 
     // Ensure session_meta.json & logs contain zero credential leaks
-    auto leak_scan = svc.GetSanitizer().ScanDirectoryForLeaks(tmp.dir.u8string());
+    auto leak_scan = svc.GetSanitizer().ScanDirectoryForLeaks(U8Str(tmp.dir.u8string()));
     CHECK(leak_scan.passed);
 }
 
@@ -1527,7 +1533,7 @@ void TestR2Remediations() {
 
         ScopedTempDir tmp("r2_crawl");
         HeadlessCrawler crawler(guarded, auth, copts, sopts);
-        auto cr = crawler.Run(tmp.dir.u8string());
+        auto cr = crawler.Run(U8Str(tmp.dir.u8string()));
         CHECK(cr.ok);
         CHECK(saw_c1.load());
         CHECK(saw_c2.load());
@@ -1542,7 +1548,7 @@ void TestR2Remediations() {
 
         // MirrorManifestStore received sopts and scrubbed runtime_password
         Sanitizer check_san(sopts);
-        CHECK(check_san.ScanDirectoryForLeaks(tmp.dir.u8string()).passed);
+        CHECK(check_san.ScanDirectoryForLeaks(U8Str(tmp.dir.u8string())).passed);
     }
 
     // 6b. [Fix 3, 4, 5] StorageDownloader: 200 OK Range-fallback max_file_bytes uses post-truncation
@@ -1615,7 +1621,7 @@ void TestR2Remediations() {
         f301.object_id = "301";
         f301.name = "fit.pdf";
         f301.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=301"};
-        auto r301 = dl.DownloadFile(f301, tmp.dir.u8string());
+        auto r301 = dl.DownloadFile(f301, U8Str(tmp.dir.u8string()));
         CHECK(r301.outcome == DownloadOutcome::Downloaded);
         CHECK(r301.sha256 == Sha256Hex(pdf_76));
 
@@ -1628,7 +1634,7 @@ void TestR2Remediations() {
         f302.object_id = "302";
         f302.name = "recover416.pdf";
         f302.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=302"};
-        auto r302 = dl.DownloadFile(f302, tmp.dir.u8string());
+        auto r302 = dl.DownloadFile(f302, U8Str(tmp.dir.u8string()));
         CHECK(r302.outcome == DownloadOutcome::Downloaded);
         CHECK(r302.sha256 == Sha256Hex(pdf_76_b));
         CHECK(r302.saw_range_header_omitted_on_zero);
@@ -1672,7 +1678,7 @@ void TestR2Remediations() {
 
         // Re-index deduplication for mismatches_ & missing_blobs_count_
         ScopedTempDir tmp("r2_reindex");
-        OfflineMaterialIndex idx(tmp.dir.u8string());
+        OfflineMaterialIndex idx(U8Str(tmp.dir.u8string()));
         IndexedBlobInput mm_in;
         mm_in.object_id = "m1";
         mm_in.name = "falso.pdf";
@@ -1841,7 +1847,7 @@ void TestR2Remediations() {
 
         ScopedTempDir tmp("r2_svc");
         ServiceConfig cfg;
-        cfg.offline_root = tmp.dir.u8string();
+        cfg.offline_root = U8Str(tmp.dir.u8string());
         TecDigitalService svc(cfg, std::move(mock));
 
         Credentials creds;
@@ -1897,7 +1903,7 @@ void TestR2Remediations() {
         auto sr = svc.SyncFolderStorage(sopts);
         CHECK(sr.ok && sr.value.files_downloaded == 1);
         CHECK(sr.value.index_stats.total == 1);
-        CHECK(svc.GetSanitizer().ScanDirectoryForLeaks((tmp.dir / "material_index").u8string()).passed);
+        CHECK(svc.GetSanitizer().ScanDirectoryForLeaks(U8Str((tmp.dir / "material_index").u8string())).passed);
         for (const auto& mname : {"files_manifest.json", "folders_manifest.json", "forms_manifest.json", "manifest.json"}) {
             std::ifstream mfs(tmp.dir / mname, std::ios::binary);
             std::ostringstream mss;
@@ -2023,7 +2029,7 @@ void TestR3Remediations() {
         sopts.runtime_password = "R3#FilePwd!99";
         sopts.runtime_email = "r3.owner@estudiantec.cr";
 
-        OfflineMaterialIndex idx(tmp.dir.u8string(), sopts);
+        OfflineMaterialIndex idx(U8Str(tmp.dir.u8string()), sopts);
 
         // 1) Missing blob with NO sha256 -> total=1, missing=1
         IndexedBlobInput step1;
@@ -2167,7 +2173,7 @@ void TestR3Remediations() {
         f901.object_id = "901";
         f901.name = "tiny.pdf";
         f901.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=901"};
-        auto r901 = dl.DownloadFile(f901, tmp.dir.u8string());
+        auto r901 = dl.DownloadFile(f901, U8Str(tmp.dir.u8string()));
         CHECK(r901.outcome == DownloadOutcome::Downloaded);
         CHECK(r901.sha256 == Sha256Hex(pdf_tiny));
         CHECK(g2_hits.load() == 1);
@@ -2181,7 +2187,7 @@ void TestR3Remediations() {
         f902.object_id = "902";
         f902.name = "fallback_gzip.pdf";
         f902.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=902"};
-        auto r902 = dl.DownloadFile(f902, tmp.dir.u8string());
+        auto r902 = dl.DownloadFile(f902, U8Str(tmp.dir.u8string()));
         CHECK(r902.outcome == DownloadOutcome::Downloaded);
         CHECK(r902.sha256 == Sha256Hex(pdf_g3));
         CHECK(r902.quarantine_rel_path.empty());
@@ -2198,7 +2204,7 @@ void TestR3Remediations() {
         f903.object_id = "903";
         f903.name = "fallback_deflate.pdf";
         f903.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=903"};
-        auto r903 = dl.DownloadFile(f903, tmp.dir.u8string());
+        auto r903 = dl.DownloadFile(f903, U8Str(tmp.dir.u8string()));
         CHECK(r903.outcome == DownloadOutcome::Downloaded);
         CHECK(r903.sha256 == Sha256Hex(pdf_deflate));
 
@@ -2207,7 +2213,7 @@ void TestR3Remediations() {
         f904.object_id = "904";
         f904.name = "partial_fail.pdf";
         f904.candidate_urls = {srv.BaseUrl() + "/dotlrn/file-storage/download?file_id=904"};
-        auto r904 = dl.DownloadFile(f904, tmp.dir.u8string());
+        auto r904 = dl.DownloadFile(f904, U8Str(tmp.dir.u8string()));
         CHECK(r904.outcome == DownloadOutcome::Failed);
         CHECK(partial_hits.load() == 3);
     }
@@ -2527,7 +2533,7 @@ void TestR4Remediations() {
         f951.object_id = "951";
         f951.name = "raw_deflate.pdf";
         f951.candidate_urls = {srv.BaseUrl() + "/raw-deflate"};
-        auto r951 = dl.DownloadFile(f951, tmp.dir.u8string());
+        auto r951 = dl.DownloadFile(f951, U8Str(tmp.dir.u8string()));
         CHECK(r951.outcome == DownloadOutcome::Downloaded);
         CHECK(r951.sha256 == Sha256Hex(pdf_raw_deflate));
 
@@ -2539,7 +2545,7 @@ void TestR4Remediations() {
         f952.object_id = "952";
         f952.name = "multi_gz.pdf";
         f952.candidate_urls = {srv.BaseUrl() + "/multi-gzip-chunked"};
-        auto r952 = dl.DownloadFile(f952, tmp.dir.u8string());
+        auto r952 = dl.DownloadFile(f952, U8Str(tmp.dir.u8string()));
         CHECK(r952.outcome == DownloadOutcome::Downloaded);
         CHECK(r952.sha256 == Sha256Hex(expected_multi));
     }
@@ -2601,7 +2607,7 @@ void TestR4Remediations() {
         });
 
         ServiceConfig cfg;
-        cfg.offline_root = tmp.dir.u8string();
+        cfg.offline_root = U8Str(tmp.dir.u8string());
         cfg.sanitize_options.shareable_mode = true;
         TecDigitalService svc(cfg, std::move(mock));
 
@@ -2719,8 +2725,8 @@ void TestR4Remediations() {
 
         Sanitizer check_a(SanitizeOptions{true, true, false, mail_a, pwd_a, {}, 8000});
         Sanitizer check_b(SanitizeOptions{true, true, false, mail_b, pwd_b, {}, 8000});
-        CHECK(check_a.ScanDirectoryForLeaks((tmp.dir / "material_index").u8string()).passed);
-        CHECK(check_b.ScanDirectoryForLeaks((tmp.dir / "material_index").u8string()).passed);
+        CHECK(check_a.ScanDirectoryForLeaks(U8Str((tmp.dir / "material_index").u8string())).passed);
+        CHECK(check_b.ScanDirectoryForLeaks(U8Str((tmp.dir / "material_index").u8string())).passed);
 
         HttpRequest blocked_login;
         blocked_login.method = "POST";

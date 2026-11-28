@@ -1830,9 +1830,12 @@ DownloadResult StorageDownloader::DownloadFile(FileRecord& file,
         return res;
     }
 
+    auto to_utf8_str = [](const auto& u8) {
+        return std::string(reinterpret_cast<const char*>(u8.data()), u8.size());
+    };
     // Compute SHA-256 and commit to CAS _blobs/<sha[:2]>/<sha256>
     std::string sha_err;
-    std::string sha = Sha256FileHex(part_path.u8string(), sha_err);
+    std::string sha = Sha256FileHex(to_utf8_str(part_path.u8string()), sha_err);
     if (sha.size() != 64) {
         res.outcome = DownloadOutcome::Failed;
         file.status = FileStatus::Failed;
@@ -1877,16 +1880,16 @@ DownloadResult StorageDownloader::DownloadFile(FileRecord& file,
 
         if (fs::is_regular_file(logical_abs, ec)) {
             std::string existing_err;
-            std::string existing_sha = Sha256FileHex(logical_abs.u8string(), existing_err);
+            std::string existing_sha = Sha256FileHex(to_utf8_str(logical_abs.u8string()), existing_err);
             if (existing_sha != sha) {
-                std::string stem = fs::u8path(safe_name).stem().u8string();
-                std::string ext = fs::u8path(safe_name).extension().u8string();
+                std::string stem = to_utf8_str(fs::u8path(safe_name).stem().u8string());
+                std::string ext = to_utf8_str(fs::u8path(safe_name).extension().u8string());
                 std::string sha8 = sha.substr(0, 8);
                 fs::path cand_rel = logical_dir / fs::u8path(stem + "_" + sha8 + ext);
                 int idx = 2;
                 while (fs::is_regular_file(root / cand_rel, ec)) {
                     std::string e2;
-                    if (Sha256FileHex((root / cand_rel).u8string(), e2) == sha) break;
+                    if (Sha256FileHex(to_utf8_str((root / cand_rel).u8string()), e2) == sha) break;
                     cand_rel = logical_dir / fs::u8path(
                         stem + "_" + sha8 + "_" + std::to_string(idx++) + ext);
                 }
@@ -1904,13 +1907,13 @@ DownloadResult StorageDownloader::DownloadFile(FileRecord& file,
                 fs::copy_file(blob_abs, logical_abs, fs::copy_options::overwrite_existing, ec);
             }
         }
-        logical_rel_str = logical_rel.generic_u8string();
+        logical_rel_str = to_utf8_str(logical_rel.generic_u8string());
     }
 
     res.outcome = deduplicated ? DownloadOutcome::Deduplicated : DownloadOutcome::Downloaded;
     res.bytes_written = final_bytes;
     res.sha256 = sha;
-    res.blob_rel_path = blob_rel.generic_u8string();
+    res.blob_rel_path = to_utf8_str(blob_rel.generic_u8string());
     res.logical_rel_path = logical_rel_str;
     res.deduplicated = deduplicated;
     res.magic_ok = true;

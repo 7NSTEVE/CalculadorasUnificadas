@@ -38,6 +38,12 @@
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
+
+static inline std::string U8Str(const std::u8string& s) {
+    return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+}
+static inline std::string U8Str(const std::string& s) { return s; }
+
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -1141,10 +1147,10 @@ void Test17_InteropXlsxCsvMdDxfOneNoteAndPerspective(const fs::path& tmpDir) {
     sh.bounds = { 80.0, 140.0, 120.0, 80.0 };
     doc.MutablePages()[0].objects.push_back(sh);
 
-    const std::string xlsxPath = (tmpDir / "datos.xlsx").u8string();
-    const std::string csvPath = (tmpDir / "datos.csv").u8string();
-    const std::string dxfPath = (tmpDir / "plano.dxf").u8string();
-    const std::string mdPath = (tmpDir / "apunte.md").u8string();
+    const std::string xlsxPath = U8Str((tmpDir / "datos.xlsx").u8string());
+    const std::string csvPath = U8Str((tmpDir / "datos.csv").u8string());
+    const std::string dxfPath = U8Str((tmpDir / "plano.dxf").u8string());
+    const std::string mdPath = U8Str((tmpDir / "apunte.md").u8string());
     std::string err;
 
     EXPECT(DocStudioApp::ExportToXlsxFile(doc, xlsxPath, &err), "ExportToXlsxFile succeeds");
@@ -1278,7 +1284,7 @@ void Test18_AudioPauseResumeMergeAndKnowledgeRefactor(const fs::path& tmpDir) {
     a1.StopRecording();
     EXPECT(a1.DurationMs() >= 380 && a1.DurationMs() <= 430, "Total audio duration equals ~400ms (excluding paused 300ms)");
 
-    const std::string wavPath = (tmpDir / "clase_rec.wav").u8string();
+    const std::string wavPath = U8Str((tmpDir / "clase_rec.wav").u8string());
     std::string err;
     EXPECT(a1.ExportWavFile(wavPath, &err) && ReadWholeFile(tmpDir / "clase_rec.wav").substr(0, 4) == "RIFF",
            "ExportWavFile writes valid RIFF WAVE");

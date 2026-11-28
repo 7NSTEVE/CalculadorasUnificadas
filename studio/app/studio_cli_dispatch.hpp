@@ -232,6 +232,11 @@ struct DispatchResult {
 
 namespace detail {
 
+inline std::string PathToUtf8Local(const std::filesystem::path& p) {
+    const auto u8 = p.u8string();
+    return std::string(reinterpret_cast<const char*>(u8.data()), u8.size());
+}
+
 inline bool WriteTextFile(const std::string& pathUtf8, const std::string& content, std::string* outErr = nullptr) {
     std::error_code ec;
     const auto p = std::filesystem::u8path(pathUtf8);
@@ -268,7 +273,7 @@ inline bool ReadFileBytesLocal(const std::string& pathUtf8, std::vector<std::uin
 
 inline std::string LowerExtUtf8(const std::string& pathUtf8) {
     try {
-        std::string ext = std::filesystem::u8path(pathUtf8).extension().u8string();
+        std::string ext = PathToUtf8Local(std::filesystem::u8path(pathUtf8).extension());
         for (char& c : ext) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         return ext;
     } catch (...) {
@@ -367,7 +372,7 @@ inline bool OpenImageIntoDocument(const std::string& imgPathUtf8, DocumentModel&
     int w = 64, h = 64;
     (void)DecodePngDimensions(bytes, w, h);
     doc.ResetToBlank(DocumentMode::PaginatedPdf);
-    doc.SetTitle(std::filesystem::u8path(imgPathUtf8).stem().u8string());
+    doc.SetTitle(PathToUtf8Local(std::filesystem::u8path(imgPathUtf8).stem()));
     const std::string assetKey = doc.RegisterAsset(bytes);
 
     // Clamp extreme aspect ratios and 1x1 tiny scans cleanly onto an A4 page
@@ -1353,7 +1358,7 @@ inline DispatchResult ExecuteWorkflow(
         std::filesystem::remove_all(tmpMirror, ec);
         std::filesystem::create_directories(tmpMirror, ec);
 
-        ServiceConfig cfg = detail::MakeAcademicConfig(opts.tecSyncUrlUtf8, tmpMirror.u8string());
+        ServiceConfig cfg = detail::MakeAcademicConfig(opts.tecSyncUrlUtf8, detail::PathToUtf8Local(tmpMirror));
         TecDigitalService svc(cfg);
         std::string err;
         if (!detail::EnsureAcademicAuthIfNeeded(svc, opts.tecSyncUrlUtf8, &err)) return fail(3, err);
@@ -1367,8 +1372,8 @@ inline DispatchResult ExecuteWorkflow(
 
         nlohmann::json sm2Arr = nlohmann::json::array();
         if (!opts.createSm2HitUtf8.empty()) {
-            OfflineMaterialIndex idx(tmpMirror.u8string());
-            (void)idx.LoadFromDisk(tmpMirror.u8string());
+            OfflineMaterialIndex idx(detail::PathToUtf8Local(tmpMirror));
+            (void)idx.LoadFromDisk(detail::PathToUtf8Local(tmpMirror));
             const auto hits = idx.SearchOfflineMaterials(opts.createSm2HitUtf8);
             for (const auto& h : hits) {
                 sm2Arr.push_back({{"front", "Repasar: " + opts.createSm2HitUtf8}, {"back", h.snippet}, {"source", h.document.name}});
@@ -1438,7 +1443,7 @@ inline DispatchResult ExecuteWorkflow(
             {"readonly_policy", true},
             {"files_downloaded", sres.value.files_downloaded}
         };
-        if (!detail::WriteTextFile((std::filesystem::u8path(bundleDir) / "bundle_manifest.json").u8string(),
+        if (!detail::WriteTextFile(detail::PathToUtf8Local(std::filesystem::u8path(bundleDir) / "bundle_manifest.json"),
                                    san.SanitizeJsonString(meta.dump(2)), &err)) {
             return fail(2, err);
         }
@@ -1451,7 +1456,7 @@ inline DispatchResult ExecuteWorkflow(
         std::filesystem::remove_all(tmpMirror, ec);
         std::filesystem::create_directories(tmpMirror, ec);
 
-        ServiceConfig cfg = detail::MakeAcademicConfig(opts.tecOpenPdfUrlUtf8, tmpMirror.u8string());
+        ServiceConfig cfg = detail::MakeAcademicConfig(opts.tecOpenPdfUrlUtf8, detail::PathToUtf8Local(tmpMirror));
         TecDigitalService svc(cfg);
         std::string err;
         if (!detail::EnsureAcademicAuthIfNeeded(svc, opts.tecOpenPdfUrlUtf8, &err)) return fail(3, err);
@@ -1462,14 +1467,14 @@ inline DispatchResult ExecuteWorkflow(
         rec.candidate_urls.push_back(opts.tecOpenPdfUrlUtf8 + "/dotlrn/file-storage/view/" + rec.object_id);
         StorageDownloader dl(svc.GuardedTransport(), svc.Auth(), opts.tecOpenPdfUrlUtf8,
                              cfg.downloader_options, svc.SnapshotSanitizeOptions());
-        const auto dr = dl.DownloadFile(rec, tmpMirror.u8string());
+        const auto dr = dl.DownloadFile(rec, detail::PathToUtf8Local(tmpMirror));
         if (dr.outcome != DownloadOutcome::Downloaded && dr.outcome != DownloadOutcome::Deduplicated) {
             return fail(4, "Failed downloading TEC Digital PDF: " + dr.error_message);
         }
         const std::filesystem::path blobPath = tmpMirror / std::filesystem::u8path(dr.blob_rel_path);
         PdfDocument pdf;
         if (pdf.LoadFromFile(blobPath.wstring(), &err)) {
-            (void)pdf.PopulateDocumentModel(doc, blobPath.u8string(), &err);
+            (void)pdf.PopulateDocumentModel(doc, detail::PathToUtf8Local(blobPath), &err);
         }
         detail::AddCalcCardFromSpec(doc, opts.tecOpenPdfCardSpecUtf8, true);
         std::filesystem::remove_all(tmpMirror, ec);
@@ -1509,9 +1514,9 @@ inline DispatchResult ExecuteWorkflow(
             for (const auto& entry : std::filesystem::recursive_directory_iterator(blobsDir)) {
                 if (!entry.is_regular_file()) continue;
                 std::vector<std::uint8_t> raw;
-                if (!detail::ReadFileBytesLocal(entry.path().u8string(), raw)) { ++corrupt; continue; }
+                if (!detail::ReadFileBytesLocal(detail::PathToUtf8Local(entry.path()), raw)) { ++corrupt; continue; }
                 const std::string actual = Sha256Hex(std::string_view(reinterpret_cast<const char*>(raw.data()), raw.size()));
-                if (actual != entry.path().filename().u8string()) ++corrupt;
+                if (actual != detail::PathToUtf8Local(entry.path().filename())) ++corrupt;
             }
         }
         Sanitizer san;
@@ -1556,7 +1561,7 @@ inline DispatchResult ExecuteWorkflow(
             {"files_downloaded", sres.value.files_downloaded},
             {"schedules_found", schedCount}
         };
-        if (!detail::WriteTextFile((std::filesystem::u8path(outDir) / "onboarding_summary.json").u8string(),
+        if (!detail::WriteTextFile(detail::PathToUtf8Local(std::filesystem::u8path(outDir) / "onboarding_summary.json"),
                                    svc.SnapshotSanitizer().SanitizeJsonString(summary.dump(2)), &err)) {
             return fail(2, err);
         }

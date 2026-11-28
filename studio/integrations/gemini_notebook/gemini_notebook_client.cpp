@@ -1,4 +1,5 @@
 #include "gemini_notebook_client.hpp"
+#include "../../core/utf8_path.hpp"
 #include "../../core/cudoc_storage.hpp"
 #include "../../core/inline_url_parser.hpp"
 #include "../../core/utf_conv.hpp"
@@ -1031,7 +1032,7 @@ bool GeminiNotebookRestClient::UploadBinaryFileSource(
     auto hdrs = BuildAuthHeaders(false);
     hdrs.emplace_back("X-Goog-Upload-Protocol", "raw");
     hdrs.emplace_back("X-Goog-Upload-File-Name", displayNameUtf8.empty()
-        ? std::filesystem::path(filePath).filename().u8string() : displayNameUtf8);
+        ? PathToUtf8(std::filesystem::path(filePath).filename()) : displayNameUtf8);
     hdrs.emplace_back("Content-Type", mime);
 
     const NotebookHttpResponse resp = transport_->UploadFileRaw(url, hdrs, filePath, store_.Config().httpTimeoutMs, std::move(cancelCheck));
@@ -1592,10 +1593,10 @@ std::string CuadernUMcpBridge::HandleJsonRpcRequestLine(
                 if (mime.empty()) continue;
                 AcademicMaterialCandidate c{};
                 c.inputKind = SourceInputKind::LocalFile;
-                c.localFilePathUtf8 = entry.path().u8string();
-                c.displayNameUtf8 = entry.path().filename().u8string();
+                c.localFilePathUtf8 = PathToUtf8(entry.path());
+                c.displayNameUtf8 = PathToUtf8(entry.path().filename());
                 c.tecCourseUtf8 = courseName;
-                c.folderPathUtf8 = std::filesystem::relative(entry.path().parent_path(), root, ec).u8string();
+                c.folderPathUtf8 = PathToUtf8(std::filesystem::relative(entry.path().parent_path(), root, ec));
                 cands.push_back(std::move(c));
             }
             const auto groups = ClassifyAcademicMaterials(cands, store.Config().recommendedMaxSourcesPerNotebook);
@@ -1633,7 +1634,7 @@ std::string CuadernUMcpBridge::HandleJsonRpcRequestLine(
                     AcademicMaterialCandidate c{};
                     c.inputKind = SourceInputKind::LocalFile;
                     c.localFilePathUtf8 = fp.get<std::string>();
-                    c.displayNameUtf8 = std::filesystem::path(Utf8ToWide(c.localFilePathUtf8)).filename().u8string();
+                    c.displayNameUtf8 = PathToUtf8(std::filesystem::path(Utf8ToWide(c.localFilePathUtf8)).filename());
                     cands.push_back(std::move(c));
                 }
             }

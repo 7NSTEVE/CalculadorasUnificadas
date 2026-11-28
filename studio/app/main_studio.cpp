@@ -77,6 +77,7 @@
 #endif
 #ifdef DOC_STUDIO_HAS_ACADEMIC
 #include "studio_tec_digital_dialog.hpp"
+#include "studio_matricula_tec_dialog.hpp"
 #endif
 
 #include <algorithm>
@@ -2556,7 +2557,7 @@ bool OpenDocumentFile(StudioAppState* st, const std::wstring& path, std::string*
         vid.kind = ObjectKind::VideoClip;
         vid.layerId = st->doc.ActiveLayerId();
         vid.bounds = { x, y, dw, dh };
-        vid.captionUtf8 = std::filesystem::path(path).filename().u8string();
+        vid.captionUtf8 = WideToUtf8(std::filesystem::path(path).filename().wstring());
         vid.videoSourcePathUtf8 = pathUtf8;
         vid.videoAssetKey = vKey;
         vid.videoDurationMs = durMs;
@@ -4031,6 +4032,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
         AppendMenuW(hm, MF_STRING, CMD_AI_PROVIDERS_VAULT, L"Proveedores de IA y Claves API...");
         AppendMenuW(hm, MF_STRING, CMD_TOGGLE_ACADEMIC, L"Panel Acad\u00E9mico (TEC Digital y HorariosTEC)");
         AppendMenuW(hm, MF_STRING, CMD_ACADEMIC_SYNC_TEC, L"Centro Acad\u00E9mico TEC Digital... (Ctrl+Shift+T)");
+        AppendMenuW(hm, MF_STRING, CMD_ACADEMIC_MATRICULA_TEC, L"Matr\u00EDcula TEC Aut\u00F3noma...");
         AppendMenuW(hm, MF_STRING, CMD_COMMAND_PALETTE, L"Paleta de comandos... (Ctrl+K)");
 
         HMENU hKnowSub = CreatePopupMenu();
@@ -4225,6 +4227,18 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
 #else
         st->academicStatusUtf8 = "Módulo académico TEC Digital no habilitado en esta compilación";
         st->statusBannerUtf8 = st->academicStatusUtf8;
+#endif
+        break;
+    }
+    case CMD_ACADEMIC_MATRICULA_TEC: {
+#if defined(DOC_STUDIO_HAS_ACADEMIC)
+        DocStudio::MatriculaTecUi::RunMatriculaTecDialog(
+            st->hwndMain,
+            st->statusBannerUtf8,
+            &st->glassSettings);
+        InvalidateViews(st);
+#else
+        st->statusBannerUtf8 = "Módulo Matrícula TEC no habilitado en esta compilación";
 #endif
         break;
     }
@@ -6586,7 +6600,7 @@ void ExecuteToolbarCommand(StudioAppState* st, WORD id) {
                     vKey = st->doc.RegisterAsset(vbytes);
                 }
             }
-            const std::string fname = std::filesystem::path(inVid).filename().u8string();
+            const std::string fname = WideToUtf8(std::filesystem::path(inVid).filename().wstring());
             double x = 80.0, y = 80.0;
             NextCardPlacement(st, x, y);
             const double aspect = (vw > 0 && vh > 0) ? (static_cast<double>(vh) / static_cast<double>(vw)) : 0.5625;
@@ -9572,7 +9586,8 @@ LRESULT CALLBACK SidebarWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                         const auto& pg = st->doc.Pages()[i];
                         RECT thumb{ r.left + S(6), r.top + S(6), r.left + S(52), r.bottom - S(6) };
                         Gdiplus::SolidBrush tBg(Gdiplus::Color(255, 255, 255, 255));
-                        g.FillRectangle(&tBg, thumb.left, thumb.top, thumb.right - thumb.left, thumb.bottom - thumb.top);
+                        g.FillRectangle(&tBg, static_cast<int>(thumb.left), static_cast<int>(thumb.top),
+                            static_cast<int>(thumb.right - thumb.left), static_cast<int>(thumb.bottom - thumb.top));
                         if (pg.hasPdfSource) {
                             const PageCacheKey tkey = PageRenderCache::MakeKey(pg, 160);
                             RasterImageBgra32 img;
@@ -9595,7 +9610,8 @@ LRESULT CALLBACK SidebarWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                             }
                         }
                         Gdiplus::Pen tPen(UiGlass::ToGdip(active ? pal.accentBlue : pal.borderSubtle), active ? 1.5f : 1.0f);
-                        g.DrawRectangle(&tPen, thumb.left, thumb.top, thumb.right - thumb.left, thumb.bottom - thumb.top);
+                        g.DrawRectangle(&tPen, static_cast<int>(thumb.left), static_cast<int>(thumb.top),
+                            static_cast<int>(thumb.right - thumb.left), static_cast<int>(thumb.bottom - thumb.top));
 
                         SelectObject(mem, active && st->hUiBoldFont ? st->hUiBoldFont : st->hUiFont);
                         SetTextColor(mem, pal.labelPrimary.ToColorRef());
@@ -10071,6 +10087,7 @@ LRESULT CALLBACK InspectorWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 drawBtnPair(L"Mis Cursos", CMD_ACADEMIC_EVALS_TEC, L"Horario", CMD_ACADEMIC_SOLVE_SCHEDULE);
                 drawBtnPair(L"Malla Curricular", CMD_ACADEMIC_MALLA_TEC, L"Notas", CMD_ACADEMIC_NOTAS_TEC);
                 drawBtnPair(L"Calendario", CMD_ACADEMIC_CALENDAR_TEC, L"Biblioteca", CMD_ACADEMIC_SEARCH_MATERIALS);
+                drawBtn(L"Matr\u00EDcula TEC Aut\u00F3noma...", CMD_ACADEMIC_MATRICULA_TEC);
                 drawDivider();
 
                 drawSecHdr(L"Gemini Notebook", UiGlass::IconId::SyncCloud, pal.accentBlue);
@@ -10855,6 +10872,22 @@ static nlohmann::json HandleMcpGuiDispatch(StudioAppState* st, const nlohmann::j
         };
 #else
         return json{ { "ok", false }, { "error", "Modulo TEC Digital no habilitado en esta compilacion." } };
+#endif
+    }
+
+    if (action == "matricula_dialog_png") {
+#if defined(DOC_STUDIO_HAS_ACADEMIC)
+        const std::wstring shotW = Utf8ToWide(req.value("out_path", ""));
+        if (shotW.empty()) return json{ { "ok", false }, { "error", "out_path requerido." } };
+        DocStudio::MatriculaTecUi::RunMatriculaTecDialog(
+            st->hwndMain,
+            st->statusBannerUtf8,
+            &st->glassSettings,
+            shotW.c_str(),
+            true);
+        return json{ { "ok", true }, { "path", req.value("out_path", "") } };
+#else
+        return json{ { "ok", false }, { "error", "Modulo Matricula TEC no habilitado." } };
 #endif
     }
 

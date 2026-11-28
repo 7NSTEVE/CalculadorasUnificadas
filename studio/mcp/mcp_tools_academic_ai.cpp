@@ -16,6 +16,13 @@
 
 #ifdef DOC_STUDIO_HAS_ACADEMIC
 #include "../integrations/tec_digital/tec_academic_store.hpp"
+#include "academic/matricula_tec/client.hpp"
+#include "academic/matricula_tec/models.hpp"
+#include "academic/matricula_tec/protocol.hpp"
+#include "academic/matricula_tec/scenario_engine.hpp"
+#include "academic/matricula_tec/vault.hpp"
+#include "academic/tec_mail_triage/triage_engine.hpp"
+#include "../math/tex_svg_engine.hpp"
 #endif
 
 #include <algorithm>
@@ -1406,6 +1413,171 @@ void RegisterAcademicAndAiTools(McpProtocolRouter& router, McpServerContext& ctx
             return McpToolResult::Err("Accion desconocida en cuadernu_audio_a11y: " + action);
         }
     });
+
+#ifdef DOC_STUDIO_HAS_ACADEMIC
+    router.RegisterTool({
+        "cuadernu_matricula_tec",
+        "Motor nativo C23/C++23 de Matricula TEC Autonoma (estado de boveda DPAPI, escenarios Plan A/B/C/Z, verificacion TLS de solo lectura y simulacion Dry-Run).",
+        MakeToolSchema(
+            { "status", "load_scenarios", "save_scenarios", "probe_tls" },
+            {
+                { "scenarios_json", { { "type", "object" } } },
+                { "path", { { "type", "string" } } }
+            }),
+        [](const json& args, const McpRequestContext&) -> McpToolResult {
+            namespace mt = academic::matricula_tec;
+            const std::string action = args.value("action", "status");
+            const std::string spath = args.value("path", mt::DefaultScenariosPathUtf8());
+            if (action == "status") {
+                return McpToolResult::Ok({
+                    { "standard", "ISO C23 + ISO C++23" },
+                    { "base_url", mt::kDefaultBaseUrl },
+                    { "vault_path", mt::DefaultVaultPathUtf8() },
+                    { "vault_exists", mt::ProtectedCredentialVault::DpapiFileExists(mt::DefaultVaultPathUtf8()) },
+                    { "scenarios_path", spath },
+                    { "dry_run_default", true }
+                });
+            }
+            if (action == "load_scenarios") {
+                mt::ScenarioPlan plan;
+                std::string err;
+                if (!mt::LoadScenarioPlanFromFile(spath, plan, &err)) {
+                    return McpToolResult::Err(err);
+                }
+                return McpToolResult::Ok({ { "path", spath }, { "plan", mt::ScenarioPlanToJson(plan) } });
+            }
+            if (action == "save_scenarios") {
+                if (!args.contains("scenarios_json") || !args["scenarios_json"].is_object()) {
+                    return McpToolResult::Err("Falta scenarios_json (objeto JSON).");
+                }
+                const auto plan = mt::ScenarioPlanFromJson(args["scenarios_json"]);
+                std::string err;
+                if (!mt::SaveScenarioPlanToFile(plan, spath, &err)) {
+                    return McpToolResult::Err(err);
+                }
+                return McpToolResult::Ok({ { "saved", true }, { "path", spath }, { "scenarios", plan.scenarios.size() } });
+            }
+            if (action == "probe_tls") {
+                mt::MatriculaClient client;
+                int status = 0;
+                bool tls_ok = false;
+                std::string err;
+                const bool ok = client.ProbePortalReachability(&status, &tls_ok, &err);
+                return McpToolResult::Ok({
+                    { "ok", ok },
+                    { "http_status", status },
+                    { "tls_verified", tls_ok },
+                    { "server_offset_ms", client.ServerClockOffsetMs() },
+                    { "error", err }
+                });
+            }
+            return McpToolResult::Err("Accion desconocida en cuadernu_matricula_tec: " + action);
+        }
+    });
+
+    router.RegisterTool({
+        "cuadernu_tec_mail_triage",
+        "Clasificador offline C23/C++23 de correos TEC (4 grupos, fechas CR, rescate de spam, Outlook COM) y empaquetador NotebookLM (<=300 archivos con hardlinks NTFS) + motor TeX->SVG.",
+        MakeToolSchema(
+            { "classify_mail", "plan_notebooklm", "build_notebooklm", "read_outlook_com", "tex_svg_render" },
+            {
+                { "subject", { { "type", "string" } } },
+                { "body", { { "type", "string" } } },
+                { "sender_smtp", { { "type", "string" } } },
+                { "in_spam", { { "type", "boolean" } } },
+                { "has_list_unsubscribe", { { "type", "boolean" } } },
+                { "files", { { "type", "array" } } },
+                { "max_per_notebook", { { "type", "integer" } } },
+                { "dest_dir", { { "type", "string" } } },
+                { "latex", { { "type", "string" } } }
+            }),
+        [](const json& args, const McpRequestContext&) -> McpToolResult {
+            namespace tm = academic::tec_mail_triage;
+            const std::string action = args.value("action", "");
+            if (action == "classify_mail") {
+                tm::MailMessage m{};
+                m.subject = args.value("subject", "");
+                m.body = args.value("body", "");
+                m.sender_smtp = args.value("sender_smtp", "");
+                m.in_spam = args.value("in_spam", false);
+                m.has_list_unsubscribe = args.value("has_list_unsubscribe", false);
+                const tm::LocalDateTime now{ 2026, 11, 27, 12, 0 };
+                m.received = now;
+                const auto r = tm::MailTriageEngine::Classify(std::move(m), now);
+                json dates_j = json::array();
+                for (const auto& d : r.dates) {
+                    dates_j.push_back({ { "ymd", d.ymd }, { "hhmm", d.hhmm }, { "when", tm::MailTriageEngine::FormatWhen(d, now) }, { "context", d.context_snippet } });
+                }
+                return McpToolResult::Ok({
+                    { "group", tm::MailGroupToString(r.group) },
+                    { "score", r.score },
+                    { "rescued_from_spam", r.rescued_from_spam },
+                    { "courses", r.courses },
+                    { "reasons", r.reasons },
+                    { "dates", std::move(dates_j) }
+                });
+            }
+            if (action == "plan_notebooklm" || action == "build_notebooklm") {
+                std::vector<tm::NotebookLmFile> files;
+                if (args.contains("files") && args["files"].is_array()) {
+                    for (const auto& f : args["files"]) {
+                        files.push_back(tm::NotebookLmFile{
+                            f.value("source_path", ""),
+                            f.value("filename", ""),
+                            f.value("bytes", int64_t{ 0 }),
+                            f.value("community", "General"),
+                            f.value("folder", "")
+                        });
+                    }
+                }
+                const auto plan = tm::NotebookLmBundler::Plan(files, args.value("max_per_notebook", 300));
+                json b_arr = json::array();
+                for (const auto& b : plan.bundles) {
+                    b_arr.push_back({ { "name", b.name }, { "count", b.files.size() }, { "bytes", b.total_bytes } });
+                }
+                if (action == "build_notebooklm") {
+                    const auto sum = tm::NotebookLmBundler::BuildHardlinkFolders(plan, args.value("dest_dir", ""));
+                    return McpToolResult::Ok({
+                        { "folders_created", sum.folders_created },
+                        { "hardlinked", sum.hardlinked },
+                        { "copied", sum.copied },
+                        { "already_present", sum.already_present },
+                        { "missing_sources", sum.missing_sources },
+                        { "failures", sum.failures },
+                        { "bundles", std::move(b_arr) }
+                    });
+                }
+                return McpToolResult::Ok({
+                    { "total_included", plan.total_included },
+                    { "discarded_by_ext", plan.discarded_by_ext },
+                    { "bundles", std::move(b_arr) }
+                });
+            }
+            if (action == "read_outlook_com") {
+                const auto out = tm::OutlookComReader::ReadMailboxes(200, 1500);
+                return McpToolResult::Ok({
+                    { "ok", out.ok },
+                    { "error_code", out.error_code },
+                    { "error_message", out.error_message },
+                    { "fix_hint", out.fix_hint },
+                    { "messages_count", out.messages.size() },
+                    { "spam_read", out.spam_read }
+                });
+            }
+            if (action == "tex_svg_render") {
+                const auto res = DocStudio::Math::TexSvgEngine::Instance().RenderSvgSync(args.value("latex", ""));
+                return McpToolResult::Ok({
+                    { "ok", res.ok },
+                    { "from_cache", res.from_cache },
+                    { "texlive_available", DocStudio::Math::TexSvgEngine::Instance().IsTexLiveAvailable() },
+                    { "svg_bytes", res.svg_utf8.size() },
+                    { "error", res.error_utf8 }
+                });
+            }
+            return McpToolResult::Err("Accion desconocida en cuadernu_tec_mail_triage: " + action);
+        }
+    });
+#endif
 }
 
 } // namespace DocStudio::Mcp

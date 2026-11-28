@@ -1433,7 +1433,8 @@ Result<OfflineMaterialStats> OfflineMaterialIndex::IndexDirectory(const std::str
         for (fs::recursive_directory_iterator it(blobs_dir, ec), end; it != end && !ec;
              it.increment(ec)) {
             if (!it->is_regular_file(ec)) continue;
-            std::string fname = it->path().filename().u8string();
+            const auto fname_u8 = it->path().filename().u8string();
+            std::string fname(reinterpret_cast<const char*>(fname_u8.data()), fname_u8.size());
             if (fname.size() >= 5 && fname.compare(fname.size() - 5, 5, ".part") == 0) continue;
             if (fname.size() >= 4 && fname.compare(fname.size() - 4, 4, ".bad") == 0) continue;
             if (seen_shas.count(AsciiLower(fname)) > 0) continue;
@@ -1442,7 +1443,8 @@ Result<OfflineMaterialStats> OfflineMaterialIndex::IndexDirectory(const std::str
             in.object_id = "blob:" + fname.substr(0, std::min<size_t>(fname.size(), 16));
             in.name = fname;
             in.sha256 = fname;
-            in.blob_rel_path = fs::relative(it->path(), root, ec).generic_u8string();
+            const auto rel_u8 = fs::relative(it->path(), root, ec).generic_u8string();
+            in.blob_rel_path.assign(reinterpret_cast<const char*>(rel_u8.data()), rel_u8.size());
             auto r = IndexBlob(in);
             if (!r.ok) {
                 return Result<OfflineMaterialStats>::Failure(r.error_code, r.error_message);

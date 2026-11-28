@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.20)
-project(E2ECppProbe LANGUAGES CXX)
+project(E2ECppProbe LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-get_filename_component(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
-set(DOC_STUDIO_ROOT "${REPO_ROOT}/doc_studio")
+get_filename_component(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../.." ABSOLUTE)
+set(DOC_STUDIO_ROOT "${REPO_ROOT}/studio")
 
 find_package(ZLIB REQUIRED)
 find_package(nlohmann_json QUIET)
@@ -22,7 +25,7 @@ add_executable(e2e_cpp_probe probe_main.cpp)
 target_include_directories(e2e_cpp_probe PRIVATE "${DOC_STUDIO_ROOT}")
 
 if(WIN32)
-    set(DOC_CORE_LIB "${REPO_ROOT}/build-studio-x64/Release/DocumentCore.lib"
+    set(DOC_CORE_LIB "${REPO_ROOT}/build/studio-x64/Release/DocumentCore.lib"
         CACHE FILEPATH "Path to compiled DocumentCore.lib")
     if(NOT EXISTS "${DOC_CORE_LIB}")
         message(FATAL_ERROR "DocumentCore.lib not found at ${DOC_CORE_LIB}")

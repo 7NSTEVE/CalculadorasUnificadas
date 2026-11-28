@@ -33,6 +33,12 @@
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
+
+static inline std::string U8Str(const std::u8string& s) {
+    return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+}
+static inline std::string U8Str(const std::string& s) { return s; }
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -454,15 +460,15 @@ int main(int argc, char** argv) {
               "SanitizeSecretFromText scrubs tokens from error messages");
 
         // Pre-flight negative checks (0 bytes, >200 MiB simulated cap, >500k words simulated cap, unsupported .exe, unsafe URL)
-        AcademicMaterialCandidate cEmpty{}; cEmpty.localFilePathUtf8 = emptyFile.u8string();
+        AcademicMaterialCandidate cEmpty{}; cEmpty.localFilePathUtf8 = U8Str(emptyFile.u8string());
         Check(!ValidateSourceForUpload(cEmpty, store.Config()).ok, "Pre-flight rejects 0-byte file");
 
-        AcademicMaterialCandidate cExe{}; cExe.localFilePathUtf8 = badExtFile.u8string();
+        AcademicMaterialCandidate cExe{}; cExe.localFilePathUtf8 = U8Str(badExtFile.u8string());
         Check(!ValidateSourceForUpload(cExe, store.Config()).ok, "Pre-flight rejects unsupported .exe extension");
 
         GeminiNotebookConfig tightCfg = store.Config();
         tightCfg.maxUploadBytes = 10u;
-        AcademicMaterialCandidate cBig{}; cBig.localFilePathUtf8 = pdfFile.u8string();
+        AcademicMaterialCandidate cBig{}; cBig.localFilePathUtf8 = U8Str(pdfFile.u8string());
         Check(!ValidateSourceForUpload(cBig, tightCfg).ok, "Pre-flight rejects file exceeding byte limit");
 
         tightCfg.maxUploadBytes = kOfficialMaxUploadBytes;
@@ -480,14 +486,14 @@ int main(int argc, char** argv) {
         // Academic classifier + Chapter Markdown bundle + .cudoc exporter
         AcademicMaterialCandidate cPdf{};
         cPdf.inputKind = SourceInputKind::LocalFile;
-        cPdf.localFilePathUtf8 = pdfFile.u8string();
+        cPdf.localFilePathUtf8 = U8Str(pdfFile.u8string());
         cPdf.displayNameUtf8 = "Guia_Cap1.pdf";
         cPdf.tecCourseUtf8 = "FI-1101 Fisica I";
         cPdf.folderPathUtf8 = "Capitulo 1";
 
         AcademicMaterialCandidate cMd{};
         cMd.inputKind = SourceInputKind::LocalFile;
-        cMd.localFilePathUtf8 = mdFile.u8string();
+        cMd.localFilePathUtf8 = U8Str(mdFile.u8string());
         cMd.displayNameUtf8 = "Resumen_Cap1.md";
         cMd.tecCourseUtf8 = "FI-1101 Fisica I";
         cMd.folderPathUtf8 = "Capitulo 1";
@@ -600,7 +606,7 @@ int main(int argc, char** argv) {
 
         AcademicMaterialCandidate cPdf{};
         cPdf.inputKind = SourceInputKind::LocalFile;
-        cPdf.localFilePathUtf8 = pdfPath.u8string();
+        cPdf.localFilePathUtf8 = U8Str(pdfPath.u8string());
         cPdf.displayNameUtf8 = "Guia_Cap1.pdf";
         cPdf.tecCourseUtf8 = "Fisica I";
         cPdf.folderPathUtf8 = "Capitulo 1";

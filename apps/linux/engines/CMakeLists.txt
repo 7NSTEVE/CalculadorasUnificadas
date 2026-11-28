@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 project(CasioLinuxEngines LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -39,7 +42,7 @@ target_compile_definitions(CasioLinuxEngines
         CASIO_SOURCE_REPO_DIR="${MONOREPO_ROOT}"
 )
 
-target_compile_features(CasioLinuxEngines PUBLIC cxx_std_17)
+target_compile_features(CasioLinuxEngines PUBLIC cxx_std_23)
 
 target_link_libraries(CasioLinuxEngines
     PUBLIC

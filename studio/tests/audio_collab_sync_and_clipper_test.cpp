@@ -16,6 +16,12 @@
 
 #include <cmath>
 #include <filesystem>
+
+static inline std::string U8Str(const std::u8string& s) {
+    return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+}
+static inline std::string U8Str(const std::string& s) { return s; }
+
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -294,9 +300,9 @@ void RunM6_AudioTimelinePauseResumeMultiSpeakerTranscriptAndMeetingNotes(const f
     // WAV roundtrip persistence
     const fs::path wavPath = tmpDir / "clase_grabada.wav";
     std::string err;
-    const bool wavSaved = audio.ExportWavFile(wavPath.u8string(), &err);
+    const bool wavSaved = audio.ExportWavFile(U8Str(wavPath.u8string()), &err);
     AudioTimelineSession reloadedAudio;
-    const bool wavLoaded = reloadedAudio.LoadFromWavFile(wavPath.u8string(), &err);
+    const bool wavLoaded = reloadedAudio.LoadFromWavFile(U8Str(wavPath.u8string()), &err);
 
     // Calendar .ics meeting notes generator (GN-AUD-058..060, NO-AUD-067..074)
     const std::string icsEvent =
@@ -505,10 +511,10 @@ void RunM7_LocalFirstSync3ModesE2EEVersionHistoryAndBackupRestore(const fs::path
     // AES-256-GCM E2EE Encrypted .cudoc + Encrypted Backup Package & Single-Note Recovery
     const fs::path encCudocPath = tmpDir / "boveda_e2ee.cudoc";
     std::string err;
-    const bool encSaved = CudocCrypto::SaveEncryptedCudocFile(encCudocPath.u8string(), locDoc, "ClaveMaestraE2EE", &err);
+    const bool encSaved = CudocCrypto::SaveEncryptedCudocFile(U8Str(encCudocPath.u8string()), locDoc, "ClaveMaestraE2EE", &err);
     DocumentModel decDoc;
-    const bool wrongPassRejected = !CudocCrypto::LoadEncryptedCudocFile(encCudocPath.u8string(), "ClaveFalsa", decDoc, nullptr);
-    const bool rightPassLoaded = CudocCrypto::LoadEncryptedCudocFile(encCudocPath.u8string(), "ClaveMaestraE2EE", decDoc, &err);
+    const bool wrongPassRejected = !CudocCrypto::LoadEncryptedCudocFile(U8Str(encCudocPath.u8string()), "ClaveFalsa", decDoc, nullptr);
+    const bool rightPassLoaded = CudocCrypto::LoadEncryptedCudocFile(U8Str(encCudocPath.u8string()), "ClaveMaestraE2EE", decDoc, &err);
 
     const fs::path backupPkg = tmpDir / "respaldo_completo.cuadernu-backup";
     const fs::path fullRestoreDir = tmpDir / "restauracion_completa";

@@ -1,5 +1,6 @@
 #include "studio_profile_store.hpp"
 #include "utf_conv.hpp"
+#include "utf8_path.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -30,7 +31,7 @@ bool WriteUtf8File(const fs::path& p, const std::string& content, std::string* o
         if (p.has_parent_path()) fs::create_directories(p.parent_path());
         std::ofstream ofs(p, std::ios::binary | std::ios::trunc);
         if (!ofs.is_open()) {
-            if (outErr) *outErr = "No se pudo abrir archivo para escritura: " + p.u8string();
+            if (outErr) *outErr = "No se pudo abrir archivo para escritura: " + PathToUtf8(p);
             return false;
         }
         ofs.write(content.data(), static_cast<std::streamsize>(content.size()));
@@ -46,7 +47,7 @@ bool ReadUtf8File(const fs::path& p, std::string& outContent, std::string* outEr
     try {
         std::ifstream ifs(p, std::ios::binary | std::ios::ate);
         if (!ifs.is_open()) {
-            if (outErr) *outErr = "Archivo no encontrado: " + p.u8string();
+            if (outErr) *outErr = "Archivo no encontrado: " + PathToUtf8(p);
             return false;
         }
         const auto sz = ifs.tellg();

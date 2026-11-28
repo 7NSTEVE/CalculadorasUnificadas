@@ -915,7 +915,7 @@ inline void ShowGeminiNotebookHubDialog(
                         }
                         c.inputKind = GeminiNotebook::SourceInputKind::LocalFile;
                         c.localFilePathUtf8 = WideToUtf8(fPath);
-                        c.displayNameUtf8 = std::filesystem::path(fPath).filename().u8string();
+                        c.displayNameUtf8 = WideToUtf8(std::filesystem::path(fPath).filename().wstring());
                     }
                     const auto pre = GeminiNotebook::ValidateSourceForUpload(c, s->store->Config(), true);
                     if (!pre.ok) {
@@ -960,7 +960,7 @@ inline void ShowGeminiNotebookHubDialog(
                 if (id == 858) {
                     std::wstring folder;
                     if (!PickFolderWin32(hwnd, L"Seleccionar carpeta de curso (TEC Digital o materiales locales)", folder)) return 0;
-                    const std::string courseName = std::filesystem::path(folder).filename().u8string();
+                    const std::string courseName = WideToUtf8(std::filesystem::path(folder).filename().wstring());
                     std::vector<GeminiNotebook::AcademicMaterialCandidate> cands;
                     std::error_code ec;
                     for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(folder), ec)) {
@@ -968,10 +968,10 @@ inline void ShowGeminiNotebookHubDialog(
                         if (GeminiNotebook::DetectSupportedMimeType(entry.path().wstring()).empty()) continue;
                         GeminiNotebook::AcademicMaterialCandidate c{};
                         c.inputKind = GeminiNotebook::SourceInputKind::LocalFile;
-                        c.localFilePathUtf8 = entry.path().u8string();
-                        c.displayNameUtf8 = entry.path().filename().u8string();
+                        c.localFilePathUtf8 = WideToUtf8(entry.path().wstring());
+                        c.displayNameUtf8 = WideToUtf8(entry.path().filename().wstring());
                         c.tecCourseUtf8 = courseName;
-                        c.folderPathUtf8 = std::filesystem::relative(entry.path().parent_path(), std::filesystem::path(folder), ec).u8string();
+                        c.folderPathUtf8 = WideToUtf8(std::filesystem::relative(entry.path().parent_path(), std::filesystem::path(folder), ec).wstring());
                         cands.push_back(std::move(c));
                     }
                     if (cands.empty()) {

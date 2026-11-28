@@ -365,7 +365,10 @@ enum CmdId : std::uint16_t {
 
     // Que no dañe ni mienta (revisión del 27-nov-2026)
     CMD_TOGGLE_SCRIBBLE_ERASE = 2649,  // Tachar para borrar (apagado por defecto)
-    CMD_TOGGLE_EXPERIMENTAL = 2650     // Mostrar funciones experimentales (apagado por defecto)
+    CMD_TOGGLE_EXPERIMENTAL = 2650,    // Mostrar funciones experimentales (apagado por defecto)
+
+    // Matrícula TEC Autónoma (C23/C++23 + Fallback Playwright + MCP)
+    CMD_ACADEMIC_MATRICULA_TEC = 2651
 };
 
 } // namespace DocStudio::CmdIds

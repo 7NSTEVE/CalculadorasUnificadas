@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(DocumentCoreLinux LANGUAGES CXX)
+project(DocumentCoreLinux LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -64,7 +67,7 @@ target_link_libraries(DocumentCoreLinux PUBLIC
     Threads::Threads
 )
 
-target_compile_features(DocumentCoreLinux PUBLIC cxx_std_17)
+target_compile_features(DocumentCoreLinux PUBLIC cxx_std_23)
 target_compile_options(DocumentCoreLinux PRIVATE -Wall -Wextra)
 
 option(DOC_STUDIO_LINUX_BUILD_TESTS "Build DocumentCoreLinux test suite" ON)

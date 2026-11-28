@@ -44,10 +44,15 @@ std::string Trim(std::string s) {
     return s;
 }
 
+std::string PathToUtf8(const fs::path& p) {
+    const auto u8 = p.u8string();
+    return std::string(reinterpret_cast<const char*>(u8.data()), u8.size());
+}
+
 bool ReadFileToString(const fs::path& p, std::string& out, std::string* err = nullptr) {
     std::ifstream ifs(p, std::ios::binary);
     if (!ifs.is_open()) {
-        if (err) *err = "failed to open file: " + p.u8string();
+        if (err) *err = "failed to open file: " + PathToUtf8(p);
         return false;
     }
     std::ostringstream oss;
@@ -61,13 +66,13 @@ bool WriteStringToFile(const fs::path& p, const std::string& content, std::strin
     if (p.has_parent_path()) fs::create_directories(p.parent_path(), ec);
     std::ofstream ofs(p, std::ios::binary | std::ios::trunc);
     if (!ofs.is_open()) {
-        if (err) *err = "failed to open output: " + p.u8string();
+        if (err) *err = "failed to open output: " + PathToUtf8(p);
         return false;
     }
     ofs.write(content.data(), static_cast<std::streamsize>(content.size()));
     ofs.flush();
     if (!ofs.good()) {
-        if (err) *err = "failed writing output: " + p.u8string();
+        if (err) *err = "failed writing output: " + PathToUtf8(p);
         return false;
     }
     return true;

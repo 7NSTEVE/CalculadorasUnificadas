@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
-project(CalculadorasUnificadasMonorepo LANGUAGES CXX)
+project(CalculadorasUnificadasMonorepo LANGUAGES C CXX)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/cmake/C23Cpp23Standards.cmake")
 
 # Single-Source Monorepo Root CMake entry point.
 # Subprojects can also be configured directly into build/<preset>/:
-#   - core/          -> 4 certified C++17 calculator engines (v47)
+#   - core/          -> 4 certified C23/C++23 calculator engines (v47)
 #   - apps/windows/  -> Windows x64 Dual-Engine + Live Comparator & Win32 Official DLL Host
-#   - studio/        -> CuadernU / Document Studio x64 + academic/tec_digital
-#   - apps/linux/    -> Linux GTK + Cairo desktop port
+#   - studio/        -> CuadernU / Document Studio x64 + academic/ (C23/C++23)
+#   - apps/linux/    -> Linux GTK + Cairo desktop port (C23/C++23)
 
 option(CU_BUILD_CORE "Build canonical native C++ calculator cores" ON)
 option(CU_BUILD_WINDOWS_APP "Build Windows desktop app (x64)" OFF)

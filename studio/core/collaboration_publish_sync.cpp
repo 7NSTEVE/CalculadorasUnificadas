@@ -1,4 +1,5 @@
 #include "collaboration_publish_sync.hpp"
+#include "utf8_path.hpp"
 #include "utf_conv.hpp"
 
 #include <nlohmann/json.hpp>
@@ -747,7 +748,7 @@ StaticPublishReport StaticSitePublisher::PublishVaultToStaticHtml(
     WriteFileBytes(outRoot / "search_index.json", std::vector<std::uint8_t>(srchStr.begin(), srchStr.end()));
 
     rep.ok = WriteFileBytes(idxPath, std::vector<std::uint8_t>(idxStr.begin(), idxStr.end()));
-    rep.indexHtmlPathUtf8 = idxPath.u8string();
+    rep.indexHtmlPathUtf8 = PathToUtf8(idxPath);
     return rep;
 }
 
@@ -853,7 +854,7 @@ FolderSyncReport LocalFirstSyncEngine::SynchronizeDirectories(
     FolderSyncReport report;
     const auto fail = [&](const std::string& message, const fs::path& relative = {}) {
         report.diagnosticUtf8 = message;
-        if (!relative.empty()) report.diagnosticUtf8 += ": " + relative.generic_u8string();
+        if (!relative.empty()) report.diagnosticUtf8 += ": " + PathToGenericUtf8(relative);
         return report;
     };
     if (deviceDir.empty() || targetSyncDir.empty()) return fail("Seleccione ambas carpetas");
@@ -889,7 +890,7 @@ FolderSyncReport LocalFirstSyncEngine::SynchronizeDirectories(
         for (; !ec && it != end; it.increment(ec)) {
             const fs::path path = it->path();
             fs::path rel = path.lexically_relative(root);
-            const std::string name = rel.generic_u8string();
+            const std::string name = PathToGenericUtf8(rel);
             if (IsInternalSyncPath(name)) {
                 it.disable_recursion_pending();
                 continue;
@@ -910,7 +911,7 @@ FolderSyncReport LocalFirstSyncEngine::SynchronizeDirectories(
                 }
                 rel.replace_extension();
             }
-            if (!IsPathAllowedBySelectiveFilter(rel.generic_u8string(), filter)) {
+            if (!IsPathAllowedBySelectiveFilter(PathToGenericUtf8(rel), filter)) {
                 if (merge || remote == restore) ++report.skippedBySelectiveFilter;
                 continue;
             }
@@ -977,7 +978,7 @@ FolderSyncReport LocalFirstSyncEngine::SynchronizeDirectories(
                 if (!BackupFileVerified(path, destinationPath(backup / "overwritten", destName))) {
                     return fail("No se pudo respaldar el original; se conserva el archivo de destino", rel);
                 }
-                report.backupDirUtf8 = backup.u8string();
+                report.backupDirUtf8 = PathToUtf8(backup);
                 ++report.backedUpBeforeChange;
             }
             const auto* expected = replace ? &existing->second : nullptr;
@@ -996,7 +997,7 @@ FolderSyncReport LocalFirstSyncEngine::SynchronizeDirectories(
                                        destinationPath(backup / "removed", rel))) {
                 return fail("No se pudo retirar el archivo con respaldo verificado", rel);
             }
-            report.backupDirUtf8 = backup.u8string();
+            report.backupDirUtf8 = PathToUtf8(backup);
             ++report.backedUpBeforeChange;
         }
         report.ok = true;
@@ -1065,7 +1066,7 @@ bool LocalFirstSyncEngine::CreateBackupPackage(
     std::error_code ec;
     for (const auto& entry : fs::recursive_directory_iterator(srcRoot, ec)) {
         if (!entry.is_regular_file()) continue;
-        const std::string rel = fs::relative(entry.path(), srcRoot, ec).generic_u8string();
+        const std::string rel = PathToGenericUtf8(fs::relative(entry.path(), srcRoot, ec));
         if (rel.rfind(".cuadernu_sync_backup", 0) == 0) continue;
         std::vector<std::uint8_t> bytes;
         if (ReadFileBytes(entry.path(), bytes)) {

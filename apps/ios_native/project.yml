@@ -11,9 +11,9 @@ options:
 
 settings:
   base:
-    CLANG_CXX_LANGUAGE_STANDARD: c++20
+    CLANG_CXX_LANGUAGE_STANDARD: c++23
     CLANG_CXX_LIBRARY: libc++
-    GCC_C_LANGUAGE_STANDARD: c11
+    GCC_C_LANGUAGE_STANDARD: c23
     SWIFT_VERSION: "5.0"
     CODE_SIGNING_ALLOWED: NO
     CODE_SIGNING_REQUIRED: NO
@@ -29,7 +29,7 @@ targets:
         name: CasioNxSources
     settings:
       base:
-        CLANG_CXX_LANGUAGE_STANDARD: c++17
+        CLANG_CXX_LANGUAGE_STANDARD: c++23
         HEADER_SEARCH_PATHS:
           - $(SRCROOT)/../../core/casio_nx/include
           - $(SRCROOT)/../../core/casio_nx/src
@@ -43,7 +43,7 @@ targets:
         name: CasioCw2Sources
     settings:
       base:
-        CLANG_CXX_LANGUAGE_STANDARD: c++17
+        CLANG_CXX_LANGUAGE_STANDARD: c++23
         HEADER_SEARCH_PATHS:
           - $(SRCROOT)/../../core/casio_cw2/include
           - $(SRCROOT)/../../core/casio_cw2/src
@@ -106,6 +106,8 @@ targets:
       - path: ../../studio/pdf/table_interop.cpp
         group: CuadernUStudioCore
       - path: ../../studio/c_api/cuadernu_studio_ffi.cpp
+        group: CuadernUStudioCore
+      - path: ../../studio/c_api/cuadernu_sync_clock_c23.c
         group: CuadernUStudioCore
       - path: ../../academic/horarios_tec/src
         name: HorariosTecCore

@@ -1,4 +1,5 @@
 #include "universal_formats_clipper.hpp"
+#include "../core/utf8_path.hpp"
 #include "../core/cudoc_storage.hpp"
 #include "../core/image_processing.hpp"
 #include "../core/utf_conv.hpp"
@@ -546,7 +547,7 @@ bool UniversalFormatsInterop::ImportUniversalNotePackage(
     }
 
     outDoc.ResetToBlank(DocumentMode::PaginatedPdf);
-    outDoc.SetTitle(fs::path(WideToUtf8(inFilePath)).stem().u8string());
+    outDoc.SetTitle(PathToUtf8(fs::path(WideToUtf8(inFilePath)).stem()));
     outDoc.MutablePages().clear();
 
     for (const auto& name : entries) {

@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
-project(AcademicHorariosTec LANGUAGES CXX)
+project(AcademicHorariosTec LANGUAGES C CXX)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../tools/cmake/C23Cpp23Standards.cmake")
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
     if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build (Debug, Release, RelWithDebInfo, MinSizeRel)" FORCE)
     endif()
@@ -53,7 +52,7 @@ target_include_directories(academic_horarios_tec PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-target_compile_features(academic_horarios_tec PUBLIC cxx_std_17)
+target_compile_features(academic_horarios_tec PUBLIC cxx_std_23)
 
 # Keep <nlohmann/json.hpp> inside .cpp implementation files so consumers
 # linking academic::horarios_tec never inherit directory-scoped imported targets.
@@ -81,7 +80,7 @@ target_link_libraries(horarios_tec_cli PRIVATE
 if(WIN32)
     target_link_libraries(horarios_tec_cli PRIVATE winhttp)
 endif()
-target_compile_features(horarios_tec_cli PRIVATE cxx_std_17)
+target_compile_features(horarios_tec_cli PRIVATE cxx_std_23)
 if(MSVC)
     target_compile_definitions(horarios_tec_cli PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     target_compile_options(horarios_tec_cli PRIVATE /W4 /utf-8 /EHsc)
@@ -113,7 +112,7 @@ if(_academic_horarios_run_tests)
     target_link_libraries(test_horarios_tec PRIVATE
         academic_horarios_tec
     )
-    target_compile_features(test_horarios_tec PRIVATE cxx_std_17)
+    target_compile_features(test_horarios_tec PRIVATE cxx_std_23)
     if(MSVC)
         target_compile_definitions(test_horarios_tec PRIVATE
             NOMINMAX

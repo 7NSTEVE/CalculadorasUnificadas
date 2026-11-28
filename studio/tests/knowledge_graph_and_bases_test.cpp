@@ -23,6 +23,12 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+
+static inline std::string U8Str(const std::u8string& s) {
+    return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+}
+static inline std::string U8Str(const std::string& s) { return s; }
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -958,8 +964,8 @@ void TestM1_CommandPaletteSlashShortcutsAndThemes(const fs::path& tmpDir) {
     KeymapProfile kp = KeymapProfile::Default();
     M1_CHECK(kp.actionToShortcut["view.command_palette"] == "Ctrl+K", ok);
     const fs::path kpPath = tmpDir / "m1_keymap.json";
-    M1_CHECK(kp.ExportToFile(kpPath.u8string()), ok);
-    KeymapProfile kpLoaded = KeymapProfile::LoadWithFallback(kpPath.u8string());
+    M1_CHECK(kp.ExportToFile(U8Str(kpPath.u8string())), ok);
+    KeymapProfile kpLoaded = KeymapProfile::LoadWithFallback(U8Str(kpPath.u8string()));
     M1_CHECK(!kpLoaded.usedFallback && kpLoaded.actionToShortcut["view.command_palette"] == "Ctrl+K", ok);
 
     // Theme profiles
@@ -1093,8 +1099,8 @@ void TestM2_SimpleAndChartLinkedTablesPdfExport(const fs::path& tmpDir) {
     // Save/load .cudoc, export .csv/.xlsx and export printed PDF
     const fs::path cp = tmpDir / "m2_tables.cudoc";
     M1_CHECK(CudocStorage::SaveToFile(cp.wstring(), doc), ok);
-    M1_CHECK(DocStudioApp::ExportToCsvFile(doc, (tmpDir / "m2_tables.csv").u8string()), ok);
-    M1_CHECK(DocStudioApp::ExportToXlsxFile(doc, (tmpDir / "m2_tables.xlsx").u8string()), ok);
+    M1_CHECK(DocStudioApp::ExportToCsvFile(doc, U8Str((tmpDir / "m2_tables.csv").u8string())), ok);
+    M1_CHECK(DocStudioApp::ExportToXlsxFile(doc, U8Str((tmpDir / "m2_tables.xlsx").u8string())), ok);
 
     std::vector<std::uint8_t> pdfOut;
     M1_CHECK(PdfWriter::ExportDocumentToBytes(doc, pdfOut), ok);
@@ -1530,7 +1536,7 @@ int main(int argc, char** argv) {
 
     std::cout << "[KnowledgeGraphAndBasesTest] Checks: " << (g_totalChecks - g_failedChecks)
               << " / " << g_totalChecks << " passed | IDs covered: " << g_outcomes.size()
-              << " | Report: " << reportPath.u8string() << "\n";
+              << " | Report: " << U8Str(reportPath.u8string()) << "\n";
 
     fs::remove_all(tmpDir, ec);
     return (g_failedChecks == 0) ? 0 : 1;

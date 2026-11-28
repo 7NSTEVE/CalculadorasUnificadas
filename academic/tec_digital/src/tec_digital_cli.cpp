@@ -30,6 +30,12 @@
 #include <vector>
 
 namespace fs = std::filesystem;
+
+static inline std::string U8Str(const std::u8string& s) {
+    return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+}
+static inline std::string U8Str(const std::string& s) { return s; }
+
 using namespace academic::tec_digital;
 
 namespace {
@@ -85,7 +91,7 @@ std::string AuthStatusName(AuthStatus st) {
 bool ReadFileToString(const fs::path& p, std::string& out, std::string* err = nullptr) {
     std::ifstream ifs(p, std::ios::binary);
     if (!ifs.is_open()) {
-        if (err) *err = "failed to open file: " + p.u8string();
+        if (err) *err = "failed to open file: " + U8Str(p.u8string());
         return false;
     }
     std::ostringstream oss;
@@ -99,13 +105,13 @@ bool WriteStringToFile(const fs::path& p, const std::string& content, std::strin
     if (p.has_parent_path()) fs::create_directories(p.parent_path(), ec);
     std::ofstream ofs(p, std::ios::binary | std::ios::trunc);
     if (!ofs.is_open()) {
-        if (err) *err = "failed to open output: " + p.u8string();
+        if (err) *err = "failed to open output: " + U8Str(p.u8string());
         return false;
     }
     ofs.write(content.data(), static_cast<std::streamsize>(content.size()));
     ofs.flush();
     if (!ofs.good()) {
-        if (err) *err = "failed writing output: " + p.u8string();
+        if (err) *err = "failed writing output: " + U8Str(p.u8string());
         return false;
     }
     return true;
@@ -156,8 +162,8 @@ ServiceConfig MakeServiceConfig(const std::string& base_url,
     if (!profile_dir.empty()) {
         fs::path prof = fs::u8path(profile_dir);
         cfg.vault_config.mode = VaultPersistenceMode::EncryptedVault;
-        cfg.vault_config.vault_path = (prof / "session.dpapi").u8string();
-        cfg.vault_config.session_meta_path = (prof / "session_meta.json").u8string();
+        cfg.vault_config.vault_path = U8Str((prof / "session.dpapi").u8string());
+        cfg.vault_config.session_meta_path = U8Str((prof / "session_meta.json").u8string());
         cfg.vault_config.persist_session_cookies = false;
     }
 
@@ -254,7 +260,7 @@ int CmdVaultSave(const std::vector<std::string>& args) {
     fs::path prof = fs::u8path(profile);
     std::error_code ec;
     fs::create_directories(prof, ec);
-    const std::string vault_path = (prof / "session.dpapi").u8string();
+    const std::string vault_path = U8Str((prof / "session.dpapi").u8string());
     VoidResult saved = CredentialVault::SaveEncrypted(vault_path, *creds, {}, false);
     CredentialVault::ClearMemory(*creds);
     if (!saved.ok) {
@@ -272,7 +278,7 @@ int CmdVaultCheck(const std::vector<std::string>& args) {
         std::cerr << "vault-check requires --profile <dir>\n";
         return 64;
     }
-    const std::string vault_path = (fs::u8path(profile) / "session.dpapi").u8string();
+    const std::string vault_path = U8Str((fs::u8path(profile) / "session.dpapi").u8string());
     auto loaded = CredentialVault::LoadEncrypted(vault_path);
     if (!loaded.ok) {
         std::cerr << "vault_invalid: " << loaded.error_code << "\n";
@@ -413,7 +419,7 @@ int CmdDownloadFile(const std::vector<std::string>& args) {
         fs::path blob_path = fs::u8path(out_dir) / fs::u8path(dr.blob_rel_path);
         fs::path dest_path = fs::u8path(out_dir) / fs::u8path(StorageDownloader::SafeFilename(rec.name));
         fs::copy_file(blob_path, dest_path, fs::copy_options::overwrite_existing, ec);
-        fs::remove(fs::u8path(dest_path.u8string() + ".part"), ec);
+        fs::remove(fs::u8path(U8Str(dest_path.u8string()) + ".part"), ec);
         nlohmann::json out = {
             {"ok", true},
             {"object_id", obj_id},
@@ -748,8 +754,8 @@ int CmdVerifyOffline(const std::vector<std::string>& args) {
                 continue;
             }
             const std::string actual = Sha256Hex(raw);
-            const std::string expected = entry.path().filename().u8string();
-            const std::string parent = entry.path().parent_path().filename().u8string();
+            const std::string expected = U8Str(entry.path().filename().u8string());
+            const std::string parent = U8Str(entry.path().parent_path().filename().u8string());
             ++blobs_checked;
             if (actual != expected || actual.size() < 2 || parent != actual.substr(0, 2)) {
                 ++corrupt_blobs;
@@ -1132,7 +1138,7 @@ int CmdCartographyCrawl(const std::vector<std::string>& args) {
         if (_dupenv_s(&appbuf, &app_len, "LOCALAPPDATA") == 0 && appbuf != nullptr) {
             fs::path p = fs::path(appbuf) / "CuadernU" / "tec_digital" / "tec_credentials.dpapi";
             std::free(appbuf);
-            if (fs::exists(p)) vault_file = p.u8string();
+            if (fs::exists(p)) vault_file = U8Str(p.u8string());
         }
 #endif
     }
@@ -1144,7 +1150,7 @@ int CmdCartographyCrawl(const std::vector<std::string>& args) {
     if (!vault_file.empty()) {
         cfg.vault_config.mode = VaultPersistenceMode::EncryptedVault;
         cfg.vault_config.vault_path = vault_file;
-        cfg.vault_config.session_meta_path = (fs::u8path(vault_file).parent_path() / "cache" / "session_meta.json").u8string();
+        cfg.vault_config.session_meta_path = U8Str((fs::u8path(vault_file).parent_path() / "cache" / "session_meta.json").u8string());
         cfg.vault_config.persist_session_cookies = true;
     }
     TecDigitalService svc(cfg);
@@ -1808,7 +1814,7 @@ int CmdCartographyPass2(const std::vector<std::string>& args) {
         if (_dupenv_s(&appbuf, &app_len, "LOCALAPPDATA") == 0 && appbuf != nullptr) {
             fs::path p = fs::path(appbuf) / "CuadernU" / "tec_digital" / "tec_credentials.dpapi";
             std::free(appbuf);
-            if (fs::exists(p)) vault_file = p.u8string();
+            if (fs::exists(p)) vault_file = U8Str(p.u8string());
         }
 #endif
     }
@@ -1816,7 +1822,7 @@ int CmdCartographyPass2(const std::vector<std::string>& args) {
     if (!vault_file.empty()) {
         cfg.vault_config.mode = VaultPersistenceMode::EncryptedVault;
         cfg.vault_config.vault_path = vault_file;
-        cfg.vault_config.session_meta_path = (fs::u8path(vault_file).parent_path() / "cache" / "session_meta.json").u8string();
+        cfg.vault_config.session_meta_path = U8Str((fs::u8path(vault_file).parent_path() / "cache" / "session_meta.json").u8string());
         cfg.vault_config.persist_session_cookies = true;
     }
     TecDigitalService svc(cfg);

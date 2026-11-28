@@ -1,4 +1,5 @@
 #include "gemini_notebook_sync_store.hpp"
+#include "../../core/utf8_path.hpp"
 #include "../../core/ai_provider_vault.hpp"
 #include "../../core/inline_url_parser.hpp"
 #include "../../core/studio_profile_store.hpp"
@@ -1028,7 +1029,7 @@ SyncDiffPlan GeminiNotebookSyncStore::ComputeIncrementalSyncPlan(
         item.preflight = ValidateSourceForUpload(c, config_, true);
         item.targetDisplayNameUtf8 = c.displayNameUtf8.empty()
             ? (c.inputKind == SourceInputKind::LocalFile
-                ? std::filesystem::path(Utf8ToWide(c.localFilePathUtf8)).filename().u8string()
+                ? PathToUtf8(std::filesystem::path(Utf8ToWide(c.localFilePathUtf8)).filename())
                 : (!c.sourceUrlUtf8.empty() ? ExtractUrlDomainUtf8(c.sourceUrlUtf8) : "Fuente CuadernU"))
             : c.displayNameUtf8;
 

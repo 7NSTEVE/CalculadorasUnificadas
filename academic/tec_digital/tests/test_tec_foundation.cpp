@@ -773,9 +773,13 @@ void TestVault() {
 
     // Item 10: UTF-8 non-ASCII path handling in SaveEncrypted/LoadEncrypted/WriteSanitizedSessionMeta
     {
+        auto to_u8 = [](const fs::path& p) {
+            const auto s = p.u8string();
+            return std::string(reinterpret_cast<const char*>(s.data()), s.size());
+        };
         fs::path utf8_dir = tmp.dir / fs::u8path("t\xc3\xa9st_\xc3\xb1_dir");
-        std::string utf8_vpath = (utf8_dir / "vault.tdv").u8string();
-        std::string utf8_mpath = (utf8_dir / "session_meta.json").u8string();
+        std::string utf8_vpath = to_u8(utf8_dir / "vault.tdv");
+        std::string utf8_mpath = to_u8(utf8_dir / "session_meta.json");
         CHECK(CredentialVault::SaveEncrypted(utf8_vpath, creds, {c}, true, "machine-utf8").ok);
         auto uload = CredentialVault::LoadEncrypted(utf8_vpath, "machine-utf8");
         CHECK(uload.ok && uload.value.credentials.password == "FAKE_VAULT_PWD!@#");
