@@ -1086,6 +1086,13 @@ body[data-vista="preparacion"] .consola { display: none; }
 .v3d-tag.col-izq { left: 6px; right: auto; }
 .v3d-tag.col-der { left: auto; right: 6px; }
 
+.v3d-etiquetas.compacta .v3d-tag.col-izq,
+.v3d-etiquetas.compacta .v3d-tag.col-der {
+  font-size: 0.64rem;
+  padding: 0 5px;
+  background: color-mix(in srgb, var(--tarjeta) 74%, transparent);
+}
+
 /* En el paso «Datos», las etiquetas propias de la escena pasan a segundo plano */
 .visual-3d[data-modo-datos="si"] .v3d-tag:not(.dato):not(.pide) {
   opacity: 0.45;

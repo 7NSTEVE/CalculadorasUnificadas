@@ -67,6 +67,10 @@ export class CapaEtiquetas3D {
   actualizar(motor, items = []) {
     const vivos = new Set();
     const filas = { izq: 0, der: 0 };
+    // Con muchos datos (el manómetro trae 9) las columnas se achican para tapar menos la escena.
+    const compacta = items.filter((it) => it.columna === 'izq').length > 6;
+    this.el.classList.toggle('compacta', compacta);
+    const alto = compacta ? 19 : 23;
     for (const it of items) {
       vivos.add(it.id);
       let nodo = this._nodos.get(it.id);
@@ -90,7 +94,7 @@ export class CapaEtiquetas3D {
         const k = filas[it.columna];
         filas[it.columna] += 1;
         nodo.hidden = false;
-        nodo.style.transform = `translateY(${6 + k * 23}px)`;
+        nodo.style.transform = `translateY(${6 + k * alto}px)`;
         continue;
       }
       const p = motor.proyectarPantalla(it.pos);

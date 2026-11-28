@@ -55,6 +55,9 @@ export function crearMaterial(nombreColor, {
     roughness: rugosidad,
     transparent: opacidad < 0.995,
     opacity: opacidad,
+    // R4: lo muy translúcido (vidrio del tanque, líquido, paredes) no escribe profundidad: si no,
+    // su cara de adelante tapaba lo que está adentro (la esfera de RP-26I-3 no se veía).
+    depthWrite: opacidad >= 0.6,
     side: dobleCara ? THREE.DoubleSide : THREE.FrontSide,
     wireframe,
   };
